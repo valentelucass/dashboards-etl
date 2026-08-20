@@ -35,6 +35,12 @@ sqlcmd -S localhost,1433 -d DASHBOARDS -U usuario_etl -P "<senha>" -C -b -f 6500
 sqlcmd -S localhost,1433 -d DASHBOARDS -U usuario_etl -P "<senha>" -C -b -f 65001 -i database\validation\002_validar_metas_custo_manifestos.sql
 ```
 
+5. Antes de migrations que criem chaves estrangeiras no schema `acesso`, o administrador do SQL Server deve conceder ao login usado pelo Flyway a permissão mínima de `REFERENCES` no schema:
+
+```powershell
+sqlcmd -S localhost,1433 -d master -E -C -b -f 65001 -v TargetDb="DASHBOARDS" AppLogin="usuario_etl" -i database\setup\002_conceder_references_schema_acesso.sql
+```
+
 ## Executor Windows
 
 - `database/executar_database.bat` usa o plugin Maven do Flyway configurado no backend.
@@ -47,6 +53,7 @@ sqlcmd -S localhost,1433 -d DASHBOARDS -U usuario_etl -P "<senha>" -C -b -f 6500
 ## Observacoes
 
 - O usuario da aplicacao pode nao ter permissao de `ALTER` ou `CREATE TABLE`. Nesse caso, aplique migrations com usuario `dbo` ou credencial administrativa.
+- O login de migrations também precisa de `REFERENCES` em `acesso` para criar chaves estrangeiras; o script `setup/002_conceder_references_schema_acesso.sql` concede somente essa permissão de schema.
 - O alvo desta pasta e sempre o banco proprio do portal: `DASHBOARDS` em producao ou `DASHBOARDS_DEV` em desenvolvimento.
 - Use `-f 65001` ao aplicar migrations via `sqlcmd`; as views de dashboard possuem aliases acentuados e devem ser lidas como UTF-8.
 - `TODAS` significa acesso total as filiais da empresa; `HERDAR_SETOR` usa o escopo do setor; `SELECIONADAS` usa `acesso.usuario_filiais_permitidas`.
