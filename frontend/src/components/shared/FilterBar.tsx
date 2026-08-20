@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -80,12 +80,27 @@ export default function FilterBar({
   const isMobile = useIsMobile();
   const [isPresentationMode, setIsPresentationMode] = useState(() => document.body.dataset.presentationMode === 'true');
   const panelId = useId();
+  const presentationAnchorRef = useRef<HTMLDivElement>(null);
+  const [presentationPanelTop, setPresentationPanelTop] = useState(0);
 
   useEffect(() => {
     const atualizarModoApresentacao = () => setIsPresentationMode(document.body.dataset.presentationMode === 'true');
     window.addEventListener('dashboard:presentation-mode-change', atualizarModoApresentacao);
     return () => window.removeEventListener('dashboard:presentation-mode-change', atualizarModoApresentacao);
   }, []);
+
+  useEffect(() => {
+    if (!isPresentationMode || !open || isMobile) return;
+
+    const atualizarPosicao = () => {
+      const base = presentationAnchorRef.current?.getBoundingClientRect().bottom;
+      if (base !== undefined) setPresentationPanelTop(base);
+    };
+
+    atualizarPosicao();
+    window.addEventListener('resize', atualizarPosicao);
+    return () => window.removeEventListener('resize', atualizarPosicao);
+  }, [isMobile, isPresentationMode, open]);
 
   // Scroll lock quando drawer mobile está aberto
   useEffect(() => {
@@ -204,8 +219,9 @@ export default function FilterBar({
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeInOut' }}
           className={isPresentationMode
-            ? 'absolute right-0 top-full z-50 mt-2 w-[min(72rem,calc(100vw-2rem))] overflow-hidden'
+            ? 'fixed inset-x-4 z-50 mt-2 overflow-hidden'
             : 'overflow-hidden'}
+          style={isPresentationMode ? { top: presentationPanelTop } : undefined}
         >
           <motion.div
             initial={{ y: -8, opacity: 0 }}
@@ -355,6 +371,17 @@ export default function FilterBar({
       )
     : null;
 
+  const presentationBackdrop = isPresentationMode && open && !isMobile && typeof document !== 'undefined'
+    ? createPortal(
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />,
+        document.body,
+      )
+    : null;
+
   const presentationSlot = typeof document !== 'undefined'
     ? document.getElementById('presentation-filter-slot')
     : null;
@@ -363,12 +390,13 @@ export default function FilterBar({
     return (
       <>
         {createPortal(
-          <div className="relative w-full">
+          <div ref={presentationAnchorRef} className="relative w-full">
             {collapsedBar}
             {desktopPanel}
           </div>,
           presentationSlot,
         )}
+        {presentationBackdrop}
         {mobileDrawer}
       </>
     );
@@ -378,6 +406,7 @@ export default function FilterBar({
     <div className={isPresentationMode ? '' : 'mb-3'}>
       {collapsedBar}
       {desktopPanel}
+      {presentationBackdrop}
       {mobileDrawer}
     </div>
   );
