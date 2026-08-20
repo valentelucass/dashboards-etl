@@ -242,18 +242,25 @@ export default function TopNav() {
       if (event.key === 'Escape') {
         event.preventDefault();
         void sairApresentacao();
-      } else if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        navegarApresentacao(-1);
-      } else if (event.key === 'ArrowRight' || event.key === ' ') {
-        event.preventDefault();
-        navegarApresentacao(1);
       }
     };
 
-    window.addEventListener('keydown', handlePresentationKeyDown);
-    return () => window.removeEventListener('keydown', handlePresentationKeyDown);
-  }, [apresentacao, navegarApresentacao, sairApresentacao]);
+    window.addEventListener('keydown', handlePresentationKeyDown, true);
+    return () => window.removeEventListener('keydown', handlePresentationKeyDown, true);
+  }, [apresentacao, sairApresentacao]);
+
+  useEffect(() => {
+    if (!apresentacao) return;
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setApresentacao(null);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, [apresentacao]);
 
   const updateDrawerScrollState = useCallback(() => {
     const element = drawerNavRef.current;

@@ -203,7 +203,9 @@ export default function FilterBar({
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeInOut' }}
-          className="overflow-hidden"
+          className={isPresentationMode
+            ? 'absolute right-0 top-full z-50 mt-2 w-[min(72rem,calc(100vw-2rem))] overflow-hidden'
+            : 'overflow-hidden'}
         >
           <motion.div
             initial={{ y: -8, opacity: 0 }}
@@ -361,7 +363,7 @@ export default function FilterBar({
     return (
       <>
         {createPortal(
-          <div className="w-full">
+          <div className="relative w-full">
             {collapsedBar}
             {desktopPanel}
           </div>,
