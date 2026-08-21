@@ -108,6 +108,25 @@ public class IntegracoesController {
                 .body(respostaSatelite.getBody());
     }
 
+    @GetMapping(value = "/vedacit-sftp/clientes", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> consultarStatusSftpClientes() {
+        return encaminharJson(integracoesService.consultarStatusSftpClientes());
+    }
+
+    @GetMapping(value = "/vedacit-sftp/execucoes", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> consultarExecucoesSftpClientes(
+            @RequestParam(required = false) Integer pagina,
+            @RequestParam(required = false) Integer tamanho,
+            @RequestParam(required = false) String cliente,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String dataInicial,
+            @RequestParam(required = false) String dataFinal
+    ) {
+        return encaminharJson(integracoesService.consultarExecucoesSftpClientes(
+                pagina, tamanho, cliente, status, dataInicial, dataFinal
+        ));
+    }
+
     @GetMapping(value = "/logs/{id}/imagem", produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE })
     public ResponseEntity<String> consultarImagemCanhoto(@PathVariable Long id) {
         ResponseEntity<String> respostaSatelite = integracoesService.consultarImagemCanhoto(id);
@@ -117,6 +136,14 @@ public class IntegracoesController {
                 .contentType(respostaSatelite.getHeaders().getContentType() != null
                         ? respostaSatelite.getHeaders().getContentType()
                         : MediaType.TEXT_PLAIN)
+                .body(respostaSatelite.getBody());
+    }
+
+    private ResponseEntity<String> encaminharJson(ResponseEntity<String> respostaSatelite) {
+        return ResponseEntity.status(respostaSatelite.getStatusCode())
+                .contentType(respostaSatelite.getHeaders().getContentType() != null
+                        ? respostaSatelite.getHeaders().getContentType()
+                        : MediaType.APPLICATION_JSON)
                 .body(respostaSatelite.getBody());
     }
 }

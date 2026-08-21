@@ -52,30 +52,20 @@ public class IntegracoesService {
         return consultarSatelite(() -> integracaoSateliteClient.buscarResumoTabelas(dataInicial, dataFinal, destinos));
     }
 
-    public ResponseEntity<String> consultarImagemCanhoto(Long id) {
-        return consultarSatelite(() -> integracaoSateliteClient.buscarImagemLog(id));
+    public ResponseEntity<String> consultarStatusSftpClientes() {
+        return consultarSatelite(integracaoSateliteClient::buscarStatusSftpClientes);
     }
 
-    public ResponseEntity<String> consultarErrosQuarentena(Integer pagina, Integer tamanho, List<String> destinos) {
-        return consultarSatelite(() -> integracaoSateliteClient.buscarErrosQuarentena(pagina, tamanho, destinos));
-    }
-
-    public ResponseEntity<String> consultarHistoricoQuarentena(
-            Integer pagina, Integer tamanho, String dataInicial, String dataFinal, List<String> destinos
+    public ResponseEntity<String> consultarExecucoesSftpClientes(
+            Integer pagina, Integer tamanho, String cliente, String status, String dataInicial, String dataFinal
     ) {
-        return consultarSatelite(() -> integracaoSateliteClient.buscarHistoricoQuarentena(
-                pagina, tamanho, dataInicial, dataFinal, destinos
+        return consultarSatelite(() -> integracaoSateliteClient.buscarExecucoesSftpClientes(
+                pagina, tamanho, cliente, status, dataInicial, dataFinal
         ));
     }
 
-    public void exportarHistoricoQuarentena(
-            String dataInicial, String dataFinal, List<String> destinos, OutputStream outputStream
-    ) {
-        executarNoSatelite(() -> integracaoSateliteClient.exportarHistoricoQuarentena(dataInicial, dataFinal, destinos, outputStream));
-    }
-
-    public void exportarErrosQuarentena(List<String> destinos, OutputStream outputStream) {
-        executarNoSatelite(() -> integracaoSateliteClient.exportarErrosQuarentena(destinos, outputStream));
+    public ResponseEntity<String> consultarImagemCanhoto(Long id) {
+        return consultarSatelite(() -> integracaoSateliteClient.buscarImagemLog(id));
     }
 
     private <T> T consultarSatelite(Supplier<T> chamada) {

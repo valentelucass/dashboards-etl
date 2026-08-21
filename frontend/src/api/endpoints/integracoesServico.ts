@@ -72,6 +72,29 @@ export interface IntegracoesAuditoriaResponse {
   pendencias: IntegracoesPendenciasPaginadas;
 }
 
+export interface WorkSftpClienteStatus {
+  cliente: string;
+  inicioUltimoCiclo: string | null;
+  fimUltimoCiclo: string | null;
+  conexao: string;
+  statusCiclo: string;
+  arquivosValidos: number;
+  arquivosRejeitados: number;
+  selecionados: number;
+  enviados: number;
+  pendentes: number;
+  saldo: number;
+  bloqueios: number;
+  timeoutsAmbiguos: number;
+  duracaoMs: number;
+  proximaExecucaoEstimada: string | null;
+}
+
+export interface WorkSftpExecucoesResponse {
+  itens: WorkSftpClienteStatus[];
+  paginacao: IntegracoesPaginacao;
+}
+
 export async function buscarIntegracoesAuditoria(
   pagina: number,
   tamanhoPagina: number,
@@ -117,6 +140,32 @@ export async function buscarIntegracoesEvolucaoDiaria(
   const { data } = await clienteAxios.get<IntegracaoEvolucaoDiaria[]>(
     '/api/painel/integracoes/evolucao-diaria',
     { params },
+  );
+  return data;
+}
+
+export async function buscarStatusWorkSftpClientes(): Promise<WorkSftpClienteStatus[]> {
+  const { data } = await clienteAxios.get<WorkSftpClienteStatus[]>('/api/painel/integracoes/vedacit-sftp/clientes');
+  return data;
+}
+
+export async function buscarExecucoesWorkSftpClientes(
+  pagina: number,
+  tamanho: number,
+  dataInicio: string,
+  dataFim: string,
+  cliente?: string,
+  status?: string,
+): Promise<WorkSftpExecucoesResponse> {
+  const params = new URLSearchParams();
+  params.set('pagina', String(Math.max(0, pagina - 1)));
+  params.set('tamanho', String(tamanho));
+  params.set('dataInicial', dataInicio);
+  params.set('dataFinal', dataFim);
+  if (cliente) params.set('cliente', cliente);
+  if (status) params.set('status', status);
+  const { data } = await clienteAxios.get<WorkSftpExecucoesResponse>(
+    '/api/painel/integracoes/vedacit-sftp/execucoes', { params },
   );
   return data;
 }

@@ -361,6 +361,14 @@ export const chartDictionary = {
       'Cada sistema destino vira duas etapas operacionais. Para PPG/Vedacit são XML/Dados e Canhoto; para SELIA são AddEvents e POD/Comprovante. O gráfico horizontal mostra o volume total processado por etapa, enquanto os KPIs laterais resumem sucessos, erros/pendências, taxa de sucesso, maior volume e etapa crítica.',
     agrupamento: 'Agrupado por sistema destino no Satélite e separado no frontend conforme os rótulos de etapa retornados pelo contrato.',
   },
+  integracoesCiclosSftp: {
+    ...integracoesBase,
+    descricao: 'Linha do tempo operacional dos ciclos SFTP Vedacit por cliente.',
+    calculoTecnico: 'Leitura paginada de /api/auditoria/vedacit-sftp/execucoes no Satélite, via proxy autenticado do Dashboard.',
+    calculoNegocio:
+      'Exibe o resultado do ciclo, conexão, inventário e processamento para identificar execução saudável, falha isolada e saldo pendente sem acionar integrações externas.',
+    agrupamento: 'Ordenado por término do ciclo em ordem decrescente, com filtros de cliente, resultado e período.',
+  },
 
   cotacoesSerie: {
     ...cotacoesBase,

@@ -28,11 +28,9 @@ public class IntegracaoSateliteClient {
     private static final String ROTA_INTEGRACOES_CLIENTES_EXPORTACAO = ROTA_INTEGRACOES_CLIENTES + "/exportacao";
     private static final String ROTA_EVOLUCAO_DIARIA = "/api/auditoria/integracoes-clientes/evolucao-diaria";
     private static final String ROTA_RESUMO_TABELAS = "/api/auditoria/integracoes-clientes/resumo-tabelas";
+    private static final String ROTA_SFTP_CLIENTES = "/api/auditoria/vedacit-sftp/clientes";
+    private static final String ROTA_SFTP_EXECUCOES = "/api/auditoria/vedacit-sftp/execucoes";
     private static final String ROTA_IMAGEM_LOG = "/api/auditoria/logs/{id}/imagem";
-    private static final String ROTA_QUARENTENA_ERROS = "/api/etl/quarentena/erros";
-    private static final String ROTA_QUARENTENA_ERROS_EXPORTACAO = ROTA_QUARENTENA_ERROS + "/exportacao";
-    private static final String ROTA_QUARENTENA_HISTORICO = "/api/etl/quarentena/historico";
-    private static final String ROTA_QUARENTENA_HISTORICO_EXPORTACAO = ROTA_QUARENTENA_HISTORICO + "/exportacao";
 
     private final RestTemplate restTemplate;
     private final String sateliteBaseUrl;
@@ -147,6 +145,30 @@ public class IntegracaoSateliteClient {
         return restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
     }
 
+    public ResponseEntity<String> buscarStatusSftpClientes() {
+        URI uri = UriComponentsBuilder.fromUriString(sateliteBaseUrl + ROTA_SFTP_CLIENTES).build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    }
+
+    public ResponseEntity<String> buscarExecucoesSftpClientes(
+            Integer pagina, Integer tamanho, String cliente, String status, String dataInicial, String dataFinal
+    ) {
+        MultiValueMap<String, String> parametros = new LinkedMultiValueMap<>();
+        if (pagina != null) parametros.set("pagina", String.valueOf(Math.max(0, pagina)));
+        if (tamanho != null) parametros.set("tamanho", String.valueOf(Math.max(1, Math.min(tamanho, 500))));
+        adicionarParametroOpcional(parametros, "cliente", cliente);
+        adicionarParametroOpcional(parametros, "status", status);
+        adicionarParametroOpcional(parametros, "dataInicial", dataInicial);
+        adicionarParametroOpcional(parametros, "dataFinal", dataFinal);
+        URI uri = UriComponentsBuilder.fromUriString(sateliteBaseUrl + ROTA_SFTP_EXECUCOES)
+                .queryParams(parametros).build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    }
+
     public ResponseEntity<String> buscarImagemLog(Long id) {
         URI uri = UriComponentsBuilder
                 .fromUriString(sateliteBaseUrl + ROTA_IMAGEM_LOG)
@@ -158,65 +180,6 @@ public class IntegracaoSateliteClient {
         headers.setAccept(List.of(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN, MediaType.ALL));
 
         return restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-    }
-
-    public ResponseEntity<String> buscarErrosQuarentena(Integer pagina, Integer tamanho, List<String> destinos) {
-        MultiValueMap<String, String> parametrosSatelite = new LinkedMultiValueMap<>();
-        if (pagina != null) {
-            parametrosSatelite.set("pagina", String.valueOf(Math.max(0, pagina)));
-        }
-        if (tamanho != null) {
-            parametrosSatelite.set("tamanho", String.valueOf(Math.max(1, Math.min(tamanho, 500))));
-        }
-        if (destinos != null && !destinos.isEmpty()) {
-            parametrosSatelite.put("destino", destinos);
-        }
-
-        URI uri = UriComponentsBuilder
-                .fromUriString(sateliteBaseUrl + ROTA_QUARENTENA_ERROS)
-                .queryParams(parametrosSatelite)
-                .build()
-                .encode()
-                .toUri();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-
-        return restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-    }
-
-    public ResponseEntity<String> buscarHistoricoQuarentena(
-            Integer pagina, Integer tamanho, String dataInicial, String dataFinal, List<String> destinos
-    ) {
-        MultiValueMap<String, String> parametros = new LinkedMultiValueMap<>();
-        if (pagina != null) parametros.set("pagina", String.valueOf(Math.max(0, pagina)));
-        if (tamanho != null) parametros.set("tamanho", String.valueOf(Math.max(1, Math.min(tamanho, 500))));
-        adicionarParametroOpcional(parametros, "dataInicial", dataInicial);
-        adicionarParametroOpcional(parametros, "dataFinal", dataFinal);
-        if (destinos != null && !destinos.isEmpty()) parametros.put("destino", destinos);
-        URI uri = UriComponentsBuilder.fromUriString(sateliteBaseUrl + ROTA_QUARENTENA_HISTORICO)
-                .queryParams(parametros).build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        return restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-    }
-
-    public void exportarHistoricoQuarentena(
-            String dataInicial, String dataFinal, List<String> destinos, OutputStream outputStream
-    ) {
-        MultiValueMap<String, String> parametros = new LinkedMultiValueMap<>();
-        adicionarParametroOpcional(parametros, "dataInicial", dataInicial);
-        adicionarParametroOpcional(parametros, "dataFinal", dataFinal);
-        if (destinos != null && !destinos.isEmpty()) parametros.put("destino", destinos);
-        executarExportacao(ROTA_QUARENTENA_HISTORICO_EXPORTACAO, parametros, outputStream);
-    }
-
-    public void exportarErrosQuarentena(List<String> destinos, OutputStream outputStream) {
-        MultiValueMap<String, String> parametrosSatelite = new LinkedMultiValueMap<>();
-        if (destinos != null && !destinos.isEmpty()) {
-            parametrosSatelite.put("destino", destinos);
-        }
-        executarExportacao(ROTA_QUARENTENA_ERROS_EXPORTACAO, parametrosSatelite, outputStream);
     }
 
     private void executarExportacao(

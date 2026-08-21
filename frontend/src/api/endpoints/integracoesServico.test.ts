@@ -3,6 +3,8 @@ import clienteAxios from '../clienteAxios';
 import {
   buscarIntegracoesAuditoria,
   buscarIntegracoesEvolucaoDiaria,
+  buscarExecucoesWorkSftpClientes,
+  buscarStatusWorkSftpClientes,
   exportarIntegracoesCsv,
 } from './integracoesServico';
 import { baixarCsvComParametros } from '../downloadCsv';
@@ -162,6 +164,21 @@ describe('integracoesServico', () => {
     expect(params.get('dataFinal')).toBe('2026-06-24');
     expect(params.get('escopo')).toBe('SUCESSO');
     expect(params.getAll('destino')).toEqual(['PPG', 'SELIA']);
+  });
+
+  it('consulta resumo e historico SFTP com paginacao e filtros server-side', async () => {
+    await buscarStatusWorkSftpClientes();
+    expect(clienteMock.get).toHaveBeenCalledWith('/api/painel/integracoes/vedacit-sftp/clientes');
+
+    await buscarExecucoesWorkSftpClientes(2, 25, '2026-08-01', '2026-08-20', 'VEDACIT', 'CONCLUIDO');
+    expect(clienteMock.get).toHaveBeenLastCalledWith('/api/painel/integracoes/vedacit-sftp/execucoes', {
+      params: expect.any(URLSearchParams),
+    });
+    const params = clienteMock.get.mock.calls[1][1].params as URLSearchParams;
+    expect(params.get('pagina')).toBe('1');
+    expect(params.get('tamanho')).toBe('25');
+    expect(params.get('cliente')).toBe('VEDACIT');
+    expect(params.get('status')).toBe('CONCLUIDO');
   });
 
   it('exporta a tabela completa preservando escopo, filtros e ordenacao', async () => {

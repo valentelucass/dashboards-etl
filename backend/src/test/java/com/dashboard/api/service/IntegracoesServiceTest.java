@@ -37,4 +37,11 @@ class IntegracoesServiceTest {
                 .extracting(error -> ((ResponseStatusException) error).getStatusCode())
                 .isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
     }
+
+    @Test
+    void delegaHistoricoSftpComFiltrosSemConsultarOutraOrigem() {
+        IntegracoesService service = new IntegracoesService(client);
+        service.consultarExecucoesSftpClientes(1, 25, "VEDACIT", "CONCLUIDO", "2026-08-01", "2026-08-02");
+        verify(client).buscarExecucoesSftpClientes(1, 25, "VEDACIT", "CONCLUIDO", "2026-08-01", "2026-08-02");
+    }
 }

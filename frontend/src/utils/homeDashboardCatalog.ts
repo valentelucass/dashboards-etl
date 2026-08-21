@@ -153,8 +153,8 @@ const HOME_DASHBOARD_META: Record<string, HomeDashboardMeta> = {
   },
   '/painel/integracoes': {
     category: 'Operação',
-    description: 'Auditoria de integrações, eventos e comprovantes enviados para PPG, Vedacit e SELIA.',
-    keywords: ['integracoes', 'vedacit', 'ppg', 'selia', 'xml', 'eventos', 'comprovantes', 'auditoria'],
+    description: 'Auditoria de integrações e telemetria dos ciclos SFTP Vedacit.',
+    keywords: ['integracoes', 'vedacit', 'sftp', 'execucoes', 'ppg', 'selia', 'xml', 'eventos', 'comprovantes', 'auditoria'],
     Icon: Activity,
     accent: '#2563eb',
     priority: 90,

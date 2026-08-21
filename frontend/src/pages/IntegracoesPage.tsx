@@ -3,9 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { EChartsOption } from 'echarts';
 import { Eye } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
-import AsyncMultiSelect from '../components/shared/AsyncMultiSelect';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
-import QuarentenaErrosPanel from '../components/domain/integracoes/QuarentenaErrosPanel';
 import AnalyticalDataTable, {
   type ColunaTabelaAnalitica,
   type SortDirection,
@@ -21,12 +19,15 @@ import MensagemErro from '../components/ui/MensagemErro';
 import {
   buscarIntegracoesAuditoria,
   buscarIntegracoesEvolucaoDiaria,
+  buscarExecucoesWorkSftpClientes,
+  buscarStatusWorkSftpClientes,
   exportarIntegracoesCsv,
   type IntegracoesEscopo,
   type IntegracaoEvolucaoDiaria,
   type IntegracaoMetricaConsolidada,
   type IntegracaoPendencia,
   type ResumoTabelaIntegracao,
+  type WorkSftpClienteStatus,
 } from '../api/endpoints/integracoesServico';
 import { useFiltro } from '../contexts/FiltroContext';
 import { usePageHeader } from '../contexts/PageHeaderContext';
@@ -47,6 +48,9 @@ const STATUS_PADRAO = ['SUCESSO', 'ERRO_DESTINO', 'PENDENTE_FOTO'];
 const EMPTY_METRICAS: IntegracaoMetricaConsolidada[] = [];
 const EMPTY_PENDENCIAS: IntegracaoPendencia[] = [];
 const EMPTY_EVOLUCAO_DIARIA: IntegracaoEvolucaoDiaria[] = [];
+const EMPTY_SFTP_CLIENTES: WorkSftpClienteStatus[] = [];
+const TODOS_DESTINOS_INTEGRACAO: string[] = [];
+const OPCOES_DESTINO_INTEGRACAO = ['PPG', 'VEDACIT', 'SELIA'];
 const DESTINOS_GRAFICOS_INTEGRACOES: IntegracaoMetricaConsolidada[] = [
   { sistemaDestino: 'PPG', totalRegistros: 0, percentualXmlSucesso: 0, percentualCanhotoSucesso: 0 },
   { sistemaDestino: 'VEDACIT', totalRegistros: 0, percentualXmlSucesso: 0, percentualCanhotoSucesso: 0 },
@@ -59,8 +63,7 @@ const DESTINOS_GRAFICOS_INTEGRACOES: IntegracaoMetricaConsolidada[] = [
     rotuloComprovante: 'POD/Comprovante',
   },
 ];
-type IntegracoesAba = IntegracoesEscopo | 'QUARENTENA';
-type IntegracoesEscopoPrincipal = 'INTEGRACOES' | 'QUARENTENA';
+type IntegracoesAba = IntegracoesEscopo;
 type IntegracoesValorTone = 'text-positive' | 'text-warning' | 'text-negative';
 type TooltipParam = {
   axisValue?: string | number;
@@ -72,15 +75,10 @@ type TooltipParam = {
 };
 
 const KPI_VALOR_CLASS = 'text-2xl font-bold truncate';
-const ABAS_ESCOPO_INTEGRACOES: { valor: IntegracoesEscopoPrincipal; label: string }[] = [
-  { valor: 'INTEGRACOES', label: 'Integrações' },
-  { valor: 'QUARENTENA', label: 'Quarentena' },
-];
 const ABAS_STATUS_INTEGRACOES: { valor: IntegracoesEscopo; label: string }[] = [
   { valor: 'PENDENCIAS', label: 'Pendências Operacionais' },
   { valor: 'SUCESSO', label: 'Integrados com Sucesso' },
 ];
-const OPCOES_DESTINO_INTEGRACAO = ['PPG', 'VEDACIT', 'SELIA'];
 
 interface IntegracoesTableSort {
   field: keyof IntegracaoPendencia & string;
@@ -113,6 +111,38 @@ function formatarData(valor: unknown) {
 
 function renderStatus(valor: unknown) {
   return valor ? <StatusBadge status={String(valor)} /> : '-';
+}
+
+function formatarDuracaoMs(valor: number) {
+  if (!Number.isFinite(valor) || valor < 0) return '-';
+  if (valor < 1_000) return `${valor} ms`;
+  return `${(valor / 1_000).toFixed(valor >= 10_000 ? 0 : 1)} s`;
+}
+
+function ResumoSftpMetrica({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: ReactNode;
+  detail?: ReactNode;
+}) {
+  return (
+    <div className="min-w-0 border-l pl-3 first:border-l-0 first:pl-0" style={{ borderColor: 'var(--color-border)' }}>
+      <p className="truncate text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
+        {label}
+      </p>
+      <p className="mt-1 truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+        {value}
+      </p>
+      {detail ? (
+        <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--color-text-muted)' }}>
+          {detail}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 function numeroSeguro(valor: unknown) {
@@ -630,17 +660,16 @@ export default function IntegracoesPage() {
   const [pendenciaCanhoto, setPendenciaCanhoto] = useState<IntegracaoPendencia | null>(null);
   const [abaSelecionada, setAbaSelecionada] = useState<IntegracoesAba>('PENDENCIAS');
   const [tableSort, setTableSort] = useState<IntegracoesTableSort | null>(null);
-  const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro } = useFiltro();
-  const destinosSelecionados = useMemo(
-    () => (filtros.integracao ?? []).filter((destino) => OPCOES_DESTINO_INTEGRACAO.includes(destino)),
-    [filtros.integracao],
-  );
+  const [sftpCliente, setSftpCliente] = useState('');
+  const [sftpStatus, setSftpStatus] = useState('');
+  const [destinoSelecionado, setDestinoSelecionado] = useState('');
+  const { dataInicio, dataFim, setDataInicio, setDataFim, setDataRange } = useFiltro();
+  const destinosSelecionados = destinoSelecionado ? [destinoSelecionado] : TODOS_DESTINOS_INTEGRACAO;
   const { isDark } = useEchartsTheme();
   const filtrosTabela = useAnalyticalTableFilters();
-  const escopoPrincipalSelecionado: IntegracoesEscopoPrincipal = abaSelecionada === 'QUARENTENA' ? 'QUARENTENA' : 'INTEGRACOES';
-  const escopoTabelaSelecionado: IntegracoesEscopo = abaSelecionada === 'QUARENTENA' ? 'PENDENCIAS' : abaSelecionada;
-  const paginacaoTabela = useTabelaPaginadaState(`${filtrosTabela.resetKey}:${escopoPrincipalSelecionado}:${escopoTabelaSelecionado}:${dataInicio}:${dataFim}`);
-  const abaAuditoriaSelecionada = escopoPrincipalSelecionado === 'INTEGRACOES';
+  const escopoTabelaSelecionado = abaSelecionada;
+  const paginacaoTabela = useTabelaPaginadaState(`${filtrosTabela.resetKey}:${escopoTabelaSelecionado}:${dataInicio}:${dataFim}`);
+  const paginacaoSftp = useTabelaPaginadaState(`work-sftp-clientes:${dataInicio}:${dataFim}`);
 
   const integracoes = useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
@@ -652,7 +681,6 @@ export default function IntegracoesPage() {
       paginacaoTabela.tamanhoPagina,
       filtrosTabela.apiFilters,
       tableSort,
-      escopoPrincipalSelecionado,
       escopoTabelaSelecionado,
       destinosSelecionados,
     ],
@@ -667,7 +695,6 @@ export default function IntegracoesPage() {
       escopoTabelaSelecionado,
       destinosSelecionados,
     ),
-    enabled: abaAuditoriaSelecionada,
     placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000,
     retry: 1,
@@ -677,6 +704,25 @@ export default function IntegracoesPage() {
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'evolucao-diaria', dataInicio, dataFim, destinosSelecionados],
     queryFn: () => buscarIntegracoesEvolucaoDiaria(dataInicio, dataFim, undefined, destinosSelecionados),
+    placeholderData: (previousData) => previousData,
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+
+  const statusSftpClientes = useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: [...QUERY_KEY, 'vedacit-sftp', 'clientes'],
+    queryFn: buscarStatusWorkSftpClientes,
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+
+  const execucoesSftp = useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: [...QUERY_KEY, 'vedacit-sftp', 'execucoes', dataInicio, dataFim, sftpCliente, sftpStatus, paginacaoSftp.pagina, paginacaoSftp.tamanhoPagina],
+    queryFn: () => buscarExecucoesWorkSftpClientes(
+      paginacaoSftp.pagina, paginacaoSftp.tamanhoPagina, dataInicio, dataFim, sftpCliente || undefined, sftpStatus || undefined,
+    ),
     placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000,
     retry: 1,
@@ -735,6 +781,8 @@ export default function IntegracoesPage() {
   const totalRegistrosTabela = sateliteIgnorouFiltroDestino
     ? 0
     : integracoes.data?.pendencias.paginacao.totalElementos;
+  const ciclosSftp = execucoesSftp.data?.itens ?? EMPTY_SFTP_CLIENTES;
+  const historicoSftpVazio = !execucoesSftp.isLoading && ciclosSftp.length === 0;
   const tituloTabela = escopoTabelaSelecionado === 'PENDENCIAS'
     ? 'Pendências operacionais'
     : 'Integrados com sucesso';
@@ -761,17 +809,6 @@ export default function IntegracoesPage() {
     [filtrosTabela.filters.status, pendencias],
   );
 
-  const selecionarEscopo = useCallback((escopo: IntegracoesEscopoPrincipal) => {
-    setAbaSelecionada((atual) => {
-      if (escopo === 'QUARENTENA') {
-        return 'QUARENTENA';
-      }
-
-      return atual === 'QUARENTENA' ? 'PENDENCIAS' : atual;
-    });
-    setPendenciaCanhoto(null);
-  }, []);
-
   const selecionarStatusTabela = useCallback((escopo: IntegracoesEscopo) => {
     setAbaSelecionada(escopo);
     setPendenciaCanhoto(null);
@@ -782,42 +819,33 @@ export default function IntegracoesPage() {
       <FilterBar
         dataInicio={dataInicio}
         dataFim={dataFim}
+        activeFilters={destinoSelecionado
+          ? [{ label: 'Integração', count: 1, valueLabel: destinoSelecionado, onRemove: () => setDestinoSelecionado('') }]
+          : []}
+        onClear={() => setDestinoSelecionado('')}
         actions={(
-          <div className="flex items-center gap-2">
-            <SegmentedTabs
-              ariaLabel="Escopo principal de integrações"
-              options={ABAS_ESCOPO_INTEGRACOES}
-              selected={escopoPrincipalSelecionado}
-              onChange={selecionarEscopo}
-            />
-            {abaSelecionada === 'QUARENTENA' && (
-              <div className="flex items-center gap-1 rounded-lg border p-1" style={{ borderColor: 'var(--color-border)' }}>
-                {[
-                  { label: 'Todos', valor: null },
-                  { label: 'Vedacit', valor: 'VEDACIT' },
-                  { label: 'PPG', valor: 'PPG' },
-                  { label: 'SELIA', valor: 'SELIA' },
-                ].map((opcao) => {
-                  const ativo = opcao.valor === null
-                    ? destinosSelecionados.length === 0
-                    : destinosSelecionados.length === 1 && destinosSelecionados[0] === opcao.valor;
-                  return (
-                    <button
-                      key={opcao.label}
-                      type="button"
-                      onClick={() => setFiltro('integracao', opcao.valor ? [opcao.valor] : [])}
-                      className="rounded-md px-2 py-1 text-xs font-bold"
-                      style={{
-                        color: ativo ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                        backgroundColor: ativo ? 'rgba(33, 71, 138, 0.12)' : 'transparent',
-                      }}
-                    >
-                      {opcao.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+          <div className="flex items-center gap-1" role="group" aria-label="Filtrar por integração">
+            {[{ valor: '', label: 'Todos' }, ...OPCOES_DESTINO_INTEGRACAO.map((destino) => ({
+              valor: destino,
+              label: destino === 'VEDACIT' ? 'Vedacit' : destino,
+            }))].map((opcao) => {
+              const ativo = destinoSelecionado === opcao.valor;
+              return (
+                <button
+                  key={opcao.label}
+                  type="button"
+                  aria-pressed={ativo}
+                  onClick={() => setDestinoSelecionado(opcao.valor)}
+                  className="h-8 cursor-pointer border-b-2 px-2 text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  style={{
+                    color: ativo ? 'var(--color-primary)' : 'var(--color-text-muted)',
+                    borderBottomColor: ativo ? 'var(--color-primary)' : 'transparent',
+                  }}
+                >
+                  {opcao.label}
+                </button>
+              );
+            })}
           </div>
         )}
       >
@@ -828,25 +856,16 @@ export default function IntegracoesPage() {
           onDataFimChange={setDataFim}
           onRangeChange={setDataRange}
         />
-        {abaSelecionada !== 'QUARENTENA' && (
-          <AsyncMultiSelect
-            label="Integração"
-            opcoes={OPCOES_DESTINO_INTEGRACAO}
-            selecionados={destinosSelecionados}
-            placeholder="Todos"
-            onChange={(destinos) => setFiltro('integracao', destinos)}
-          />
-        )}
       </FilterBar>
 
-      {abaAuditoriaSelecionada && integracoes.isError && (
+      {integracoes.isError && (
         <MensagemErro
           mensagem={getApiErrorMessage(integracoes.error, 'Erro ao carregar auditoria de integrações.')}
           tipo={getTipoErro(integracoes.error)}
         />
       )}
 
-      {abaAuditoriaSelecionada && sateliteIgnorouFiltroDestino && (
+      {sateliteIgnorouFiltroDestino && (
         <section
           role="alert"
           className="mb-4 rounded-xl border px-4 py-3 text-sm"
@@ -861,15 +880,8 @@ export default function IntegracoesPage() {
         </section>
       )}
 
-      {abaSelecionada === 'QUARENTENA' ? (
-        <QuarentenaErrosPanel
-          destinosSelecionados={destinosSelecionados}
-          dataInicial={dataInicio}
-          dataFinal={dataFim}
-        />
-      ) : (
-        <>
-          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="contents">
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <TooltipKpi kpiName="integracoes.volumeOperacional">
               <KpiCard
                 label="Volume Operacional"
@@ -1003,14 +1015,111 @@ export default function IntegracoesPage() {
             />
           </div>
 
-          <div className="mb-3 flex min-w-0 justify-start">
-            <SegmentedTabs
-              ariaLabel="Filtro de status dos registros de integração"
-              options={ABAS_STATUS_INTEGRACOES}
-              selected={escopoTabelaSelecionado}
-              onChange={selecionarStatusTabela}
-            />
-          </div>
+          <section className="mb-6 space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold" style={{ color: 'var(--color-text)' }}>Ciclos SFTP Vedacit</h2>
+                <p className="mt-0.5 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  A próxima execução é estimada 30 minutos após o término de cada ciclo.
+                </p>
+              </div>
+              {statusSftpClientes.isError && (
+                <span className="text-sm text-negative">{getApiErrorMessage(statusSftpClientes.error, 'Satélite indisponível.')}</span>
+              )}
+            </div>
+
+            {(statusSftpClientes.data ?? EMPTY_SFTP_CLIENTES).map((cliente) => (
+              <article key={cliente.cliente} className="rounded-xl border" style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-[minmax(180px,1.3fr)_repeat(5,minmax(0,1fr))]">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <strong className="truncate" style={{ color: 'var(--color-text)' }}>{cliente.cliente}</strong>
+                      {renderStatus(cliente.statusCiclo)}
+                    </div>
+                    <p className="mt-1 truncate text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      Conexão {cliente.conexao} · {formatarDuracaoMs(cliente.duracaoMs)}
+                    </p>
+                  </div>
+                  <ResumoSftpMetrica label="Última execução" value={formatarData(cliente.fimUltimoCiclo)} />
+                  <ResumoSftpMetrica label="Próximo ciclo" value={formatarData(cliente.proximaExecucaoEstimada)} />
+                  <ResumoSftpMetrica label="Inventário" value={`${formatarInteiro(cliente.arquivosValidos)} válidos`} detail={`${formatarInteiro(cliente.arquivosRejeitados)} rejeitados`} />
+                  <ResumoSftpMetrica label="Processamento" value={`${formatarInteiro(cliente.selecionados)} selecionados`} detail={`${formatarInteiro(cliente.enviados)} enviados · ${formatarInteiro(cliente.pendentes)} pendentes`} />
+                  <ResumoSftpMetrica label="Fila" value={`Saldo ${formatarInteiro(cliente.saldo)}`} detail={`${formatarInteiro(cliente.bloqueios)} bloqueios · ${formatarInteiro(cliente.timeoutsAmbiguos)} timeouts`} />
+                </div>
+              </article>
+            ))}
+            {!statusSftpClientes.isLoading && (statusSftpClientes.data?.length ?? 0) === 0 && (
+              <div className="rounded-xl border border-dashed px-4 py-5 text-sm" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
+                Nenhum ciclo SFTP auditado no momento.
+              </div>
+            )}
+
+            <div className="rounded-xl border" style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+              <div className="flex flex-wrap items-end justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+                <div>
+                  <h3 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>Histórico de execuções</h3>
+                  <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>Use os filtros para encontrar ciclos concluídos ou com falha.</p>
+                </div>
+                <div className="flex flex-wrap items-end gap-2">
+                  <label className="flex flex-col gap-1 text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+                    Cliente
+                    <select className="h-9 min-w-28 rounded-lg border px-2 text-sm" value={sftpCliente} onChange={(event) => { setSftpCliente(event.target.value); paginacaoSftp.setPagina(1); }} style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)', background: 'var(--color-surface)' }}>
+                      <option value="">Todos</option>
+                      {(statusSftpClientes.data ?? EMPTY_SFTP_CLIENTES).map((cliente) => <option key={cliente.cliente} value={cliente.cliente}>{cliente.cliente}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+                    Resultado
+                    <select className="h-9 min-w-28 rounded-lg border px-2 text-sm" value={sftpStatus} onChange={(event) => { setSftpStatus(event.target.value); paginacaoSftp.setPagina(1); }} style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)', background: 'var(--color-surface)' }}>
+                      <option value="">Todos</option>
+                      <option value="CONCLUIDO">Concluído</option>
+                      <option value="FALHA">Falha</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              {historicoSftpVazio ? (
+                <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  Nenhuma execução encontrada para o período e filtros selecionados.
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[920px] text-left text-sm">
+                      <thead className="text-xs uppercase" style={{ color: 'var(--color-text-muted)' }}>
+                        <tr className="border-b" style={{ borderColor: 'var(--color-border)' }}>
+                          <th className="px-4 py-3 font-semibold">Cliente</th><th className="px-3 py-3 font-semibold">Finalizado</th><th className="px-3 py-3 font-semibold">Execução</th><th className="px-3 py-3 font-semibold">Inventário</th><th className="px-3 py-3 font-semibold">Processamento</th><th className="px-4 py-3 font-semibold">Fila</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ciclosSftp.map((ciclo) => (
+                          <tr key={`${ciclo.cliente}:${ciclo.fimUltimoCiclo}:${ciclo.inicioUltimoCiclo}`} className="border-b last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
+                            <td className="px-4 py-3 font-semibold" style={{ color: 'var(--color-text)' }}>{ciclo.cliente}</td>
+                            <td className="px-3 py-3 whitespace-nowrap">{formatarData(ciclo.fimUltimoCiclo)}</td>
+                            <td className="px-3 py-3"><div>{renderStatus(ciclo.statusCiclo)}</div><span className="mt-1 block text-xs" style={{ color: 'var(--color-text-muted)' }}>{ciclo.conexao} · {formatarDuracaoMs(ciclo.duracaoMs)}</span></td>
+                            <td className="px-3 py-3"><strong>{formatarInteiro(ciclo.arquivosValidos)}</strong><span className="text-xs" style={{ color: 'var(--color-text-muted)' }}> válidos · {formatarInteiro(ciclo.arquivosRejeitados)} rejeitados</span></td>
+                            <td className="px-3 py-3"><strong>{formatarInteiro(ciclo.selecionados)}</strong><span className="text-xs" style={{ color: 'var(--color-text-muted)' }}> selecionados · {formatarInteiro(ciclo.enviados)} enviados · {formatarInteiro(ciclo.pendentes)} pendentes</span></td>
+                            <td className="px-4 py-3"><strong>Saldo {formatarInteiro(ciclo.saldo)}</strong><span className="mt-1 block text-xs" style={{ color: 'var(--color-text-muted)' }}>{formatarInteiro(ciclo.bloqueios)} bloqueios · {formatarInteiro(ciclo.timeoutsAmbiguos)} timeouts</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm" style={{ borderColor: 'var(--color-border)' }}>
+                    <span style={{ color: 'var(--color-text-muted)' }}>
+                      {formatarNumero(execucoesSftp.data?.paginacao.totalElementos ?? 0)} execuções · {paginacaoSftp.tamanhoPagina} por página
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button type="button" className="rounded-lg border px-3 py-1.5 disabled:opacity-50" style={{ borderColor: 'var(--color-border)' }} disabled={paginacaoSftp.pagina <= 1} onClick={() => paginacaoSftp.setPagina(paginacaoSftp.pagina - 1)}>Anterior</button>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Página {paginacaoSftp.pagina} de {execucoesSftp.data?.paginacao.totalPaginas}</span>
+                      <button type="button" className="rounded-lg border px-3 py-1.5 disabled:opacity-50" style={{ borderColor: 'var(--color-border)' }} disabled={execucoesSftp.data?.paginacao.ultimaPagina ?? true} onClick={() => paginacaoSftp.setPagina(paginacaoSftp.pagina + 1)}>Próxima</button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
 
           <AnalyticalDataTable
             titulo={tituloTabela}
@@ -1038,18 +1147,26 @@ export default function IntegracoesPage() {
             sortDirection={tableSort?.direction}
             onSortChange={(field, direction) => setTableSort({ field, direction })}
             acoesCabecalho={(
-              <ExportButton
-                nomeArquivo={escopoTabelaSelecionado === 'SUCESSO' ? 'integracoes-sucesso' : 'integracoes-pendencias'}
-                onExport={() => exportarIntegracoesCsv(
-                  dataInicio,
-                  dataFim,
-                  filtrosTabela.apiFilters,
-                  tableSort?.field,
-                  tableSort?.direction,
-                  escopoTabelaSelecionado,
-                  destinosSelecionados,
-                )}
-              />
+              <>
+                <SegmentedTabs
+                  ariaLabel="Filtro de status dos registros de integração"
+                  options={ABAS_STATUS_INTEGRACOES}
+                  selected={escopoTabelaSelecionado}
+                  onChange={selecionarStatusTabela}
+                />
+                <ExportButton
+                  nomeArquivo={escopoTabelaSelecionado === 'SUCESSO' ? 'integracoes-sucesso' : 'integracoes-pendencias'}
+                  onExport={() => exportarIntegracoesCsv(
+                    dataInicio,
+                    dataFim,
+                    filtrosTabela.apiFilters,
+                    tableSort?.field,
+                    tableSort?.direction,
+                    escopoTabelaSelecionado,
+                    destinosSelecionados,
+                  )}
+                />
+              </>
             )}
           />
 
@@ -1057,8 +1174,7 @@ export default function IntegracoesPage() {
             pendencia={pendenciaCanhoto}
             onClose={fecharCanhoto}
           />
-        </>
-      )}
+      </div>
     </div>
   );
 }

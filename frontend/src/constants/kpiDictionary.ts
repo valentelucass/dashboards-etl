@@ -827,6 +827,13 @@ export const KpiDictionary = {
       observacao:
         'O agrupamento diário e a classificação de sucesso ou erro são calculados pelo microsserviço Satélite e respeitam os destinos selecionados no filtro Integração.',
     },
+    ciclosSftpVedacit: {
+      titulo: 'Ciclos SFTP Vedacit',
+      descricao: 'Situação mais recente e histórico paginado do worker que lê comprovantes no SFTP Vedacit.',
+      calculo: 'Valores registrados pelo ciclo do worker: inventário, seleção, envios, pendências, saldo, bloqueios, timeouts e duração.',
+      observacao:
+        'A fonte é a auditoria técnica do Satélite. O estado waiting restart do PM2 é esperado entre ciclos; a próxima execução é estimada como término do último ciclo mais 30 minutos.',
+    },
     taxaSucessoIntegracao: {
       titulo: 'Taxa de Sucesso da Integração',
       descricao:
