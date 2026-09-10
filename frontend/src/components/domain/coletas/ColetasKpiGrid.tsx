@@ -23,7 +23,7 @@ export default function ColetasKpiGrid({ overview }: ColetasKpiGridProps) {
   ];
 
   return (
-    <KpiGrid count={9}>
+    <KpiGrid count={9} intermediateRows={[5, 4]}>
       {cards.map((card) => (
         <TooltipKpi key={card.label} definition={card.definition}>
           <KpiCard label={card.label} valor={card.valor} />

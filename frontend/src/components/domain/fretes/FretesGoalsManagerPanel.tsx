@@ -189,7 +189,7 @@ export default function FretesGoalsManagerPanel({
         </p>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="grid gap-4 rounded-2xl border p-4 lg:grid-cols-[1fr_1fr_minmax(15rem,auto)_1fr_1fr_auto]" style={{ borderColor: 'var(--color-border)' }}>
+      <form onSubmit={handleSubmit} className="fretes-goals-form grid gap-4 rounded-2xl border p-4 lg:grid-cols-[1fr_1fr_minmax(15rem,auto)_1fr_1fr_auto]" style={{ borderColor: 'var(--color-border)' }}>
         <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
           Ano
           <select
@@ -219,7 +219,7 @@ export default function FretesGoalsManagerPanel({
           </select>
         </label>
         {onReplicatePreviousMonth ? (
-          <div className="flex min-w-max flex-shrink-0 items-end">
+          <div className="flex min-w-max flex-shrink-0 items-end lg:max-2xl:col-span-2">
             <button
               type="button"
               onClick={() => void handleReplicarMetas()}

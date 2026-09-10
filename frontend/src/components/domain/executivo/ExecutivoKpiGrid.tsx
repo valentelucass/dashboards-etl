@@ -119,7 +119,7 @@ export default function ExecutivoKpiGrid({ overview }: ExecutivoKpiGridProps) {
   ];
 
   return (
-    <KpiGrid count={7} singleRowDesktop>
+    <KpiGrid count={7} singleRowDesktop intermediateRows={[3, 4]}>
       {cards.map((card) => (
         <TooltipKpi key={card.label} definition={card.definition} className={card.className}>
           <KpiCard

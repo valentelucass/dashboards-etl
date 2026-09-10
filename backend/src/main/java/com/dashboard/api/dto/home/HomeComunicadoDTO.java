@@ -15,6 +15,7 @@ public record HomeComunicadoDTO(
         long totalCurtidas,
         long totalComentarios,
         List<String> curtidoPor,
-        boolean curtidoPeloUsuarioAtual
+        boolean curtidoPeloUsuarioAtual,
+        boolean naoLido
 ) {
 }

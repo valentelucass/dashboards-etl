@@ -8,6 +8,7 @@ import {
   buscarComentariosHomeComunicado,
   criarComentarioHomeComunicado,
   excluirComentarioHomeComunicado,
+  registrarLeituraHomeComunicado,
 } from '../../api/endpoints/homeComunicadosServico';
 import { HOME_COMUNICADOS_API_ENABLED } from '../../config/api';
 import type { HomeNoticePayload } from '../../types/home';
@@ -20,7 +21,16 @@ export function useHomeComunicados() {
     queryFn: buscarHomeComunicados,
     enabled: HOME_COMUNICADOS_API_ENABLED,
     staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
     retry: false,
+  });
+}
+
+export function useLerHomeComunicado() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: registrarLeituraHomeComunicado,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: HOME_COMUNICADOS_QUERY_KEY }),
   });
 }
 

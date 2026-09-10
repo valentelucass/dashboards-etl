@@ -502,7 +502,7 @@ function kpiValorToneClassName(tone?: GoalTone): string {
 function kpiValorClassName(label: string, tone?: GoalTone): string | undefined {
   const toneClassName = kpiValorToneClassName(tone);
   if (label === 'Valor NF sem Comprovante') {
-    return `text-[clamp(1rem,1.2vw,1.35rem)] font-bold whitespace-nowrap ${toneClassName}`.trim();
+    return `text-2xl font-bold truncate ${toneClassName}`.trim();
   }
   if (label === 'Comprovante Anexado') {
     return `text-2xl font-bold truncate ${toneClassName}`.trim();

@@ -36,6 +36,7 @@ import type { NavItem } from '../../utils/accessControl';
 import { formatarDataHoraMinuto } from '../../utils/formatadores';
 import { filterPresentationPages, type PresentationPage } from '../../utils/presentationSequence';
 import PresentationSequencesModal from '../presentation/PresentationSequencesModal';
+import CommunicationsBell from '../home/CommunicationsBell';
 
 const focusRingClass = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
 
@@ -455,6 +456,7 @@ export default function TopNav() {
                       </div>
                     </div>
 
+                    <CommunicationsBell />
                     <button
                       ref={closeButtonRef}
                       type="button"
@@ -665,6 +667,7 @@ export default function TopNav() {
               <Settings2 size={17} />
             </button>
 
+            <CommunicationsBell />
             <button
               type="button"
               onClick={toggleTheme}

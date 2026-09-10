@@ -299,7 +299,7 @@ export const chartDictionary = {
     descricao: 'Mostra a distribuição atual ou a evolução temporal dos status Faturado e Aguardando Faturamento.',
     calculoTecnico: 'COUNT(1); na evolução, SUM(CASE WHEN status_processo = ... THEN 1 ELSE 0 END).',
     calculoNegocio:
-      'Conta cada fatura dentro do status de processo normalizado, expondo em qual etapa a carteira está concentrada.',
+      'Conta cada fatura dentro do status de processo normalizado, expondo em qual etapa a carteira está concentrada. A distribuição também é exibida quando há um único status, que representa 100% dos registros.',
     agrupamento: 'GROUP BY status_processo ou GROUP BY período temporal selecionado.',
   },
 

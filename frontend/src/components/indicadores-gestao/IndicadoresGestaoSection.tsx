@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import ChartWrapper from '../charts/ChartWrapper';
@@ -130,6 +130,7 @@ export default function IndicadoresGestaoSection<T>({
   onToggleTable,
 }: IndicadoresGestaoSectionProps<T>) {
   const hasTableError = Boolean(tableError);
+  const tableRegionId = useId();
   const totalTabela = tableTotal ?? tableData.length;
   const resumoTabela = hasTableError
     ? 'Falha ao carregar registros'
@@ -160,7 +161,9 @@ export default function IndicadoresGestaoSection<T>({
           <button
             type="button"
             onClick={onToggleTable}
-            className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors"
+            aria-expanded={isExpanded}
+            aria-controls={tableRegionId}
+            className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors lg:max-2xl:hidden"
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
           >
             {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
@@ -223,11 +226,18 @@ export default function IndicadoresGestaoSection<T>({
               {resumoTabela}
             </div>
           </div>
-          <div className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-            {isExpanded ? 'Tabela expandida' : 'Tabela recolhida por padrao'}
+          <div className="text-xs lg:max-2xl:hidden" style={{ color: 'var(--color-text-subtle)' }}>
+            {isExpanded ? 'Tabela expandida' : 'Tabela recolhida por padrão'}
           </div>
+          <button type="button" onClick={onToggleTable} aria-expanded={isExpanded} aria-controls={tableRegionId}
+            className="hidden items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] lg:max-2xl:inline-flex"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+            {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            {isExpanded ? 'Ocultar tabela' : 'Mostrar tabela'}
+          </button>
         </div>
 
+        <div id={tableRegionId} hidden={!isExpanded}>
         {isExpanded ? (
           <div className="p-3">
             {tableFilters && onTableTextFilterChange && onTableMultiFilterChange && onTableColumnFilterChange && onTableClearFilters ? (
@@ -274,6 +284,7 @@ export default function IndicadoresGestaoSection<T>({
             )}
           </div>
         ) : null}
+        </div>
       </div>
     </section>
   );

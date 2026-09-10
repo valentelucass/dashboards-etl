@@ -549,12 +549,12 @@ export default function EtlSaudePage() {
           erro={erroResumoTabelas}
           altura={400}
           className="lg:col-span-2"
-          sideContentLayoutClassName="grid h-full min-h-0 grid-cols-1 gap-4 xl:grid-cols-3 xl:gap-6"
+          sideContentLayoutClassName="notebook-summary-layout grid h-full min-h-0 grid-cols-1 gap-4 xl:grid-cols-3 xl:gap-6"
           sideContentChartClassName="xl:col-span-2"
           sideContentAsideClassName="xl:col-span-1"
           sideContent={(
             <div
-              className="flex h-full min-h-0 flex-col justify-start gap-3 border-t pt-4 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0"
+              className="resumo-etl flex h-full min-h-0 flex-col justify-start gap-3 border-t pt-4 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0"
               style={{ borderColor: 'var(--color-border)' }}
             >
               <div className="grid grid-cols-2 gap-x-5 gap-y-4">

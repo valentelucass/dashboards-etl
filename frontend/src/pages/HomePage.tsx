@@ -340,7 +340,7 @@ export default function HomePage() {
         />
 
         <div className="relative flex flex-col gap-5 lg:block">
-          <main className="min-w-0 space-y-6 lg:mr-[344px] 2xl:mr-[404px]">
+          <main className="min-w-0 space-y-6 lg:mr-[344px] lg:max-2xl:mr-[384px] 2xl:mr-[404px]">
             <div>
               <HomeRequestPanel
                 saving={criarSolicitacao.isPending}
@@ -364,7 +364,7 @@ export default function HomePage() {
             </div>
           </main>
 
-          <aside className="flex min-h-0 w-full flex-col gap-4 lg:absolute lg:inset-y-0 lg:right-0 lg:w-[320px] 2xl:w-[380px]" aria-label="Apoio e comunicações">
+          <aside className="flex min-h-0 w-full flex-col gap-4 lg:absolute lg:inset-y-0 lg:right-0 lg:w-[320px] lg:max-2xl:w-[360px] 2xl:w-[380px]" aria-label="Apoio e comunicações">
             <CommunicationsPanel
               className="min-h-0 lg:h-full"
               notices={notices}

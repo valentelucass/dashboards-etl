@@ -1,6 +1,7 @@
 package com.dashboard.api.controller;
 
 import com.dashboard.api.dto.home.HomeComunicadoDTO;
+import com.dashboard.api.dto.home.HomeComunicadoLeituraRequestDTO;
 import com.dashboard.api.dto.home.HomeComunicadoRequestDTO;
 import com.dashboard.api.dto.home.HomeComunicadoComentarioDTO;
 import com.dashboard.api.dto.home.HomeComunicadoComentarioRequestDTO;
@@ -66,6 +67,14 @@ public class HomeComunicadoController {
     @PostMapping("/{id}/curtidas")
     public ResponseEntity<HomeComunicadoDTO> alternarCurtida(@PathVariable Long id, Authentication authentication) {
         return ResponseEntity.ok(service.alternarCurtida(id, usuarioLogin(authentication)));
+    }
+
+    @PutMapping("/{id}/leitura")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> registrarLeitura(@PathVariable Long id,
+            @Valid @RequestBody HomeComunicadoLeituraRequestDTO request, Authentication authentication) {
+        service.registrarLeitura(id, request.versao(), usuarioLogin(authentication));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/comentarios")

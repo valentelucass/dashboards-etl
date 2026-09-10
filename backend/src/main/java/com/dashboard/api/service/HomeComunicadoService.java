@@ -48,6 +48,7 @@ public class HomeComunicadoService {
                 .map(usuario -> usuario.getId())
                 .orElse(-1L);
         if (comunicados.isEmpty()) return List.of();
+        Set<Long> naoLidos = Set.copyOf(repository.listarIdsNaoLidos(usuarioId));
         List<Long> comunicadoIds = comunicados.stream().map(HomeComunicadoEntity::getId).toList();
         Map<Long, HomeComunicadoCurtidaRepository.ResumoCurtidasProjection> curtidasPorComunicado = curtidaRepository
                 .resumirAtivasPorComunicado(comunicadoIds, usuarioId).stream()
@@ -61,9 +62,20 @@ public class HomeComunicadoService {
                 .map(comunicado -> toDto(
                         comunicado,
                         curtidasPorComunicado.get(comunicado.getId()),
-                        totalComentariosPorComunicado.getOrDefault(comunicado.getId(), 0L)
+                        totalComentariosPorComunicado.getOrDefault(comunicado.getId(), 0L),
+                        naoLidos.contains(comunicado.getId())
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public void registrarLeitura(Long id, Instant versao, String usuarioEmail) {
+        buscarAtivo(id);
+        Long usuarioId = usuarioRepository.findByEmailIgnoreCaseAndAtivoTrue(usuarioEmail)
+                .map(usuario -> usuario.getId())
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Usuário autenticado não encontrado."));
+        // A versão enviada é a que a pessoa abriu: uma edição concorrente continua não lida.
+        repository.registrarLeitura(usuarioId, id, versao);
     }
 
     @Transactional
@@ -203,6 +215,15 @@ public class HomeComunicadoService {
             HomeComunicadoCurtidaRepository.ResumoCurtidasProjection curtidas,
             long totalComentarios
     ) {
+        return toDto(entity, curtidas, totalComentarios, true);
+    }
+
+    private HomeComunicadoDTO toDto(
+            HomeComunicadoEntity entity,
+            HomeComunicadoCurtidaRepository.ResumoCurtidasProjection curtidas,
+            long totalComentarios,
+            boolean naoLido
+    ) {
         List<String> curtidoPor = curtidas == null || curtidas.getCurtidoPor() == null
                 ? List.of()
                 : List.of(curtidas.getCurtidoPor().split("\\|"));
@@ -218,7 +239,8 @@ public class HomeComunicadoService {
                 curtidas == null || curtidas.getTotalCurtidas() == null ? 0 : curtidas.getTotalCurtidas(),
                 totalComentarios,
                 curtidoPor,
-                curtidas != null && Boolean.TRUE.equals(curtidas.getCurtidoPeloUsuarioAtual())
+                curtidas != null && Boolean.TRUE.equals(curtidas.getCurtidoPeloUsuarioAtual()),
+                naoLido
         );
     }
 }

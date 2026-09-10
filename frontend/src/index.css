@@ -1,5 +1,78 @@
 @import "tailwindcss";
 
+/* Organização de notebooks: referência 1265px, isolada entre lg e 2xl. */
+@media (width >= 64rem) and (width < 96rem) {
+  .fretes-goals-form {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .fretes-goals-form > *,
+  .fretes-goals-form input,
+  .fretes-goals-form select {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .fretes-goals-form input,
+  .fretes-goals-form select {
+    width: 100%;
+  }
+  .fretes-goals-form > label:nth-of-type(3) {
+    grid-column: span 2;
+  }
+
+  .cotacoes-resumo-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .cotacoes-col-entidade { width: 25%; }
+  .cotacoes-col-total, .cotacoes-col-ganhas { width: 6%; }
+  .cotacoes-col-emAberto { width: 7%; }
+  .cotacoes-col-conversao { width: 14%; }
+  .cotacoes-col-freteCotado, .cotacoes-col-freteGanho { width: 15%; }
+  .cotacoes-col-volumeM3 { width: 12%; }
+  .cotacoes-resumo-table th,
+  .cotacoes-resumo-table td {
+    padding-inline: 8px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .cotacoes-resumo-table td:first-child > div { gap: 8px; }
+  .cotacoes-resumo-table td:first-child .truncate {
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .resumo-integracoes,
+  .resumo-etl {
+    display: grid;
+    height: auto;
+    align-content: start;
+    gap: 12px 16px;
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+    padding: 12px 0 0;
+  }
+  .resumo-integracoes {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) repeat(2, minmax(0, 1.45fr));
+  }
+  .notebook-summary-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .notebook-summary-layout > div { grid-column: 1 / -1; }
+  .resumo-etl { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 12px; }
+  .resumo-integracoes > div,
+  .resumo-etl > div { display: contents; }
+  .resumo-etl > div:first-child > div,
+  .resumo-etl > div:nth-child(2) > div:nth-child(n + 5) { grid-column: span 2; }
+  .resumo-etl > div:nth-child(n + 3) > div {
+    grid-column: span 3;
+    border-top: 1px solid var(--color-border);
+    padding-top: 8px;
+  }
+  .resumo-etl > div:nth-child(3) > div > p {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
 /* Tailwind v4: enable class-based dark mode */
 @variant dark (&:where(.dark, .dark *));
 

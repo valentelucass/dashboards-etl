@@ -217,8 +217,8 @@ function ConversionProgress({ value }: { value: number }) {
   const largura = Math.max(3, Math.min(100, value));
 
   return (
-    <div className="flex min-w-[14rem] items-center justify-end gap-3">
-      <div className="h-2 w-36 overflow-hidden rounded-full" style={{ backgroundColor: 'var(--color-border)' }} role="presentation">
+    <div className="flex min-w-[14rem] items-center justify-end gap-3 lg:max-2xl:min-w-0 lg:max-2xl:gap-1.5">
+      <div className="h-2 w-36 overflow-hidden rounded-full lg:max-2xl:min-w-0 lg:max-2xl:flex-1" style={{ backgroundColor: 'var(--color-border)' }} role="presentation">
         <div className="h-full rounded-full" style={{ width: `${largura}%`, backgroundColor: tone.fill }} />
       </div>
       <span
@@ -395,10 +395,10 @@ export default function CotacoesResumoVisualTable({
       </div>
 
       <div className="overflow-x-auto px-4 pb-4 sm:px-5">
-        <table className="w-max text-sm" style={{ minWidth: 'max(100%, 1080px)' }}>
+        <table className="cotacoes-resumo-table w-max min-w-[max(100%,1080px)] text-sm">
           <colgroup>
             {RESUMO_COLUMNS.map((column, index) => (
-              <col key={column.key} style={{ backgroundColor: getColumnBodyBackground(index) }} />
+              <col key={column.key} className={`cotacoes-col-${column.key}`} style={{ backgroundColor: getColumnBodyBackground(index) }} />
             ))}
           </colgroup>
           <thead>

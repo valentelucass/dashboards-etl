@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import { Archive, Bell, ChevronDown, CircleAlert, Heart, Megaphone, MessageCircle, Pencil, Plus, Save, Send, Sparkles, X } from 'lucide-react';
+import CommunicationsBell from './CommunicationsBell';
+import { useLerHomeComunicado } from '../../hooks/queries/useHomeComunicados';
 import type {
   HomeCommunicationPriority,
   HomeCommunicationTab,
@@ -122,6 +124,7 @@ export default function CommunicationsPanel({
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null);
   const [commentBody, setCommentBody] = useState('');
   const [burstNoticeId, setBurstNoticeId] = useState<string | null>(null);
+  const leitura = useLerHomeComunicado();
 
   const filteredNotices = useMemo(() => filterByTab(notices, activeTab), [activeTab, notices]);
   const visibleNotices = filteredNotices;
@@ -170,16 +173,7 @@ export default function CommunicationsPanel({
                 Avisos, atualizações e pendências internas.
               </p>
             </div>
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border"
-              style={{
-                backgroundColor: 'rgba(33, 71, 138, 0.14)',
-                borderColor: 'var(--color-primary)',
-                color: 'var(--color-primary)',
-              }}
-            >
-              <Bell size={18} />
-            </span>
+            <CommunicationsBell className="h-10 w-10 rounded-2xl border border-[var(--color-primary)]" />
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -328,10 +322,11 @@ export default function CommunicationsPanel({
           )}
 
           <div className="space-y-3" role="list">
+            {leitura.isError && <p role="alert" className="text-xs text-negative">Não foi possível registrar a leitura. Abra o comunicado novamente para tentar.</p>}
             {visibleNotices.map((notice, noticeIndex) => {
               const priority = priorityForNotice(notice);
               const selected = selectedNoticeId === notice.id;
-              const isNew = notice.tag === 'NOVO';
+              const isNew = notice.unread;
               const isExpanded = selected;
               const likedNames = notice.likedBy.join(', ');
               const commentsOpen = commentsNoticeId === notice.id;
@@ -340,7 +335,10 @@ export default function CommunicationsPanel({
                 <article key={notice.id} role="listitem">
                   <button
                     type="button"
-                    onClick={() => setSelectedNoticeId(selected ? null : notice.id)}
+                    onClick={() => {
+                      setSelectedNoticeId(selected ? null : notice.id);
+                      if (!selected && notice.unread) leitura.mutate(notice);
+                    }}
                     className={`group w-full rounded-[20px] border p-4 text-left shadow-sm transition-all duration-200 hover:shadow-md ${focusRingClass}`}
                     style={{
                       backgroundColor: selected
@@ -353,7 +351,7 @@ export default function CommunicationsPanel({
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2">
                         {isNew && (
-                          <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-primary)' }} aria-label="Novo" />
+                          <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: 'var(--color-primary)' }} aria-label="Não lido" />
                         )}
                         <span className="truncate text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>
                           {tagLabel(notice.tag)}

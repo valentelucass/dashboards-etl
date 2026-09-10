@@ -28,6 +28,8 @@ export interface HomeNotice {
   audience: string;
   date: string;
   publishedAt?: string | null;
+  updatedAt?: string | null;
+  unread?: boolean;
   updatedBy?: string | null;
   likeCount: number;
   commentCount: number;
@@ -42,6 +44,8 @@ export interface HomeNoticeApi {
   tag: HomeNoticeTag;
   publicoAlvo: string;
   publicadoEm: string;
+  atualizadoEm?: string | null;
+  naoLido?: boolean;
   atualizadoPor?: string | null;
   totalCurtidas?: number;
   totalComentarios?: number;

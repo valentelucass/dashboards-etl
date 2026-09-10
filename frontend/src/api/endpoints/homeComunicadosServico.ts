@@ -25,6 +25,8 @@ export function mapNoticeFromApi(notice: HomeNoticeApi): HomeNotice {
     audience: notice.publicoAlvo,
     date: formatNoticeDate(notice.publicadoEm),
     publishedAt: notice.publicadoEm,
+    updatedAt: notice.atualizadoEm,
+    unread: notice.naoLido ?? false,
     updatedBy: notice.atualizadoPor,
     likeCount: notice.totalCurtidas ?? 0,
     commentCount: notice.totalComentarios ?? 0,
@@ -51,9 +53,15 @@ export function noticeToForm(notice: HomeNotice): HomeNoticeFormState {
   };
 }
 
-export async function buscarHomeComunicados(): Promise<HomeNotice[]> {
-  const { data } = await clienteAxios.get<HomeNoticeApi[]>(HOME_COMUNICADOS_ENDPOINT);
+export async function buscarHomeComunicados({ signal }: { signal?: AbortSignal } = {}): Promise<HomeNotice[]> {
+  const { data } = await clienteAxios.get<HomeNoticeApi[]>(HOME_COMUNICADOS_ENDPOINT, { signal });
   return data.map(mapNoticeFromApi);
+}
+
+export async function registrarLeituraHomeComunicado(notice: HomeNotice): Promise<void> {
+  const versao = notice.updatedAt ?? notice.publishedAt;
+  if (!versao) throw new Error('Atualize a lista para registrar a leitura deste comunicado.');
+  await clienteAxios.put(`${HOME_COMUNICADOS_ENDPOINT}/${notice.id}/leitura`, { versao });
 }
 
 export async function criarHomeComunicado(payload: HomeNoticePayload): Promise<HomeNotice> {
