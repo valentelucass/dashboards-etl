@@ -67,9 +67,11 @@ node scripts/benchmark-charts.mjs .tmp/quality-build/20260910-six-final/dist .tm
 
 ## Candidatos preparados
 
-- Frontend: `frontend/.tmp/quality-build/20260910-cascade-final/dist`.
+- Frontend atual: `frontend/.tmp/quality-build/20260910-menu-tabs/dist`, com Visão Analítica como primeiro botão e identificação da sessão no topo do menu lateral. O candidato `20260910-cascade-final` permanece como referência das medições acima.
 - Backend: `backend/target/quality/20260910-162544-afcbf9/dashboard-api-1.0.0.jar`.
 - Relatório completo: `.tmp/quality/20260910-162544-afcbf9/summary.json`; verificação final frontend em `frontend/.tmp/cascade-final-checks.json` e logs `cascade-ready-typescript/queue/lint/build`.
 - Navegação do candidato final: `frontend/.tmp/cascade-ready/navigation/navigation.json`, sem erros, zero GET no retorno fresco a Coletas, 13 transições e 39 layouts válidos. Heap JavaScript com fixtures pequenas: 10,39–14,40 MiB após coleta; nenhuma página anterior mantém seus canvas montados.
 
 Publicar frontend/backend em conjunto: a interface usa os novos endpoints de Coletas. V068/V069 e o baseline V001 da entrega anterior continuam preparados. Não houve DDL/DML operacional, alteração dos artefatos em uso ou gerenciamento dos runtimes/portas de produção.
+
+Revalidação dos ajustes de menu/abas: TypeScript, lint dos componentes, encoding, ambiente, build e 24 testes existentes de fila/cache/navegação/filtros aprovados. O navegador isolado passou 65 verificações das abas e do cabeçalho (390/1265/1920/2560px, claro/escuro) e repetiu a navegação dos 12 dashboards com 13 transições e 39 verificações de layout. O retorno imediato a Coletas reutilizou os dados com zero GET; após exceder as cinco páginas, fez seis GETs, conforme a retenção limitada. Evidências em `frontend/.tmp/menu-tabs-audit/summary.json`, `frontend/.tmp/menu-tabs-navigation/navigation.json` e `frontend/.tmp/menu-tabs-coverage.json`. A fila e o cache continuam compartilhados pelos 12 dashboards; autenticação, escritas e exportações seguem seus fluxos próprios. Não foram refeitas medições comparativas de velocidade nesta alteração visual.

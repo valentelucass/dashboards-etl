@@ -3,10 +3,10 @@
 Os seis itens solicitados estão implementados:
 
 1. `LayoutPainel`: versão/data fica junto ao copyright, à esquerda, com divisor vertical. Créditos e suporte permanecem à direita no desktop; os grupos quebram no mobile.
-2. `TopNav`: o drawer contém navegação, fechamento e saída. Foram retirados logo, título visível, nome, perfil/setor/e-mail e sino redundantes. O diálogo mantém nome acessível e controle de foco.
+2. `TopNav`: o drawer mostra nome e login (e-mail) da sessão em um cabeçalho compacto, acima da navegação, junto ao fechamento. Textos extensos têm truncamento e título integral. Logo, título visível, perfil/setor e sino redundantes permanecem removidos. O diálogo mantém nome acessível e controle de foco.
 3. Curtidas: o botão e os corações ficam acima do balão com os nomes, inclusive durante a animação, sem bloquear sua leitura.
 4. Presença: contagem e lista SQL consideram outras contas ativas com atividade nos últimos 15 minutos, excluindo o operador autenticado por login/e-mail. A lista de vistos recentemente também omite a própria conta e contas inativas. O KPI está documentado em `kpiDictionary.ts` e integrado a `TooltipKpi`.
-5. Cotações: Visão Analítica é a abertura padrão. Os quatro botões têm bordas e seleção preenchida; setas, Home e End alternam a seleção pelo teclado. Abaixo de 768px, as ações usam uma linha própria na barra, sem alterar as demais páginas.
+5. Cotações: Visão Analítica é o primeiro botão e a abertura padrão, seguida por Por Usuário, Por Filial e Top 40 Clientes. Os quatro botões têm bordas e seleção preenchida; setas acompanham a ordem visual, Home seleciona Visão Analítica e End seleciona Top 40 Clientes. Abaixo de 768px, as ações usam uma linha própria na barra, sem alterar as demais páginas.
 6. Destaques de Cotações: as quatro colunas distribuem largura pelo conteúdo com `minmax(0, auto)`. Textos curtos recebem o espaço necessário e nomes longos aproveitam o restante. Quando o conjunto excede a largura, o truncamento preserva o texto integral no título. Regras e valores dos destaques não mudaram.
 
 ## Trilha do dia

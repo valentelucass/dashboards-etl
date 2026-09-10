@@ -155,7 +155,7 @@ function DrawerNavSection({
 }
 
 export default function TopNav() {
-  const { logout } = useAutenticacao();
+  const { usuario, logout } = useAutenticacao();
   const navigate = useNavigate();
   const currentLocation = useLocation();
   const { theme, setTheme } = useTheme();
@@ -421,13 +421,24 @@ export default function TopNav() {
                   borderColor: 'var(--color-border)',
                 }}
               >
-                <div className="flex justify-end px-4 pt-3">
+                <div
+                  className="flex shrink-0 items-center gap-3 border-b px-5 py-4"
+                  style={{ borderColor: 'var(--color-border)' }}
+                >
                   <h2 id={drawerTitleId} className="sr-only">Navegação</h2>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }} title={usuario?.nome}>
+                      {usuario?.nome}
+                    </p>
+                    <p className="mt-1 truncate text-xs" style={{ color: 'var(--color-text-muted)' }} title={usuario?.email}>
+                      {usuario?.email}
+                    </p>
+                  </div>
                   <button
                     ref={closeButtonRef}
                     type="button"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-[var(--color-bg)] ${focusRingClass}`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[var(--color-bg)] ${focusRingClass}`}
                     style={{ color: 'var(--color-text-muted)' }}
                     aria-label="Fechar menu de navegação"
                   >

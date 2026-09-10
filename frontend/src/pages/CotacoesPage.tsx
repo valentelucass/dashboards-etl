@@ -75,10 +75,10 @@ interface TrendBucket {
 
 const KPI_CARD_HEIGHT_CLASS = 'h-full min-h-0';
 const COTACOES_VIEW_TABS: Array<{ value: CotacoesViewTab; label: string; compactLabel: string; icon: typeof UserRound }> = [
+  { value: 'analitica', label: 'Visão Analítica', compactLabel: 'Análise', icon: Table2 },
   { value: 'usuario', label: 'Por Usuário', compactLabel: 'Usuário', icon: UserRound },
   { value: 'filial', label: 'Por Filial', compactLabel: 'Filial', icon: Building2 },
   { value: 'clientes', label: 'Top 40 Clientes', compactLabel: 'Clientes', icon: UsersRound },
-  { value: 'analitica', label: 'Visão Analítica', compactLabel: 'Análise', icon: Table2 },
 ];
 const PERIOD_LEVELS: PeriodDrillLevel[] = ['ano', 'mes', 'dia'];
 const CONVERSION_LEVELS: ConversionDrillLevel[] = ['ano', 'mes'];
