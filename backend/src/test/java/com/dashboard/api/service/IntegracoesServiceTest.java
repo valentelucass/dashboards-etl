@@ -41,7 +41,7 @@ class IntegracoesServiceTest {
     @Test
     void delegaHistoricoSftpComFiltrosSemConsultarOutraOrigem() {
         IntegracoesService service = new IntegracoesService(client);
-        service.consultarExecucoesSftpClientes(1, 25, "VEDACIT", "CONCLUIDO", "2026-08-01", "2026-08-02");
-        verify(client).buscarExecucoesSftpClientes(1, 25, "VEDACIT", "CONCLUIDO", "2026-08-01", "2026-08-02");
+        service.consultarExecucoesSftpClientes(1, 25, "VEDACIT", "CONCLUIDO", "2026-08-01", "2026-08-02", "API_ESL");
+        verify(client).buscarExecucoesSftpClientes(1, 25, "VEDACIT", "CONCLUIDO", "2026-08-01", "2026-08-02", "API_ESL");
     }
 }

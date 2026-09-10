@@ -7,16 +7,16 @@ export function getPasswordPolicyErrors(password: string): string[] {
   if (senha.length < 12) {
     errors.push('Use pelo menos 12 caracteres.');
   }
-  if (!/[A-Z]/.test(senha)) {
+  if (!/\p{Lu}/u.test(senha)) {
     errors.push('Inclua ao menos uma letra maiúscula.');
   }
-  if (!/[a-z]/.test(senha)) {
+  if (!/\p{Ll}/u.test(senha)) {
     errors.push('Inclua ao menos uma letra minúscula.');
   }
-  if (!/\d/.test(senha)) {
+  if (!/\p{Nd}/u.test(senha)) {
     errors.push('Inclua ao menos um número.');
   }
-  if (!/[^A-Za-z0-9\s]/.test(senha)) {
+  if (!/[^\p{L}\p{Nd}\s]/u.test(senha)) {
     errors.push('Inclua ao menos um caractere especial.');
   }
 

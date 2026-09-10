@@ -201,16 +201,13 @@ public class AutenticacaoService {
             return List.of();
         }
 
-        Map<String, Boolean> permissoes = permissaoResolver.permissoesEfetivas(usuario);
-        Long usuarioId = Objects.requireNonNull(usuario.getId(), "usuario.id é obrigatório.");
-        String papel = permissaoResolver.papel(usuarioId);
-        boolean isAdmin = permissaoResolver.ehAdmin(usuarioId);
+        var acesso = permissaoResolver.resolverAcesso(usuario);
 
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(isAdmin ? "ROLE_ADMIN" : "ROLE_USER"));
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + papel.toUpperCase()));
+        authorities.add(new SimpleGrantedAuthority(acesso.administrador() ? "ROLE_ADMIN" : "ROLE_USER"));
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + acesso.papel().toUpperCase(java.util.Locale.ROOT)));
 
-        permissoes.entrySet().stream()
+        acesso.permissoes().entrySet().stream()
                 .filter(Map.Entry::getValue)
                 .map(entry -> PermissaoCatalogo.authorityForKey(entry.getKey()))
                 .map(SimpleGrantedAuthority::new)
@@ -293,13 +290,11 @@ public class AutenticacaoService {
     }
 
     private SessaoUsuarioDTO mapearSessao(UsuarioEntity usuario) {
-        Long usuarioId = Objects.requireNonNull(usuario.getId(), "usuario.id é obrigatório.");
         if (escopoFiliaisUsuarioStore != null) {
             escopoFiliaisUsuarioStore.carregarNoUsuario(usuario);
         }
-        Map<String, Boolean> permissoes = permissaoResolver.permissoesEfetivas(usuario);
-        String papel = permissaoResolver.papel(usuarioId);
-        EscopoFilialService.EscopoFilial escopoFilial = permissaoResolver.ehAdminPlataforma(usuarioId) || permissaoResolver.ehDesenvolvedor(usuarioId)
+        var acesso = permissaoResolver.resolverAcesso(usuario);
+        EscopoFilialService.EscopoFilial escopoFilial = acesso.escopoFilialTotal()
                 ? EscopoFilialService.EscopoFilial.comAcessoTotal()
                 : EscopoFiliaisUsuarioPolicy.resolverSemPapelElevado(usuario);
 
@@ -307,9 +302,9 @@ public class AutenticacaoService {
                 String.valueOf(usuario.getId()),
                 usuario.getNome(),
                 usuario.getEmail(),
-                papel,
+                acesso.papel(),
                 new SetorSessaoDTO(String.valueOf(usuario.getSetor().getId()), usuario.getSetor().getNome()),
-                permissoes,
+                acesso.permissoes(),
                 escopoFilial.acessoTotal() ? List.of() : escopoFilial.filiaisOrdenadas(),
                 usuario.isExigeTrocaSenha()
         );

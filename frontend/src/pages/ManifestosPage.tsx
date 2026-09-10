@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import { Settings } from 'lucide-react';
@@ -65,16 +66,6 @@ type TipoVeiculoTooltipData = {
   mediaEventos: number | null;
   value: number;
 };
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }[char] ?? char));
-}
 
 function formatarTooltipTipoVeiculo(params: unknown): string {
   const entry = Array.isArray(params) ? params[0] as { data?: TipoVeiculoTooltipData; name?: string; value?: number } : null;
@@ -323,7 +314,7 @@ export default function ManifestosPage() {
       trigger: 'item',
       formatter: (params: unknown) => {
         const item = params as { name?: string; value?: number; percent?: number };
-        return `${item.name ?? ''}<br/>${formatarMoeda(Number(item.value ?? 0))}<br/>${formatarNumero(Number(item.percent ?? 0), 1)}%`;
+        return `${escapeHtml(item.name ?? '')}<br/>${formatarMoeda(Number(item.value ?? 0))}<br/>${formatarNumero(Number(item.percent ?? 0), 1)}%`;
       },
     },
     legend: {

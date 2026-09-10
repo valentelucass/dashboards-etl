@@ -36,7 +36,7 @@ export function useManifestosOverview(filtro: ManifestosFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'overview', filtro],
-    queryFn: () => buscarManifestosOverview(filtro),
+    queryFn: ({ signal }) => buscarManifestosOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -46,7 +46,7 @@ export function useManifestosSerie(filtro: ManifestosFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'serie', filtro],
-    queryFn: () => buscarManifestosSerie(filtro),
+    queryFn: ({ signal }) => buscarManifestosSerie(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -56,7 +56,7 @@ export function useManifestosGraficos(filtro: ManifestosFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'graficos', filtro],
-    queryFn: () => buscarManifestosGraficos(filtro),
+    queryFn: ({ signal }) => buscarManifestosGraficos(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -71,7 +71,7 @@ export function useManifestosPerformance(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'performance', filtro, nivel, ano, mes],
-    queryFn: () => buscarManifestosPerformance(filtro, nivel, ano, mes),
+    queryFn: ({ signal }) => buscarManifestosPerformance(filtro, nivel, ano, mes, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -81,7 +81,7 @@ export function useManifestosTabela(filtro: ManifestosFiltro, limite = 100) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'tabela', filtro, limite],
-    queryFn: () => buscarManifestosTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarManifestosTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -91,7 +91,7 @@ export function useManifestosTabelaTotal(filtro: ManifestosFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'tabela-total', filtro],
-    queryFn: () => buscarManifestosTabelaTotal(filtro),
+    queryFn: ({ signal }) => buscarManifestosTabelaTotal(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -108,13 +108,14 @@ export function useManifestosTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'tabela-paginada', filtro, pagina, tamanhoPagina, filtrosTabela, sortField, sortDirection],
-    queryFn: () => buscarManifestosTabelaPaginada(
+    queryFn: ({ signal }) => buscarManifestosTabelaPaginada(
       filtro,
       pagina,
       tamanhoPagina,
       filtrosTabela,
       sortField,
       sortDirection,
+      signal,
     ),
     placeholderData: (previousData) => previousData,
     staleTime: STALE_TIME,
@@ -125,7 +126,7 @@ export function useManifestosTabelaPaginada(
 export function useManifestosMetas(branchId: string, ano: number, mes: number, enabled = true) {
   return useQuery({
     queryKey: manifestosMetasQueryKey(branchId, mes, ano),
-    queryFn: () => buscarManifestosMetas(branchId, ano, mes),
+    queryFn: ({ signal }) => buscarManifestosMetas(branchId, ano, mes, signal),
     staleTime: STALE_TIME,
     retry: false,
     enabled: enabled && Boolean(branchId),

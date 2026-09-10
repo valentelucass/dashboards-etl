@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, Fragment, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import {
   alterarSenha as alterarSenhaServico,
@@ -28,6 +29,7 @@ import {
   sessaoExpirada,
 } from '../utils/gerenciadorSessao';
 import { resolverAcaoBootstrapSessao } from '../utils/authSession';
+import { sessionScope } from '../utils/sessionScope';
 
 interface AutenticacaoContexto {
   usuario: IUsuarioSessao | null;
@@ -72,19 +74,28 @@ function calcularDelayRefresh(sessao: IUsuarioSessao, accessToken: string | null
 }
 
 export function AutenticacaoProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [usuario, setUsuario] = useState<IUsuarioSessao | null>(() => obterSessao());
   const [carregandoSessao, setCarregandoSessao] = useState(true);
+  const escopoCache = useRef(sessionScope(usuario));
 
   useEffect(() => {
     function sincronizarSessaoAtual() {
-      setUsuario(obterSessao());
+      const proxima = obterSessao();
+      const proximoEscopo = sessionScope(proxima);
+      if (escopoCache.current !== proximoEscopo) {
+        // clear também cancela queries em voo, impedindo respostas antigas de repovoar o cache.
+        queryClient.clear();
+        escopoCache.current = proximoEscopo;
+      }
+      setUsuario(proxima);
     }
 
     window.addEventListener(EVENTO_SESSAO_ATUALIZADA, sincronizarSessaoAtual);
     return () => {
       window.removeEventListener(EVENTO_SESSAO_ATUALIZADA, sincronizarSessaoAtual);
     };
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     let ativo = true;
@@ -233,7 +244,7 @@ export function AutenticacaoProvider({ children }: { children: ReactNode }) {
       concluirTrocaSenhaObrigatoria: concluirTrocaSenha,
       logout,
     }}>
-      {children}
+      <Fragment key={sessionScope(usuario)}>{children}</Fragment>
     </AutenticacaoContext.Provider>
   );
 }

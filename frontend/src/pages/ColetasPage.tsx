@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
@@ -244,8 +245,8 @@ export default function ColetasPage() {
             : [];
 
           return [
-            `<strong>${formatarHistoricoLabel(name, historicoPeriodo)}</strong>`,
-            ...entries.map((item) => `${item.marker ?? ''}${item.seriesName}: ${formatarPorcentagem(Number(item.value ?? 0), 2)}`),
+            `<strong>${escapeHtml(formatarHistoricoLabel(name, historicoPeriodo))}</strong>`,
+            ...entries.map((item) => `${item.marker ?? ''}${escapeHtml(item.seriesName)}: ${formatarPorcentagem(Number(item.value ?? 0), 2)}`),
             ...metricas,
           ].join('<br/>');
         },
@@ -320,12 +321,12 @@ export default function ColetasPage() {
           const entries = params as { marker?: string; seriesName: string; name: string; value: number }[];
           const primeira = entries[0];
           return [
-            primeira?.name ?? '',
+            escapeHtml(primeira?.name),
             ...entries.map((item) => {
               const valor = item.seriesName === 'Peso Taxado'
                 ? formatarPeso(Number(item.value ?? 0))
                 : Number(item.value ?? 0).toLocaleString('pt-BR');
-              return `${item.marker ?? ''}${item.seriesName}: ${valor}`;
+              return `${item.marker ?? ''}${escapeHtml(item.seriesName)}: ${valor}`;
             }),
           ].join('<br/>');
         },

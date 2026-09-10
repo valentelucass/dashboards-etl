@@ -95,7 +95,7 @@ export function useVeiculos() {
 export function useManifestosClassificacoes(filtro: ManifestosFiltro) {
   return useQuery({
     queryKey: ['dim', 'manifestos', 'classificacoes', filtro],
-    queryFn: () => buscarManifestosClassificacoes(filtro),
+    queryFn: ({ signal }) => buscarManifestosClassificacoes(filtro, signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -125,7 +125,7 @@ export function useUsuarios() {
 export function useFretesStatus(filtro: FretesFiltro) {
   return useQuery({
     queryKey: ['dim', 'fretes', 'status', filtro],
-    queryFn: () => buscarFretesStatus(filtro),
+    queryFn: ({ signal }) => buscarFretesStatus(filtro, signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -135,7 +135,7 @@ export function useFretesStatus(filtro: FretesFiltro) {
 export function useFaturamentoStatus(filtro: FaturamentoFiltro) {
   return useQuery({
     queryKey: ['dim', 'faturamento', 'status', filtro],
-    queryFn: () => buscarFaturamentoStatus(filtro),
+    queryFn: ({ signal }) => buscarFaturamentoStatus(filtro, signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -145,7 +145,7 @@ export function useFaturamentoStatus(filtro: FaturamentoFiltro) {
 export function usePerformanceResponsaveis(filtro: PerformanceFiltro) {
   return useQuery({
     queryKey: ['dim', 'performance', 'responsaveis', filtro],
-    queryFn: () => buscarPerformanceResponsaveis(filtro),
+    queryFn: ({ signal }) => buscarPerformanceResponsaveis(filtro, signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -155,7 +155,7 @@ export function usePerformanceResponsaveis(filtro: PerformanceFiltro) {
 export function usePerformanceRegioesDestino(filtro: PerformanceFiltro) {
   return useQuery({
     queryKey: ['dim', 'performance', 'regioes-destino', filtro],
-    queryFn: () => buscarPerformanceRegioesDestino(filtro),
+    queryFn: ({ signal }) => buscarPerformanceRegioesDestino(filtro, signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -165,7 +165,7 @@ export function usePerformanceRegioesDestino(filtro: PerformanceFiltro) {
 export function usePerformanceCidadesDestino(filtro: PerformanceFiltro) {
   return useQuery({
     queryKey: ['dim', 'performance', 'cidades-destino', filtro],
-    queryFn: () => buscarPerformanceCidadesDestino(filtro),
+    queryFn: ({ signal }) => buscarPerformanceCidadesDestino(filtro, signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -175,7 +175,7 @@ export function usePerformanceCidadesDestino(filtro: PerformanceFiltro) {
 export function useFaturamentoResponsaveis(filtro: FaturamentoFiltro) {
   return useQuery({
     queryKey: ['dim', 'faturamento', 'responsaveis', filtro],
-    queryFn: () => buscarFaturamentoResponsaveis(filtro),
+    queryFn: ({ signal }) => buscarFaturamentoResponsaveis(filtro, signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,

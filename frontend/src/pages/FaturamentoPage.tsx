@@ -1,6 +1,7 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useMemo, useRef, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from '../components/charts/DashboardEChart';
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Info, Minus, Settings } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
@@ -37,7 +38,6 @@ import {
 } from '../hooks/queries/useFaturamento';
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { usePermissions } from '../hooks/usePermissions';
-import { useStaggeredQueryEnabled } from '../hooks/useStaggeredQueryEnabled';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import type {
   FaturamentoClienteRanking,
@@ -406,7 +406,7 @@ function buildClassificacaoDonutOption(dados: ChartDatum[], selectedName: string
       formatter: (params: unknown) => {
         const item = params as { name?: string; value?: number; percent?: number };
         return [
-          `<strong>${item.name ?? ''}</strong>`,
+          `<strong>${escapeHtml(item.name ?? '')}</strong>`,
           `Faturamento: ${formatarMoeda(Number(item.value ?? 0))}`,
           `Participação: ${formatarNumero(Number(item.percent ?? 0), 1)}%`,
         ].join('<br/>');
@@ -460,7 +460,7 @@ function buildClientePieOption(dados: ChartDatum[], selectedName: string | null,
       formatter: (params: unknown) => {
         const item = params as { name?: string; value?: number; percent?: number };
         return [
-          `<strong>${item.name ?? ''}</strong>`,
+          `<strong>${escapeHtml(item.name ?? '')}</strong>`,
           `Faturamento: ${formatarMoeda(Number(item.value ?? 0))}`,
           `Participação: ${formatarNumero(Number(item.percent ?? 0), 1)}%`,
         ].join('<br/>');
@@ -558,7 +558,7 @@ function buildHorizontalBarOption(
         const value = getMetricValue(original, metric);
         const percent = totalMetric > 0 ? (value / totalMetric) * 100 : 0;
         return [
-          `<strong>${original.nome}</strong>`,
+          `<strong>${escapeHtml(original.nome)}</strong>`,
           `Faturamento: ${formatarMoeda(original.receita)}`,
             `Minutas: ${formatarNumero(original.fretes)}`,
           `Participação: ${formatarPorcentagem(percent, 1)}`,
@@ -654,7 +654,7 @@ function buildEvolutionOption(
         return items
           .map((item) => {
             const rawValue = typeof item.value === 'object' ? item.value?.value : item.value;
-            return `${item.marker ?? ''}${item.seriesName}: ${formatarMoeda(Number(rawValue ?? 0))}`;
+            return `${item.marker ?? ''}${escapeHtml(item.seriesName)}: ${formatarMoeda(Number(rawValue ?? 0))}`;
           })
           .join('<br/>');
       },
@@ -917,22 +917,15 @@ export default function FaturamentoPage() {
   ];
 
   const overview = useFaturamentoOverview(filtro);
-  const overviewReady = overview.isSuccess && Boolean(overview.data);
-  const metasEnabled = useStaggeredQueryEnabled(overviewReady, 120);
-  const serieEnabled = useStaggeredQueryEnabled(overviewReady, 240);
-  const graficosEnabled = useStaggeredQueryEnabled(overviewReady, 380);
-  const topClientesEnabled = useStaggeredQueryEnabled(overviewReady, 620);
-  const topClientesAnteriorEnabled = useStaggeredQueryEnabled(overviewReady, 760);
-  const tabelaEnabled = useStaggeredQueryEnabled(overviewReady, 950);
-  const serie = useFaturamentoSerie(filtro, serieEnabled);
-  const graficos = useFaturamentoGraficos(filtro, graficosEnabled);
-  const metas = useFaturamentoMetas(filtro, metasEnabled);
+  const serie = useFaturamentoSerie(filtro);
+  const graficos = useFaturamentoGraficos(filtro);
+  const metas = useFaturamentoMetas(filtro);
   const metasConfiguracoes = useFaturamentoMetasConfiguracoes(goalsPanelYear, goalsPanelMonth, goalsPanelOpen);
   const salvarMeta = useSalvarFaturamentoMetaConfiguracao();
   const removerMeta = useRemoverFaturamentoMetaConfiguracao();
   const replicarMetas = useReplicarFaturamentoMetasConfiguracoes();
-  const topClientes = useFaturamentoTopClientes(filtro, 10, topClientesEnabled);
-  const topClientesPeriodoAnterior = useFaturamentoTopClientes(filtroPeriodoAnterior, 50, topClientesAnteriorEnabled);
+  const topClientes = useFaturamentoTopClientes(filtro, 10);
+  const topClientesPeriodoAnterior = useFaturamentoTopClientes(filtroPeriodoAnterior, 50);
   const filtrosTabela = useAnalyticalTableFilters();
   const paginacaoTabela = useTabelaPaginadaState(JSON.stringify({ filtro, tabela: filtrosTabela.resetKey }));
   const tabela = useFaturamentoTabelaPaginada(
@@ -940,7 +933,6 @@ export default function FaturamentoPage() {
     paginacaoTabela.pagina,
     paginacaoTabela.tamanhoPagina,
     filtrosTabela.apiFilters,
-    tabelaEnabled,
   );
 
   const filtroParaStatus: FaturamentoFiltro = {

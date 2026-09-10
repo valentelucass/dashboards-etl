@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -73,10 +74,10 @@ function formatarTooltipNumero(params: unknown) {
     const nomeSerie = item.seriesName ?? '';
     const valor = valorTooltip(item);
 
-    return `${item.marker ?? ''}${nomeSerie}: ${formatarNumero(valor)}`;
+    return `${item.marker ?? ''}${escapeHtml(nomeSerie)}: ${formatarNumero(valor)}`;
   });
 
-  return [titulo, ...linhas].filter(Boolean).join('<br/>');
+  return [escapeHtml(titulo), ...linhas].filter(Boolean).join('<br/>');
 }
 
 function formatarIntervaloExtracao(inicio: string | null, fim: string | null) {
@@ -366,7 +367,7 @@ export default function EtlSaudePage() {
           const item = Number.isInteger(indice) && indice >= 0 ? resumoTabelasDados[indice] : null;
           const tabelaAlvo = item?.tabelaAlvo ?? String(itens[0]?.axisValueLabel ?? itens[0]?.axisValue ?? '');
           const linhas = [
-            tabelaAlvo,
+            escapeHtml(tabelaAlvo),
             `Registros gravados: ${formatarNumero(numeroSeguro(item?.totalRegistrosGravados))}`,
             `Extrações: ${formatarNumero(numeroSeguro(item?.qtdExtracoes))}`,
             `Sucessos: ${formatarNumero(numeroSeguro(item?.qtdSucessos))}`,

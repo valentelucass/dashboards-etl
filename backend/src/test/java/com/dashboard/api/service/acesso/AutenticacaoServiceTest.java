@@ -226,6 +226,11 @@ class AutenticacaoServiceTest {
         }
 
         @Override
+        public com.dashboard.api.dto.acesso.AcessoResolvidoDTO resolverAcesso(UsuarioEntity usuario) {
+            return new com.dashboard.api.dto.acesso.AcessoResolvidoDTO(papel, ehAdmin(usuario.getId()), adminPlataforma, permissoes);
+        }
+
+        @Override
         public String papel(Long usuarioId) {
             return papel;
         }

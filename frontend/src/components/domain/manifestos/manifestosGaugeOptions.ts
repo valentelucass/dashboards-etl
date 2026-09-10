@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../utils/escapeHtml';
 import type { EChartsOption } from 'echarts';
 import { getEchartsThemeTokens, resolveEchartsColor } from '../../../utils/echartsBuilders';
 import { formatarPorcentagem } from '../../../utils/formatadores';
@@ -36,7 +37,7 @@ export function buildManifestosHalfDonutOption(globalInput: number, corDestaque:
         const item = params as { name?: string; value?: number };
         if (!item.name || item.name === 'Metade Oculta') return '';
         const valor = item.name === 'Global' ? globalReal : Number(item.value ?? 0);
-        return `${item.name}: ${formatarPorcentagem(valor, 1)}`;
+        return `${escapeHtml(item.name)}: ${formatarPorcentagem(valor, 1)}`;
       },
     },
     graphic: [

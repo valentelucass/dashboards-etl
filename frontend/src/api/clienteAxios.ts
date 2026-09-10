@@ -5,6 +5,7 @@ import type { LoginResponse } from '../types/auth';
 import { limparSessao, obterAccessToken, salvarSessaoDoLogin } from '../utils/gerenciadorSessao';
 import { SessaoExpiradaError, normalizarErroSessao } from '../utils/authSession';
 import { DATABASE_TIMEOUT_MESSAGE, SERVER_INSTABILITY_MESSAGE } from '../utils/apiError';
+import { createDashboardRequestAdapter } from './dashboardRequestQueue';
 
 export interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -23,6 +24,7 @@ const clienteAxios = axios.create({
   timeout: API_REQUEST_TIMEOUT_MS,
   withCredentials: true,
 });
+clienteAxios.defaults.adapter = createDashboardRequestAdapter(axios.getAdapter(clienteAxios.defaults.adapter));
 
 let refreshEmAndamento: Promise<LoginResponse> | null = null;
 let isRefreshing = false;

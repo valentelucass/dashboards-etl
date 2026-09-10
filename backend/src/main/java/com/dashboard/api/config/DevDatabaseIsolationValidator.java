@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
+import com.dashboard.api.util.SqlServerJdbcUrl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -50,28 +51,11 @@ public class DevDatabaseIsolationValidator {
     }
 
     private String marcadoresAmbiente() {
-        if (environment != null && environment.getActiveProfiles().length > 0) {
-            return String.join(",", environment.getActiveProfiles());
-        }
-        return springProfilesActive + "," + appEnvironment;
+        String ativos = environment == null ? "" : String.join(",", environment.getActiveProfiles());
+        return ativos + "," + springProfilesActive + "," + appEnvironment;
     }
 
     static Optional<String> extrairNomeBanco(String jdbcUrl) {
-        if (jdbcUrl == null || jdbcUrl.isBlank()) {
-            return Optional.empty();
-        }
-
-        return Arrays.stream(jdbcUrl.split(";"))
-                .map(String::trim)
-                .filter(segmento -> segmento.contains("="))
-                .map(segmento -> segmento.split("=", 2))
-                .filter(partes -> partes.length == 2)
-                .filter(partes -> {
-                    String chave = partes[0].trim().toLowerCase(Locale.ROOT);
-                    return chave.equals("databasename") || chave.equals("database");
-                })
-                .map(partes -> partes[1].trim())
-                .filter(valor -> !valor.isBlank())
-                .findFirst();
+        return SqlServerJdbcUrl.nomeBancoExplicito(jdbcUrl);
     }
 }

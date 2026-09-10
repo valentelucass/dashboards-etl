@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -463,6 +465,32 @@ class ManifestosCostGoalServiceTest {
         )).thenReturn(11);
         when(performanceRepository.buscarCustoTotal(any(FiltroConsultaDTO.class)))
                 .thenReturn(new BigDecimal("4400000.00"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1,17,false,10.00", "1,18,false,10.00", "1,19,true,7.00", "19,19,false,0.00"})
+    void consultaCustoFechadoSomenteQuandoJanelaDifereDoTotalRecebido(
+            int diaInicio, int diaFim, boolean consultaAdicional, String mediaEsperada) {
+        FiltroConsultaDTO filtro = new FiltroConsultaDTO(LocalDate.of(2026, 5, diaInicio),
+                LocalDate.of(2026, 5, diaFim), Map.of("filiais", List.of("SPO"), "status", List.of("Encerrado")));
+        when(performanceRepository.buscarUltimoDiaUtilFechado(FIM_MAIO)).thenReturn(LocalDate.of(2026, 5, 18));
+        when(performanceRepository.contarDiasUteisCalendario(any(), any())).thenReturn(10);
+        if (consultaAdicional) {
+            when(performanceRepository.buscarCustoTotal(any())).thenReturn(new BigDecimal("70.00"));
+        }
+
+        ManifestosCustosEvolucaoDTO resultado = service.calcular(filtro, new BigDecimal("100.00"));
+
+        assertThat(resultado.custoReal()).isEqualByComparingTo("100.00");
+        assertThat(resultado.custoMedioDiarioReal()).isEqualByComparingTo(mediaEsperada);
+        verify(performanceRepository).buscarCustosDiarios(filtro);
+        if (consultaAdicional) {
+            verify(performanceRepository).buscarCustoTotal(new FiltroConsultaDTO(filtro.dataInicio(),
+                    LocalDate.of(2026, 5, 18), filtro.filtros()));
+        } else {
+            verify(performanceRepository, never()).buscarCustoTotal(any());
+        }
+        verifyNoInteractions(goalRepository);
     }
 
     private ManifestosCostGoalService serviceComEscopo(EscopoFilialService.EscopoFilial escopo) {

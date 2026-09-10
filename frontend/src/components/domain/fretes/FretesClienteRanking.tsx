@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../utils/escapeHtml';
 import { useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
 import ChartWrapper from '../../charts/ChartWrapper';
@@ -52,7 +53,7 @@ export default function FretesClienteRanking({ dados, isLoading }: FretesCliente
             return '';
           }
 
-          return `${cliente.cliente}<br/>Receita: R$ ${cliente.receita.toLocaleString('pt-BR')}<br/>Fretes: ${cliente.fretes}<br/>Ticket: R$ ${cliente.ticketMedio.toLocaleString('pt-BR')}`;
+          return `${escapeHtml(cliente.cliente)}<br/>Receita: R$ ${cliente.receita.toLocaleString('pt-BR')}<br/>Fretes: ${cliente.fretes}<br/>Ticket: R$ ${cliente.ticketMedio.toLocaleString('pt-BR')}`;
         },
       },
     });

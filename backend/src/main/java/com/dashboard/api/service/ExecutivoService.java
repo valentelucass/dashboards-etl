@@ -9,7 +9,6 @@ import com.dashboard.api.dto.executivo.ExecutivoTrendPointDTO;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteMensalDTO;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteOverviewDTO;
 import com.dashboard.api.dto.FiltroConsultaDTO;
-import com.dashboard.api.dto.fretes.FretesOverviewDTO;
 import com.dashboard.api.dto.fretes.FretesTrendPointDTO;
 import com.dashboard.api.dto.manifestos.ManifestosOverviewDTO;
 import com.dashboard.api.dto.tracking.TrackingOverviewDTO;
@@ -67,7 +66,7 @@ public class ExecutivoService {
     public ExecutivoOverviewDTO buscarOverview(FiltroConsultaDTO filtro) {
         log.info("Calculando overview executivo: periodo={} a {}", filtro.dataInicio(), filtro.dataFim());
 
-        FretesOverviewDTO fretes = fretesService.buscarOverview(filtro);
+        BigDecimal receitaOperacional = fretesService.buscarReceitaBruta(filtro);
         FaturasPorClienteOverviewDTO faturasPorCliente = faturasPorClienteService.buscarOverview(filtro);
         ContasAPagarOverviewDTO contasAPagar = contasAPagarService.buscarOverview(filtro);
         var coletas = coletasService.buscarOverview(filtro);
@@ -76,7 +75,7 @@ public class ExecutivoService {
 
         return new ExecutivoOverviewDTO(
                 LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                fretes.receitaBruta(),
+                receitaOperacional,
                 faturasPorCliente.valorFaturado(),
                 BigDecimal.ZERO,
                 contasAPagar.saldoAberto(),

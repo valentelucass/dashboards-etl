@@ -70,9 +70,10 @@ export async function buscarVeiculos(): Promise<VeiculoDim[]> {
   return data;
 }
 
-export async function buscarManifestosClassificacoes(filtro: ManifestosFiltro): Promise<string[]> {
+export async function buscarManifestosClassificacoes(filtro: ManifestosFiltro, signal?: AbortSignal): Promise<string[]> {
   const { data } = await clienteAxios.get<string[]>('/api/dimensoes/manifestos/classificacoes', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }
@@ -87,41 +88,46 @@ export async function buscarUsuarios(): Promise<UsuarioDim[]> {
   return data;
 }
 
-export async function buscarFretesStatus(filtro: FretesFiltro): Promise<string[]> {
+export async function buscarFretesStatus(filtro: FretesFiltro, signal?: AbortSignal): Promise<string[]> {
   const { data } = await clienteAxios.get<string[]>('/api/dimensoes/fretes/status', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }
 
-export async function buscarFaturamentoStatus(filtro: FaturamentoFiltro): Promise<string[]> {
-  return buscarFretesStatus(filtro);
+export async function buscarFaturamentoStatus(filtro: FaturamentoFiltro, signal?: AbortSignal): Promise<string[]> {
+  return buscarFretesStatus(filtro, signal);
 }
 
-export async function buscarPerformanceResponsaveis(filtro: PerformanceFiltro): Promise<DimensaoOpcao[]> {
+export async function buscarPerformanceResponsaveis(filtro: PerformanceFiltro, signal?: AbortSignal): Promise<DimensaoOpcao[]> {
   const { data } = await clienteAxios.get<DimensaoOpcao[]>('/api/dimensoes/performance/responsaveis', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }
 
-export async function buscarPerformanceRegioesDestino(filtro: PerformanceFiltro): Promise<string[]> {
+export async function buscarPerformanceRegioesDestino(filtro: PerformanceFiltro, signal?: AbortSignal): Promise<string[]> {
   const { data } = await clienteAxios.get<string[]>('/api/dimensoes/performance/regioes-destino', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }
 
-export async function buscarPerformanceCidadesDestino(filtro: PerformanceFiltro): Promise<string[]> {
+export async function buscarPerformanceCidadesDestino(filtro: PerformanceFiltro, signal?: AbortSignal): Promise<string[]> {
   const { data } = await clienteAxios.get<string[]>('/api/dimensoes/performance/cidades-destino', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }
 
-export async function buscarFaturamentoResponsaveis(filtro: FaturamentoFiltro): Promise<DimensaoOpcao[]> {
+export async function buscarFaturamentoResponsaveis(filtro: FaturamentoFiltro, signal?: AbortSignal): Promise<DimensaoOpcao[]> {
   const { data } = await clienteAxios.get<DimensaoOpcao[]>('/api/dimensoes/faturamento/responsaveis', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }

@@ -24,6 +24,7 @@ export function performanceHistoricoQueryKey(filtro: PerformanceFiltro, periodoM
     filtro.dataInicio,
     filtro.dataFim,
     filtro.filiais ?? [],
+    filtro.parceirosLogisticos ?? [],
     filtro.status ?? [],
     filtro.pagadores ?? [],
     filtro.responsaveis ?? [],
@@ -36,7 +37,7 @@ export function usePerformanceOverview(filtro: PerformanceFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'overview', filtro],
-    queryFn: () => buscarPerformanceOverview(filtro),
+    queryFn: ({ signal }) => buscarPerformanceOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -52,7 +53,7 @@ export function usePerformanceSerieTemporal(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'serie-temporal', filtro, nivel, ano, mes],
-    queryFn: () => buscarPerformanceSerieTemporal(filtro, nivel, ano, mes),
+    queryFn: ({ signal }) => buscarPerformanceSerieTemporal(filtro, nivel, ano, mes, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -63,7 +64,7 @@ export function usePerformanceStatus(filtro: PerformanceFiltro, enabled = true) 
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'status', filtro],
-    queryFn: () => buscarPerformanceStatus(filtro),
+    queryFn: ({ signal }) => buscarPerformanceStatus(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -74,7 +75,7 @@ export function usePerformanceHistorico(filtro: PerformanceFiltro, periodoMeses?
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: performanceHistoricoQueryKey(filtro, periodoMeses),
-    queryFn: () => buscarPerformanceHistorico(filtro),
+    queryFn: ({ signal }) => buscarPerformanceHistorico(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -89,7 +90,7 @@ export function usePerformanceDrilldown(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'drilldown', filtro, drilldown],
-    queryFn: () => buscarPerformanceDrilldown(filtro, drilldown),
+    queryFn: ({ signal }) => buscarPerformanceDrilldown(filtro, drilldown, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -100,7 +101,7 @@ export function usePerformanceAging(filtro: PerformanceFiltro, enabled = true) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'aging', filtro],
-    queryFn: () => buscarPerformanceAging(filtro),
+    queryFn: ({ signal }) => buscarPerformanceAging(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -117,7 +118,7 @@ export function usePerformanceTabela(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'tabela', filtro, pagina, tamanhoPagina, filtrosTabela],
-    queryFn: () => buscarPerformanceTabela(filtro, pagina, tamanhoPagina, filtrosTabela),
+    queryFn: ({ signal }) => buscarPerformanceTabela(filtro, pagina, tamanhoPagina, filtrosTabela, signal),
     placeholderData: (previousData) => previousData,
     staleTime: STALE_TIME,
     retry: 1,
@@ -135,7 +136,7 @@ export function usePerformanceTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'tabela-paginada', filtro, pagina, tamanhoPagina, filtrosTabela],
-    queryFn: () => buscarPerformanceTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela),
+    queryFn: ({ signal }) => buscarPerformanceTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela, signal),
     placeholderData: (previousData) => previousData,
     staleTime: STALE_TIME,
     retry: 1,

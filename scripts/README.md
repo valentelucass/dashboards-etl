@@ -1,5 +1,25 @@
 # Scripts
 
+## Qualidade isolada, cobertura e build
+
+Na raiz, execute `./scripts/run-quality.ps1`. O runner seleciona um JDK 17 instalado em Eclipse Adoptium, ou aceita `-JavaHome 'C:/caminho/jdk-17'`. Ele exige Maven, Node e dependências frontend previamente instalados; não instala nem atualiza pacotes.
+
+O perfil Maven `quality` rejeita JDK incompatível antes de compilar, exclui SQL Server JDBC e spring-dotenv do processo de testes, desabilita Flyway e usa configuração exclusiva de teste. Os testes atuais são unitários, MVC em memória, HTTP simulado e H2 em memória. Não há inicialização do Spring Boot completo, execução de migrations, consultas a bancos reais ou teste de carga nos serviços operacionais. Isso não substitui um sandbox de rede do sistema operacional para testes futuros arbitrários.
+
+Cada execução cria um diretório próprio em `backend/target/quality/<execução>` e `frontend/.tmp/quality-build/<execução>`. Executa Maven `verify` com JaCoCo e JAR candidato, Vitest com V8, TypeScript, ESLint, encoding, validação do ambiente frontend e build Vite. O processo Java usa um único fork com heap máximo de 512 MB; Vitest usa até dois workers. Um fingerprint confirma a preservação dos arquivos operacionais monitorados, incluindo JAR, `dist-prod`, configurações e o candidato anterior `build-check`.
+
+Resultados e códigos de saída ficam em `.tmp/quality/<execução>/summary.json`. Relatórios HTML: `<backendOutput>/site/jacoco/index.html` e `<frontendOutput>/coverage/index.html`. As coberturas incluem código sem testes. Pisos iniciais: backend 49% de linhas/38% de ramificações; frontend 19% de linhas/statements, 66% de ramificações e 44% de funções. Esses pisos detectam quedas relevantes na base medida; não representam cobertura completa nem uma meta final.
+
+`-Audit` acrescenta `npm audit --omit=dev --json`, sem aplicar correções. Para conferir dependências Java por versão, gere `mvn.cmd -B -ntp -f backend/pom.xml -Pquality dependency:list -DincludeScope=runtime -DoutputFile=target/quality/dependencies.txt` com JDK 17 e execute `node scripts/audit-java-dependencies.mjs`. Essa etapa consulta a API pública OSV usando somente coordenadas/versionamentos públicos das bibliotecas. Alertas não provam explorabilidade na configuração do portal e retornam código diferente de zero.
+
+## Medição do carregamento dos gráficos
+
+`frontend/scripts/measure-bundle.mjs` compara builds em `frontend/.tmp/quality-perf-before` e `frontend/.tmp/quality-perf-after`, gerados com `vite build --manifest --outDir <diretório>`. O relatório soma o fechamento de imports estáticos de cada página, sem duplicar chunks, e calcula tamanhos bruto/gzip.
+
+`node frontend/scripts/benchmark-charts.mjs` usa esses dois builds e inicia exclusivamente um servidor estático temporário em loopback/porta dinâmica e um Edge headless com perfil próprio. `QUALITY_BROWSER_PATH` permite indicar outro Chromium. Todas as APIs recebem fixtures sintéticas; DNS externo é bloqueado e requisições externas são interceptadas. Nada é enviado aos serviços do portal. O processo fecha somente o navegador que criou.
+
+O benchmark compara três repetições alternadas por build, cache desabilitado, desktop e CPU 4x/2 Mbps, com cinco gráficos reais de Coletas e 200 ms de latência simulada por resposta de API. JSON e capturas ficam em `frontend/.tmp/chart-benchmark`. Os números são medições locais com amostra pequena, não SLA de produção. Consulte `docs/qualidade-e-graficos-2026-09-10.md` para resultados, limitações e próximos pontos de investigação.
+
 ## Validação automática dos dashboards
 
 Este diretório contém a automação que compara os KPIs do SQL Server com os valores consumidos pela UI via API.
@@ -109,3 +129,12 @@ Para Gestão à Vista, a validação oficial é zero divergência: contagens pre
 - A comparação geral usa tolerância por tipo de métrica, por exemplo `%` e valores decimais; a validação XLSX vs Dashboard de Gestão à Vista usa tolerância zero nas métricas comparáveis.
 - O script trata `NULL` versus `0` para evitar falso positivo em agregações vazias.
 - A coleta do "frontend" é feita pela mesma API consumida pela UI, não por scraping.
+### Auditoria aprofundada e benchmark por página
+
+`docs/auditoria-aprofundada-2026-09-10.md` registra a segunda rodada, correções de cache/tooltips/isolamento DEV, fila de Performance, redução de consultas de autorização e lacunas remanescentes.
+
+- `node scripts/triage-java-advisories.mjs` expande os IDs do relatório OSV anterior com severidades, aliases e faixas corrigidas. Envia somente IDs públicos à OSV; não lê credenciais ou conecta ao banco. Aceita caminhos opcionais de entrada e saída.
+- Em `frontend`, `node scripts/benchmark-charts.mjs <build-antes> <build-depois> <saida> performance 5` compara cinco amostras de cada versão em desktop e CPU 4x/2 Mbps. Use `coletas 3` para a comparação de Coletas. Paths são relativos a `frontend`.
+- O argumento final `smoke` com `performance 1` valida somente o build posterior: overview simulado com HTTP 503, cinco gráficos independentes, larguras 1024/390 px e tema escuro. Resultados de smoke não devem ser usados como medição de velocidade.
+- Preserve diretórios de evidência por rodada. Os scripts abrem apenas navegador próprio e servidor de arquivos em porta dinâmica local; APIs ficam interceptadas e não chegam à operação.
+- A rodada de quatro páginas está em `docs/performance-quatro-paginas-2026-09-10.md`. O benchmark também aceita `faturamento`, `manifestos` e `executivo`, com cinco, sete e dois gráficos respectivamente; registra cada título separadamente, parâmetros e conclusão das APIs. As fixtures adicionais ficam em `frontend/scripts/benchmark-page-fixtures.mjs`. `smoke` aceita as quatro páginas; Manifestos usa resposta completa, pois seu endpoint ainda concentra todos os gráficos.

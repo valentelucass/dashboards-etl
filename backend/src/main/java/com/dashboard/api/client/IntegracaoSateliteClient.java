@@ -153,13 +153,14 @@ public class IntegracaoSateliteClient {
     }
 
     public ResponseEntity<String> buscarExecucoesSftpClientes(
-            Integer pagina, Integer tamanho, String cliente, String status, String dataInicial, String dataFinal
+            Integer pagina, Integer tamanho, String cliente, String status, String dataInicial, String dataFinal, String origem
     ) {
         MultiValueMap<String, String> parametros = new LinkedMultiValueMap<>();
         if (pagina != null) parametros.set("pagina", String.valueOf(Math.max(0, pagina)));
         if (tamanho != null) parametros.set("tamanho", String.valueOf(Math.max(1, Math.min(tamanho, 500))));
         adicionarParametroOpcional(parametros, "cliente", cliente);
         adicionarParametroOpcional(parametros, "status", status);
+        adicionarParametroOpcional(parametros, "origem", origem);
         adicionarParametroOpcional(parametros, "dataInicial", dataInicial);
         adicionarParametroOpcional(parametros, "dataFinal", dataFinal);
         URI uri = UriComponentsBuilder.fromUriString(sateliteBaseUrl + ROTA_SFTP_EXECUCOES)

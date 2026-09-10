@@ -1,6 +1,7 @@
 package com.dashboard.api.service.acesso;
 
 import com.dashboard.api.model.acesso.PermissaoEntity;
+import com.dashboard.api.dto.acesso.AcessoResolvidoDTO;
 import com.dashboard.api.model.acesso.UsuarioEntity;
 import com.dashboard.api.model.acesso.UsuarioPermissaoOverride;
 import com.dashboard.api.repository.acesso.PermissaoRepository;
@@ -44,10 +45,21 @@ public class PermissaoResolverService {
     }
 
     public Map<String, Boolean> permissoesEfetivas(UsuarioEntity usuario) {
+        return resolverAcesso(usuario).permissoes();
+    }
+
+    public AcessoResolvidoDTO resolverAcesso(UsuarioEntity usuario) {
+        String papel = papel(Objects.requireNonNull(usuario.getId(), "usuario.id é obrigatório."));
+        boolean acessoTotal = PAPEL_ADMIN_PLATAFORMA.equals(papel) || usuarioSupremo.papel().equals(papel);
+        boolean administrador = acessoTotal || PAPEL_ADMIN_ACESSO.equals(papel);
+        return new AcessoResolvidoDTO(papel, administrador, acessoTotal, resolverPermissoes(usuario, acessoTotal));
+    }
+
+    private Map<String, Boolean> resolverPermissoes(UsuarioEntity usuario, boolean acessoTotal) {
         Long usuarioId = Objects.requireNonNull(usuario.getId(), "usuario.id é obrigatório.");
         List<PermissaoEntity> catalogo = permissaoRepository.findAllByAtivoTrue();
 
-        if (ehAdminPlataforma(usuarioId) || ehDesenvolvedor(usuarioId)) {
+        if (acessoTotal) {
             return catalogoCompleto(catalogo, true);
         }
 

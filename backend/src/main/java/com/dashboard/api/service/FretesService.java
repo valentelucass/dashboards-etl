@@ -94,6 +94,15 @@ public class FretesService {
         return buscarOverview(new FiltroConsultaDTO(dataInicio, dataFim, Map.of()));
     }
 
+    /** Receita com a mesma consulta e escopo do overview, sem calcular metas não usadas pelo Executivo. */
+    public BigDecimal buscarReceitaBruta(FiltroConsultaDTO filtro) {
+        validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
+        VisaoFretesRepository.FretesOverviewProjection overview = buscarOverviewAgregado(consulta(filtro));
+        return overview == null || overview.getTotalFretes() == 0
+                ? BigDecimal.ZERO
+                : zero(overview.getReceitaBruta()).setScale(2, RoundingMode.HALF_UP);
+    }
+
     public FretesOverviewDTO buscarOverview(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
 

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from '../../charts/DashboardEChart';
 import { useEchartsTheme } from '../../charts/useEchartsTheme';
 import ChartCard from '../../shared/ChartCard';
 import TooltipKpi from '../../shared/TooltipKpi';

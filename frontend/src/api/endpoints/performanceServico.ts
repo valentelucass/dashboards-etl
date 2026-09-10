@@ -45,9 +45,10 @@ function paramsComDrilldown(
 
 export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
   return {
-    async buscarOverview(filtro: PerformanceFiltro): Promise<PerformanceOverview> {
+    async buscarOverview(filtro: PerformanceFiltro, signal?: AbortSignal): Promise<PerformanceOverview> {
       const { data } = await clienteAxios.get<PerformanceOverview>(`${basePath}/overview`, {
         params: paramsComFiltro(filtro),
+        signal,
       });
       return data;
     },
@@ -57,6 +58,7 @@ export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
       nivel: PerformanceTempoNivel,
       ano?: number | null,
       mes?: number | null,
+      signal?: AbortSignal,
     ): Promise<PerformanceSerieTemporalPoint[]> {
       const params = paramsComFiltro(filtro);
       params.set('nivel', nivel);
@@ -69,20 +71,23 @@ export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
 
       const { data } = await clienteAxios.get<PerformanceSerieTemporalPoint[]>(`${basePath}/serie-temporal`, {
         params,
+        signal,
       });
       return data;
     },
 
-    async buscarStatus(filtro: PerformanceFiltro): Promise<PerformanceStatusDistribuicao[]> {
+    async buscarStatus(filtro: PerformanceFiltro, signal?: AbortSignal): Promise<PerformanceStatusDistribuicao[]> {
       const { data } = await clienteAxios.get<PerformanceStatusDistribuicao[]>(`${basePath}/status`, {
         params: paramsComFiltro(filtro),
+        signal,
       });
       return data;
     },
 
-    async buscarHistorico(filtro: PerformanceFiltro): Promise<PerformanceHistoricoPoint[]> {
+    async buscarHistorico(filtro: PerformanceFiltro, signal?: AbortSignal): Promise<PerformanceHistoricoPoint[]> {
       const { data } = await clienteAxios.get<PerformanceHistoricoPoint[]>(`${basePath}/historico`, {
         params: paramsComFiltro(filtro),
+        signal,
       });
       return data;
     },
@@ -90,16 +95,19 @@ export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
     async buscarDrilldown(
       filtro: PerformanceFiltro,
       drilldown: PerformanceDrilldownParams,
+      signal?: AbortSignal,
     ): Promise<PerformanceDrilldownPoint[]> {
       const { data } = await clienteAxios.get<PerformanceDrilldownPoint[]>(`${basePath}/drilldown`, {
         params: paramsComDrilldown(filtro, drilldown),
+        signal,
       });
       return data;
     },
 
-    async buscarAging(filtro: PerformanceFiltro): Promise<PerformanceAgingPoint[]> {
+    async buscarAging(filtro: PerformanceFiltro, signal?: AbortSignal): Promise<PerformanceAgingPoint[]> {
       const { data } = await clienteAxios.get<PerformanceAgingPoint[]>(`${basePath}/aging`, {
         params: paramsComFiltro(filtro),
+        signal,
       });
       return data;
     },
@@ -109,6 +117,7 @@ export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
       pagina: number,
       tamanhoPagina: number,
       filtrosTabela?: TableApiFilters,
+      signal?: AbortSignal,
     ): Promise<PerformanceTabelaPage> {
       const params = paramsComFiltro(filtro);
       aplicarFiltrosTabelaParams(params, filtrosTabela);
@@ -117,6 +126,7 @@ export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
 
       const { data } = await clienteAxios.get<PerformanceTabelaPage>(`${basePath}/tabela`, {
         params,
+        signal,
       });
       return data;
     },
@@ -126,6 +136,7 @@ export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
       pagina: number,
       tamanhoPagina: number,
       filtrosTabela?: TableApiFilters,
+      signal?: AbortSignal,
     ): Promise<PaginacaoResponse<PerformanceTabelaRow>> {
       return buscarTabelaPaginada<PerformanceTabelaRow, PerformanceFiltro>(
         `${basePath}/tabela/paginada`,
@@ -133,6 +144,9 @@ export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
         pagina,
         tamanhoPagina,
         filtrosTabela,
+        undefined,
+        undefined,
+        signal,
       );
     },
 

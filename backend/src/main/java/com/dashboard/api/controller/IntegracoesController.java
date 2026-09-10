@@ -120,10 +120,11 @@ public class IntegracoesController {
             @RequestParam(required = false) String cliente,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String dataInicial,
-            @RequestParam(required = false) String dataFinal
+            @RequestParam(required = false) String dataFinal,
+            @RequestParam(required = false) String origem
     ) {
         return encaminharJson(integracoesService.consultarExecucoesSftpClientes(
-                pagina, tamanho, cliente, status, dataInicial, dataFinal
+                pagina, tamanho, cliente, status, dataInicial, dataFinal, origem
         ));
     }
 

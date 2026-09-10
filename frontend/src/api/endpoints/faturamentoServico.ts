@@ -36,35 +36,36 @@ export function mapFretesOverviewToFaturamento(data: FaturamentoOverview): Fatur
   return { ...data };
 }
 
-export async function buscarFaturamentoOverview(filtro: FaturamentoFiltro): Promise<FaturamentoOverview> {
-  return mapFretesOverviewToFaturamento(await buscarFretesOverview(filtro));
+export async function buscarFaturamentoOverview(filtro: FaturamentoFiltro, signal?: AbortSignal): Promise<FaturamentoOverview> {
+  return mapFretesOverviewToFaturamento(await buscarFretesOverview(filtro, signal));
 }
 
-export async function buscarFaturamentoSerie(filtro: FaturamentoFiltro): Promise<FaturamentoTrendPoint[]> {
-  return buscarFretesSerie(filtro);
+export async function buscarFaturamentoSerie(filtro: FaturamentoFiltro, signal?: AbortSignal): Promise<FaturamentoTrendPoint[]> {
+  return buscarFretesSerie(filtro, signal);
 }
 
 export async function buscarFaturamentoTopClientes(
   filtro: FaturamentoFiltro,
   limite = 10,
+  signal?: AbortSignal,
 ): Promise<FaturamentoClienteRanking[]> {
-  return buscarFretesTopClientes(filtro, limite);
+  return buscarFretesTopClientes(filtro, limite, signal);
 }
 
-export async function buscarFaturamentoMixDocumental(filtro: FaturamentoFiltro): Promise<FaturamentoDocumentMix[]> {
-  return buscarFretesMixDocumental(filtro);
+export async function buscarFaturamentoMixDocumental(filtro: FaturamentoFiltro, signal?: AbortSignal): Promise<FaturamentoDocumentMix[]> {
+  return buscarFretesMixDocumental(filtro, signal);
 }
 
-export async function buscarFaturamentoGraficos(filtro: FaturamentoFiltro): Promise<FaturamentoCharts> {
-  return buscarFretesGraficos(filtro);
+export async function buscarFaturamentoGraficos(filtro: FaturamentoFiltro, signal?: AbortSignal): Promise<FaturamentoCharts> {
+  return buscarFretesGraficos(filtro, signal);
 }
 
-export async function buscarFaturamentoMetas(filtro: FaturamentoFiltro): Promise<FaturamentoGoalSummary> {
-  return buscarFretesMetas(filtro);
+export async function buscarFaturamentoMetas(filtro: FaturamentoFiltro, signal?: AbortSignal): Promise<FaturamentoGoalSummary> {
+  return buscarFretesMetas(filtro, signal);
 }
 
-export async function buscarFaturamentoMetasConfiguracoes(ano: number, mes: number): Promise<FaturamentoGoalConfig[]> {
-  return buscarFretesMetasConfiguracoes(ano, mes);
+export async function buscarFaturamentoMetasConfiguracoes(ano: number, mes: number, signal?: AbortSignal): Promise<FaturamentoGoalConfig[]> {
+  return buscarFretesMetasConfiguracoes(ano, mes, signal);
 }
 
 export async function salvarFaturamentoMetaConfiguracao(payload: FaturamentoGoalConfigPayload): Promise<FaturamentoGoalConfig> {
@@ -84,12 +85,13 @@ export async function removerFaturamentoMetaConfiguracao(branchId: string, ano: 
 export async function buscarFaturamentoTabela(
   filtro: FaturamentoFiltro,
   limite = 100,
+  signal?: AbortSignal,
 ): Promise<FaturamentoResumoRow[]> {
-  return buscarFretesTabela(filtro, limite);
+  return buscarFretesTabela(filtro, limite, signal);
 }
 
-export async function buscarFaturamentoTabelaTotal(filtro: FaturamentoFiltro): Promise<number> {
-  return buscarFretesTabelaTotal(filtro);
+export async function buscarFaturamentoTabelaTotal(filtro: FaturamentoFiltro, signal?: AbortSignal): Promise<number> {
+  return buscarFretesTabelaTotal(filtro, signal);
 }
 
 export async function buscarFaturamentoTabelaPaginada(
@@ -97,8 +99,9 @@ export async function buscarFaturamentoTabelaPaginada(
   pagina: number,
   tamanhoPagina: number,
   filtrosTabela?: TableApiFilters,
+  signal?: AbortSignal,
 ): Promise<PaginacaoResponse<FaturamentoResumoRow>> {
-  return buscarFretesTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela);
+  return buscarFretesTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela, signal);
 }
 
 export async function exportarFaturamentoCsv(filtro: FaturamentoFiltro, filtrosTabela?: TableApiFilters): Promise<void> {

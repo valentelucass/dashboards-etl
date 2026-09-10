@@ -74,6 +74,7 @@ export interface IntegracoesAuditoriaResponse {
 
 export interface WorkSftpClienteStatus {
   cliente: string;
+  origemComprovantes?: string | null;
   inicioUltimoCiclo: string | null;
   fimUltimoCiclo: string | null;
   conexao: string;
@@ -144,9 +145,16 @@ export async function buscarIntegracoesEvolucaoDiaria(
   return data;
 }
 
+function identificarOrigemWorkSftp(ciclo: WorkSftpClienteStatus): WorkSftpClienteStatus {
+  // Estes dois endpoints consultam exclusivamente a auditoria do WORK-SFTP-CLIENTES.
+  // Versões anteriores não serializam a origem; o escopo da rota identifica SFTP.
+  // Preserva null e valores explícitos: não inferir origem pelo nome do cliente.
+  return ciclo.origemComprovantes === undefined ? { ...ciclo, origemComprovantes: 'SFTP' } : ciclo;
+}
+
 export async function buscarStatusWorkSftpClientes(): Promise<WorkSftpClienteStatus[]> {
   const { data } = await clienteAxios.get<WorkSftpClienteStatus[]>('/api/painel/integracoes/vedacit-sftp/clientes');
-  return data;
+  return data.map(identificarOrigemWorkSftp);
 }
 
 export async function buscarExecucoesWorkSftpClientes(
@@ -156,6 +164,7 @@ export async function buscarExecucoesWorkSftpClientes(
   dataFim: string,
   cliente?: string,
   status?: string,
+  origem?: string,
 ): Promise<WorkSftpExecucoesResponse> {
   const params = new URLSearchParams();
   params.set('pagina', String(Math.max(0, pagina - 1)));
@@ -164,10 +173,11 @@ export async function buscarExecucoesWorkSftpClientes(
   params.set('dataFinal', dataFim);
   if (cliente) params.set('cliente', cliente);
   if (status) params.set('status', status);
+  if (origem) params.set('origem', origem);
   const { data } = await clienteAxios.get<WorkSftpExecucoesResponse>(
     '/api/painel/integracoes/vedacit-sftp/execucoes', { params },
   );
-  return data;
+  return { ...data, itens: data.itens.map(identificarOrigemWorkSftp) };
 }
 
 export async function exportarIntegracoesCsv(

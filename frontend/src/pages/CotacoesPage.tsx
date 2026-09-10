@@ -1,6 +1,7 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from '../components/charts/DashboardEChart';
 import { Building2, ChevronDown, ChevronUp, Table2, UserRound, UsersRound } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
@@ -583,7 +584,7 @@ function buildSerieOption(buckets: TrendBucket[], isDark: boolean): EChartsOptio
         const bucket = typeof item?.dataIndex === 'number' ? buckets[item.dataIndex] : null;
         if (!bucket) return '';
         return [
-          `<strong>${bucket.label}</strong>`,
+          `<strong>${escapeHtml(bucket.label)}</strong>`,
           `Quantidade total: ${formatarNumero(bucket.cotacoes)}`,
           `Convertidas: ${formatarNumero(bucket.convertidas)}`,
           `Reprovadas: ${formatarNumero(bucket.reprovadas)}`,
@@ -662,7 +663,7 @@ function buildTrechosOption(entries: CotacoesAgrupamento[], selectedName: string
         const original = typeof item?.dataIndex === 'number' ? dados[item.dataIndex] : null;
         if (!original) return '';
         return [
-          `<strong>${original.nome}</strong>`,
+          `<strong>${escapeHtml(original.nome)}</strong>`,
           `${metricLabel}: ${formatTrechoMetricValue(getTrechoMetricValue(original, metric))}`,
           `Potencial: ${formatarMoeda(original.valorPotencial)}`,
           `Convertido: ${formatarMoeda(original.valorConvertido)}`,
@@ -711,7 +712,7 @@ function buildConversionOption(buckets: TrendBucket[], metric: ConversionMetric,
         const bucket = typeof item?.dataIndex === 'number' ? buckets[item.dataIndex] : null;
         if (!bucket) return '';
         return [
-          `<strong>${bucket.label}</strong>`,
+          `<strong>${escapeHtml(bucket.label)}</strong>`,
           `Taxa: ${formatarPorcentagem(Number(item?.value ?? 0), 1)}`,
           `Potencial: ${formatarMoeda(bucket.valorPotencial)}`,
           `Convertido: ${formatarMoeda(bucket.valorConvertido)}`,
@@ -767,7 +768,7 @@ function buildMotivosOption(entries: CotacoesMotivoPerda[], selectedName: string
         const original = sorted.find((entrada) => entrada.motivo === item.name);
         if (!original) return '';
         return [
-          `<strong>${original.motivo}</strong>`,
+          `<strong>${escapeHtml(original.motivo)}</strong>`,
           `Quantidade: ${formatarNumero(original.total)}`,
           `Sobre reprovadas: ${formatarPorcentagem(percentual(original.total, total), 1)}`,
         ].join('<br/>');

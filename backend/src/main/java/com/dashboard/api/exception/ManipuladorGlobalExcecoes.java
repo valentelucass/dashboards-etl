@@ -10,6 +10,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.TransactionException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,6 +29,14 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class ManipuladorGlobalExcecoes {
 
     private static final Logger log = LoggerFactory.getLogger(ManipuladorGlobalExcecoes.class);
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<RespostaErroPadrao> handleUnreadableRequest(HttpMessageNotReadableException ex) {
+        // Parser exceptions can contain the submitted payload; never log it here.
+        log.warn("Corpo da requisição ausente ou inválido.");
+        return ResponseEntity.badRequest().body(criarResposta(
+                HttpStatus.BAD_REQUEST, "Bad Request", "Corpo da requisição ausente ou inválido."));
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<RespostaErroPadrao> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {

@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useEffect } from 'react';
 import type { EChartsOption } from 'echarts';
 import ChartWrapper from '../components/charts/ChartWrapper';
@@ -51,8 +52,8 @@ function valorTooltip(param: TooltipParam): number {
 function formatarTooltipFinanceiro(params: unknown) {
   const itens = normalizarTooltipParams(params);
   const titulo = itens[0]?.axisValueLabel ?? itens[0]?.axisValue ?? '';
-  const linhas = itens.map((item) => `${item.marker ?? ''}${item.seriesName ?? ''}: ${formatarMoeda(valorTooltip(item))}`);
-  return [titulo, ...linhas].filter(Boolean).join('<br/>');
+  const linhas = itens.map((item) => `${item.marker ?? ''}${escapeHtml(item.seriesName ?? '')}: ${formatarMoeda(valorTooltip(item))}`);
+  return [escapeHtml(titulo), ...linhas].filter(Boolean).join('<br/>');
 }
 
 function formatarTooltipExecutivoMisto(params: unknown) {
@@ -65,9 +66,9 @@ function formatarTooltipExecutivoMisto(params: unknown) {
       ? formatarNumero(valor)
       : formatarMoeda(valor);
 
-    return `${item.marker ?? ''}${nomeSerie}: ${valorFormatado}`;
+    return `${item.marker ?? ''}${escapeHtml(nomeSerie)}: ${valorFormatado}`;
   });
-  return [titulo, ...linhas].filter(Boolean).join('<br/>');
+  return [escapeHtml(titulo), ...linhas].filter(Boolean).join('<br/>');
 }
 
 const CSV_SEPARATOR = ';';

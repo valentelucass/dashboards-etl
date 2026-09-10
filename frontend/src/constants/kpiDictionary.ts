@@ -797,6 +797,36 @@ export const KpiDictionary = {
   },
 
   integracoes: {
+    origemComprovantesCiclo: {
+      titulo: 'Origem dos comprovantes',
+      descricao: 'De onde o processo busca os comprovantes de entrega: arquivos no SFTP ou consulta à API ESL.',
+      calculo: 'Origem informada pela auditoria do processo. Quando uma versão anterior da API não envia esse campo, SFTP é identificado pelo histórico exclusivo do processo que busca arquivos no SFTP.',
+      observacao: 'Identifica onde este processo busca os comprovantes, mesmo quando nenhum é enviado no ciclo. Não identifica a origem histórica do XML nem o canal de envio ao cliente. Origem explicitamente desconhecida continua como Não informada. Ciclos de outros processos via API ESL ainda não estão disponíveis neste histórico.',
+    },
+    arquivosOrigemCiclo: {
+      titulo: 'Arquivos encontrados na origem',
+      descricao: 'Reconhecidos são arquivos de comprovante cuja identificação passou pelas verificações do inventário SFTP. Rejeitados são entradas recusadas por nome, tamanho, tipo ou estabilidade do upload.',
+      calculo: 'Contagem de arquivos reconhecidos e rejeitados na varredura realizada naquele ciclo, antes da seleção de NF-es para envio.',
+      observacao: 'Pode incluir comprovantes já enviados em ciclos anteriores e mais de um arquivo para a mesma NF-e. Reconhecido não significa enviado nem garante que o conteúdo poderá ser lido e aceito pelo cliente.',
+    },
+    processamentoComprovantesCiclo: {
+      titulo: 'Resultado deste ciclo',
+      descricao: 'NF-es avaliadas são as selecionadas para tratamento no ciclo. Enviados são comprovantes cujo tratamento terminou com sucesso. Pendentes são NF-es que continuam sem conclusão, por exemplo por arquivo indisponível ou documento ocupado por outro processo.',
+      calculo: 'Contagens registradas durante o ciclo: selecionados, enviados e pendentes. Itens ignorados ou com erro também podem participar dos selecionados.',
+      observacao: '1 NF-e avaliada, 0 comprovantes enviados e 1 NF-e pendente significa que o ciclo analisou uma nota, mas não concluiu seu comprovante. Um ciclo concluído pode deixar pendências; sucesso pode incluir confirmação de duplicidade pelo destino.',
+    },
+    filaComprovantesCiclo: {
+      titulo: 'Pendências ao final do ciclo',
+      descricao: 'Na fila são NF-es distintas ainda elegíveis na fila normal. Bloqueados são registros impedidos de reenvio por problema de origem ou recusa do destino. Sem confirmação são registros com timeout cujo envio pode ter sido recebido pelo cliente.',
+      calculo: 'Saldo da fila normal referente ao inventário do ciclo; bloqueios e timeouts são contagens acumuladas dos registros ativos do cliente, capturadas ao final da execução.',
+      observacao: 'Esses números não devem ser somados: usam critérios e unidades diferentes. Não representam novos erros daquele ciclo. Bloqueios e envios sem confirmação ficam fora do reenvio automático; a fila técnica é tratada separadamente.',
+    },
+    agendaComprovantesCiclo: {
+      titulo: 'Horários do processo',
+      descricao: 'Última execução é o término do ciclo auditado. Próximo ciclo é uma estimativa, calculada a partir desse término.',
+      calculo: 'Próximo ciclo estimado = término do último ciclo + 30 minutos.',
+      observacao: 'A estimativa não confirma que o processo está ligado ou agendado neste momento. Uma parada manual pode impedir a execução no horário exibido.',
+    },
     volumeOperacional: {
       titulo: 'Volume Operacional',
       descricao: 'Quantidade total de registros de integração no período selecionado.',
@@ -828,9 +858,9 @@ export const KpiDictionary = {
         'O agrupamento diário e a classificação de sucesso ou erro são calculados pelo microsserviço Satélite e respeitam os destinos selecionados no filtro Integração.',
     },
     ciclosSftpVedacit: {
-      titulo: 'Ciclos SFTP Vedacit',
+      titulo: 'Ciclos de busca de comprovantes',
       descricao: 'Situação mais recente e histórico paginado do worker que lê comprovantes no SFTP Vedacit.',
-      calculo: 'Valores registrados pelo ciclo do worker: inventário, seleção, envios, pendências, saldo, bloqueios, timeouts e duração.',
+      calculo: 'Arquivos reconhecidos/rejeitados na origem; NF-es avaliadas, comprovantes enviados e NF-es pendentes no ciclo; saldo, bloqueios e envios sem confirmação capturados ao final.',
       observacao:
         'A fonte é a auditoria técnica do Satélite. O estado waiting restart do PM2 é esperado entre ciclos; a próxima execução é estimada como término do último ciclo mais 30 minutos.',
     },

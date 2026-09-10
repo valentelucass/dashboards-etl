@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './DashboardEChart';
 import ChartCard from '../shared/ChartCard';
 import type { ChartDictionaryKey } from '../../constants/chartDictionary';
 import { useEchartsTheme } from './useEchartsTheme';

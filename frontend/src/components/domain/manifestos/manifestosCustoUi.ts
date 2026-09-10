@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../utils/escapeHtml';
 import type { EChartsOption } from 'echarts';
 import type { ManifestosCustosEvolucao } from '../../../types/manifestos';
 import { buildBaseLineOption, getEchartsThemeTokens } from '../../../utils/echartsBuilders';
@@ -107,10 +108,10 @@ export function buildManifestosCustoEvolutionOption(
               value?: number | { value?: number };
             }>
           : [];
-        const data = items[0]?.axisValue ? `<strong>${formatarDataCurta(items[0].axisValue)}</strong>` : '';
+        const data = items[0]?.axisValue ? `<strong>${escapeHtml(formatarDataCurta(items[0].axisValue))}</strong>` : '';
         const valores = items.map((item) => {
           const valor = typeof item.value === 'object' ? item.value?.value : item.value;
-          return `${item.marker ?? ''}${item.seriesName ?? ''}: ${formatarMoeda(Number(valor ?? 0))}`;
+          return `${item.marker ?? ''}${escapeHtml(item.seriesName ?? '')}: ${formatarMoeda(Number(valor ?? 0))}`;
         });
         return [data, ...valores].filter(Boolean).join('<br/>');
       },

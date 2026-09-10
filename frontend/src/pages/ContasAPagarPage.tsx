@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -135,7 +136,7 @@ export default function ContasAPagarPage() {
       trigger: 'axis',
       formatter: (params: unknown) => {
         const itens = params as { marker?: string; seriesName: string; value: number; name: string }[];
-        return [itens[0]?.name ?? '', ...itens.map((item) => `${item.marker ?? ''}${item.seriesName}: ${formatarMoeda(Number(item.value ?? 0))}`)].join('<br/>');
+        return [escapeHtml(itens[0]?.name), ...itens.map((item) => `${item.marker ?? ''}${escapeHtml(item.seriesName)}: ${formatarMoeda(Number(item.value ?? 0))}`)].join('<br/>');
       },
     },
     xAxis: { type: 'category', data: (serie.data ?? []).map((item) => item.month), axisLabel: { hideOverlap: true } },
@@ -159,7 +160,7 @@ export default function ContasAPagarPage() {
       formatter: (params: unknown) => {
         const item = (params as { name: string; value: number }[])[0];
         const ponto = dados.find((dado) => dado.label === item?.name);
-        return `${item?.name ?? ''}<br/>${formatarValorMetrica(Number(item?.value ?? 0), metrica)}<br/>Títulos: ${ponto?.titulos.toLocaleString('pt-BR') ?? '0'}`;
+        return `${escapeHtml(item?.name ?? '')}<br/>${formatarValorMetrica(Number(item?.value ?? 0), metrica)}<br/>Títulos: ${ponto?.titulos.toLocaleString('pt-BR') ?? '0'}`;
       },
     },
     series: [{ type: 'bar', data: dados.map((item) => item.valor).reverse(), itemStyle: { color: tokens.palette[0] } }],

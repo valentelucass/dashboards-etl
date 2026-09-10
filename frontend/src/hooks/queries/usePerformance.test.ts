@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { performanceHistoricoQueryKey } from './usePerformance';
 
 describe('performanceHistoricoQueryKey', () => {
+  it('isola o histórico quando muda o parceiro logístico', () => {
+    const filtro = { dataInicio: '2026-08-01', dataFim: '2026-08-31' };
+    expect(performanceHistoricoQueryKey({ ...filtro, parceirosLogisticos: ['A'] }, 3))
+      .not.toEqual(performanceHistoricoQueryKey({ ...filtro, parceirosLogisticos: ['B'] }, 3));
+  });
   it('inclui periodo e datas para invalidar cache ao trocar dropdown', () => {
     const key3Meses = performanceHistoricoQueryKey({
       dataInicio: '2026-03-01',

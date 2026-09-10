@@ -1,3 +1,4 @@
+import { escapeHtml } from './escapeHtml';
 import type { EChartsOption } from 'echarts';
 import { buildBaseBarOption, getEchartsThemeTokens } from './echartsBuilders';
 import { getGoalToneStyle, resolverTomMetaPorValor, type GoalMode } from './indicadoresGestaoVistaUi';
@@ -203,7 +204,7 @@ export function buildMetaComparisonOption({
         return items
           .map((item) => {
             const point = item as { name: string; value: number };
-            return `<strong>${point.name}</strong><br/>${valueFormatter(Number(point.value))}`;
+            return `<strong>${escapeHtml(point.name)}</strong><br/>${valueFormatter(Number(point.value))}`;
           })
           .join('<br/><br/>');
       },

@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -120,7 +121,7 @@ export default function FaturasPorClientePage() {
     yAxis: { type: 'value' },
     tooltip: { trigger: 'axis', formatter: (items: unknown) => {
       const item = (items as Array<{ name: string; value: number }>)[0];
-      return `${item?.name ?? ''}<br/>${formatarMetrica(Number(item?.value ?? 0), serieMetrica)}`;
+      return `${escapeHtml(item?.name ?? '')}<br/>${formatarMetrica(Number(item?.value ?? 0), serieMetrica)}`;
     } },
     series: [{ name: METRICAS_SERIE.find((item) => item.value === serieMetrica)?.label, type: 'bar', data: (serie.data ?? []).map((item) => item.valor), itemStyle: { color: tokens.palette[0] } }],
   }), [isDark, serie.data, serieMetrica, tokens.palette]);
@@ -135,7 +136,7 @@ export default function FaturasPorClientePage() {
     yAxis: agingFaixa ? { type: 'category', data: [...labelsAging].reverse(), axisLabel: { formatter: abreviar } } : { type: 'value' },
     tooltip: { trigger: agingFaixa ? 'axis' : 'item', formatter: (item: unknown) => {
       const point = Array.isArray(item) ? item[0] : item as { name?: string; value?: number };
-      return `${point?.name ?? ''}<br/>${agingMetrica === 'valor' ? formatarMoeda(Number(point?.value ?? 0)) : Number(point?.value ?? 0).toLocaleString('pt-BR')}`;
+      return `${escapeHtml(point?.name ?? '')}<br/>${agingMetrica === 'valor' ? formatarMoeda(Number(point?.value ?? 0)) : Number(point?.value ?? 0).toLocaleString('pt-BR')}`;
     } },
     series: [{ type: 'bar', data: dadosAging.map((item) => agingMetrica === 'valor' ? item.valor : ('registros' in item ? item.registros : item.titulos)).reverse(), itemStyle: { color: tokens.palette[1] } }],
   }), [agingFaixa, agingMetrica, dadosAging, isDark, labelsAging, tokens.palette]);
@@ -154,7 +155,7 @@ export default function FaturasPorClientePage() {
     tooltip: { trigger: 'axis', formatter: (items: unknown) => {
       const item = (items as Array<{ name: string; value: number }>)[0];
       const point = (topClientes.data ?? []).find((dado) => dado.label === item?.name);
-      return `${item?.name ?? ''}<br/>${formatarMetrica(Number(item?.value ?? 0), clienteMetrica)}<br/>Participação acumulada: ${point?.percentualAcumulado.toFixed(1) ?? '0'}%`;
+      return `${escapeHtml(item?.name ?? '')}<br/>${formatarMetrica(Number(item?.value ?? 0), clienteMetrica)}<br/>Participação acumulada: ${point?.percentualAcumulado.toFixed(1) ?? '0'}%`;
     } },
     series: [
       { type: 'bar', data: (topClientes.data ?? []).map((item) => item.valor), itemStyle: { color: tokens.palette[2] } },

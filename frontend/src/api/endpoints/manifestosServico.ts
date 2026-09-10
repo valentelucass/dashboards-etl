@@ -19,23 +19,26 @@ import type {
 } from '../../types/manifestos';
 import type { TableApiFilters } from '../../types/tableFilters';
 
-export async function buscarManifestosOverview(filtro: ManifestosFiltro): Promise<ManifestosOverview> {
+export async function buscarManifestosOverview(filtro: ManifestosFiltro, signal?: AbortSignal): Promise<ManifestosOverview> {
   const { data } = await clienteAxios.get<ManifestosOverview>('/api/painel/manifestos', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }
 
-export async function buscarManifestosSerie(filtro: ManifestosFiltro): Promise<ManifestosTrendPoint[]> {
+export async function buscarManifestosSerie(filtro: ManifestosFiltro, signal?: AbortSignal): Promise<ManifestosTrendPoint[]> {
   const { data } = await clienteAxios.get<ManifestosTrendPoint[]>('/api/painel/manifestos/serie', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }
 
-export async function buscarManifestosGraficos(filtro: ManifestosFiltro): Promise<ManifestosCharts> {
+export async function buscarManifestosGraficos(filtro: ManifestosFiltro, signal?: AbortSignal): Promise<ManifestosCharts> {
   const { data } = await clienteAxios.get<ManifestosCharts>('/api/painel/manifestos/graficos', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data;
 }
@@ -45,6 +48,7 @@ export async function buscarManifestosPerformance(
   nivel: ManifestosTempoNivel,
   ano?: number | null,
   mes?: number | null,
+  signal?: AbortSignal,
 ): Promise<PerformanceVeiculosDados> {
   const params = montarQueryParams(filtro);
   params.set('nivel', nivel);
@@ -57,6 +61,7 @@ export async function buscarManifestosPerformance(
 
   const { data } = await clienteAxios.get<PerformanceVeiculosDados>('/api/painel/manifestos/performance', {
     params,
+    signal,
   });
   return data;
 }
@@ -65,9 +70,11 @@ export async function buscarManifestosMetas(
   branchId: string,
   ano: number,
   mes: number,
+  signal?: AbortSignal,
 ): Promise<ManifestosCostGoalConfig[]> {
   const { data } = await clienteAxios.get<ManifestosCostGoalConfig[]>('/api/painel/manifestos/metas', {
     params: { branchId, ano, mes },
+    signal,
   });
   return data;
 }
@@ -150,17 +157,19 @@ export async function importarManifestosMetas(
 
 export async function buscarManifestosTabela(
   filtro: ManifestosFiltro,
-  limite = 100
+  limite = 100,
+  signal?: AbortSignal,
 ): Promise<ManifestoResumoRow[]> {
   const params = montarQueryParams(filtro);
   params.set('limite', String(limite));
-  const { data } = await clienteAxios.get<ManifestoResumoRow[]>('/api/painel/manifestos/tabela', { params });
+  const { data } = await clienteAxios.get<ManifestoResumoRow[]>('/api/painel/manifestos/tabela', { params, signal });
   return data;
 }
 
-export async function buscarManifestosTabelaTotal(filtro: ManifestosFiltro): Promise<number> {
+export async function buscarManifestosTabelaTotal(filtro: ManifestosFiltro, signal?: AbortSignal): Promise<number> {
   const { data } = await clienteAxios.get<{ total: number }>('/api/painel/manifestos/tabela/total', {
     params: montarQueryParams(filtro),
+    signal,
   });
   return data.total;
 }
@@ -172,6 +181,7 @@ export async function buscarManifestosTabelaPaginada(
   filtrosTabela?: TableApiFilters,
   sortField?: string,
   sortDirection?: 'asc' | 'desc',
+  signal?: AbortSignal,
 ): Promise<PaginacaoResponse<ManifestoResumoRow>> {
   return buscarTabelaPaginada(
     '/api/painel/manifestos/tabela/paginada',
@@ -181,6 +191,7 @@ export async function buscarManifestosTabelaPaginada(
     filtrosTabela,
     sortField,
     sortDirection,
+    signal,
   );
 }
 

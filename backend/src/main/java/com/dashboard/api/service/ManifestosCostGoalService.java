@@ -252,7 +252,7 @@ public class ManifestosCostGoalService {
                 : contarDiasUteis(inicioCompetencia, referenciaLimitada);
         int diasUteisRestantes = Math.max(0, totalDiasUteis - diasUteisDecorridos);
 
-        BigDecimal custoFechado = buscarCustoFechado(filtro, referenciaFechada);
+        BigDecimal custoFechado = buscarCustoFechado(filtro, referenciaFechada, custoReal);
         BigDecimal custoMedioDiarioReal = dividir(custoFechado, Math.max(1, diasUteisDecorridos));
         BigDecimal tendenciaCusto = custoReal
                 .add(custoMedioDiarioReal.multiply(BigDecimal.valueOf(diasUteisRestantes)))
@@ -501,12 +501,15 @@ public class ManifestosCostGoalService {
         );
     }
 
-    private BigDecimal buscarCustoFechado(FiltroConsultaDTO filtro, LocalDate referenciaFechada) {
+    private BigDecimal buscarCustoFechado(FiltroConsultaDTO filtro, LocalDate referenciaFechada, BigDecimal custoRealPeriodo) {
         LocalDate fimFechado = referenciaFechada.isAfter(filtro.dataFim())
                 ? filtro.dataFim()
                 : referenciaFechada;
         if (fimFechado.isBefore(filtro.dataInicio())) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        if (fimFechado.equals(filtro.dataFim())) {
+            return custoRealPeriodo;
         }
         return performanceRepository.buscarCustoTotal(new FiltroConsultaDTO(
                 filtro.dataInicio(),

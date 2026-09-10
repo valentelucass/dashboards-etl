@@ -22,6 +22,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +31,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.mockingDetails;
 
 @ExtendWith(MockitoExtension.class)
 class FretesServiceTest {
@@ -89,6 +93,28 @@ class FretesServiceTest {
         assertThat(overview.faturamentoDiario().faturamentoFaltante()).isEqualByComparingTo("3569720.00");
         assertThat(overview.faturamentoDiario().tendenciaFaturamento()).isEqualByComparingTo("7802760.00");
         assertThat(overview.faturamentoDiario().tendenciaPercentual()).isEqualByComparingTo("-0.071100");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"2,4830280.005", "2,0", "0,99", "2,-15.555"})
+    void receitaExecutivaPreservaConsultaFiltrosEValorSemConsultarMetas(int total, String receita) {
+        stubOverview(overview(total, receita, receita, total));
+        FiltroConsultaDTO filtro = new FiltroConsultaDTO(LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 19),
+                Map.of("filiais", List.of("SPO"), "status", List.of("Autorizado"),
+                        "pagadores", List.of("Cliente"), "responsaveis", List.of("REC")));
+        BigDecimal receitaOriginal = service.buscarOverview(filtro).receitaBruta();
+        var consultasOriginais = List.copyOf(mockingDetails(repository).getInvocations());
+        Object[] parametrosOriginais = consultasOriginais.stream()
+                .filter(i -> i.getMethod().getName().equals("buscarOverviewAgregado"))
+                .findFirst().orElseThrow().getArguments();
+        assertThat(consultasOriginais.size()).isGreaterThan(1);
+        clearInvocations(repository);
+
+        assertThat(service.buscarReceitaBruta(filtro)).isEqualTo(receitaOriginal);
+        var consultasNovas = List.copyOf(mockingDetails(repository).getInvocations());
+        assertThat(consultasNovas).hasSize(1);
+        assertThat(consultasNovas.get(0).getMethod().getName()).isEqualTo("buscarOverviewAgregado");
+        assertThat(consultasNovas.get(0).getArguments()).containsExactly(parametrosOriginais);
     }
 
     @Test

@@ -6,6 +6,7 @@ import {
   buscarExecucoesWorkSftpClientes,
   buscarStatusWorkSftpClientes,
   exportarIntegracoesCsv,
+  type WorkSftpClienteStatus,
 } from './integracoesServico';
 import { baixarCsvComParametros } from '../downloadCsv';
 
@@ -22,6 +23,14 @@ vi.mock('../downloadCsv', () => ({
 const clienteMock = clienteAxios as unknown as {
   get: ReturnType<typeof vi.fn>;
 };
+
+const cicloSftp: WorkSftpClienteStatus = {
+  cliente: 'VEDACIT', inicioUltimoCiclo: '2026-09-09T23:34:02', fimUltimoCiclo: '2026-09-09T23:35:00',
+  conexao: 'OK', statusCiclo: 'CONCLUIDO', arquivosValidos: 3058, arquivosRejeitados: 37,
+  selecionados: 1, enviados: 0, pendentes: 1, saldo: 1, bloqueios: 780, timeoutsAmbiguos: 18,
+  duracaoMs: 58000, proximaExecucaoEstimada: '2026-09-10T00:05:00',
+};
+const paginacaoSftp = { pagina: 1, tamanho: 25, totalElementos: 408, totalPaginas: 17, primeiraPagina: false, ultimaPagina: false };
 
 describe('integracoesServico', () => {
   beforeEach(() => {
@@ -167,10 +176,12 @@ describe('integracoesServico', () => {
   });
 
   it('consulta resumo e historico SFTP com paginacao e filtros server-side', async () => {
+    clienteMock.get.mockResolvedValueOnce({ data: [cicloSftp] });
     await buscarStatusWorkSftpClientes();
     expect(clienteMock.get).toHaveBeenCalledWith('/api/painel/integracoes/vedacit-sftp/clientes');
 
-    await buscarExecucoesWorkSftpClientes(2, 25, '2026-08-01', '2026-08-20', 'VEDACIT', 'CONCLUIDO');
+    clienteMock.get.mockResolvedValueOnce({ data: { itens: [cicloSftp], paginacao: paginacaoSftp } });
+    await buscarExecucoesWorkSftpClientes(2, 25, '2026-08-01', '2026-08-20', 'VEDACIT', 'CONCLUIDO', 'SFTP');
     expect(clienteMock.get).toHaveBeenLastCalledWith('/api/painel/integracoes/vedacit-sftp/execucoes', {
       params: expect.any(URLSearchParams),
     });
@@ -179,6 +190,32 @@ describe('integracoesServico', () => {
     expect(params.get('tamanho')).toBe('25');
     expect(params.get('cliente')).toBe('VEDACIT');
     expect(params.get('status')).toBe('CONCLUIDO');
+    expect(params.get('origem')).toBe('SFTP');
+  });
+
+  it('identifica SFTP em respostas antigas das rotas exclusivas sem alterar contagens, paginação ou objeto recebido', async () => {
+    clienteMock.get.mockResolvedValueOnce({ data: [cicloSftp] });
+    clienteMock.get.mockResolvedValueOnce({ data: { itens: [cicloSftp], paginacao: paginacaoSftp } });
+
+    expect(await buscarStatusWorkSftpClientes()).toEqual([{ ...cicloSftp, origemComprovantes: 'SFTP' }]);
+    const historico = await buscarExecucoesWorkSftpClientes(2, 25, '2026-09-01', '2026-09-10', undefined, undefined, 'SFTP');
+    expect(historico).toEqual({ itens: [{ ...cicloSftp, origemComprovantes: 'SFTP' }], paginacao: paginacaoSftp });
+    expect(cicloSftp).not.toHaveProperty('origemComprovantes');
+  });
+
+  it.each(['SFTP', 'API_ESL', 'OUTRA_ORIGEM', null])('preserva origem explícita %s sem reclassificar pelo cliente', async (origemComprovantes) => {
+    const item = { ...cicloSftp, origemComprovantes };
+    clienteMock.get.mockResolvedValueOnce({ data: [item] });
+    clienteMock.get.mockResolvedValueOnce({ data: { itens: [item], paginacao: paginacaoSftp } });
+    expect(await buscarStatusWorkSftpClientes()).toEqual([item]);
+    expect((await buscarExecucoesWorkSftpClientes(2, 25, '2026-09-01', '2026-09-10')).itens).toEqual([item]);
+  });
+
+  it('propaga falha HTTP sem apresentar histórico vazio ou origem inventada', async () => {
+    const erro = new Error('HTTP 500');
+    clienteMock.get.mockRejectedValue(erro);
+    await expect(buscarStatusWorkSftpClientes()).rejects.toBe(erro);
+    await expect(buscarExecucoesWorkSftpClientes(1, 10, '2026-09-01', '2026-09-10')).rejects.toBe(erro);
   });
 
   it('exporta a tabela completa preservando escopo, filtros e ordenacao', async () => {

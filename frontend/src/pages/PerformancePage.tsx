@@ -1,3 +1,4 @@
+import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import { ArrowLeft, ChevronRight, ChevronUp } from 'lucide-react';
@@ -34,7 +35,6 @@ import {
 } from '../hooks/queries/usePerformance';
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { usePerformanceData } from '../hooks/usePerformanceData';
-import { useStaggeredQueryEnabled } from '../hooks/useStaggeredQueryEnabled';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import type {
   PerformanceAgingPoint,
@@ -316,8 +316,8 @@ function buildHistoricoOption(dados: PerformanceHistoricoPoint[], isDark: boolea
         const entries = params as { marker?: string; seriesName: string; value: number; name: string }[];
         const name = entries[0]?.name ?? '';
         return [
-          `<strong>${name}</strong>`,
-          ...entries.map((item) => `${item.marker ?? ''}${item.seriesName}: ${formatarPorcentagem(Number(item.value ?? 0), 2)}`),
+          `<strong>${escapeHtml(name)}</strong>`,
+          ...entries.map((item) => `${item.marker ?? ''}${escapeHtml(item.seriesName)}: ${formatarPorcentagem(Number(item.value ?? 0), 2)}`),
         ].join('<br/>');
       },
     },
@@ -835,19 +835,12 @@ export default function PerformancePage() {
   ];
 
   const overview = usePerformanceOverview(filtro);
-  const overviewReady = overview.isSuccess && Boolean(overview.data);
-  const serieTemporalEnabled = useStaggeredQueryEnabled(overviewReady, 150);
-  const statusEnabled = useStaggeredQueryEnabled(overviewReady, 250);
-  const historicoEnabled = useStaggeredQueryEnabled(overviewReady, 350);
-  const drilldownEnabled = useStaggeredQueryEnabled(overviewReady, 550);
-  const agingEnabled = useStaggeredQueryEnabled(overviewReady, 700);
-  const tabelaEnabled = useStaggeredQueryEnabled(overviewReady, 900);
   const responsaveis = usePerformanceResponsaveis(filtroSemResponsaveis);
   const regioesDestino = usePerformanceRegioesDestino(filtroSemRegioesDestino);
   const cidadesDestino = usePerformanceCidadesDestino(filtroSemCidadesDestino);
-  const serieTemporal = usePerformanceSerieTemporal(filtro, nivelTemporal, anoTemporal, mesTemporal, serieTemporalEnabled);
-  const status = usePerformanceStatus(filtro, statusEnabled);
-  const historico = usePerformanceHistorico(historicoFiltro, historicoPeriodoMeses, historicoEnabled);
+  const serieTemporal = usePerformanceSerieTemporal(filtro, nivelTemporal, anoTemporal, mesTemporal);
+  const status = usePerformanceStatus(filtro);
+  const historico = usePerformanceHistorico(historicoFiltro, historicoPeriodoMeses);
   const filtrosTabela = useAnalyticalTableFilters();
   const filtrosTabelaComDrill = useMemo(
     () => aplicarDrillNosFiltrosTabela(
@@ -877,10 +870,9 @@ export default function PerformancePage() {
     paginacaoTabela.pagina,
     paginacaoTabela.tamanhoPagina,
     filtrosTabelaComDrill,
-    tabelaEnabled,
   );
-  const drilldown = usePerformanceDrilldown(filtro, drilldownParams, drilldownEnabled);
-  const aging = usePerformanceAging(filtro, agingEnabled);
+  const drilldown = usePerformanceDrilldown(filtro, drilldownParams);
+  const aging = usePerformanceAging(filtro);
 
   usePageHeader({
     title: 'Performance',

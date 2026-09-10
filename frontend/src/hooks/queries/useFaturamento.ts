@@ -29,7 +29,7 @@ export function useFaturamentoOverview(filtro: FaturamentoFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'overview', filtro],
-    queryFn: () => buscarFaturamentoOverview(filtro),
+    queryFn: ({ signal }) => buscarFaturamentoOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -39,7 +39,7 @@ export function useFaturamentoSerie(filtro: FaturamentoFiltro, enabled = true) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'serie', filtro],
-    queryFn: () => buscarFaturamentoSerie(filtro),
+    queryFn: ({ signal }) => buscarFaturamentoSerie(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -50,7 +50,7 @@ export function useFaturamentoTopClientes(filtro: FaturamentoFiltro, limite = 10
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'top-clientes', filtro, limite],
-    queryFn: () => buscarFaturamentoTopClientes(filtro, limite),
+    queryFn: ({ signal }) => buscarFaturamentoTopClientes(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -61,7 +61,7 @@ export function useFaturamentoMixDocumental(filtro: FaturamentoFiltro, enabled =
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'mix-documental', filtro],
-    queryFn: () => buscarFaturamentoMixDocumental(filtro),
+    queryFn: ({ signal }) => buscarFaturamentoMixDocumental(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -72,7 +72,7 @@ export function useFaturamentoGraficos(filtro: FaturamentoFiltro, enabled = true
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'graficos', filtro],
-    queryFn: () => buscarFaturamentoGraficos(filtro),
+    queryFn: ({ signal }) => buscarFaturamentoGraficos(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -83,7 +83,7 @@ export function useFaturamentoMetas(filtro: FaturamentoFiltro, enabled = true) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'metas', filtro],
-    queryFn: () => buscarFaturamentoMetas(filtro),
+    queryFn: ({ signal }) => buscarFaturamentoMetas(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -93,7 +93,7 @@ export function useFaturamentoMetas(filtro: FaturamentoFiltro, enabled = true) {
 export function useFaturamentoMetasConfiguracoes(ano: number, mes: number, enabled = true) {
   return useQuery({
     queryKey: [...QUERY_KEY, 'metas-configuracoes', ano, mes],
-    queryFn: () => buscarFaturamentoMetasConfiguracoes(ano, mes),
+    queryFn: ({ signal }) => buscarFaturamentoMetasConfiguracoes(ano, mes, signal),
     staleTime: STALE_TIME,
     retry: false,
     enabled,
@@ -134,7 +134,7 @@ export function useFaturamentoTabela(filtro: FaturamentoFiltro, limite = 100, en
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'tabela', filtro, limite],
-    queryFn: () => buscarFaturamentoTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarFaturamentoTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -145,7 +145,7 @@ export function useFaturamentoTabelaTotal(filtro: FaturamentoFiltro, enabled = t
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'tabela-total', filtro],
-    queryFn: () => buscarFaturamentoTabelaTotal(filtro),
+    queryFn: ({ signal }) => buscarFaturamentoTabelaTotal(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -162,7 +162,7 @@ export function useFaturamentoTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'tabela-paginada', filtro, pagina, tamanhoPagina, filtrosTabela],
-    queryFn: () => buscarFaturamentoTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela),
+    queryFn: ({ signal }) => buscarFaturamentoTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela, signal),
     placeholderData: (previousData) => previousData,
     staleTime: STALE_TIME,
     retry: 1,

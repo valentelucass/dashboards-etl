@@ -57,10 +57,10 @@ public class IntegracoesService {
     }
 
     public ResponseEntity<String> consultarExecucoesSftpClientes(
-            Integer pagina, Integer tamanho, String cliente, String status, String dataInicial, String dataFinal
+            Integer pagina, Integer tamanho, String cliente, String status, String dataInicial, String dataFinal, String origem
     ) {
         return consultarSatelite(() -> integracaoSateliteClient.buscarExecucoesSftpClientes(
-                pagina, tamanho, cliente, status, dataInicial, dataFinal
+                pagina, tamanho, cliente, status, dataInicial, dataFinal, origem
         ));
     }
 
