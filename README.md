@@ -192,6 +192,20 @@ Para subir o frontend e o backend em paralelo, com recarregamento rápido (Hot R
 * O backend subirá na porta `5011` (`http://localhost:5011`).
 * O frontend subirá na porta `5174` (`http://localhost:5174`).
 
+#### Acesso em outra máquina pelo Ports do VS Code
+
+Com o ambiente DEV em execução, encaminhe a porta **5174** no painel **Ports** e abra o endereço HTTPS gerado na outra máquina. Mantenha a visibilidade **Private** e autentique-se na conta usada no VS Code. Basta encaminhar o frontend: as chamadas `/api/...` passam pelo proxy do Vite até `127.0.0.1:5011` na máquina do projeto, incluindo login, refresh e downloads. A API DEV precisa continuar em execução nessa máquina.
+
+O navegador usa a mesma origem da página em DEV. `VITE_API_BASE_URL` continua restrita à API local `5011`, preservando a validação de isolamento; produção continua usando sua URL HTTPS externa. Não substitua essa variável pelo endereço de um segundo túnel.
+
+Normalmente o VS Code reescreve os cabeçalhos para localhost. Se houver `Blocked request` por hostname ou `Origem não autorizada no proxy de desenvolvimento`, configure apenas a origem exata do seu túnel em `.env.development.local` na raiz (arquivo ignorado pelo Git):
+
+```dotenv
+DASHBOARD_DEV_TUNNEL_ORIGIN=https://SEU-TUNEL-5174.brs.devtunnels.ms
+```
+
+Use o endereço atual, sem `/login` ou outros caminhos, e atualize-o se o túnel mudar. A opção é exclusiva do servidor DEV; não permite outros túneis e não altera o CORS do backend. Após mudanças, recarregue a página para obter o código atualizado. O diagnóstico e os testes estão em [docs/acesso-tunel-vscode-2026-09-10.md](docs/acesso-tunel-vscode-2026-09-10.md).
+
 #### 🏭 Ambiente de Produção (Homologação / VM)
 Para compilar e subir o bundle otimizado simulando o ambiente de produção localmente ou na VM:
 ```powershell

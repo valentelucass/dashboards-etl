@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'node',
     maxWorkers: 2,
     minWorkers: 1,
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'config/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       all: true,

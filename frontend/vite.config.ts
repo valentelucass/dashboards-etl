@@ -1,6 +1,8 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
+import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { criarProxyApiDev, validarOrigemTunel } from './config/devApiProxy'
 
 const DEV_FRONTEND_PORT = 5174
 const PROD_FRONTEND_PORT = 5173
@@ -32,7 +34,7 @@ function dashboardBuildIdHtmlPlugin(buildId: string): Plugin {
   }
 }
 
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ command, mode, isPreview }) => {
   const isNpmDev = process.env.npm_lifecycle_event === 'dev'
 
   if (command === 'serve' && isNpmDev && mode !== 'development') {
@@ -41,6 +43,10 @@ export default defineConfig(({ command, mode }) => {
 
   const buildId = resolverBuildId(command)
   process.env.VITE_DASHBOARD_BUILD_ID = buildId
+  const isDevServer = command === 'serve' && mode === 'development' && !isPreview
+  const tunnelOrigin = isDevServer
+    ? validarOrigemTunel(loadEnv(mode, fileURLToPath(new URL('..', import.meta.url)), 'DASHBOARD_DEV_TUNNEL_ORIGIN').DASHBOARD_DEV_TUNNEL_ORIGIN)
+    : undefined
 
   return {
     envDir: '..',
@@ -59,7 +65,8 @@ export default defineConfig(({ command, mode }) => {
       host: '127.0.0.1',
       port: DEV_FRONTEND_PORT,
       strictPort: true,
-      allowedHosts: LOCAL_DEV_HOSTS,
+      allowedHosts: [...LOCAL_DEV_HOSTS, ...(tunnelOrigin ? [new URL(tunnelOrigin).hostname] : [])],
+      proxy: isDevServer ? { '^/api(?:/|\\?|$)': criarProxyApiDev(tunnelOrigin) } : undefined,
     },
     preview: {
       host: '127.0.0.1',

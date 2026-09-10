@@ -28,7 +28,10 @@ function validarDevBaseUrl(baseUrl: string): string {
 function resolverApiBaseUrl(): string {
   const envBaseUrl = normalizarBaseUrl(String(import.meta.env.VITE_API_BASE_URL ?? ''));
   if (import.meta.env.DEV) {
-    return validarDevBaseUrl(envBaseUrl || API_LOCAL_DEV_BASE_URL);
+    validarDevBaseUrl(envBaseUrl || API_LOCAL_DEV_BASE_URL);
+    // O navegador usa a mesma origem da página; o Vite alcança a API local.
+    // Assim, localhost continua sendo a máquina do projeto ao usar Ports/túneis.
+    return '';
   }
 
   if (envBaseUrl) {
@@ -39,7 +42,9 @@ function resolverApiBaseUrl(): string {
 }
 
 export const API_BASE_URL = resolverApiBaseUrl();
-export const API_UNAVAILABLE_MESSAGE = `API indisponível em ${API_BASE_URL}. Verifique se o backend foi iniciado.`;
+export const API_UNAVAILABLE_MESSAGE = import.meta.env.DEV
+  ? 'API indisponível. Verifique se o backend de desenvolvimento (porta 5011) está em execução na máquina do projeto.'
+  : `API indisponível em ${API_BASE_URL}. Verifique se o backend foi iniciado.`;
 export const API_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_REQUEST_TIMEOUT_MS ?? 90000);
 export const API_DOWNLOAD_TIMEOUT_MS = Number(import.meta.env.VITE_API_DOWNLOAD_TIMEOUT_MS ?? 120000);
 export const AUTH_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_REQUEST_TIMEOUT_MS ?? 15000);
