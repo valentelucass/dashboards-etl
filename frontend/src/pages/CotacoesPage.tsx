@@ -944,6 +944,10 @@ function TaxasConversaoCard({
     valor: 'Evolução Conversão Valor',
     quantidade: 'Evolução Conversão Quantidade',
   };
+  const conversionOptions = useMemo(() => ({
+    valor: buildConversionOption(buckets, 'valor', isSingleMode, isDark),
+    quantidade: buildConversionOption(buckets, 'quantidade', isSingleMode, isDark),
+  }), [buckets, isSingleMode, isDark]);
 
   return (
     <ChartCard
@@ -973,7 +977,7 @@ function TaxasConversaoCard({
             <div key={metric} className={`flex max-h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg px-2 ${isSingleMode ? 'py-2' : 'py-1.5'}`} style={{ backgroundColor: 'var(--color-bg)' }}>
               <div className="shrink-0 px-1 text-xs font-semibold leading-tight" style={{ color: 'var(--color-text)' }}>{chartTitles[metric]}</div>
               <div className="max-h-full min-h-[100px] flex-1 overflow-hidden pt-1">
-                <ThemedEChart option={buildConversionOption(buckets, metric, isSingleMode, isDark)} />
+                <ThemedEChart option={conversionOptions[metric]} />
               </div>
             </div>
           ))}
@@ -1253,7 +1257,7 @@ export default function CotacoesPage() {
                 level={conversionLevel}
                 viewMode={conversionViewMode}
                 periodoMeses={conversionPeriodoMeses}
-                isLoading={conversionSerie.isLoading || graficos.isLoading}
+                isLoading={conversionSerie.isPending || graficos.isPending}
                 erro={conversionSerie.isError ? getApiErrorMessage(conversionSerie.error, 'Erro ao carregar evolução das taxas de conversão.') : null}
                 onLevelChange={setConversionLevel}
                 onViewModeChange={setConversionViewMode}

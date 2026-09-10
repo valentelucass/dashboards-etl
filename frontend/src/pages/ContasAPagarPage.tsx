@@ -120,10 +120,10 @@ export default function ContasAPagarPage() {
     updatedAt: overview.data?.updatedAt ?? null,
   });
 
-  const conciliacao = graficos.data?.conciliacao ?? [];
+  const conciliacao = useMemo(() => graficos.data?.conciliacao ?? [], [graficos.data?.conciliacao]);
   const dadosFornecedor = useMemo(() => fornecedores.data ?? [], [fornecedores.data]);
   const dadosCentro = useMemo(() => centrosCusto.data ?? [], [centrosCusto.data]);
-  const tokens = getEchartsThemeTokens(isDark);
+  const tokens = useMemo(() => getEchartsThemeTokens(isDark), [isDark]);
   const statusTabelaOptions = combinarStatusOptions(
     ['Sim', 'Não'],
     (tabela.data?.conteudo ?? []).map((item) => item.statusPagamento),
@@ -168,9 +168,9 @@ export default function ContasAPagarPage() {
 
   const fornecedorOption = useMemo(() => criarOptionRanking(dadosFornecedor, fornecedorMetrica), [criarOptionRanking, dadosFornecedor, fornecedorMetrica]);
   const centroOption = useMemo(() => criarOptionRanking(dadosCentro, centroMetrica), [criarOptionRanking, dadosCentro, centroMetrica]);
-  const conciliacaoOption: EChartsOption = buildBaseDonutOption(isDark, {
+  const conciliacaoOption: EChartsOption = useMemo(() => buildBaseDonutOption(isDark, {
     series: [{ name: 'Conciliação', type: 'pie', data: conciliacao.map((item) => ({ name: item.status, value: item.valor })) }],
-  });
+  }), [isDark, conciliacao]);
 
   const fornecedorEvents = useMemo(() => ({ click: (params: unknown) => {
     const label = (params as { name?: string }).name;

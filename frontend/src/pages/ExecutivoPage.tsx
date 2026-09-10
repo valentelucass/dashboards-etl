@@ -1,5 +1,5 @@
 import { escapeHtml } from '../utils/escapeHtml';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
@@ -225,19 +225,21 @@ export default function ExecutivoPage() {
     updatedAt: overview.data?.updatedAt ?? null,
   });
 
-  const serieDados = serie.data ?? [];
+  const serieDados = useMemo(() => serie.data ?? [], [serie.data]);
   const erroSerie = serie.isError ? getApiErrorMessage(serie.error, 'Erro ao carregar série executiva.') : null;
   const resumoFinanceiroDados = resumoFinanceiro.data ?? [];
-  const tokens = getEchartsThemeTokens(isDark);
-  const chartColors = {
-    receitaOperacional: tokens.palette[0],
-    valorFaturado: tokens.palette[2],
-    saldoAReceber: tokens.palette[8],
-    saldoAPagar: tokens.palette[3],
-    backlog: tokens.palette[4],
-  };
+  const chartColors = useMemo(() => {
+    const tokens = getEchartsThemeTokens(isDark);
+    return {
+      receitaOperacional: tokens.palette[0],
+      valorFaturado: tokens.palette[2],
+      saldoAReceber: tokens.palette[8],
+      saldoAPagar: tokens.palette[3],
+      backlog: tokens.palette[4],
+    };
+  }, [isDark]);
 
-  const financeiroOption: EChartsOption = buildBaseLineOption(isDark, {
+  const financeiroOption: EChartsOption = useMemo(() => buildBaseLineOption(isDark, {
     color: Object.values(chartColors),
     legend: { top: 0 },
     tooltip: {
@@ -293,9 +295,9 @@ export default function ExecutivoPage() {
         data: serieDados.map((item) => item.saldoAPagar),
       },
     ],
-  });
+  }), [isDark, chartColors, serieDados]);
 
-  const backlogOption: EChartsOption = buildBaseLineOption(isDark, buildBaseBarOption(isDark, {
+  const backlogOption: EChartsOption = useMemo(() => buildBaseLineOption(isDark, buildBaseBarOption(isDark, {
     color: [chartColors.valorFaturado, chartColors.backlog],
     legend: { top: 0 },
     tooltip: { trigger: 'axis', formatter: formatarTooltipExecutivoMisto },
@@ -331,7 +333,7 @@ export default function ExecutivoPage() {
         data: serieDados.map((item) => item.backlogColetas),
       },
     ],
-  }));
+  })), [isDark, chartColors, serieDados]);
 
   return (
     <div className="w-full">

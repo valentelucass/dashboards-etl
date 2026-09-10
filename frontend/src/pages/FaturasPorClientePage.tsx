@@ -112,7 +112,7 @@ export default function FaturasPorClientePage() {
   const filtrosTabela = useAnalyticalTableFilters();
   const paginacaoTabela = useTabelaPaginadaState(JSON.stringify({ filtro, tabela: filtrosTabela.resetKey }));
   const tabela = useFaturasPorClienteTabelaPaginada(filtro, paginacaoTabela.pagina, paginacaoTabela.tamanhoPagina, filtrosTabela.apiFilters);
-  const tokens = getEchartsThemeTokens(isDark);
+  const tokens = useMemo(() => getEchartsThemeTokens(isDark), [isDark]);
 
   usePageHeader({ title: 'Faturas por Cliente', description: 'Visão operacional de faturamento por cliente baseada em `ID Único`.', updatedAt: overview.data?.updatedAt ?? null });
 

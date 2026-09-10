@@ -7,10 +7,14 @@ import { spawn } from 'node:child_process';
 import { gzipSync } from 'node:zlib';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { chartCounts, pageFixture, chartApiPaths } from './benchmark-page-fixtures.mjs';
+import { chartAnimationProbe, chartTitleProbe } from './chart-animation-probe.mjs';
 
 const frontend = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const [beforeDir = '.tmp/quality-perf-before', afterDir = '.tmp/quality-perf-after', outputDir = '.tmp/chart-benchmark', route = 'coletas', repetitions = '3', check = 'timing'] = process.argv.slice(2);
 const smoke = check === 'smoke';
+const animation = check === 'animation' || check === 'animation-fast';
+const apiDelay = check === 'animation-fast' ? 10 : 200;
+if (!['timing', 'smoke', 'animation', 'animation-fast'].includes(check)) throw new Error('Use timing, smoke, animation ou animation-fast.');
 if (!(route in chartCounts) || !/^[1-9]\d?$/.test(repetitions)) throw new Error('Use uma rota suportada e 1-99 repetições.');
 const expectedCharts = chartCounts[route];
 const out = resolve(frontend, outputDir);
@@ -69,18 +73,23 @@ function send(method, params = {}) {
 const series = Array.from({ length: 30 }, (_, day) => ({ date: `2026-08-${String(day + 1).padStart(2, '0')}`,
   total: 50 + day, finalizadas: 40 + day, canceladas: 3, emTratativa: 7,
   performancePercentual: 85 + day % 10, metaPercentual: 95, noPrazo: 35 + day, foraDoPrazo: 5 }));
-function fixture(path) {
-  const pageData = pageFixture(path);
+function fixture(path, params) {
+  const pageData = pageFixture(path, params);
+  if (path === '/api/painel/tracking/dashboard' && params.get('f.statusCarga') === 'Em entrega') return {
+    ...pageData, overview: { ...pageData.overview, totalCargas: 30 },
+    graficos: { ...pageData.graficos, statusDistribuicao: pageData.graficos.statusDistribuicao.filter(item => item.status === 'Em entrega') },
+  };
   if (pageData !== undefined) return pageData;
   if (path === '/api/auth/refresh' || path === '/api/auth/me') {
     const usuario = { id: 'synthetic', nome: 'Teste sintético', email: 'synthetic@example.test', papel: 'usuario_comum',
-      setor: { id: 'teste', nome: 'Teste' }, permissoesEfetivas: { coletas: true, performance: true, faturamento: true, fretes: true, manifestos: true, executivo: true, dimensoes: true },
+      setor: { id: 'teste', nome: 'Teste' }, permissoesEfetivas: { coletas: true, performance: true, faturamento: true, fretes: true, manifestos: true, executivo: true, dimensoes: true, tracking: true,
+        contasAPagar: true, faturasPorCliente: true, etlSaude: true, integracoes: true, indicadoresGestaoAVista: true, cotacoes: true },
       filiaisPermitidasEfetivas: ['CWB'], exigeTrocaSenha: false };
     if (path.endsWith('/me')) return usuario;
     return { usuario, exigeTrocaSenha: false, sessaoExpiraEm: new Date(Date.now() + 3_600_000).toISOString(),
       token: `e30.${Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 900 })).toString('base64url')}.synthetic` };
   }
-  if (path === '/api/dimensoes/filiais') return ['CWB'];
+  if (path === '/api/dimensoes/filiais') return route === 'tracking' ? ['AGU - RODOGARCIA TRANSPORTES RODOVIARIOS LTDA'] : ['CWB'];
   if (path === '/api/dimensoes/clientes') return ['Cliente sintético'];
   if (path === '/api/dimensoes/pagadores') return [];
   if (path === '/api/dimensoes/usuarios') return [{ userId: '1', nome: 'Operador sintético' }];
@@ -118,9 +127,12 @@ async function intercept(event) {
     apiRequests.push(request);
     const counted = event.request.method === 'GET' && /^\/api\/(painel|dimensoes)\/(performance|fretes|faturamento|manifestos|executivo)(?:\/|$)/.test(path);
     if (counted) { activePerformance++; peakPerformance = Math.max(peakPerformance, activePerformance); }
-    const body = fixture(path);
+    const body = fixture(path, url.searchParams);
     if (body === undefined) errors.push(`Missing fixture: ${path}`);
-    await sleep(200);
+    // Delayed unrelated data must arrive after the entrance animation has finished.
+    const delayed = animation && event.request.method === 'GET' &&
+      (path.endsWith('/detalhes') || path.endsWith('/tabela/paginada') || path.endsWith('/resumo-financeiro'));
+    await sleep(delayed ? 2200 : apiDelay);
     const overviewFailure = smoke && event.request.method === 'GET' &&
       (path === '/api/painel/performance/overview' || path === '/api/painel/fretes' || path === '/api/painel/executivo');
     request.responseCode = body === undefined ? 404 : overviewFailure ? 503 : 200;
@@ -168,6 +180,8 @@ try {
   await send('Network.setCacheDisabled', { cacheDisabled: true });
   await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] });
   await send('Emulation.setDeviceMetricsOverride', { width: 1600, height: 1000, deviceScaleFactor: 1, mobile: false });
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: chartTitleProbe });
+  if (animation || smoke) await send('Page.addScriptToEvaluateOnNewDocument', { source: chartAnimationProbe });
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
     localStorage.setItem('dashboard_refresh_ativo', '1');
     window.__chartMetrics = { firstDraw: 0, lastDraw: 0, longTasks: [], charts: {} };
@@ -181,9 +195,7 @@ try {
         if (this.canvas.isConnected && element) {
           let key = chartElements.get(element);
           if (!key) {
-            let card = element.parentElement;
-            while (card && !card.querySelector('h3')) card = card.parentElement;
-            key = card?.querySelector('h3')?.textContent || 'chart-' + (++chartId);
+            key = window.__chartTitleFor(element) || 'chart-' + (++chartId);
             chartElements.set(element, key);
             window.__chartMetrics.charts[key] = { firstDraw: performance.now(), lastDraw: 0,
               mounts: (window.__chartMetrics.charts[key]?.mounts ?? 0) + 1 };
@@ -206,18 +218,30 @@ try {
         activeRoot = builds[version]; apiRequests = []; errors.length = 0; externalBlocked = 0; activePerformance = 0; peakPerformance = 0;
         await send('Page.navigate', { url: `${origin}/${route}?dataInicio=2026-08-01&dataFim=2026-08-30&qualityRun=${mode.name}-${version}-${repetition}` });
         let metrics;
+        let settled = false;
+        let needsChartTab = route === 'cotacoes';
         for (let attempt = 0; attempt < 250; attempt++) {
           await sleep(100);
+          if (needsChartTab) {
+            const tab = await send('Runtime.evaluate', { expression: `(() => { const button = [...document.querySelectorAll('button')].find(button => button.textContent.includes('Visão Analítica')); if (!button) return false; button.click(); return true; })()`, returnByValue: true });
+            needsChartTab = !tab.result.value;
+          }
           const evaluation = await send('Runtime.evaluate', { expression: `JSON.stringify({ ...window.__chartMetrics, timeOrigin: performance.timeOrigin, now: performance.now(), canvases: document.querySelectorAll('.echarts-for-react canvas').length })`, returnByValue: true });
           metrics = JSON.parse(evaluation.result.value ?? '{}');
-          if (metrics.canvases === expectedCharts && Object.keys(metrics.charts ?? {}).length === expectedCharts && metrics.firstDraw > 0 && metrics.now - metrics.lastDraw > 400) break;
+          if (metrics.canvases === expectedCharts && Object.keys(metrics.charts ?? {}).length === expectedCharts && metrics.firstDraw > 0 && metrics.now - metrics.lastDraw > 400
+            && apiRequests.every(request => request.completedAt) && Date.now() - Math.max(...apiRequests.map(request => request.completedAt)) > 400) { settled = true; break; }
         }
-        if (metrics.canvases !== expectedCharts || Object.keys(metrics.charts ?? {}).length !== expectedCharts || !metrics.firstDraw || errors.length) {
+        if (!settled || metrics.canvases !== expectedCharts || Object.keys(metrics.charts ?? {}).length !== expectedCharts || !metrics.firstDraw || errors.length) {
           const diagnostic = await send('Runtime.evaluate', { expression: 'document.body.innerText.slice(0,1500)', returnByValue: true });
           throw new Error(JSON.stringify({ metrics, errors, apiRequests, page: diagnostic.result.value }));
         }
         const resourceResult = await send('Runtime.evaluate', { expression: `JSON.stringify(performance.getEntriesByType('resource').filter(x => x.name.endsWith('.js')).map(x => ({bytes:x.encodedBodySize,duration:x.duration})))`, returnByValue: true });
         const resources = JSON.parse(resourceResult.result.value);
+        if (animation) {
+          const probe = await send('Runtime.evaluate', { expression: 'JSON.stringify({ updates: window.__chartUpdates, finished: window.__chartFinished, initializations: window.__chartInitializations })', returnByValue: true });
+          metrics.animation = JSON.parse(probe.result.value);
+          if (new Set(metrics.animation.updates.map(update => update.title)).size !== expectedCharts) throw new Error(`Incomplete chart animation probe: ${JSON.stringify({ charts: metrics.charts, updates: metrics.animation.updates.map(({title, at}) => ({title, at})), initializations: metrics.animation.initializations })}`);
+        }
         for (const [title, chart] of Object.entries(metrics.charts)) {
           const paths = chartApiPaths(route, title);
           const sources = apiRequests.filter(request => request.method === 'GET' && paths.includes(request.path)
@@ -239,14 +263,35 @@ try {
     }
   }
   if (smoke) {
+    const legendResult = await send('Runtime.evaluate', { expression: `JSON.stringify([...window.__chartTestInstances].map(([title, instance]) => {
+      const legend = instance.getModel().getComponent('legend');
+      const name = legend?.get('show') ? legend.getData()[0]?.get('name') : undefined;
+      if (!name) return { title, applicable: false };
+      instance.dispatchAction({ type: 'legendUnSelect', name });
+      const unselected = instance.getOption().legend[0].selected[name] === false;
+      instance.dispatchAction({ type: 'legendSelect', name });
+      return { title, applicable: true, unselected, selected: instance.getOption().legend[0].selected[name] === true };
+    }))`, returnByValue: true });
+    const legends = JSON.parse(legendResult.result.value);
+    if (legends.some(result => result.applicable && (!result.unselected || !result.selected))) throw new Error('Legend interaction failed');
     const layouts = [];
     for (const width of [1024, 390]) {
       await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
       await sleep(700);
-      const result = await send('Runtime.evaluate', { expression: `JSON.stringify({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, charts: [...document.querySelectorAll('.echarts-for-react')].map(x => ({ width: x.clientWidth, height: x.clientHeight, canvas: !!x.querySelector('canvas') })) })`, returnByValue: true });
+      const result = await send('Runtime.evaluate', { expression: `JSON.stringify({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, charts: [...document.querySelectorAll('.echarts-for-react')].map(x => {
+        const title = window.__chartTitleFor(x); const instance = window.__chartTestInstances.get(title);
+        const style = getComputedStyle(x);
+        return { title, width: x.clientWidth, height: x.clientHeight, paddingX: parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
+          paddingY: parseFloat(style.paddingTop) + parseFloat(style.paddingBottom), canvas: !!x.querySelector('canvas'), renderedWidth: instance?.getWidth(), renderedHeight: instance?.getHeight() };
+      }) })`, returnByValue: true });
       const layout = JSON.parse(result.result.value);
       const minimumCanvasHeight = route === 'manifestos' ? 300 : 350;
-      if (layout.scrollWidth > layout.width + 2 || layout.charts.length !== expectedCharts || layout.charts.some(x => !x.canvas || x.width <= 0 || x.height < minimumCanvasHeight)) throw new Error(`Invalid responsive layout: ${JSON.stringify(layout)}`);
+      // The existing 100%-height cost canvas is 4px shorter at 1024px in BOTH builds.
+      // Keep this measured baseline exception local; other charts must fit within 1px.
+      const heightTolerance = chart => route === 'manifestos' && chart.title === 'Evolução do Custo Real x Meta Diária Base' ? 4 : 1;
+      if (layout.scrollWidth > layout.width + 2 || layout.charts.length !== expectedCharts || layout.charts.some(x => !x.canvas || x.width <= 0
+        || x.height < (route === 'cotacoes' && x.title.startsWith('Taxas de Conversão') ? 1 : minimumCanvasHeight)
+        || Math.abs(x.renderedWidth - (x.width - x.paddingX)) > 1 || Math.abs(x.renderedHeight - (x.height - x.paddingY)) > heightTolerance(x))) throw new Error(`Invalid responsive layout: ${JSON.stringify(layout)}`);
       layouts.push(layout);
     }
     await send('Runtime.evaluate', { expression: `document.querySelector('button[aria-label="Alternar para modo escuro"]').click()` });
@@ -256,9 +301,20 @@ try {
     if (!themeState.dark || themeState.canvases !== expectedCharts || errors.length) throw new Error(`Theme smoke failed: ${JSON.stringify({ themeState, errors })}`);
     const screenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
     await writeFile(resolve(out, 'mobile-dark.png'), Buffer.from(screenshot.data, 'base64'));
-    await writeFile(resolve(out, 'smoke.json'), JSON.stringify({ overview503: apiRequests.some(request => request.method === 'GET' && request.responseCode === 503), chartsRendered: expectedCharts, layouts, darkTheme: true, errors }, null, 2));
+    let trackingFilter;
+    if (route === 'tracking') {
+      await send('Runtime.evaluate', { expression: `[...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Em entrega').click()` });
+      for (let attempt = 0; attempt < 80; attempt++) {
+        await sleep(100);
+        const state = await send('Runtime.evaluate', { expression: `JSON.stringify(window.__chartTestInstances.get('Distribuição de Status').getOption().series[0].data.map(item => ({name:item.name, value:item.value})))`, returnByValue: true });
+        trackingFilter = JSON.parse(state.result.value);
+        if (trackingFilter.length === 1 && trackingFilter[0].name === 'Em entrega' && trackingFilter[0].value === 30) break;
+      }
+      if (trackingFilter?.length !== 1 || trackingFilter[0].value !== 30 || errors.length) throw new Error('Tracking filter did not update chart');
+    }
+    await writeFile(resolve(out, 'smoke.json'), JSON.stringify({ overview503: apiRequests.some(request => request.method === 'GET' && request.responseCode === 503), chartsRendered: expectedCharts, layouts, legends, trackingFilter, darkTheme: true, errors }, null, 2));
   }
-  await writeFile(resolve(out, 'results.json'), JSON.stringify({ fixture: `Synthetic data, 200ms API delay, ${expectedCharts} real ${route} charts`, builds, results }, null, 2));
+  await writeFile(resolve(out, 'results.json'), JSON.stringify({ fixture: `Synthetic data, ${apiDelay}ms API delay${animation ? ', unrelated table GET delayed 2200ms' : ''}, ${expectedCharts} real ${route} charts`, builds, results }, null, 2));
 } finally {
   if (socket?.readyState === WebSocket.OPEN) {
     try { await send('Browser.close'); } catch { /* browser closes its socket before acknowledging */ }

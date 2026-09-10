@@ -351,7 +351,7 @@ export default function TrackingPage() {
   const valorChartData = useMemo(() => valorRegiao, [valorRegiao]);
   const statusTotal = useMemo(() => statusData.reduce((total, item) => total + item.total, 0), [statusData]);
 
-  const statusOption: EChartsOption = buildBaseDonutOption(isDark, {
+  const statusOption: EChartsOption = useMemo(() => buildBaseDonutOption(isDark, {
     tooltip: { trigger: 'item', formatter: '{b}<br/>{c} cargas ({d}%)' },
     title: {
       text: numeroCurto(statusTotal),
@@ -397,9 +397,9 @@ export default function TrackingPage() {
         },
       },
     }],
-  });
+  }), [isDark, statusData, statusTotal]);
 
-  const valorRegiaoOption: EChartsOption = buildBaseBarOption(isDark, {
+  const valorRegiaoOption: EChartsOption = useMemo(() => buildBaseBarOption(isDark, {
     tooltip: { trigger: 'axis' },
     grid: { left: 66, right: 12, top: 10, bottom: 38 },
     xAxis: {
@@ -423,7 +423,7 @@ export default function TrackingPage() {
       data: valorChartData.map((item) => item.valorFrete),
       itemStyle: { color: getEchartsThemeTokens(isDark).palette[1] },
     }],
-  });
+  }), [isDark, valorChartData]);
 
   const colunas: ColunaTabelaAnalitica<TrackingRawRow>[] = [
     { chave: 'numeroMinuta', label: 'Minuta', fixo: true, filtroTabela: 'codigo' },
