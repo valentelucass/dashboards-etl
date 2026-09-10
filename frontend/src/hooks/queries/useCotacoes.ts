@@ -24,17 +24,17 @@ export function useCotacoesOverview(filtro: CotacoesFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'overview', filtro],
-    queryFn: () => buscarCotacoesOverview(filtro),
+    queryFn: ({ signal }) => buscarCotacoesOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
 }
 
-export function useCotacoesSerie(filtro: CotacoesFiltro, enabled = true) {
+export function useCotacoesSerie(filtro: CotacoesFiltro, enabled = true, chartKey: 'cotacoesSerie' | 'cotacoesTaxasConversao' = 'cotacoesSerie') {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'serie', filtro],
-    queryFn: () => buscarCotacoesSerie(filtro),
+    queryFn: ({ signal }) => buscarCotacoesSerie(filtro, signal, chartKey),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -45,7 +45,7 @@ export function useCotacoesGraficos(filtro: CotacoesFiltro, enabled = true) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'graficos', filtro],
-    queryFn: () => buscarCotacoesGraficos(filtro),
+    queryFn: ({ signal }) => buscarCotacoesGraficos(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -56,7 +56,7 @@ export function useCotacoesTabela(filtro: CotacoesFiltro, limite = 100, enabled 
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'tabela', filtro, limite],
-    queryFn: () => buscarCotacoesTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarCotacoesTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -67,7 +67,7 @@ export function useCotacoesResumoUsuario(filtro: CotacoesFiltro, isActive: boole
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'resumo', 'usuario', filtro],
-    queryFn: () => buscarCotacoesResumoUsuario(filtro),
+    queryFn: ({ signal }) => buscarCotacoesResumoUsuario(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled: isActive && hasPeriodoValido(filtro),
@@ -78,7 +78,7 @@ export function useCotacoesResumoFilial(filtro: CotacoesFiltro, isActive: boolea
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'resumo', 'filial', filtro],
-    queryFn: () => buscarCotacoesResumoFilial(filtro),
+    queryFn: ({ signal }) => buscarCotacoesResumoFilial(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled: isActive && hasPeriodoValido(filtro),
@@ -89,7 +89,7 @@ export function useCotacoesResumoCliente(filtro: CotacoesFiltro, isActive: boole
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'resumo', 'cliente', filtro],
-    queryFn: () => buscarCotacoesResumoCliente(filtro),
+    queryFn: ({ signal }) => buscarCotacoesResumoCliente(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled: isActive && hasPeriodoValido(filtro),
@@ -100,7 +100,7 @@ export function useCotacoesTabelaTotal(filtro: CotacoesFiltro, enabled = true) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'tabela-total', filtro],
-    queryFn: () => buscarCotacoesTabelaTotal(filtro),
+    queryFn: ({ signal }) => buscarCotacoesTabelaTotal(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -117,7 +117,7 @@ export function useCotacoesTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['cotacoes', 'tabela-paginada', filtro, pagina, tamanhoPagina, filtrosTabela],
-    queryFn: () => buscarCotacoesTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela),
+    queryFn: ({ signal }) => buscarCotacoesTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela, signal),
     placeholderData: (previousData) => previousData,
     staleTime: STALE_TIME,
     retry: 1,

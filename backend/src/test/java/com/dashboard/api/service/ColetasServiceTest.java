@@ -22,6 +22,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ColetasServiceTest {
 
     @Test
+    void statusDaPrimeiraLinhaNaoDeveEsperarConsultasDaOperacao() {
+        LocalDate hoje = LocalDate.of(2026, 9, 10);
+        FiltroConsultaDTO filtro = new FiltroConsultaDTO(hoje.minusDays(9), hoje, Map.of("filiais", List.of("SPO")));
+        CapturingColetasRepository repository = new CapturingColetasRepository();
+        ColetasService service = new ColetasService(new ValidadorPeriodoService(), new FixedPeriodoHelper(hoje),
+                repository, new NoopColetasViewContractValidator(), null);
+
+        service.buscarStatusDistribuicao(filtro);
+
+        assertThat(repository.statusFiltro).isSameAs(filtro);
+        assertThat(repository.regioesFiltro).isNull();
+        assertThat(repository.agingFiltro).isNull();
+        assertThat(repository.historicoFiltro).isNull();
+    }
+
+    @Test
+    void operacaoNaoDeveRepetirConsultaDeStatusNemAlterarFiltrosOuDataReferencia() {
+        LocalDate hoje = LocalDate.of(2026, 9, 10);
+        FiltroConsultaDTO filtro = new FiltroConsultaDTO(hoje.minusDays(9), hoje, Map.of("filiais", List.of("SPO")));
+        CapturingColetasRepository repository = new CapturingColetasRepository();
+        ColetasService service = new ColetasService(new ValidadorPeriodoService(), new FixedPeriodoHelper(hoje),
+                repository, new NoopColetasViewContractValidator(), null);
+
+        service.buscarOperacao(filtro);
+
+        assertThat(repository.statusFiltro).isNull();
+        assertThat(repository.regioesFiltro).isSameAs(filtro);
+        assertThat(repository.agingFiltro).isSameAs(filtro);
+        assertThat(repository.agingDataReferencia).isEqualTo(hoje);
+        assertThat(repository.historicoFiltro).isNull();
+    }
+
+    @Test
     void buscarGraficosNaoDeveAcionarHistoricoPerformance() {
         LocalDate hoje = LocalDate.of(2026, 6, 18);
         FiltroConsultaDTO filtro = new FiltroConsultaDTO(

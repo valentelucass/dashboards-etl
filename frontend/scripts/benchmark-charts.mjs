@@ -12,9 +12,11 @@ import { chartAnimationProbe, chartTitleProbe } from './chart-animation-probe.mj
 const frontend = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const [beforeDir = '.tmp/quality-perf-before', afterDir = '.tmp/quality-perf-after', outputDir = '.tmp/chart-benchmark', route = 'coletas', repetitions = '3', check = 'timing'] = process.argv.slice(2);
 const smoke = check === 'smoke';
+const loading = check === 'loading';
+const navigation = check === 'navigation';
 const animation = check === 'animation' || check === 'animation-fast';
 const apiDelay = check === 'animation-fast' ? 10 : 200;
-if (!['timing', 'smoke', 'animation', 'animation-fast'].includes(check)) throw new Error('Use timing, smoke, animation ou animation-fast.');
+if (!['timing', 'smoke', 'animation', 'animation-fast', 'loading', 'navigation'].includes(check)) throw new Error('Use timing, smoke, animation, animation-fast, loading ou navigation.');
 if (!(route in chartCounts) || !/^[1-9]\d?$/.test(repetitions)) throw new Error('Use uma rota suportada e 1-99 repetições.');
 const expectedCharts = chartCounts[route];
 const out = resolve(frontend, outputDir);
@@ -89,6 +91,13 @@ function fixture(path, params) {
     return { usuario, exigeTrocaSenha: false, sessaoExpiraEm: new Date(Date.now() + 3_600_000).toISOString(),
       token: `e30.${Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 900 })).toString('base64url')}.synthetic` };
   }
+  if (path === '/api/painel/home/comunicados') return [];
+  if (path === '/api/sessao/presenca') return {};
+  if (path === '/api/painel/coletas/graficos/status') return fixture('/api/painel/coletas/graficos', params).statusDistribuicao;
+  if (path === '/api/painel/coletas/graficos/operacao') {
+    const { regioesOrigem, agingAbertas } = fixture('/api/painel/coletas/graficos', params);
+    return { regioesOrigem, agingAbertas };
+  }
   if (path === '/api/dimensoes/filiais') return route === 'tracking' ? ['AGU - RODOGARCIA TRANSPORTES RODOVIARIOS LTDA'] : ['CWB'];
   if (path === '/api/dimensoes/clientes') return ['Cliente sintético'];
   if (path === '/api/dimensoes/pagadores') return [];
@@ -125,25 +134,35 @@ async function intercept(event) {
     const path = url.pathname.slice(apiIndex);
     const request = { path, query: url.search, method: event.request.method, receivedAt: Date.now() };
     apiRequests.push(request);
-    const counted = event.request.method === 'GET' && /^\/api\/(painel|dimensoes)\/(performance|fretes|faturamento|manifestos|executivo)(?:\/|$)/.test(path);
+    const counted = event.request.method === 'GET' && /^\/api\/(painel|dimensoes)\/(coletas|cotacoes|contas-a-pagar|faturas-por-cliente|tracking|etl-saude|indicadores-gestao-a-vista|integracoes|performance|fretes|faturamento|manifestos|executivo)(?:\/|$)/.test(path);
     if (counted) { activePerformance++; peakPerformance = Math.max(peakPerformance, activePerformance); }
     const body = fixture(path, url.searchParams);
     if (body === undefined) errors.push(`Missing fixture: ${path}`);
     // Delayed unrelated data must arrive after the entrance animation has finished.
     const delayed = animation && event.request.method === 'GET' &&
       (path.endsWith('/detalhes') || path.endsWith('/tabela/paginada') || path.endsWith('/resumo-financeiro'));
-    await sleep(delayed ? 2200 : apiDelay);
+    // Modelo controlado: o pacote legado de Coletas executa três agregações SQL em série.
+    // A separação usa uma agregação para status e duas para operação; nenhuma é duplicada.
+    const sqlUnits = loading && event.request.method === 'GET'
+      ? path === '/api/painel/coletas/graficos' ? 3 : path === '/api/painel/coletas/graficos/operacao' ? 2 : 1 : 1;
+    await sleep(loading && event.request.method === 'OPTIONS' ? 0 : delayed ? 2200 : apiDelay * sqlUnits);
     const overviewFailure = smoke && event.request.method === 'GET' &&
       (path === '/api/painel/performance/overview' || path === '/api/painel/fretes' || path === '/api/painel/executivo');
     request.responseCode = body === undefined ? 404 : overviewFailure ? 503 : 200;
-    await send('Fetch.fulfillRequest', { requestId: event.requestId, responseCode: request.responseCode,
+    if (counted) activePerformance--;
+    try {
+      await send('Fetch.fulfillRequest', { requestId: event.requestId, responseCode: request.responseCode,
       responseHeaders: [{ name: 'Content-Type', value: 'application/json' },
         { name: 'Access-Control-Allow-Origin', value: currentOrigin }, { name: 'Access-Control-Allow-Credentials', value: 'true' },
-        { name: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
+        { name: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, OPTIONS' },
         { name: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Dashboard-Route' }],
-      body: Buffer.from(JSON.stringify(body ?? {})).toString('base64') });
+        body: Buffer.from(JSON.stringify(body ?? {})).toString('base64') });
+    } catch (error) {
+      // A navegação/troca de filtro pode cancelar o request enquanto o mock aguarda.
+      if (!error.message.includes('Invalid InterceptionId')) throw error;
+      request.canceled = true;
+    }
     request.completedAt = Date.now();
-    if (counted) activePerformance--;
   } else if (url.origin === origin) {
     await send('Fetch.continueRequest', { requestId: event.requestId });
   } else {
@@ -198,6 +217,7 @@ try {
             key = window.__chartTitleFor(element) || 'chart-' + (++chartId);
             chartElements.set(element, key);
             window.__chartMetrics.charts[key] = { firstDraw: performance.now(), lastDraw: 0,
+              top: element.getBoundingClientRect().top,
               mounts: (window.__chartMetrics.charts[key]?.mounts ?? 0) + 1 };
           }
           window.__chartMetrics.charts[key].lastDraw = performance.now();
@@ -209,12 +229,12 @@ try {
   ` });
   const results = [];
   const modes = [{ name: 'desktop', cpu: 1, bytesPerSecond: -1 }, { name: 'cpu4x-2Mbps', cpu: 4, bytesPerSecond: 250_000 }];
-  for (const mode of smoke ? modes.slice(0, 1) : modes) {
+  for (const mode of smoke || navigation ? modes.slice(0, 1) : modes) {
     await send('Emulation.setCPUThrottlingRate', { rate: mode.cpu });
     await send('Network.emulateNetworkConditions', { offline: false, latency: mode.cpu === 1 ? 0 : 40,
       downloadThroughput: mode.bytesPerSecond, uploadThroughput: mode.bytesPerSecond });
     for (let repetition = 1; repetition <= Number(repetitions); repetition++) {
-      for (const version of smoke ? ['after'] : repetition % 2 ? ['before', 'after'] : ['after', 'before']) {
+      for (const version of smoke || navigation ? ['after'] : repetition % 2 ? ['before', 'after'] : ['after', 'before']) {
         activeRoot = builds[version]; apiRequests = []; errors.length = 0; externalBlocked = 0; activePerformance = 0; peakPerformance = 0;
         await send('Page.navigate', { url: `${origin}/${route}?dataInicio=2026-08-01&dataFim=2026-08-30&qualityRun=${mode.name}-${version}-${repetition}` });
         let metrics;
@@ -251,6 +271,15 @@ try {
             chart.finalDrawAfterDataMs = chart.lastDraw - chart.dataReadyAt;
           }
         }
+        const firstRowTop = Math.min(...Object.values(metrics.charts).map(chart => chart.top));
+        const firstRowCharts = Object.values(metrics.charts).filter(chart => Math.abs(chart.top - firstRowTop) < 60);
+        metrics.firstRowReadyMs = Math.max(...firstRowCharts.map(chart => chart.firstDraw));
+        metrics.allChartsReadyMs = Math.max(...Object.values(metrics.charts).map(chart => chart.firstDraw));
+        const pageGets = apiRequests.filter(request => request.method === 'GET' && request.path.startsWith('/api/painel/') && !request.path.includes('/home/'));
+        metrics.firstDataRequestMs = Math.min(...pageGets.map(request => request.receivedAt)) - metrics.timeOrigin;
+        metrics.firstRowAfterRequestsMs = metrics.firstRowReadyMs - metrics.firstDataRequestMs;
+        metrics.allChartsAfterRequestsMs = metrics.allChartsReadyMs - metrics.firstDataRequestMs;
+        metrics.allDataAfterRequestsMs = Math.max(...pageGets.map(request => request.completedAt)) - metrics.timeOrigin - metrics.firstDataRequestMs;
         results.push({ mode: mode.name, version, repetition, ...metrics, apiCalls: apiRequests.length, externalBlocked, peakPerformance, apiRequests,
           javascriptBytes: resources.reduce((sum, item) => sum + item.bytes, 0),
           longTaskTotalMs: metrics.longTasks.reduce((sum, item) => sum + item.duration, 0) });
@@ -262,6 +291,51 @@ try {
       }
     }
   }
+
+  if (navigation) {
+    const checks = [];
+    async function evaluate(expression) {
+      const result = await send('Runtime.evaluate', { expression, returnByValue: true });
+      if (result.exceptionDetails) throw new Error(result.exceptionDetails.text);
+      return result.result.value;
+    }
+    async function navigateMenu(targetRoute, expectedCache) {
+      await evaluate(`document.querySelector('button[aria-label="Abrir menu de navegação"]').click()`);
+      await sleep(250);
+      const beforeCalls = apiRequests.length;
+      const startedAt = Date.now();
+      const target = '/' + targetRoute;
+      const href = await evaluate(`(() => { const link = [...document.querySelectorAll('a[href]')].find(link => new URL(link.href).pathname === ${JSON.stringify(target)}); if (!link) throw new Error("Link ausente"); const href = link.getAttribute("href"); link.click(); return href; })()`);
+      let state;
+      for (let attempt = 0; attempt < 150; attempt++) {
+        await sleep(100);
+        state = await evaluate('({ path: location.pathname, search: location.search, canvases: document.querySelectorAll(".echarts-for-react canvas").length, pending: [...document.querySelectorAll("[data-dashboard-chart]")].some(card => card.querySelector(".animate-pulse")), width: innerWidth, scrollWidth: document.documentElement.scrollWidth })');
+        if (state.path === target && state.canvases === chartCounts[targetRoute] && !state.pending
+          && apiRequests.slice(beforeCalls).every(request => request.completedAt) && Date.now() - startedAt > 500) break;
+      }
+      const calls = apiRequests.slice(beforeCalls).filter(request => request.method === 'GET' && request.path.startsWith('/api/painel/') && !request.path.includes('/home/'));
+      if (state.path !== target || state.canvases !== chartCounts[targetRoute] || state.pending || errors.length) throw new Error(JSON.stringify({ target, state, errors }));
+      if (expectedCache === true && calls.length) throw new Error('Retorno fresco disparou consultas: ' + JSON.stringify(calls));
+      if (expectedCache === false && !calls.length) throw new Error('Página removida do cache não foi consultada');
+      await send('HeapProfiler.collectGarbage');
+      const heap = await send('Runtime.getHeapUsage');
+      checks.push({ route: targetRoute, href, apiGets: calls.length, elapsedMs: Date.now() - startedAt, heapBytes: heap.usedSize, ...state });
+      for (const width of [390, 1265, 1920]) {
+        await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
+        await sleep(150);
+        const layout = await evaluate('({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, canvases: document.querySelectorAll(".echarts-for-react canvas").length })');
+        if (layout.scrollWidth > width + 2 || layout.canvases !== chartCounts[targetRoute]) throw new Error(JSON.stringify({ target, layout }));
+      }
+      return checks.at(-1);
+    }
+    await navigateMenu('performance');
+    const returned = await navigateMenu('coletas', true);
+    if (!returned.search.includes('dataInicio=2026-08-01') || !returned.search.includes('dataFim=2026-08-30')) throw new Error('Período não preservado ao retornar');
+    for (const targetRoute of Object.keys(chartCounts).filter(key => !['coletas', 'performance'].includes(key))) await navigateMenu(targetRoute);
+    await navigateMenu('coletas', false);
+    await writeFile(resolve(out, 'navigation.json'), JSON.stringify({ checks, errors, externalBlocked }, null, 2));
+  }
+
   if (smoke) {
     const legendResult = await send('Runtime.evaluate', { expression: `JSON.stringify([...window.__chartTestInstances].map(([title, instance]) => {
       const legend = instance.getModel().getComponent('legend');
@@ -314,7 +388,7 @@ try {
     }
     await writeFile(resolve(out, 'smoke.json'), JSON.stringify({ overview503: apiRequests.some(request => request.method === 'GET' && request.responseCode === 503), chartsRendered: expectedCharts, layouts, legends, trackingFilter, darkTheme: true, errors }, null, 2));
   }
-  await writeFile(resolve(out, 'results.json'), JSON.stringify({ fixture: `Synthetic data, ${apiDelay}ms API delay${animation ? ', unrelated table GET delayed 2200ms' : ''}, ${expectedCharts} real ${route} charts`, builds, results }, null, 2));
+  await writeFile(resolve(out, 'results.json'), JSON.stringify({ fixture: `Synthetic data, ${apiDelay}ms API delay${loading ? ", Coletas legacy charts = 3 SQL units, operation = 2 units, OPTIONS = 0ms" : ""}${animation ? ', unrelated table GET delayed 2200ms' : ''}, ${expectedCharts} real ${route} charts`, builds, results }, null, 2));
 } finally {
   if (socket?.readyState === WebSocket.OPEN) {
     try { await send('Browser.close'); } catch { /* browser closes its socket before acknowledging */ }

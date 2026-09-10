@@ -599,7 +599,7 @@ export default function IntegracoesPage() {
       escopoTabelaSelecionado,
       destinosSelecionados,
     ],
-    queryFn: () => buscarIntegracoesAuditoria(
+    queryFn: ({ signal }) => buscarIntegracoesAuditoria(
       paginacaoTabela.pagina,
       paginacaoTabela.tamanhoPagina,
       dataInicio,
@@ -609,6 +609,7 @@ export default function IntegracoesPage() {
       tableSort?.direction,
       escopoTabelaSelecionado,
       destinosSelecionados,
+      signal,
     ),
     placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000,
@@ -618,7 +619,7 @@ export default function IntegracoesPage() {
   const evolucaoDiariaQuery = useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: [...QUERY_KEY, 'evolucao-diaria', dataInicio, dataFim, destinosSelecionados],
-    queryFn: () => buscarIntegracoesEvolucaoDiaria(dataInicio, dataFim, undefined, destinosSelecionados),
+    queryFn: ({ signal }) => buscarIntegracoesEvolucaoDiaria(dataInicio, dataFim, undefined, destinosSelecionados, signal),
     placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000,
     retry: 1,

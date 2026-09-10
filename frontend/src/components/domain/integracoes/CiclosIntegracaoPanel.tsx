@@ -97,13 +97,13 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
   const paginacao = useTabelaPaginadaState(`ciclos:${dataInicio}:${dataFim}:${cliente}:${status}:${origem}`);
   const recentes = useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
-    queryKey: ['integracoes', 'vedacit-sftp', 'clientes'], queryFn: buscarStatusWorkSftpClientes,
+    queryKey: ['integracoes', 'vedacit-sftp', 'clientes'], queryFn: ({ signal }) => buscarStatusWorkSftpClientes(signal),
     staleTime: 60_000, retry: 1,
   });
   const historico = useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['integracoes', 'vedacit-sftp', 'execucoes', dataInicio, dataFim, cliente, status, origem, paginacao.pagina, paginacao.tamanhoPagina],
-    queryFn: () => buscarExecucoesWorkSftpClientes(paginacao.pagina, paginacao.tamanhoPagina, dataInicio, dataFim, cliente || undefined, status || undefined, origem || undefined),
+    queryFn: ({ signal }) => buscarExecucoesWorkSftpClientes(paginacao.pagina, paginacao.tamanhoPagina, dataInicio, dataFim, cliente || undefined, status || undefined, origem || undefined, signal),
     staleTime: 60_000, retry: 1,
   });
   const todosRecentes = recentes.data ?? empty;

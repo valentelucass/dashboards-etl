@@ -1,6 +1,10 @@
 package com.dashboard.api.config;
 
 import com.dashboard.api.controller.PerformanceController;
+import com.dashboard.api.controller.PresencaNavegacaoController;
+import com.dashboard.api.service.acesso.NavegacaoDiaService;
+import com.dashboard.api.security.acesso.UsuarioSupremo;
+import com.dashboard.api.dto.acesso.NavegacaoDiaDTO;
 import com.dashboard.api.repository.acesso.UsuarioSessaoSqlRepository;
 import com.dashboard.api.security.*;
 import com.dashboard.api.service.DashboardExportService;
@@ -62,6 +66,45 @@ class SecurityChainIntegrationTest {
     }
     @AfterEach void clean() { SecurityContextHolder.clearContext(); }
 
+    @Test void presencaExigeSessaoEUsaAIdentidadeDoJwt() throws Exception {
+        var navegacao = context.getBean(NavegacaoDiaService.class);
+        reset(navegacao);
+        mvc.perform(put("/api/sessao/presenca")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/admin/acesso/usuarios/7/navegacao-dia")).andExpect(status().isUnauthorized());
+        verifyNoInteractions(navegacao);
+        mvc.perform(put("/api/sessao/presenca").header("Authorization", "Bearer " + tokens.gerarToken("sem-permissao"))
+                .contentType("application/json").content("""
+                    {"rota":"/cotacoes","visivel":true,"fluxoId":"11111111-1111-4111-8111-111111111111"}
+                    """)).andExpect(status().isNoContent());
+        verify(navegacao).registrar(eq("sem-permissao"), argThat(p -> p.rota().equals("/cotacoes") && p.visivel()));
+    }
+
+    @Test void trilhaRecusaOutroAdministradorEAceitaSomenteSupremo() throws Exception {
+        var navegacao = context.getBean(NavegacaoDiaService.class);
+        var supremo = context.getBean(UsuarioSupremo.class);
+        reset(navegacao, supremo);
+        when(auth.authoritiesFor("admin")).thenReturn(List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        mvc.perform(get("/api/admin/acesso/usuarios/7/navegacao-dia")
+                .header("Authorization", "Bearer " + tokens.gerarToken("admin"))).andExpect(status().isForbidden());
+        verifyNoInteractions(navegacao);
+        when(supremo.ehEmailSupremo("admin")).thenReturn(true);
+        when(navegacao.buscar("admin", 7, 1)).thenReturn(new NavegacaoDiaDTO("2026-09-10", 11, List.of()));
+        mvc.perform(get("/api/admin/acesso/usuarios/7/navegacao-dia").param("pagina", "1")
+                .header("Authorization", "Bearer " + tokens.gerarToken("admin")))
+                .andExpect(status().isOk()).andExpect(jsonPath("dia").value("2026-09-10"));
+        verify(navegacao).buscar("admin", 7, 1);
+    }
+
+    @Test void pulsoMalformadoNaoChegaAoServico() throws Exception {
+        var navegacao = context.getBean(NavegacaoDiaService.class);
+        reset(navegacao);
+        mvc.perform(put("/api/sessao/presenca").header("Authorization", "Bearer " + tokens.gerarToken("sem-permissao"))
+                .contentType("application/json").content("""
+                    {"rota":"/","visivel":null,"fluxoId":"invalido"}
+                    """)).andExpect(status().isBadRequest());
+        verifyNoInteractions(navegacao);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"overview", "serie-temporal", "status", "historico", "drilldown", "aging", "tabela/paginada", "exportacao"})
     void rotasReaisRecusamAnonimoAntesDoServico(String route) throws Exception {
@@ -119,9 +162,11 @@ class SecurityChainIntegrationTest {
     }
 
     @Configuration @EnableWebMvc
-    @Import({SegurancaWebConfig.class, PerformanceController.class, AcessoSeguranca.class})
+    @Import({SegurancaWebConfig.class, PerformanceController.class, PresencaNavegacaoController.class, AcessoSeguranca.class})
     static class TestConfiguration {
         @Bean ObjectMapper objectMapper() { return new ObjectMapper().findAndRegisterModules(); }
+        @Bean NavegacaoDiaService navegacao() { return mock(NavegacaoDiaService.class); }
+        @Bean UsuarioSupremo usuarioSupremo() { return mock(UsuarioSupremo.class); }
         @Bean AutenticacaoService auth() { return mock(AutenticacaoService.class); }
         @Bean PerformanceDashboardService performance() { return mock(PerformanceDashboardService.class); }
         @Bean DashboardExportService exports() { return mock(DashboardExportService.class); }

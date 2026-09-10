@@ -5,6 +5,8 @@ import com.dashboard.api.dto.coletas.ColetasChartsDTO;
 import com.dashboard.api.dto.coletas.ColetasCidadeOrigemDTO;
 import com.dashboard.api.dto.coletas.ColetasHistoricoPerformanceDTO;
 import com.dashboard.api.dto.coletas.ColetasOverviewDTO;
+import com.dashboard.api.dto.coletas.ColetasOperacaoDTO;
+import com.dashboard.api.dto.coletas.ColetasStatusDistribuicaoDTO;
 import com.dashboard.api.dto.coletas.ColetasTrendPointDTO;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.service.ColetasService;
@@ -56,6 +58,22 @@ public class ColetasController {
             @RequestParam LocalDate dataFim,
             @RequestParam MultiValueMap<String, String> params) {
         return ResponseEntity.ok(coletasService.buscarGraficos(FiltroRequestMapper.from(dataInicio, dataFim, params)));
+    }
+
+    @GetMapping("/graficos/status")
+    public ResponseEntity<List<ColetasStatusDistribuicaoDTO>> status(
+            @RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim,
+            @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(coletasService.buscarStatusDistribuicao(FiltroRequestMapper.from(dataInicio, dataFim, params)));
+    }
+
+    @GetMapping("/graficos/operacao")
+    public ResponseEntity<ColetasOperacaoDTO> operacao(
+            @RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim,
+            @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(coletasService.buscarOperacao(FiltroRequestMapper.from(dataInicio, dataFim, params)));
     }
 
     @GetMapping("/graficos/historico-performance")

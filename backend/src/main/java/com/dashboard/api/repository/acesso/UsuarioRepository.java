@@ -73,12 +73,13 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
                    CAST(COALESCE(SUM(CASE WHEN ativo = 1 THEN 1 ELSE 0 END), 0) AS bigint) AS [usuariosAtivos],
                    CAST(COALESCE(SUM(CASE WHEN ativo = 0 THEN 1 ELSE 0 END), 0) AS bigint) AS [usuariosInativos],
                    CAST(COALESCE(SUM(CASE
-                        WHEN ultima_atividade >= DATEADD(MINUTE, -15, SYSDATETIMEOFFSET()) THEN 1
+                        WHEN ativo = 1 AND email <> :operador AND login <> :operador
+                             AND ultima_atividade >= DATEADD(MINUTE, -15, SYSDATETIMEOFFSET()) THEN 1
                         ELSE 0
                    END), 0) AS bigint) AS [usuariosOnline]
             FROM acesso.usuarios
             """, nativeQuery = true)
-    UsuarioSessaoResumoProjection calcularResumoSessoes();
+    UsuarioSessaoResumoProjection calcularResumoSessoes(@Param("operador") String operador);
 
     @Query(value = """
             SELECT
@@ -87,10 +88,11 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
                    u.email AS [email],
                    CONVERT(varchar(33), u.ultima_atividade, 127) AS [ultimaAtividade]
             FROM acesso.usuarios u
-            WHERE u.ultima_atividade >= DATEADD(MINUTE, -15, SYSDATETIMEOFFSET())
+            WHERE u.ativo = 1 AND u.email <> :operador AND u.login <> :operador
+              AND u.ultima_atividade >= DATEADD(MINUTE, -15, SYSDATETIMEOFFSET())
             ORDER BY u.ultima_atividade DESC, LOWER(u.nome)
             """, nativeQuery = true)
-    List<UsuarioOnlineResumoProjection> findUsuariosOnlineResumo();
+    List<UsuarioOnlineResumoProjection> findUsuariosOnlineResumo(@Param("operador") String operador);
 
     @Query(value = """
             SELECT CAST(CASE

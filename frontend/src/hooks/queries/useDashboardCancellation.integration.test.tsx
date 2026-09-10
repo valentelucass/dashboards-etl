@@ -12,12 +12,26 @@ import { useManifestosPerformance, useManifestosTabelaPaginada } from './useMani
 import { useExecutivoOverview, useExecutivoSerie, useExecutivoResumoFinanceiro } from './useExecutivo';
 import { useFaturamentoStatus, useFaturamentoResponsaveis, useManifestosClassificacoes } from './useDimensoes';
 
+import { useColetasOverview, useColetasSerie, useColetasStatus, useColetasOperacao, useColetasHistoricoPerformance } from './useColetas';
+import { useCotacoesOverview, useCotacoesGraficos, useCotacoesSerie } from './useCotacoes';
+import { useTrackingDashboard } from './useTracking';
+import { useEtlSaudeOverview } from './useEtlSaude';
+import { useContasAPagarOverview } from './useContasAPagar';
+import { useFaturasPorClienteOverview } from './useFaturasPorCliente';
+import { usePerformanceEntregaOverview, useCubagemMercadoriasSerie } from './useIndicadoresGestaoAVista';
+
 const originalAdapter = clienteAxios.defaults.adapter;
 const filtro = { dataInicio: '2026-08-01', dataFim: '2026-08-30', filiais: ['CWB'] };
 let client: QueryClient;
 afterEach(() => { cleanup(); client?.clear(); clienteAxios.defaults.adapter = originalAdapter; });
 function wrapper({ children }: { children: ReactNode }) { return <QueryClientProvider client={client}>{children}</QueryClientProvider>; }
 const useCases = [
+  ['coletas overview', useColetasOverview], ['coletas série', useColetasSerie],
+  ['coletas status', useColetasStatus], ['coletas operação', useColetasOperacao], ['coletas histórico', useColetasHistoricoPerformance],
+  ['cotações overview', useCotacoesOverview], ['cotações gráficos', useCotacoesGraficos], ['cotações série', useCotacoesSerie],
+  ['tracking dashboard', useTrackingDashboard], ['ETL overview', useEtlSaudeOverview],
+  ['contas a pagar overview', useContasAPagarOverview], ['faturas overview', useFaturasPorClienteOverview],
+  ['gestão overview', usePerformanceEntregaOverview], ['gestão série', useCubagemMercadoriasSerie],
   ['faturamento overview', useFaturamentoOverview], ['faturamento série', useFaturamentoSerie],
   ['faturamento gráficos', useFaturamentoGraficos], ['faturamento metas', useFaturamentoMetas],
   ['faturamento clientes', useFaturamentoTopClientes], ['faturamento status', useFaturamentoStatus],

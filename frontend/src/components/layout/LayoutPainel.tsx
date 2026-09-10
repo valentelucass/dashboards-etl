@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { CalendarClock } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import TopNav from './TopNav';
+import usePresencaNavegacao from '../../hooks/usePresencaNavegacao';
 
 type BuildInfo = {
   buildId?: string;
@@ -81,8 +82,8 @@ function BuildInfoFooter() {
 
   return (
     <div
-      className="flex min-w-0 items-center gap-2.5 text-xs"
-      style={{ color: 'var(--color-text-muted)' }}
+      className="flex min-w-0 items-center gap-2.5 border-l pl-5 text-xs"
+      style={{ color: 'var(--color-text-muted)', borderColor: 'var(--color-border)' }}
       title={!isDevBuild ? `Versão ${buildId}` : undefined}
     >
       <CalendarClock size={16} className="shrink-0" aria-hidden="true" />
@@ -104,14 +105,18 @@ function BuildInfoFooter() {
 }
 
 export default function LayoutPainel() {
+  usePresencaNavegacao();
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
       <TopNav />
       <main className="flex-1 w-full overflow-auto px-3 py-3 sm:px-5 sm:py-4">
-        <Outlet />
+        <Suspense fallback={<div role="status" className="flex min-h-80 items-center justify-center text-sm" style={{ color: 'var(--color-text-muted)' }}>Carregando página…</div>}>
+          <Outlet />
+        </Suspense>
       </main>
       <footer className="mt-auto border-t px-4 py-4 sm:px-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
         <div className="flex w-full flex-wrap items-center justify-between gap-x-8 gap-y-4">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3">
           <div className="min-w-0 space-y-1">
             <p className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
               Rodogarcia <span aria-hidden="true" className="mx-1 opacity-40">·</span> Dashboards
@@ -121,6 +126,7 @@ export default function LayoutPainel() {
             </p>
           </div>
           <BuildInfoFooter />
+          </div>
           <div className="flex flex-col gap-1 text-left sm:items-end sm:text-right">
             <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
               Desenvolvido por{' '}

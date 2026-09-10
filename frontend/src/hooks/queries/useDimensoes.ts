@@ -32,7 +32,7 @@ const GC_TIME = 24 * 60 * 60 * 1000; // 24 horas
 export function useFiliais() {
   return useQuery({
     queryKey: ['dim', 'filiais'],
-    queryFn: buscarFiliais,
+    queryFn: ({ signal }) => buscarFiliais(signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -42,7 +42,7 @@ export function useFiliais() {
 export function useClientes() {
   return useQuery({
     queryKey: ['dim', 'clientes'],
-    queryFn: buscarClientes,
+    queryFn: ({ signal }) => buscarClientes(signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -54,7 +54,7 @@ export function usePagadores(busca: string) {
 
   return useQuery({
     queryKey: ['dim', 'pagadores', buscaNormalizada],
-    queryFn: () => buscarPagadores(buscaNormalizada),
+    queryFn: ({ signal }) => buscarPagadores(buscaNormalizada, signal),
     placeholderData: (previousData) => previousData,
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
@@ -65,7 +65,7 @@ export function usePagadores(busca: string) {
 export function useFaturasPorClienteClientesCnpj() {
   return useQuery({
     queryKey: ['dim', 'faturas-por-cliente', 'clientes-cnpj'],
-    queryFn: buscarFaturasPorClienteClientesCnpj,
+    queryFn: ({ signal }) => buscarFaturasPorClienteClientesCnpj(signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -75,7 +75,7 @@ export function useFaturasPorClienteClientesCnpj() {
 export function useMotoristas() {
   return useQuery({
     queryKey: ['dim', 'motoristas'],
-    queryFn: buscarMotoristas,
+    queryFn: ({ signal }) => buscarMotoristas(signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -85,7 +85,7 @@ export function useMotoristas() {
 export function useVeiculos() {
   return useQuery({
     queryKey: ['dim', 'veiculos'],
-    queryFn: buscarVeiculos,
+    queryFn: ({ signal }) => buscarVeiculos(signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -105,7 +105,7 @@ export function useManifestosClassificacoes(filtro: ManifestosFiltro) {
 export function usePlanoContas() {
   return useQuery({
     queryKey: ['dim', 'planocontas'],
-    queryFn: buscarPlanoContas,
+    queryFn: ({ signal }) => buscarPlanoContas(signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -115,7 +115,7 @@ export function usePlanoContas() {
 export function useUsuarios() {
   return useQuery({
     queryKey: ['dim', 'usuarios'],
-    queryFn: buscarUsuarios,
+    queryFn: ({ signal }) => buscarUsuarios(signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -185,7 +185,7 @@ export function useFaturamentoResponsaveis(filtro: FaturamentoFiltro) {
 export function useCotacoesUsuarios(filtro: CotacoesFiltro) {
   return useQuery({
     queryKey: ['dim', 'cotacoes', 'usuarios', filtro],
-    queryFn: () => buscarCotacoesUsuarios(filtro),
+    queryFn: ({ signal }) => buscarCotacoesUsuarios(filtro, signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,
@@ -195,7 +195,7 @@ export function useCotacoesUsuarios(filtro: CotacoesFiltro) {
 export function useCotacoesClassificacoes(filtro: CotacoesFiltro) {
   return useQuery({
     queryKey: ['dim', 'cotacoes', 'classificacoes', filtro],
-    queryFn: () => buscarCotacoesClassificacoes(filtro),
+    queryFn: ({ signal }) => buscarCotacoesClassificacoes(filtro, signal),
     staleTime: Infinity,
     gcTime: GC_TIME,
     retry: 1,
@@ -205,7 +205,7 @@ export function useCotacoesClassificacoes(filtro: CotacoesFiltro) {
 export function useCotacoesOrigens(filtro: CotacoesFiltro) {
   return useQuery({
     queryKey: ['dim', 'cotacoes', 'origens', filtro],
-    queryFn: () => buscarCotacoesOrigens(filtro),
+    queryFn: ({ signal }) => buscarCotacoesOrigens(filtro, signal),
     staleTime: Infinity,
     gcTime: GC_TIME,
     retry: 1,
@@ -215,7 +215,7 @@ export function useCotacoesOrigens(filtro: CotacoesFiltro) {
 export function useCotacoesDestinos(filtro: CotacoesFiltro) {
   return useQuery({
     queryKey: ['dim', 'cotacoes', 'destinos', filtro],
-    queryFn: () => buscarCotacoesDestinos(filtro),
+    queryFn: ({ signal }) => buscarCotacoesDestinos(filtro, signal),
     staleTime: Infinity,
     gcTime: GC_TIME,
     retry: 1,

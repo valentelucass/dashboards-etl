@@ -424,7 +424,7 @@ class GestaoUsuarioServiceTest {
 
     @Test
     void resumoSessoesUsuariosIncluiDetalhesDosUsuariosOnline() {
-        when(usuarioRepository.calcularResumoSessoes()).thenReturn(new UsuarioRepository.UsuarioSessaoResumoProjection() {
+        when(usuarioRepository.calcularResumoSessoes(org.mockito.ArgumentMatchers.anyString())).thenReturn(new UsuarioRepository.UsuarioSessaoResumoProjection() {
             @Override
             public Long getTotalUsuarios() {
                 return 3L;
@@ -445,7 +445,7 @@ class GestaoUsuarioServiceTest {
                 return 1L;
             }
         });
-        when(usuarioRepository.findUsuariosOnlineResumo()).thenReturn(List.of(new UsuarioRepository.UsuarioOnlineResumoProjection() {
+        when(usuarioRepository.findUsuariosOnlineResumo(org.mockito.ArgumentMatchers.anyString())).thenReturn(List.of(new UsuarioRepository.UsuarioOnlineResumoProjection() {
             @Override
             public Long getId() {
                 return 99L;

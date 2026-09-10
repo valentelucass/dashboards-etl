@@ -1,5 +1,5 @@
 import { escapeHtml } from '../utils/escapeHtml';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
 import ChartWrapper from '../components/charts/ChartWrapper';
@@ -7,7 +7,6 @@ import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import EtlSaudeKpiGrid from '../components/domain/etlSaude/EtlSaudeKpiGrid';
 import DataTable, { type ColunaTabela } from '../components/shared/DataTable';
 import DateRangePicker from '../components/shared/DateRangePicker';
-import { DATE_RANGE_PRESETS } from '../components/shared/dateRangePresets';
 import ExportButton from '../components/shared/ExportButton';
 import FilterBar from '../components/shared/FilterBar';
 import StatusBadge from '../components/shared/StatusBadge';
@@ -24,7 +23,6 @@ import {
   useEtlSaudeTabelasResumo,
   useEtlSaudeTaxasDiarias,
 } from '../hooks/queries/useEtlSaude';
-import { normalizarPeriodo } from '../utils/dateUtils';
 import { buildBaseBarOption, buildBaseLineOption, getEchartsThemeTokens } from '../utils/echartsBuilders';
 import { formatarData, formatarDataHora, formatarNumero, formatarPorcentagem } from '../utils/formatadores';
 import type { EtlLogExtracaoAuditoriaRow } from '../types/etlSaude';
@@ -145,17 +143,6 @@ export default function EtlSaudePage() {
   const { dataInicio, dataFim, setDataInicio, setDataFim, setDataRange, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
   const filtro = { dataInicio, dataFim };
-
-  useEffect(() => {
-    const preset180d = DATE_RANGE_PRESETS.find((preset) => preset.label === '180d');
-    if (!preset180d) return;
-
-    const range = preset180d.getRange();
-    const periodo = normalizarPeriodo(range.dataInicio, range.dataFim);
-    setDataRange(periodo.dataInicio, periodo.dataFim);
-    // Esta excecao de periodo inicial deve rodar somente na montagem da pagina.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const overview = useEtlSaudeOverview(filtro);
   const taxasDiariasQuery = useEtlSaudeTaxasDiarias(filtro);

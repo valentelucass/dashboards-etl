@@ -30,7 +30,7 @@ export function useFaturasPorClienteOverview(filtro: FaturasPorClienteFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'overview', filtro],
-    queryFn: () => buscarFaturasPorClienteOverview(filtro),
+    queryFn: ({ signal }) => buscarFaturasPorClienteOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -40,7 +40,7 @@ export function useFaturasPorClienteMensal(filtro: FaturasPorClienteFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'mensal', filtro],
-    queryFn: () => buscarFaturasPorClienteMensal(filtro),
+    queryFn: ({ signal }) => buscarFaturasPorClienteMensal(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -55,7 +55,7 @@ export function useFaturasPorClienteSerie(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'serie', filtro, granularidade, referencia, metrica],
-    queryFn: () => buscarFaturasPorClienteSerie(filtro, granularidade, referencia, metrica),
+    queryFn: ({ signal }) => buscarFaturasPorClienteSerie(filtro, granularidade, referencia, metrica, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -65,7 +65,7 @@ export function useFaturasPorClienteAging(filtro: FaturasPorClienteFiltro, escop
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'aging', filtro, escopo],
-    queryFn: () => buscarFaturasPorClienteAging(filtro, escopo),
+    queryFn: ({ signal }) => buscarFaturasPorClienteAging(filtro, escopo, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -80,7 +80,7 @@ export function useFaturasPorClienteAgingDrilldown(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'aging', 'drilldown', filtro, faixa, nivel, cliente],
-    queryFn: () => buscarFaturasPorClienteAgingDrilldown(filtro, faixa ?? '', nivel, cliente),
+    queryFn: ({ signal }) => buscarFaturasPorClienteAgingDrilldown(filtro, faixa ?? '', nivel, cliente, signal),
     enabled: Boolean(faixa),
     staleTime: STALE_TIME,
     retry: 1,
@@ -91,7 +91,7 @@ export function useFaturasPorClienteTopClientes(filtro: FaturasPorClienteFiltro,
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'top-clientes', filtro, limite],
-    queryFn: () => buscarFaturasPorClienteTopClientes(filtro, limite),
+    queryFn: ({ signal }) => buscarFaturasPorClienteTopClientes(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -108,7 +108,7 @@ export function useFaturasPorClienteTopClientesDrilldown(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'top-clientes', 'drilldown', filtro, limite, metrica, nivel, cliente, cnpj],
-    queryFn: () => buscarFaturasPorClienteTopClientesDrilldown(filtro, limite, metrica, nivel, cliente, cnpj),
+    queryFn: ({ signal }) => buscarFaturasPorClienteTopClientesDrilldown(filtro, limite, metrica, nivel, cliente, cnpj, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -118,7 +118,7 @@ export function useFaturasPorClienteStatusProcesso(filtro: FaturasPorClienteFilt
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'status-processo', filtro],
-    queryFn: () => buscarFaturasPorClienteStatusProcesso(filtro),
+    queryFn: ({ signal }) => buscarFaturasPorClienteStatusProcesso(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -128,7 +128,7 @@ export function useFaturasPorClienteStatusEvolucao(filtro: FaturasPorClienteFilt
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'status-processo', 'evolucao', filtro, granularidade],
-    queryFn: () => buscarFaturasPorClienteStatusEvolucao(filtro, granularidade),
+    queryFn: ({ signal }) => buscarFaturasPorClienteStatusEvolucao(filtro, granularidade, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -138,7 +138,7 @@ export function useFaturasPorClienteTabela(filtro: FaturasPorClienteFiltro, limi
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'tabela', filtro, limite],
-    queryFn: () => buscarFaturasPorClienteTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarFaturasPorClienteTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -148,7 +148,7 @@ export function useFaturasPorClienteTabelaTotal(filtro: FaturasPorClienteFiltro)
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'tabela-total', filtro],
-    queryFn: () => buscarFaturasPorClienteTabelaTotal(filtro),
+    queryFn: ({ signal }) => buscarFaturasPorClienteTabelaTotal(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -163,7 +163,7 @@ export function useFaturasPorClienteTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'tabela-paginada', filtro, pagina, tamanhoPagina, filtrosTabela],
-    queryFn: () => buscarFaturasPorClienteTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela),
+    queryFn: ({ signal }) => buscarFaturasPorClienteTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela, signal),
     placeholderData: (previousData) => previousData,
     staleTime: STALE_TIME,
     retry: 1,

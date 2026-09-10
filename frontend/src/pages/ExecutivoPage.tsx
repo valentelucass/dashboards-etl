@@ -1,12 +1,11 @@
 import { escapeHtml } from '../utils/escapeHtml';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import ExecutivoKpiGrid from '../components/domain/executivo/ExecutivoKpiGrid';
 import DataTable, { type ColunaTabela } from '../components/shared/DataTable';
 import DateRangePicker from '../components/shared/DateRangePicker';
-import { DATE_RANGE_PRESETS } from '../components/shared/dateRangePresets';
 import ExportButton from '../components/shared/ExportButton';
 import FiliaisParceirosFilter from '../components/shared/FiliaisParceirosFilter';
 import FilterBar, { type ActiveFilter } from '../components/shared/FilterBar';
@@ -19,7 +18,6 @@ import { usePageHeader } from '../contexts/PageHeaderContext';
 import { useFiliais } from '../hooks/queries/useDimensoes';
 import { useExecutivoOverview, useExecutivoResumoFinanceiro, useExecutivoSerie } from '../hooks/queries/useExecutivo';
 import type { ExecutivoResumoFinanceiro } from '../types/executivo';
-import { normalizarPeriodo } from '../utils/dateUtils';
 import { buildBaseBarOption, buildBaseLineOption, getEchartsThemeTokens } from '../utils/echartsBuilders';
 import { formatarMoeda, formatarNumero, formatarPeso } from '../utils/formatadores';
 
@@ -167,7 +165,7 @@ function ResumoFinanceiroTable({
   ];
 
   return (
-    <div className="mb-6">
+    <div className="mb-6" data-dashboard-table="true">
       <DataTable
         titulo="Resumo financeiro por filial"
         dados={rows}
@@ -191,17 +189,6 @@ export default function ExecutivoPage() {
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
   const filiais = useFiliais();
-
-  useEffect(() => {
-    const preset180d = DATE_RANGE_PRESETS.find((preset) => preset.label === '180d');
-    if (!preset180d) return;
-
-    const range = preset180d.getRange();
-    const periodo = normalizarPeriodo(range.dataInicio, range.dataFim);
-    setDataRange(periodo.dataInicio, periodo.dataFim);
-    // Esta excecao de periodo inicial deve rodar somente na montagem da pagina.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const filtro = {
     dataInicio,

@@ -17,6 +17,7 @@ interface FilterBarProps {
   onClear?: () => void;
   activeFilters?: ActiveFilter[];
   actions?: ReactNode;
+  actionsOnMobileRow?: boolean;
   /** Se fornecidos, exibe data compacta na barra recolhida */
   dataInicio?: string;
   dataFim?: string;
@@ -74,6 +75,7 @@ export default function FilterBar({
   onClear,
   activeFilters,
   actions,
+  actionsOnMobileRow = false,
   dataInicio,
   dataFim,
   dateAccessory,
@@ -122,7 +124,7 @@ export default function FilterBar({
   // ── barra recolhida (sempre visível) ──────────────────────────────
   const collapsedBar = (
     <div
-      className={`flex items-center border shadow-sm ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : 'h-12 gap-3 rounded-[20px] px-4'}`}
+      className={`flex items-center border shadow-sm ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : actionsOnMobileRow ? 'min-h-12 flex-wrap gap-x-3 gap-y-1 rounded-[20px] px-4 py-1.5 md:h-12 md:flex-nowrap md:py-0' : 'h-12 gap-3 rounded-[20px] px-4'}`}
       style={{ backgroundColor: isPresentationMode ? 'transparent' : 'var(--color-card)', borderColor: 'var(--color-border)' }}
     >
       {/* Data compacta */}
@@ -150,6 +152,7 @@ export default function FilterBar({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
+          data-dashboard-filters-open={open ? 'true' : undefined}
           aria-controls={panelId}
           className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg font-medium
                      transition-all duration-150 hover:bg-[var(--color-bg)] active:scale-[0.97]
@@ -174,7 +177,7 @@ export default function FilterBar({
       )}
 
       {actions ? (
-        <div className={`flex shrink-0 items-center gap-2 overflow-hidden ${isPresentationMode ? 'p-0' : 'p-1'}`}>
+        <div className={`flex items-center gap-2 ${actionsOnMobileRow && !isPresentationMode ? 'min-w-0 basis-full md:basis-auto md:shrink-0' : 'shrink-0 overflow-hidden'} ${isPresentationMode ? 'p-0' : 'p-1'}`}>
           {actions}
         </div>
       ) : null}

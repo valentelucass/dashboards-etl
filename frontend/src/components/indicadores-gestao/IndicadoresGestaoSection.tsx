@@ -152,6 +152,7 @@ export default function IndicadoresGestaoSection<T>({
 
   return (
     <section
+      data-dashboard-section={chartKey}
       className="mb-8 rounded-[24px] border p-5 shadow-sm"
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
     >

@@ -83,8 +83,10 @@ function withPerformanceSerieParams(
 
 export async function buscarPerformanceEntregaOverview(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<PerformanceEntregaOverview> {
   const { data } = await clienteAxios.get<PerformanceEntregaOverview>(`${BASE}/performance-entrega/overview`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -93,8 +95,10 @@ export async function buscarPerformanceEntregaOverview(
 export async function buscarPerformanceEntregaSerie(
   filtro: IndicadoresGestaoVistaFiltro,
   serieParams: PerformanceEntregaSerieParams,
+  signal?: AbortSignal,
 ): Promise<PerformanceEntregaSeriePoint[]> {
   const { data } = await clienteAxios.get<PerformanceEntregaSeriePoint[]>(`${BASE}/performance-entrega/serie`, {
+    signal,
     params: withPerformanceSerieParams(filtro, serieParams),
   });
   return data;
@@ -103,8 +107,10 @@ export async function buscarPerformanceEntregaSerie(
 export async function buscarPerformanceEntregaTabela(
   filtro: IndicadoresGestaoVistaFiltro,
   limite = 100,
+  signal?: AbortSignal,
 ): Promise<PerformanceEntregaRow[]> {
   const { data } = await clienteAxios.get<PerformanceEntregaRow[]>(`${BASE}/performance-entrega/tabela`, {
+    signal,
     params: withLimit(filtro, limite),
   });
   return data;
@@ -114,8 +120,9 @@ export async function buscarPerformanceEntregaTabelaPaginada(
   filtro: IndicadoresGestaoVistaFiltro,
   pagina: number,
   tamanhoPagina: number,
+  signal?: AbortSignal,
 ): Promise<PaginacaoResponse<PerformanceEntregaRow>> {
-  return buscarTabelaPaginada(`${BASE}/performance-entrega/tabela/paginada`, filtro, pagina, tamanhoPagina);
+  return buscarTabelaPaginada(`${BASE}/performance-entrega/tabela/paginada`, filtro, pagina, tamanhoPagina, undefined, undefined, undefined, signal);
 }
 
 export async function exportarPerformanceEntregaCsv(filtro: IndicadoresGestaoVistaFiltro): Promise<void> {
@@ -124,8 +131,10 @@ export async function exportarPerformanceEntregaCsv(filtro: IndicadoresGestaoVis
 
 export async function buscarUtilizacaoColetoresOverview(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<UtilizacaoColetoresOverview> {
   const { data } = await clienteAxios.get<UtilizacaoColetoresOverview>(`${BASE}/utilizacao-coletores/overview`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -133,8 +142,10 @@ export async function buscarUtilizacaoColetoresOverview(
 
 export async function buscarUtilizacaoColetoresSerie(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<UtilizacaoColetoresSeriePoint[]> {
   const { data } = await clienteAxios.get<UtilizacaoColetoresSeriePoint[]>(`${BASE}/utilizacao-coletores/serie`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -142,8 +153,10 @@ export async function buscarUtilizacaoColetoresSerie(
 
 export async function buscarUtilizacaoColetoresRanking(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<UtilizacaoColetoresRankingItem[]> {
   const { data } = await clienteAxios.get<UtilizacaoColetoresRankingItem[]>(`${BASE}/utilizacao-coletores/ranking`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -152,8 +165,10 @@ export async function buscarUtilizacaoColetoresRanking(
 export async function buscarUtilizacaoColetoresTabela(
   filtro: IndicadoresGestaoVistaFiltro,
   limite = 100,
+  signal?: AbortSignal,
 ): Promise<UtilizacaoColetoresRow[]> {
   const { data } = await clienteAxios.get<UtilizacaoColetoresRow[]>(`${BASE}/utilizacao-coletores/tabela`, {
+    signal,
     params: withLimit(filtro, limite),
   });
   return data;
@@ -163,8 +178,9 @@ export async function buscarUtilizacaoColetoresTabelaPaginada(
   filtro: IndicadoresGestaoVistaFiltro,
   pagina: number,
   tamanhoPagina: number,
+  signal?: AbortSignal,
 ): Promise<PaginacaoResponse<UtilizacaoColetoresRow>> {
-  return buscarTabelaPaginada(`${BASE}/utilizacao-coletores/tabela/paginada`, filtro, pagina, tamanhoPagina);
+  return buscarTabelaPaginada(`${BASE}/utilizacao-coletores/tabela/paginada`, filtro, pagina, tamanhoPagina, undefined, undefined, undefined, signal);
 }
 
 export async function exportarUtilizacaoColetoresCsv(filtro: IndicadoresGestaoVistaFiltro): Promise<void> {
@@ -173,8 +189,10 @@ export async function exportarUtilizacaoColetoresCsv(filtro: IndicadoresGestaoVi
 
 export async function buscarCubagemMercadoriasOverview(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<CubagemMercadoriasOverview> {
   const { data } = await clienteAxios.get<CubagemMercadoriasOverview>(`${BASE}/cubagem-mercadorias/overview`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -182,8 +200,10 @@ export async function buscarCubagemMercadoriasOverview(
 
 export async function buscarCubagemMercadoriasSerie(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<CubagemMercadoriasSeriePoint[]> {
   const { data } = await clienteAxios.get<CubagemMercadoriasSeriePoint[]>(`${BASE}/cubagem-mercadorias/serie`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -192,8 +212,10 @@ export async function buscarCubagemMercadoriasSerie(
 export async function buscarCubagemMercadoriasTabela(
   filtro: IndicadoresGestaoVistaFiltro,
   limite = 100,
+  signal?: AbortSignal,
 ): Promise<CubagemMercadoriasRow[]> {
   const { data } = await clienteAxios.get<CubagemMercadoriasRow[]>(`${BASE}/cubagem-mercadorias/tabela`, {
+    signal,
     params: withLimit(filtro, limite),
   });
   return data;
@@ -203,16 +225,17 @@ export async function buscarCubagemMercadoriasTabelaPaginada(
   filtro: IndicadoresGestaoVistaFiltro,
   pagina: number,
   tamanhoPagina: number,
+  signal?: AbortSignal,
 ): Promise<PaginacaoResponse<CubagemMercadoriasRow>> {
-  return buscarTabelaPaginada(`${BASE}/cubagem-mercadorias/tabela/paginada`, filtro, pagina, tamanhoPagina);
+  return buscarTabelaPaginada(`${BASE}/cubagem-mercadorias/tabela/paginada`, filtro, pagina, tamanhoPagina, undefined, undefined, undefined, signal);
 }
 
 export async function exportarCubagemMercadoriasCsv(filtro: IndicadoresGestaoVistaFiltro): Promise<void> {
   await baixarCsv(`${BASE}/cubagem-mercadorias/exportacao`, filtro, 'indicadores-cubagem-mercadorias');
 }
 
-export async function buscarClientesExcecaoCubagem(): Promise<ClienteExcecaoCubagem[]> {
-  const { data } = await clienteAxios.get<ClienteExcecaoCubagem[]>(CUBAGEM_CLIENTES_BASE);
+export async function buscarClientesExcecaoCubagem(signal?: AbortSignal): Promise<ClienteExcecaoCubagem[]> {
+  const { data } = await clienteAxios.get<ClienteExcecaoCubagem[]>(CUBAGEM_CLIENTES_BASE, { signal });
   return data;
 }
 
@@ -258,8 +281,10 @@ export async function importarClientesExcecaoCubagem(
 
 export async function buscarIndenizacaoMercadoriasOverview(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<IndenizacaoMercadoriasOverview> {
   const { data } = await clienteAxios.get<IndenizacaoMercadoriasOverview>(`${BASE}/indenizacao-mercadorias/overview`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -267,8 +292,10 @@ export async function buscarIndenizacaoMercadoriasOverview(
 
 export async function buscarIndenizacaoMercadoriasSerie(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<IndenizacaoMercadoriasSeriePoint[]> {
   const { data } = await clienteAxios.get<IndenizacaoMercadoriasSeriePoint[]>(`${BASE}/indenizacao-mercadorias/serie`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -277,8 +304,10 @@ export async function buscarIndenizacaoMercadoriasSerie(
 export async function buscarIndenizacaoMercadoriasTabela(
   filtro: IndicadoresGestaoVistaFiltro,
   limite = 100,
+  signal?: AbortSignal,
 ): Promise<IndenizacaoMercadoriasRow[]> {
   const { data } = await clienteAxios.get<IndenizacaoMercadoriasRow[]>(`${BASE}/indenizacao-mercadorias/tabela`, {
+    signal,
     params: withLimit(filtro, limite),
   });
   return data;
@@ -288,8 +317,9 @@ export async function buscarIndenizacaoMercadoriasTabelaPaginada(
   filtro: IndicadoresGestaoVistaFiltro,
   pagina: number,
   tamanhoPagina: number,
+  signal?: AbortSignal,
 ): Promise<PaginacaoResponse<IndenizacaoMercadoriasRow>> {
-  return buscarTabelaPaginada(`${BASE}/indenizacao-mercadorias/tabela/paginada`, filtro, pagina, tamanhoPagina);
+  return buscarTabelaPaginada(`${BASE}/indenizacao-mercadorias/tabela/paginada`, filtro, pagina, tamanhoPagina, undefined, undefined, undefined, signal);
 }
 
 export async function exportarIndenizacaoMercadoriasCsv(filtro: IndicadoresGestaoVistaFiltro): Promise<void> {
@@ -298,8 +328,10 @@ export async function exportarIndenizacaoMercadoriasCsv(filtro: IndicadoresGesta
 
 export async function buscarHorariosCorteOverview(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<HorariosCorteOverview> {
   const { data } = await clienteAxios.get<HorariosCorteOverview>(`${BASE}/horarios-corte/overview`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -307,8 +339,10 @@ export async function buscarHorariosCorteOverview(
 
 export async function buscarHorariosCorteSerie(
   filtro: IndicadoresGestaoVistaFiltro,
+  signal?: AbortSignal,
 ): Promise<HorariosCorteSeriePoint[]> {
   const { data } = await clienteAxios.get<HorariosCorteSeriePoint[]>(`${BASE}/horarios-corte/serie`, {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
@@ -317,8 +351,10 @@ export async function buscarHorariosCorteSerie(
 export async function buscarHorariosCorteTabela(
   filtro: IndicadoresGestaoVistaFiltro,
   limite = 100,
+  signal?: AbortSignal,
 ): Promise<HorarioCorteRow[]> {
   const { data } = await clienteAxios.get<HorarioCorteRow[]>(`${BASE}/horarios-corte/tabela`, {
+    signal,
     params: withLimit(filtro, limite),
   });
   return data;
@@ -329,8 +365,9 @@ export async function buscarHorariosCorteTabelaPaginada(
   pagina: number,
   tamanhoPagina: number,
   filtrosTabela?: TableApiFilters,
+  signal?: AbortSignal,
 ): Promise<PaginacaoResponse<HorarioCorteRow>> {
-  return buscarTabelaPaginada(`${BASE}/horarios-corte/tabela/paginada`, filtro, pagina, tamanhoPagina, filtrosTabela);
+  return buscarTabelaPaginada(`${BASE}/horarios-corte/tabela/paginada`, filtro, pagina, tamanhoPagina, filtrosTabela, undefined, undefined, signal);
 }
 
 export async function exportarHorariosCorteCsv(
@@ -351,16 +388,17 @@ export async function excluirJustificativaHorarioCorte(sm: number | string): Pro
   await clienteAxios.delete(`${BASE}/horarios-corte/justificativas/${encodeURIComponent(String(sm))}`);
 }
 
-export async function buscarKpiGoalsCompleto(competencia?: string): Promise<KpiGoalsFullResponse> {
+export async function buscarKpiGoalsCompleto(competencia?: string, signal?: AbortSignal): Promise<KpiGoalsFullResponse> {
   const params = withCompetenciaParam({}, competencia);
   const { data } = Object.keys(params).length > 0
-    ? await clienteAxios.get<KpiGoalsFullResponse>(KPI_GOALS_BASE, { params })
-    : await clienteAxios.get<KpiGoalsFullResponse>(KPI_GOALS_BASE);
+    ? await clienteAxios.get<KpiGoalsFullResponse>(KPI_GOALS_BASE, { signal, params })
+    : await clienteAxios.get<KpiGoalsFullResponse>(KPI_GOALS_BASE, { signal });
   return data;
 }
 
-export async function buscarKpiGoalsEfetivos(branchId: string, competencia?: string): Promise<KpiGoalEffectiveResponse> {
+export async function buscarKpiGoalsEfetivos(branchId: string, competencia?: string, signal?: AbortSignal): Promise<KpiGoalEffectiveResponse> {
   const { data } = await clienteAxios.get<KpiGoalEffectiveResponse>(`${KPI_GOALS_BASE}/effective`, {
+    signal,
     params: withCompetenciaParam({ branchId }, competencia),
   });
   return data;
@@ -392,8 +430,9 @@ export async function removerKpiGoalsOverride(branchId: string, competencia?: st
   return data;
 }
 
-export async function buscarKpiGoalsHistorico(branchId: string, limit = 10): Promise<KpiGoalHistoryItem[]> {
+export async function buscarKpiGoalsHistorico(branchId: string, limit = 10, signal?: AbortSignal): Promise<KpiGoalHistoryItem[]> {
   const { data } = await clienteAxios.get<KpiGoalHistoryItem[]>(`${KPI_GOALS_BASE}/history`, {
+    signal,
     params: { branchId, limit },
   });
   return data;
@@ -403,15 +442,18 @@ export async function buscarKpiGoalsHistoricoPaginado(
   branchId: string,
   pagina = 1,
   tamanhoPagina = 10,
+  signal?: AbortSignal,
 ): Promise<PaginacaoResponse<KpiGoalHistoryItem>> {
   const { data } = await clienteAxios.get<PaginacaoResponse<KpiGoalHistoryItem>>(`${KPI_GOALS_BASE}/history/page`, {
+    signal,
     params: { branchId, pagina, tamanhoPagina },
   });
   return data;
 }
 
-export async function buscarKpiGoalOverrides(indicatorKey: KpiGoalIndicatorKey, competencia?: string): Promise<KpiGoalOverridesResponse> {
+export async function buscarKpiGoalOverrides(indicatorKey: KpiGoalIndicatorKey, competencia?: string, signal?: AbortSignal): Promise<KpiGoalOverridesResponse> {
   const { data } = await clienteAxios.get<KpiGoalOverridesResponse>(`${KPI_GOALS_BASE}/overrides`, {
+    signal,
     params: withCompetenciaParam({ indicatorKey }, competencia),
   });
   return data;

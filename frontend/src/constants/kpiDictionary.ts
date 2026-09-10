@@ -46,6 +46,14 @@ const regraHorarioCorteCwbNhb =
   'Na linha CWB-NHB, o corte operacional vigente é 22h.';
 
 export const KpiDictionary = {
+  administracao: {
+    usuariosOnline: {
+      titulo: 'Online agora',
+      descricao: 'Outras pessoas com conta ativa e atividade registrada nos últimos 15 minutos.',
+      calculo: 'Contagem de usuários ativos com último acesso nos últimos 15 minutos, excluindo a conta de quem consulta.',
+      observacao: 'A lista de presença usa a mesma regra. A trilha de hoje, disponível ao usuário supremo, estima o tempo da página em foco por pulsos de 30 segundos; intervalos acima de 75 segundos não são somados.',
+    },
+  },
   coletas: {
     totalColetas: {
       titulo: 'Total de Coletas',

@@ -1,8 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
+import { rememberedDashboardHref, rememberDashboardSearch, type DashboardNavigationEntry } from '../utils/dashboardNavigation';
 import { dataHojeLocal, primeiroDiaMesAtualLocal } from '../utils/dateUtils';
+import { DATE_RANGE_PRESETS } from '../components/shared/dateRangePresets';
 
 interface FiltroContexto {
   dataInicio: string;
@@ -14,6 +16,7 @@ interface FiltroContexto {
   setFiltro: (chave: string, valores: string[]) => void;
   setFiltros: (alteracoes: Record<string, string[]>) => void;
   limparFiltros: () => void;
+  obterLinkPainel: (path: string) => string;
 }
 
 const FiltroContext = createContext<FiltroContexto | null>(null);
@@ -44,9 +47,25 @@ function lerFiltros(params: URLSearchParams): Record<string, string[]> {
 
 export function FiltroProvider({ children }: { children: ReactNode }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const [navigation, setNavigation] = useState(() => ({
+    key: location.key,
+    entries: rememberDashboardSearch([] as DashboardNavigationEntry[], location.pathname, location.search),
+  }));
+  // Memória da navegação do menu, limitada e vinculada ao provider da sessão.
+  // URLs explícitas e Voltar/Avançar continuam sendo a fonte dos filtros atuais.
+  if (navigation.key !== location.key) {
+    setNavigation({
+      key: location.key,
+      entries: rememberDashboardSearch(navigation.entries, location.pathname, location.search),
+    });
+  }
+  const obterLinkPainel = (path: string) => rememberedDashboardHref(navigation.entries, path);
 
-  const dataInicio = searchParams.get('dataInicio') ?? primeiroDiaMesAtualLocal();
-  const dataFim = searchParams.get('dataFim') ?? dataHojeLocal();
+  const defaultPeriod = location.pathname === '/executivo' || location.pathname === '/etl-saude'
+    ? DATE_RANGE_PRESETS.find(preset => preset.label === '180d')?.getRange() : undefined;
+  const dataInicio = searchParams.get('dataInicio') ?? defaultPeriod?.dataInicio ?? primeiroDiaMesAtualLocal();
+  const dataFim = searchParams.get('dataFim') ?? defaultPeriod?.dataFim ?? dataHojeLocal();
   const filtros = useMemo(() => lerFiltros(searchParams), [searchParams]);
 
   const atualizarParams = useCallback(
@@ -130,6 +149,7 @@ export function FiltroProvider({ children }: { children: ReactNode }) {
         setFiltro,
         setFiltros,
         limparFiltros,
+        obterLinkPainel,
       }}
     >
       {children}

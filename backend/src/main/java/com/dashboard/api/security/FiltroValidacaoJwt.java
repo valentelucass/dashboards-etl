@@ -62,7 +62,7 @@ public class FiltroValidacaoJwt extends OncePerRequestFilter {
 
                         SecurityContextHolder.getContext().setAuthentication(autenticacao);
                     }
-                    if (!authorities.isEmpty()) {
+                    if (!authorities.isEmpty() && !request.getRequestURI().equals("/api/sessao/presenca")) {
                         registrarAtividade(usuario, request);
                     }
                 } catch (Exception ex) {

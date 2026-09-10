@@ -38,7 +38,6 @@ import {
   useCotacoesTabelaPaginada,
 } from '../hooks/queries/useCotacoes';
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
-import { useStaggeredQueryEnabled } from '../hooks/useStaggeredQueryEnabled';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import type {
   CotacaoResumoRow,
@@ -379,8 +378,17 @@ function CotacoesViewTabs({
     <div
       role="tablist"
       aria-label="Visões de cotações"
-      className="grid w-fit min-w-0 shrink-0 grid-cols-4 gap-1 overflow-hidden rounded-lg border p-0.5"
-      style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
+      className="grid w-full max-w-full min-w-0 grid-cols-4 gap-1.5 md:w-fit"
+      onKeyDown={event => {
+        const current = COTACOES_VIEW_TABS.findIndex(item => item.value === activeView);
+        const next = event.key === 'ArrowRight' ? (current + 1) % 4
+          : event.key === 'ArrowLeft' ? (current + 3) % 4
+          : event.key === 'Home' ? 0 : event.key === 'End' ? 3 : -1;
+        if (next < 0) return;
+        event.preventDefault();
+        onChange(COTACOES_VIEW_TABS[next].value);
+        event.currentTarget.querySelectorAll<HTMLButtonElement>('button')[next]?.focus();
+      }}
     >
       {COTACOES_VIEW_TABS.map((item) => {
         const Icon = item.icon;
@@ -393,11 +401,14 @@ function CotacoesViewTabs({
             role="tab"
             data-state={active ? 'active' : 'inactive'}
             aria-selected={active}
+            aria-label={item.label}
+            tabIndex={active ? 0 : -1}
             onClick={() => onChange(item.value)}
-            className="inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors hover:bg-[var(--color-card)] data-[state=active]:shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            className="inline-flex h-9 min-w-0 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold shadow-sm transition-colors hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
             style={{
-              backgroundColor: active ? 'var(--color-card)' : 'transparent',
-              color: active ? 'var(--color-text)' : 'var(--color-text-muted)',
+              backgroundColor: active ? 'var(--color-primary)' : 'var(--color-card)',
+              borderColor: active ? 'var(--color-primary)' : 'var(--color-border)',
+              color: active ? '#fff' : 'var(--color-text-subtle)',
             }}
           >
             <Icon size={14} aria-hidden="true" />
@@ -1026,7 +1037,7 @@ function TaxasConversaoCard({
 export default function CotacoesPage() {
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
-  const [activeView, setActiveView] = useState<CotacoesViewTab>('usuario');
+  const [activeView, setActiveView] = useState<CotacoesViewTab>('analitica');
   const [serieDrillLevel, setSerieDrillLevel] = useState<PeriodDrillLevel>('dia');
   const [funilMetric, setFunilMetric] = useState<FunnelMetric>('quantidade');
   const [funilDrillLevel, setFunilDrillLevel] = useState<PeriodDrillLevel>('dia');
@@ -1105,15 +1116,14 @@ export default function CotacoesPage() {
   ];
 
   const overview = useCotacoesOverview(filtro);
-  const overviewReady = overview.isSuccess && Boolean(overview.data);
   const abaAtiva = activeView;
-  const analyticalViewReady = overviewReady && abaAtiva === 'analitica';
-  const serieEnabled = useStaggeredQueryEnabled(analyticalViewReady, 150);
-  const graficosEnabled = useStaggeredQueryEnabled(analyticalViewReady, 320);
-  const conversionSerieEnabled = useStaggeredQueryEnabled(analyticalViewReady, 520);
-  const tabelaEnabled = useStaggeredQueryEnabled(analyticalViewReady, 850);
+  const analyticalViewReady = abaAtiva === 'analitica';
+  const serieEnabled = analyticalViewReady;
+  const graficosEnabled = analyticalViewReady;
+  const conversionSerieEnabled = analyticalViewReady;
+  const tabelaEnabled = analyticalViewReady;
   const serie = useCotacoesSerie(filtro, serieEnabled);
-  const conversionSerie = useCotacoesSerie(conversionFiltro, conversionSerieEnabled);
+  const conversionSerie = useCotacoesSerie(conversionFiltro, conversionSerieEnabled, 'cotacoesTaxasConversao');
   const graficos = useCotacoesGraficos(filtro, graficosEnabled);
   const filtrosTabela = useAnalyticalTableFilters();
   const paginacaoTabela = useTabelaPaginadaState(JSON.stringify({ filtro, tabela: filtrosTabela.resetKey }));
@@ -1207,6 +1217,7 @@ export default function CotacoesPage() {
         dataInicio={dataInicio}
         dataFim={dataFim}
         actions={<CotacoesViewTabs activeView={activeView} onChange={setActiveView} />}
+        actionsOnMobileRow
       >
         <FiliaisParceirosFilter
           opcoes={filiais.data ?? []}

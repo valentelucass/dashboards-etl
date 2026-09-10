@@ -262,7 +262,7 @@ function InsightsBar({ insights }: { insights: InsightConfig[] }) {
       className="rounded-xl border px-3 py-2.5"
       style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
     >
-      <div className="grid grid-cols-1 gap-2 text-xs font-semibold sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 text-xs font-semibold sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,auto))]">
         {insights.map((insight) => {
           const Icon = insight.icon;
           const color = getInsightToneColor(insight.tone);
@@ -275,7 +275,7 @@ function InsightsBar({ insights }: { insights: InsightConfig[] }) {
             >
               <Icon size={14} className="shrink-0" style={{ color }} aria-hidden="true" />
               <span className="shrink-0" style={{ color: 'var(--color-text-muted)' }}>{insight.label}:</span>
-              <strong className="min-w-0 flex-1 truncate font-bold" style={{ color: 'var(--color-text)' }} title={insight.value}>
+              <strong className="min-w-0 truncate font-bold" style={{ color: 'var(--color-text)' }} title={insight.value}>
                 {insight.value}
               </strong>
             </div>

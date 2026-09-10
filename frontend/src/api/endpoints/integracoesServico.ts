@@ -106,6 +106,7 @@ export async function buscarIntegracoesAuditoria(
   sortDirection?: 'asc' | 'desc',
   escopo: IntegracoesEscopo = 'PENDENCIAS',
   destinos?: string[],
+  signal?: AbortSignal,
 ): Promise<IntegracoesAuditoriaResponse> {
   const params = new URLSearchParams();
   params.set('pagina', String(Math.max(0, pagina - 1)));
@@ -120,7 +121,7 @@ export async function buscarIntegracoesAuditoria(
   }
   aplicarFiltrosTabelaParams(params, filtrosTabela);
 
-  const { data } = await clienteAxios.get<IntegracoesAuditoriaResponse>('/api/painel/integracoes', { params });
+  const { data } = await clienteAxios.get<IntegracoesAuditoriaResponse>('/api/painel/integracoes', { signal, params });
   return data;
 }
 
@@ -129,6 +130,7 @@ export async function buscarIntegracoesEvolucaoDiaria(
   dataFim: string,
   escopo?: IntegracoesEscopo,
   destinos?: string[],
+  signal?: AbortSignal,
 ): Promise<IntegracaoEvolucaoDiaria[]> {
   const params = new URLSearchParams();
   params.set('dataInicial', dataInicio);
@@ -140,7 +142,7 @@ export async function buscarIntegracoesEvolucaoDiaria(
 
   const { data } = await clienteAxios.get<IntegracaoEvolucaoDiaria[]>(
     '/api/painel/integracoes/evolucao-diaria',
-    { params },
+    { signal, params },
   );
   return data;
 }
@@ -152,8 +154,8 @@ function identificarOrigemWorkSftp(ciclo: WorkSftpClienteStatus): WorkSftpClient
   return ciclo.origemComprovantes === undefined ? { ...ciclo, origemComprovantes: 'SFTP' } : ciclo;
 }
 
-export async function buscarStatusWorkSftpClientes(): Promise<WorkSftpClienteStatus[]> {
-  const { data } = await clienteAxios.get<WorkSftpClienteStatus[]>('/api/painel/integracoes/vedacit-sftp/clientes');
+export async function buscarStatusWorkSftpClientes(signal?: AbortSignal): Promise<WorkSftpClienteStatus[]> {
+  const { data } = await clienteAxios.get<WorkSftpClienteStatus[]>('/api/painel/integracoes/vedacit-sftp/clientes', { signal });
   return data.map(identificarOrigemWorkSftp);
 }
 
@@ -165,6 +167,7 @@ export async function buscarExecucoesWorkSftpClientes(
   cliente?: string,
   status?: string,
   origem?: string,
+  signal?: AbortSignal,
 ): Promise<WorkSftpExecucoesResponse> {
   const params = new URLSearchParams();
   params.set('pagina', String(Math.max(0, pagina - 1)));
@@ -175,7 +178,7 @@ export async function buscarExecucoesWorkSftpClientes(
   if (status) params.set('status', status);
   if (origem) params.set('origem', origem);
   const { data } = await clienteAxios.get<WorkSftpExecucoesResponse>(
-    '/api/painel/integracoes/vedacit-sftp/execucoes', { params },
+    '/api/painel/integracoes/vedacit-sftp/execucoes', { signal, params },
   );
   return { ...data, itens: data.itens.map(identificarOrigemWorkSftp) };
 }

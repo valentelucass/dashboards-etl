@@ -105,6 +105,7 @@ export interface PapelAdmin {
 }
 
 export interface UsuariosSessaoResumo {
+  podeVerTrilha?: boolean;
   totalUsuarios: number;
   usuariosAtivos: number;
   usuariosInativos: number;

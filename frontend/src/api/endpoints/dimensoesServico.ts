@@ -33,17 +33,17 @@ export interface DimensaoOpcao {
   description?: string | null;
 }
 
-export async function buscarFiliais(): Promise<string[]> {
-  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/filiais');
+export async function buscarFiliais(signal?: AbortSignal): Promise<string[]> {
+  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/filiais', { signal });
   return data;
 }
 
-export async function buscarClientes(): Promise<string[]> {
-  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/clientes');
+export async function buscarClientes(signal?: AbortSignal): Promise<string[]> {
+  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/clientes', { signal });
   return data;
 }
 
-export async function buscarPagadores(busca?: string): Promise<PagadorDim[]> {
+export async function buscarPagadores(busca?: string, signal?: AbortSignal): Promise<PagadorDim[]> {
   const params = new URLSearchParams();
   const termo = busca?.trim();
   if (termo) {
@@ -51,22 +51,22 @@ export async function buscarPagadores(busca?: string): Promise<PagadorDim[]> {
   }
   params.set('limite', '50');
 
-  const { data } = await clienteAxios.get<PagadorDim[]>('/api/dimensoes/pagadores', { params });
+  const { data } = await clienteAxios.get<PagadorDim[]>('/api/dimensoes/pagadores', { signal, params });
   return data;
 }
 
-export async function buscarFaturasPorClienteClientesCnpj(): Promise<string[]> {
-  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/faturas-por-cliente/clientes-cnpj');
+export async function buscarFaturasPorClienteClientesCnpj(signal?: AbortSignal): Promise<string[]> {
+  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/faturas-por-cliente/clientes-cnpj', { signal });
   return data;
 }
 
-export async function buscarMotoristas(): Promise<string[]> {
-  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/motoristas');
+export async function buscarMotoristas(signal?: AbortSignal): Promise<string[]> {
+  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/motoristas', { signal });
   return data;
 }
 
-export async function buscarVeiculos(): Promise<VeiculoDim[]> {
-  const { data } = await clienteAxios.get<VeiculoDim[]>('/api/dimensoes/veiculos');
+export async function buscarVeiculos(signal?: AbortSignal): Promise<VeiculoDim[]> {
+  const { data } = await clienteAxios.get<VeiculoDim[]>('/api/dimensoes/veiculos', { signal });
   return data;
 }
 
@@ -78,13 +78,13 @@ export async function buscarManifestosClassificacoes(filtro: ManifestosFiltro, s
   return data;
 }
 
-export async function buscarPlanoContas(): Promise<PlanoContasDim[]> {
-  const { data } = await clienteAxios.get<PlanoContasDim[]>('/api/dimensoes/planocontas');
+export async function buscarPlanoContas(signal?: AbortSignal): Promise<PlanoContasDim[]> {
+  const { data } = await clienteAxios.get<PlanoContasDim[]>('/api/dimensoes/planocontas', { signal });
   return data;
 }
 
-export async function buscarUsuarios(): Promise<UsuarioDim[]> {
-  const { data } = await clienteAxios.get<UsuarioDim[]>('/api/dimensoes/usuarios');
+export async function buscarUsuarios(signal?: AbortSignal): Promise<UsuarioDim[]> {
+  const { data } = await clienteAxios.get<UsuarioDim[]>('/api/dimensoes/usuarios', { signal });
   return data;
 }
 
@@ -132,29 +132,33 @@ export async function buscarFaturamentoResponsaveis(filtro: FaturamentoFiltro, s
   return data;
 }
 
-export async function buscarCotacoesUsuarios(filtro: CotacoesFiltro): Promise<DimensaoOpcao[]> {
+export async function buscarCotacoesUsuarios(filtro: CotacoesFiltro, signal?: AbortSignal): Promise<DimensaoOpcao[]> {
   const { data } = await clienteAxios.get<DimensaoOpcao[]>('/api/dimensoes/cotacoes/usuarios', {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
 }
 
-export async function buscarCotacoesClassificacoes(filtro: CotacoesFiltro): Promise<DimensaoOpcao[]> {
+export async function buscarCotacoesClassificacoes(filtro: CotacoesFiltro, signal?: AbortSignal): Promise<DimensaoOpcao[]> {
   const { data } = await clienteAxios.get<DimensaoOpcao[]>('/api/dimensoes/cotacoes/classificacoes', {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
 }
 
-export async function buscarCotacoesOrigens(filtro: CotacoesFiltro): Promise<DimensaoOpcao[]> {
+export async function buscarCotacoesOrigens(filtro: CotacoesFiltro, signal?: AbortSignal): Promise<DimensaoOpcao[]> {
   const { data } = await clienteAxios.get<DimensaoOpcao[]>('/api/dimensoes/cotacoes/origens', {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;
 }
 
-export async function buscarCotacoesDestinos(filtro: CotacoesFiltro): Promise<DimensaoOpcao[]> {
+export async function buscarCotacoesDestinos(filtro: CotacoesFiltro, signal?: AbortSignal): Promise<DimensaoOpcao[]> {
   const { data } = await clienteAxios.get<DimensaoOpcao[]>('/api/dimensoes/cotacoes/destinos', {
+    signal,
     params: montarQueryParams(filtro),
   });
   return data;

@@ -56,7 +56,6 @@ import {
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { usePermissions } from '../hooks/usePermissions';
-import { useStaggeredQueryEnabled } from '../hooks/useStaggeredQueryEnabled';
 import type {
   CubagemMercadoriasRow,
   HorarioCorteRow,
@@ -356,11 +355,11 @@ export default function IndicadoresGestaoAVistaPage() {
   const cubagemOverview = useCubagemMercadoriasOverview(filtroBase);
   const indenizacaoOverview = useIndenizacaoMercadoriasOverview(filtroBase);
   const horariosOverview = useHorariosCorteOverview(filtroBase);
-  const performanceSecondaryEnabled = useStaggeredQueryEnabled(performanceOverview.isSuccess && Boolean(performanceOverview.data), 150);
-  const coletoresSecondaryEnabled = useStaggeredQueryEnabled(coletoresOverview.isSuccess && Boolean(coletoresOverview.data), 220);
-  const cubagemSecondaryEnabled = useStaggeredQueryEnabled(cubagemOverview.isSuccess && Boolean(cubagemOverview.data), 290);
-  const indenizacaoSecondaryEnabled = useStaggeredQueryEnabled(indenizacaoOverview.isSuccess && Boolean(indenizacaoOverview.data), 360);
-  const horariosSecondaryEnabled = useStaggeredQueryEnabled(horariosOverview.isSuccess && Boolean(horariosOverview.data), 430);
+  const performanceSecondaryEnabled = true;
+  const coletoresSecondaryEnabled = true;
+  const cubagemSecondaryEnabled = true;
+  const indenizacaoSecondaryEnabled = true;
+  const horariosSecondaryEnabled = true;
   const performanceSerieParams = useMemo(() => ({
     visao: nivelVisaoPerformance,
     responsavelFiltro: responsavelSelecionado,

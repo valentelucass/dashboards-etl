@@ -1,40 +1,36 @@
 import { CanceledError } from 'axios';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
+import { dashboardRequestPath, dashboardRequestPriority } from '../config/dashboardLoadPriority';
 
 export const DASHBOARD_MAX_CONCURRENT_REQUESTS = 3;
 
-function prioridade(config: InternalAxiosRequestConfig): number | null {
-  if ((config.method ?? 'get').toLowerCase() !== 'get') return null;
-  const path = new URL(config.url ?? '', 'http://dashboard.invalid').pathname;
-  if (!/^\/api\/(painel|dimensoes)\/(performance|fretes|faturamento|manifestos|executivo)(?:\/|$)/.test(path)
-      || path.endsWith('/exportacao') || path.includes('/importacao/')) return null;
-  if (path.endsWith('/overview') || /^\/api\/painel\/(fretes|executivo)$/.test(path)
-      || path === '/api/painel/manifestos/performance') return 0;
-  if (path.includes('/tabela')) return 3;
-  if (path.startsWith('/api/dimensoes/')) return 2;
-  return 1;
-}
-
-// Limite compartilhado pelas quatro páginas, inclusive durante a navegação entre elas.
+// Limite compartilhado pelos dashboards, inclusive durante a navegação entre eles.
 // Auth, exportações, downloads e escritas mantêm seu fluxo.
 export function createDashboardRequestAdapter(adapter: AxiosAdapter): AxiosAdapter {
   let active = 0;
   let scheduled = false;
-  const queue: Array<{ priority: number; start: () => void }> = [];
+  const queue: Array<{ path: string; config: InternalAxiosRequestConfig; start: () => void }> = [];
 
   function schedule() {
     if (scheduled) return;
     scheduled = true;
     queueMicrotask(() => {
       scheduled = false;
-      queue.sort((a, b) => a.priority - b.priority);
+      // Uma leitura de layout por endpoint/lote, sem listeners de scroll ou timers.
+      const priorityKey = (item: (typeof queue)[number]) => `${item.path}|${item.config.dashboardChartKey ?? ''}`;
+      const priorities = new Map<string, number>();
+      for (const item of queue) {
+        const key = priorityKey(item);
+        if (!priorities.has(key)) priorities.set(key, dashboardRequestPriority(item.path, item.config.dashboardChartKey));
+      }
+      queue.sort((a, b) => priorities.get(priorityKey(a))! - priorities.get(priorityKey(b))!);
       while (active < DASHBOARD_MAX_CONCURRENT_REQUESTS && queue.length) queue.shift()!.start();
     });
   }
 
   return (config) => {
-    const priority = prioridade(config);
-    if (priority === null) return adapter(config);
+    const path = dashboardRequestPath(config);
+    if (path === null) return adapter(config);
     return new Promise((resolve, reject) => {
       const cancel = () => {
         const index = queue.indexOf(item);
@@ -43,7 +39,8 @@ export function createDashboardRequestAdapter(adapter: AxiosAdapter): AxiosAdapt
         reject(new CanceledError('Consulta cancelada antes do envio.', config));
       };
       const item = {
-        priority,
+        path,
+        config,
         start: () => {
           config.signal?.removeEventListener?.('abort', cancel);
           if (config.signal?.aborted) { cancel(); return; }

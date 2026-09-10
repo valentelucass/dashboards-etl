@@ -52,7 +52,7 @@ export function useKpiGoalsEffective(branchId: string, competencia?: string, ena
   const competenciaApi = normalizarCompetenciaApiOpcional(competencia);
   return useQuery({
     queryKey: ['kpi-goals', 'effective', branchId, competenciaApi],
-    queryFn: () => buscarKpiGoalsEfetivos(branchId, competenciaApi),
+    queryFn: ({ signal }) => buscarKpiGoalsEfetivos(branchId, competenciaApi, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -64,7 +64,7 @@ export function useKpiGoalsFull(competencia?: string, enabled = true) {
   const competenciaApi = normalizarCompetenciaApiOpcional(competencia);
   return useQuery({
     queryKey: ['kpi-goals', 'full', competenciaApi],
-    queryFn: () => buscarKpiGoalsCompleto(competenciaApi),
+    queryFn: ({ signal }) => buscarKpiGoalsCompleto(competenciaApi, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -75,7 +75,7 @@ export function useKpiGoalsFull(competencia?: string, enabled = true) {
 export function useKpiGoalHistory(branchId: string, pagina = 1, tamanhoPagina = 10, enabled = true) {
   return useQuery({
     queryKey: ['kpi-goals', 'history', branchId, pagina, tamanhoPagina],
-    queryFn: () => buscarKpiGoalsHistoricoPaginado(branchId, pagina, tamanhoPagina),
+    queryFn: ({ signal }) => buscarKpiGoalsHistoricoPaginado(branchId, pagina, tamanhoPagina, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -87,7 +87,7 @@ export function useKpiGoalOverrides(indicatorKey: KpiGoalIndicatorKey, competenc
   const competenciaApi = normalizarCompetenciaApiOpcional(competencia);
   return useQuery({
     queryKey: ['kpi-goals', 'overrides', indicatorKey, competenciaApi],
-    queryFn: () => buscarKpiGoalOverrides(indicatorKey, competenciaApi),
+    queryFn: ({ signal }) => buscarKpiGoalOverrides(indicatorKey, competenciaApi, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -129,7 +129,7 @@ export function usePerformanceEntregaOverview(filtro: IndicadoresGestaoVistaFilt
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'performance-entrega', 'overview', filtro],
-    queryFn: () => buscarPerformanceEntregaOverview(filtro),
+    queryFn: ({ signal }) => buscarPerformanceEntregaOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -151,7 +151,7 @@ export function usePerformanceEntregaSerie(
       serieParams.responsavelFiltro ?? null,
       serieParams.regiaoFiltro ?? null,
     ],
-    queryFn: () => buscarPerformanceEntregaSerie(filtro, serieParams),
+    queryFn: ({ signal }) => buscarPerformanceEntregaSerie(filtro, serieParams, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -162,7 +162,7 @@ export function usePerformanceEntregaTabela(filtro: IndicadoresGestaoVistaFiltro
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'performance-entrega', 'tabela', filtro, limite],
-    queryFn: () => buscarPerformanceEntregaTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarPerformanceEntregaTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -178,7 +178,7 @@ export function usePerformanceEntregaTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'performance-entrega', 'tabela-paginada', filtro, pagina, tamanhoPagina],
-    queryFn: () => buscarPerformanceEntregaTabelaPaginada(filtro, pagina, tamanhoPagina),
+    queryFn: ({ signal }) => buscarPerformanceEntregaTabelaPaginada(filtro, pagina, tamanhoPagina, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -190,7 +190,7 @@ export function useUtilizacaoColetoresOverview(filtro: IndicadoresGestaoVistaFil
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'utilizacao-coletores', 'overview', filtro],
-    queryFn: () => buscarUtilizacaoColetoresOverview(filtro),
+    queryFn: ({ signal }) => buscarUtilizacaoColetoresOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -200,7 +200,7 @@ export function useUtilizacaoColetoresSerie(filtro: IndicadoresGestaoVistaFiltro
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'utilizacao-coletores', 'serie', filtro],
-    queryFn: () => buscarUtilizacaoColetoresSerie(filtro),
+    queryFn: ({ signal }) => buscarUtilizacaoColetoresSerie(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -211,7 +211,7 @@ export function useUtilizacaoColetoresRanking(filtro: IndicadoresGestaoVistaFilt
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'utilizacao-coletores', 'ranking', filtro],
-    queryFn: () => buscarUtilizacaoColetoresRanking(filtro),
+    queryFn: ({ signal }) => buscarUtilizacaoColetoresRanking(filtro, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -223,7 +223,7 @@ export function useUtilizacaoColetoresTabela(filtro: IndicadoresGestaoVistaFiltr
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'utilizacao-coletores', 'tabela', filtro, limite],
-    queryFn: () => buscarUtilizacaoColetoresTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarUtilizacaoColetoresTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -239,7 +239,7 @@ export function useUtilizacaoColetoresTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'utilizacao-coletores', 'tabela-paginada', filtro, pagina, tamanhoPagina],
-    queryFn: () => buscarUtilizacaoColetoresTabelaPaginada(filtro, pagina, tamanhoPagina),
+    queryFn: ({ signal }) => buscarUtilizacaoColetoresTabelaPaginada(filtro, pagina, tamanhoPagina, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -251,7 +251,7 @@ export function useCubagemMercadoriasOverview(filtro: IndicadoresGestaoVistaFilt
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'cubagem-mercadorias', 'overview', filtro],
-    queryFn: () => buscarCubagemMercadoriasOverview(filtro),
+    queryFn: ({ signal }) => buscarCubagemMercadoriasOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -261,7 +261,7 @@ export function useCubagemMercadoriasSerie(filtro: IndicadoresGestaoVistaFiltro,
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'cubagem-mercadorias', 'serie', filtro],
-    queryFn: () => buscarCubagemMercadoriasSerie(filtro),
+    queryFn: ({ signal }) => buscarCubagemMercadoriasSerie(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -272,7 +272,7 @@ export function useCubagemMercadoriasTabela(filtro: IndicadoresGestaoVistaFiltro
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'cubagem-mercadorias', 'tabela', filtro, limite],
-    queryFn: () => buscarCubagemMercadoriasTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarCubagemMercadoriasTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -288,7 +288,7 @@ export function useCubagemMercadoriasTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'cubagem-mercadorias', 'tabela-paginada', filtro, pagina, tamanhoPagina],
-    queryFn: () => buscarCubagemMercadoriasTabelaPaginada(filtro, pagina, tamanhoPagina),
+    queryFn: ({ signal }) => buscarCubagemMercadoriasTabelaPaginada(filtro, pagina, tamanhoPagina, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -299,7 +299,7 @@ export function useCubagemMercadoriasTabelaPaginada(
 export function useClientesExcecaoCubagem(enabled = true) {
   return useQuery({
     queryKey: ['indicadores-gestao-a-vista', 'cubagem-clientes-excecao'],
-    queryFn: buscarClientesExcecaoCubagem,
+    queryFn: ({ signal }) => buscarClientesExcecaoCubagem(signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -341,7 +341,7 @@ export function useIndenizacaoMercadoriasOverview(filtro: IndicadoresGestaoVista
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'indenizacao-mercadorias', 'overview', filtro],
-    queryFn: () => buscarIndenizacaoMercadoriasOverview(filtro),
+    queryFn: ({ signal }) => buscarIndenizacaoMercadoriasOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -351,7 +351,7 @@ export function useIndenizacaoMercadoriasSerie(filtro: IndicadoresGestaoVistaFil
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'indenizacao-mercadorias', 'serie', filtro],
-    queryFn: () => buscarIndenizacaoMercadoriasSerie(filtro),
+    queryFn: ({ signal }) => buscarIndenizacaoMercadoriasSerie(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -362,7 +362,7 @@ export function useIndenizacaoMercadoriasTabela(filtro: IndicadoresGestaoVistaFi
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'indenizacao-mercadorias', 'tabela', filtro, limite],
-    queryFn: () => buscarIndenizacaoMercadoriasTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarIndenizacaoMercadoriasTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -378,7 +378,7 @@ export function useIndenizacaoMercadoriasTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'indenizacao-mercadorias', 'tabela-paginada', filtro, pagina, tamanhoPagina],
-    queryFn: () => buscarIndenizacaoMercadoriasTabelaPaginada(filtro, pagina, tamanhoPagina),
+    queryFn: ({ signal }) => buscarIndenizacaoMercadoriasTabelaPaginada(filtro, pagina, tamanhoPagina, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -390,7 +390,7 @@ export function useHorariosCorteOverview(filtro: IndicadoresGestaoVistaFiltro) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'horarios-corte', 'overview', filtro],
-    queryFn: () => buscarHorariosCorteOverview(filtro),
+    queryFn: ({ signal }) => buscarHorariosCorteOverview(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -400,7 +400,7 @@ export function useHorariosCorteSerie(filtro: IndicadoresGestaoVistaFiltro, enab
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'horarios-corte', 'serie', filtro],
-    queryFn: () => buscarHorariosCorteSerie(filtro),
+    queryFn: ({ signal }) => buscarHorariosCorteSerie(filtro, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -411,7 +411,7 @@ export function useHorariosCorteTabela(filtro: IndicadoresGestaoVistaFiltro, lim
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'horarios-corte', 'tabela', filtro, limite],
-    queryFn: () => buscarHorariosCorteTabela(filtro, limite),
+    queryFn: ({ signal }) => buscarHorariosCorteTabela(filtro, limite, signal),
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
@@ -428,7 +428,7 @@ export function useHorariosCorteTabelaPaginada(
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['indicadores-gestao-a-vista', 'horarios-corte', 'tabela-paginada', filtro, pagina, tamanhoPagina, filtrosTabela],
-    queryFn: () => buscarHorariosCorteTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela),
+    queryFn: ({ signal }) => buscarHorariosCorteTabelaPaginada(filtro, pagina, tamanhoPagina, filtrosTabela, signal),
     staleTime: STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,

@@ -3,6 +3,7 @@ import type { ComponentType } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useFiltro } from '../../contexts/FiltroContext';
 import { useTheme } from 'next-themes';
 import {
   Activity,
@@ -78,6 +79,7 @@ function DrawerNavSection({
   onNavigate: () => void;
 }) {
   const headingId = `${title.toLowerCase().replace(/\s+/g, '-')}-heading`;
+  const { obterLinkPainel } = useFiltro();
 
   return (
     <section aria-labelledby={headingId}>
@@ -96,7 +98,7 @@ function DrawerNavSection({
           return (
             <NavLink
               key={item.path}
-              to={item.path}
+              to={obterLinkPainel(item.path)}
               onClick={onNavigate}
               className={({ isActive }) =>
                 `group flex items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-all duration-150 ${focusRingClass} ${
@@ -153,11 +155,11 @@ function DrawerNavSection({
 }
 
 export default function TopNav() {
-  const { usuario, logout } = useAutenticacao();
+  const { logout } = useAutenticacao();
   const navigate = useNavigate();
   const currentLocation = useLocation();
   const { theme, setTheme } = useTheme();
-  const { canAccess, isAdminAcesso, isAdminPlataforma } = usePermissions();
+  const { canAccess, isAdminAcesso } = usePermissions();
   const pageHeader = usePageHeader();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [apresentacao, setApresentacao] = useState<{ paginas: NavItem[]; indice: number } | null>(null);
@@ -188,11 +190,6 @@ export default function TopNav() {
     ...(adminItems.length > 0 ? [{ title: 'Administração', items: adminItems }] : []),
   ].filter((section) => section.items.length > 0);
 
-  const adminBadge = isAdminPlataforma
-    ? 'Admin Plataforma'
-    : isAdminAcesso
-      ? 'Admin Acesso'
-      : null;
   const isDarkTheme = theme === 'dark';
   const themeToggleLabel = isDarkTheme ? 'Alternar para modo claro' : 'Alternar para modo escuro';
   const hamburgerLabel = isMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação';
@@ -424,77 +421,18 @@ export default function TopNav() {
                   borderColor: 'var(--color-border)',
                 }}
               >
-                <div
-                  className="border-b px-5 py-4"
-                  style={{ borderColor: 'var(--color-border)' }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <NavLink
-                        to="/"
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          void sairApresentacao();
-                        }}
-                        className={`top-nav__drawer-logo-mark flex h-10 shrink-0 items-center justify-center ${focusRingClass}`}
-                        aria-label="Ir para Home"
-                        title="Ir para Home"
-                      >
-                        <img
-                          src="/logo.png"
-                          alt="Logo da empresa"
-                          className="h-7 max-w-[7.5rem] object-contain transition-all duration-200 dark:brightness-0 dark:invert"
-                        />
-                      </NavLink>
-                      <div className="min-w-0">
-                        <p id={drawerTitleId} className="truncate text-sm font-bold" style={{ color: 'var(--color-text)' }}>
-                          Menu do painel
-                        </p>
-                        <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                          {usuario?.nome ?? 'Dashboards ETL'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <CommunicationsBell />
-                    <button
-                      ref={closeButtonRef}
-                      type="button"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors duration-150 hover:bg-[var(--color-bg)] ${focusRingClass}`}
-                      style={{ color: 'var(--color-text-muted)' }}
-                      aria-label="Fechar menu de navegação"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-
-                  <div
-                    className="mt-4 rounded-xl border px-3 py-2.5"
-                    style={{
-                      backgroundColor: 'var(--color-bg)',
-                      borderColor: 'var(--color-border)',
-                    }}
+                <div className="flex justify-end px-4 pt-3">
+                  <h2 id={drawerTitleId} className="sr-only">Navegação</h2>
+                  <button
+                    ref={closeButtonRef}
+                    type="button"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-[var(--color-bg)] ${focusRingClass}`}
+                    style={{ color: 'var(--color-text-muted)' }}
+                    aria-label="Fechar menu de navegação"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
-                          {usuario?.setor.nome ?? 'Perfil ativo'}
-                        </p>
-                        <p className="truncate text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-                          {usuario?.email ?? 'Sessão ativa'}
-                        </p>
-                      </div>
-                      {adminBadge && (
-                        <span
-                          className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                          style={{ backgroundColor: 'rgba(249, 115, 22, 0.16)', color: '#ea580c' }}
-                        >
-                          {adminBadge}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                    <X size={18} />
+                  </button>
                 </div>
 
                 <div className="relative flex flex-1 overflow-hidden">

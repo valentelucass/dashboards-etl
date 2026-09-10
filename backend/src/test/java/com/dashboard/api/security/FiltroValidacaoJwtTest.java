@@ -43,6 +43,14 @@ class FiltroValidacaoJwtTest {
     @AfterEach
     void clearContext() { SecurityContextHolder.clearContext(); }
 
+    @Test void pulsoDePresencaDelegaAAtividadeAoControllerSemHeartbeatDuplicado() throws Exception {
+        usuarioAutorizado();
+        request.setRequestURI("/api/sessao/presenca");
+        filter.doFilter(request, response, chain);
+        verifyNoInteractions(sessions);
+        verify(chain).doFilter(request, response);
+    }
+
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"Basic abc", "bearer abc", "Bearer"})

@@ -605,6 +605,7 @@ export default function AnalyticalDataTable<T>({
   return (
     <div
       className="overflow-hidden rounded-[20px] border shadow-sm"
+      data-dashboard-table="true"
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
       aria-busy={isUpdating}
     >

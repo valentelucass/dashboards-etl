@@ -19,7 +19,7 @@ import { getApiErrorMessage, getTipoErro } from '../utils/apiError';
 import { useFiltro } from '../contexts/FiltroContext';
 import { usePageHeader } from '../contexts/PageHeaderContext';
 import { useClientes, useFiliais, useUsuarios } from '../hooks/queries/useDimensoes';
-import { useColetasCidadesOrigem, useColetasGraficos, useColetasHistoricoPerformance, useColetasOverview, useColetasSerie, useColetasTabelaPaginada } from '../hooks/queries/useColetas';
+import { useColetasCidadesOrigem, useColetasOperacao, useColetasStatus, useColetasHistoricoPerformance, useColetasOverview, useColetasSerie, useColetasTabelaPaginada } from '../hooks/queries/useColetas';
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import type { ColetaResumoRow, ColetasFiltro, ColetasHistoricoPerformance, ColetasHistoricoPeriodo } from '../types/coletas';
@@ -132,7 +132,8 @@ export default function ColetasPage() {
 
   const overview = useColetasOverview(filtro);
   const serie = useColetasSerie(filtro);
-  const graficos = useColetasGraficos(filtro);
+  const statusQuery = useColetasStatus(filtro);
+  const graficos = useColetasOperacao(filtro);
   const historicoPerformanceQuery = useColetasHistoricoPerformance(filtro, historicoPeriodo);
   const cidadesOrigem = useColetasCidadesOrigem(filtro, regiaoLogisticaSelecionada);
   const filtrosTabela = useAnalyticalTableFilters();
@@ -146,7 +147,7 @@ export default function ColetasPage() {
     updatedAt: overview.data?.updatedAt ?? null,
   });
 
-  const statusData = graficos.data?.statusDistribuicao ?? EMPTY_ARRAY;
+  const statusData = statusQuery.data ?? EMPTY_ARRAY;
   const historicoPerformanceResponse = historicoPerformanceQuery.data;
   const historicoPerformance = useMemo<ColetasHistoricoPerformance[]>(() => (
     (historicoPerformanceResponse ?? EMPTY_ARRAY).map((item) => ({
@@ -568,7 +569,7 @@ export default function ColetasPage() {
         <div className="col-span-full 2xl:col-span-2">
           <ColetasTrend dados={serieData} isLoading={serie.isLoading} />
         </div>
-        <ChartWrapper titulo="Distribuição por Status" chartKey="coletasStatus" option={statusOption} isLoading={graficos.isLoading} isEmpty={statusData.length === 0} className="2xl:col-span-2" />
+        <ChartWrapper titulo="Distribuição por Status" chartKey="coletasStatus" option={statusOption} isLoading={statusQuery.isLoading} erro={statusQuery.isError ? getApiErrorMessage(statusQuery.error, 'Erro ao carregar distribuição por status.') : null} isEmpty={statusData.length === 0} className="2xl:col-span-2" />
         <ChartWrapper
           titulo="Histórico da Performance"
           chartKey="coletasHistoricoPerformance"
@@ -607,7 +608,7 @@ export default function ColetasPage() {
         onColumnFilterChange={filtrosTabela.setColumnFilter}
         onClearFilters={filtrosTabela.clearTableFilters}
         statusOptions={statusTabelaOptions}
-        statusOptionsLoading={graficos.isLoading}
+        statusOptionsLoading={statusQuery.isLoading}
         isLoading={tabela.isLoading}
         error={tabela.error}
         errorFallbackMessage="Erro ao carregar coletas analíticas."

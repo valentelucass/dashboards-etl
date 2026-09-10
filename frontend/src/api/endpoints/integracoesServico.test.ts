@@ -178,7 +178,7 @@ describe('integracoesServico', () => {
   it('consulta resumo e historico SFTP com paginacao e filtros server-side', async () => {
     clienteMock.get.mockResolvedValueOnce({ data: [cicloSftp] });
     await buscarStatusWorkSftpClientes();
-    expect(clienteMock.get).toHaveBeenCalledWith('/api/painel/integracoes/vedacit-sftp/clientes');
+    expect(clienteMock.get).toHaveBeenCalledWith('/api/painel/integracoes/vedacit-sftp/clientes', { signal: undefined });
 
     clienteMock.get.mockResolvedValueOnce({ data: { itens: [cicloSftp], paginacao: paginacaoSftp } });
     await buscarExecucoesWorkSftpClientes(2, 25, '2026-08-01', '2026-08-20', 'VEDACIT', 'CONCLUIDO', 'SFTP');

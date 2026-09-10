@@ -133,12 +133,14 @@ public class GestaoUsuarioService {
 
     @Transactional(readOnly = true)
     public UsuarioSessaoResumoDTO resumoSessoesUsuarios() {
-        UsuarioRepository.UsuarioSessaoResumoProjection resumo = usuarioRepository.calcularResumoSessoes();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String operador = authentication == null ? "" : authentication.getName();
+        UsuarioRepository.UsuarioSessaoResumoProjection resumo = usuarioRepository.calcularResumoSessoes(operador);
         if (resumo == null) {
             return new UsuarioSessaoResumoDTO(0, 0, 0, 0);
         }
 
-        List<UsuarioOnlineResumoDTO> usuariosOnline = usuarioRepository.findUsuariosOnlineResumo().stream()
+        List<UsuarioOnlineResumoDTO> usuariosOnline = usuarioRepository.findUsuariosOnlineResumo(operador).stream()
                 .map(usuario -> new UsuarioOnlineResumoDTO(
                         String.valueOf(usuario.getId()),
                         usuario.getNome(),
@@ -152,7 +154,8 @@ public class GestaoUsuarioService {
                 valorLong(resumo.getUsuariosAtivos()),
                 valorLong(resumo.getUsuariosInativos()),
                 valorLong(resumo.getUsuariosOnline()),
-                usuariosOnline
+                usuariosOnline,
+                operadorEhUsuarioSupremo()
         );
     }
 

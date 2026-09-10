@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { CircleHelp, Clock3, Eye, EyeOff, KeyRound, MapPin, MoreHorizontal, Pencil, Upload, UserCheck, UserX, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import PresenceHistory from '../components/admin/PresenceHistory';
+import TooltipKpi from '../components/shared/TooltipKpi';
+import { useAutenticacao } from '../contexts/AutenticacaoContext';
 import FiliaisPermitidasSplitSelect from '../components/admin/FiliaisPermitidasSplitSelect';
 import PermissionOverrideMatrix from '../components/admin/PermissionOverrideMatrix';
 import UsuariosImportacaoModal from '../components/admin/UsuariosImportacaoModal';
@@ -279,13 +282,14 @@ function formatTempoUltimoPulso(valor: string | null): string {
   return `Ativo há ${horas}h ${minutos % 60}min`;
 }
 
-function PresenceUserRow({ usuario, online }: {
+function PresenceUserRow({ usuario, online, podeVerTrilha }: {
+  podeVerTrilha: boolean;
   usuario: Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>;
   online: boolean;
 }) {
   const initial = usuario.nome.trim().charAt(0).toUpperCase() || '?';
 
-  return (
+  const conteudo = (
     <div className="flex gap-3 rounded-xl border p-3" style={SOFT_PANEL_STYLE}>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: online ? 'rgba(16, 185, 129, 0.16)' : 'rgba(100, 116, 139, 0.14)', color: online ? '#059669' : 'var(--color-text-subtle)' }} aria-hidden="true">{initial}</div>
       <div className="min-w-0 flex-1">
@@ -298,6 +302,7 @@ function PresenceUserRow({ usuario, online }: {
       </div>
     </div>
   );
+  return podeVerTrilha ? <PresenceHistory usuarioId={usuario.id} nome={usuario.nome}>{conteudo}</PresenceHistory> : conteudo;
 }
 
 function AccessSummaryItem({
@@ -341,7 +346,9 @@ function OnlineUsersCard({
   recentes,
   isLoading,
   totalOnline,
+  podeVerTrilha,
 }: {
+  podeVerTrilha: boolean;
   usuarios: Array<Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>>;
   recentes: UsuarioAdmin[];
   isLoading: boolean;
@@ -356,11 +363,11 @@ function OnlineUsersCard({
           <Users size={19} strokeWidth={2.2} aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <div className="flex items-baseline gap-2">
+          <TooltipKpi kpiName="administracao.usuariosOnline"><div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold leading-none" style={{ color: '#10b981' }}>{totalOnline}</span>
             <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>Online agora</span>
-          </div>
-          <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}><span className="h-2 w-2 rounded-full bg-[#10b981] motion-safe:animate-pulse" aria-hidden="true" />Em atividade</div>
+          </div></TooltipKpi>
+          <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}><span className="h-2 w-2 rounded-full bg-[#10b981] motion-safe:animate-pulse" aria-hidden="true" />Outras pessoas em atividade</div>
         </div>
         <PopoverTrigger asChild>
           <button type="button" aria-label="Ver detalhes de presença" title="Ver detalhes de presença" className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
@@ -371,19 +378,19 @@ function OnlineUsersCard({
       <PopoverContent side="bottom" align="end" sideOffset={10} collisionPadding={12} className="overflow-hidden p-0 shadow-xl" style={{ width: 'min(48rem, calc(100vw - 1.5rem))', color: 'var(--color-text)', backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
         <div className="border-b px-5 py-4" style={{ borderColor: 'var(--color-border)' }}>
           <div className="flex items-center gap-2"><Users size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" /><h2 className="text-base font-bold">Presença de usuários</h2></div>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>Acompanhe quem está ativo e as últimas atividades registradas.</p>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>Acompanhe a atividade das outras pessoas no portal.</p>
         </div>
         <div className="grid gap-0 md:grid-cols-2">
           <section className="p-4 md:border-r" style={{ borderColor: 'var(--color-border)' }}>
             <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><span className="rounded-full px-2 py-0.5 text-xs font-bold" style={ONLINE_BADGE_STYLE}>{totalOnline}</span></div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-              {isLoading ? <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Carregando presença...</p> : usuarios.length > 0 ? usuarios.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhum usuário online agora.</p>}
+              {isLoading ? <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Carregando presença...</p> : usuarios.length > 0 ? usuarios.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online podeVerTrilha={podeVerTrilha} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhum usuário online agora.</p>}
             </div>
           </section>
           <section className="border-t p-4 md:border-l-0 md:border-t-0" style={{ borderColor: 'var(--color-border)' }}>
             <div className="mb-3"><h3 className="text-sm font-bold">Vistos recentemente</h3><p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>Últimas pessoas que ficaram offline.</p></div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-              {recentes.length > 0 ? recentes.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online={false} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
+              {recentes.length > 0 ? recentes.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online={false} podeVerTrilha={podeVerTrilha} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
             </div>
           </section>
         </div>
@@ -672,6 +679,7 @@ function renderUsuarioDetailsPopover(row: UsuarioRow) {
 }
 
 export default function AdminUsuariosPage() {
+  const { usuario: operador } = useAutenticacao();
   const { isAdminPlataforma, isDesenvolvedor } = usePermissions();
   const catalogo = useCatalogoPermissoes();
   const papeis = usePapeisAdmin();
@@ -801,17 +809,17 @@ export default function AdminUsuariosPage() {
   };
   const usuariosOnlineAgora = useMemo(
     () =>
-      [...resumoUsuarios.usuariosOnlineDetalhes]
+      resumoUsuarios.usuariosOnlineDetalhes.filter(usuario => usuario.id !== operador?.id)
         .sort((a, b) => timestampAtividade(b.ultimaAtividade) - timestampAtividade(a.ultimaAtividade)),
-    [resumoUsuarios.usuariosOnlineDetalhes],
+    [resumoUsuarios.usuariosOnlineDetalhes, operador?.id],
   );
   const usuariosVistosRecentemente = useMemo(
     () =>
       (usuarios.data ?? [])
-        .filter((usuario) => !usuario.isOnline && Boolean(usuario.ultimaAtividade))
+        .filter((usuario) => usuario.ativo && usuario.id !== operador?.id && !usuario.isOnline && Boolean(usuario.ultimaAtividade))
         .sort((a, b) => timestampAtividade(b.ultimaAtividade) - timestampAtividade(a.ultimaAtividade))
         .slice(0, 12),
-    [usuarios.data],
+    [usuarios.data, operador?.id],
   );
   const usuariosOnlineComDetalhes = useMemo(
     () => usuariosOnlineAgora.map((usuario) => ({
@@ -1294,6 +1302,7 @@ export default function AdminUsuariosPage() {
               recentes={usuariosVistosRecentemente}
               isLoading={resumoSessoes.isLoading}
               totalOnline={resumoUsuarios.usuariosOnline}
+              podeVerTrilha={resumoUsuarios.podeVerTrilha ?? false}
             />
           </div>
         </div>

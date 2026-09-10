@@ -8,6 +8,7 @@ import com.dashboard.api.dto.coletas.ColetasCidadeOrigemDTO;
 import com.dashboard.api.dto.coletas.ColetasHistoricoPerformanceDTO;
 import com.dashboard.api.dto.coletas.ColetasHistoricoPeriodo;
 import com.dashboard.api.dto.coletas.ColetasOverviewDTO;
+import com.dashboard.api.dto.coletas.ColetasOperacaoDTO;
 import com.dashboard.api.dto.coletas.ColetasRegiaoOrigemDTO;
 import com.dashboard.api.dto.coletas.ColetasStatusDistribuicaoDTO;
 import com.dashboard.api.dto.coletas.ColetasTrendPointDTO;
@@ -69,17 +70,28 @@ public class ColetasService {
     }
 
     public ColetasChartsDTO buscarGraficos(FiltroConsultaDTO filtro) {
+        List<ColetasStatusDistribuicaoDTO> status = buscarStatusDistribuicao(filtro);
+        ColetasOperacaoDTO operacao = buscarOperacao(filtro);
+        return new ColetasChartsDTO(status, List.of(), operacao.regioesOrigem(), operacao.agingAbertas());
+    }
+
+    public List<ColetasStatusDistribuicaoDTO> buscarStatusDistribuicao(FiltroConsultaDTO filtro) {
+        validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
+        contractValidator.validarSolicitacaoNativa();
+        return agregadosSqlRepository.buscarStatusDistribuicao(filtro);
+    }
+
+    public ColetasOperacaoDTO buscarOperacao(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
         contractValidator.validarSolicitacaoNativa();
 
-        List<ColetasStatusDistribuicaoDTO> statusDistribuicao = agregadosSqlRepository.buscarStatusDistribuicao(filtro);
         List<ColetasRegiaoOrigemDTO> regioesOrigem = agregadosSqlRepository.buscarRegioesOrigem(filtro);
         List<ColetasAgingBucketDTO> agingAbertas = agregadosSqlRepository.buscarAgingAbertas(
                 filtro,
                 periodoOffsetDateTimeHelper.hoje()
         );
 
-        return new ColetasChartsDTO(statusDistribuicao, List.of(), regioesOrigem, agingAbertas);
+        return new ColetasOperacaoDTO(regioesOrigem, agingAbertas);
     }
 
     public List<ColetasHistoricoPerformanceDTO> buscarHistoricoPerformance(FiltroConsultaDTO filtro, String periodo) {

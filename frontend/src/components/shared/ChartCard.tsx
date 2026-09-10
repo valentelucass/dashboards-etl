@@ -167,6 +167,7 @@ export default function ChartCard({
 }: ChartCardProps) {
   return (
     <div
+      data-dashboard-chart={chartKey}
       className={`flex h-full min-h-0 flex-col rounded-[20px] border p-4 shadow-sm ${className}`}
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
     >
