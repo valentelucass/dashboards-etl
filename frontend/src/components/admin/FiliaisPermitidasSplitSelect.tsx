@@ -28,7 +28,7 @@ export default function FiliaisPermitidasSplitSelect({
   }
 
   return (
-    <div className="flex w-full flex-col gap-3 md:flex-row">
+    <div className="flex w-full flex-col gap-3 md:flex-row [&>div>div]:w-full">
       <div className="min-w-0 flex-1">
         <AsyncMultiSelect
           label="Filiais Próprias Permitidas"

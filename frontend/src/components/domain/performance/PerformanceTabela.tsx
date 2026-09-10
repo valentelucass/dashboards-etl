@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import AnalyticalDataTable, { type ColunaTabelaAnalitica } from '../../shared/AnalyticalDataTable';
 import StatusBadge from '../../shared/StatusBadge';
 import type { PaginacaoResponse } from '../../../types/common';
@@ -6,6 +7,7 @@ import type { TableFilters } from '../../../types/tableFilters';
 import { formatarMoeda, formatarNumero } from '../../../utils/formatadores';
 
 interface PerformanceTabelaProps {
+  acoesCabecalho?: ReactNode;
   pagina?: PaginacaoResponse<PerformanceTabelaRow>;
   filtros: TableFilters;
   hiddenActiveCount: number;
@@ -63,6 +65,7 @@ const colunas: ColunaTabelaAnalitica<PerformanceTabelaRow>[] = [
 ];
 
 export default function PerformanceTabela({
+  acoesCabecalho,
   pagina,
   filtros,
   hiddenActiveCount,
@@ -83,6 +86,7 @@ export default function PerformanceTabela({
   return (
     <section className="mt-4">
       <AnalyticalDataTable
+        acoesCabecalho={acoesCabecalho}
         titulo="Performance Analitica"
         dados={pagina?.conteudo ?? []}
         colunas={colunas}

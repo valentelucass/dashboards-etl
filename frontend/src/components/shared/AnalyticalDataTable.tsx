@@ -627,8 +627,8 @@ export default function AnalyticalDataTable<T>({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="min-w-[210px] flex-1 sm:flex-none">
+        <div role="group" aria-label={`Controles de ${titulo ?? 'tabela'}`} className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
+          <div className="min-w-0 basis-full sm:min-w-[180px] sm:flex-1">
             <TextFilter
               value={filtros.busca ?? ''}
               onChange={(valor) => onTextFilterChange('busca', valor)}
@@ -658,7 +658,7 @@ export default function AnalyticalDataTable<T>({
             Limpar
           </button>
           {acoesCabecalho}
-          <label className="flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+          <label className="flex shrink-0 items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
             Linhas
             <select
               value={tamanhoPagina}

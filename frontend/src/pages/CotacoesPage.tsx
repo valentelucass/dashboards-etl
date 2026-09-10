@@ -1199,13 +1199,15 @@ export default function CotacoesPage() {
   return (
     <div className="w-full">
       <FilterBar
+        period={(
+          <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+        )}
         onClear={limparFiltros}
         activeFilters={activeFilters}
         dataInicio={dataInicio}
         dataFim={dataFim}
         actions={<CotacoesViewTabs activeView={activeView} onChange={setActiveView} />}
       >
-        <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
         <FiliaisParceirosFilter
           opcoes={filiais.data ?? []}
           filiaisSelecionadas={filtros.filiais ?? []}
@@ -1316,11 +1318,9 @@ export default function CotacoesPage() {
             </div>
           </div>
 
-          <div className="mb-3 flex justify-end">
-            <ExportButton nomeArquivo="cotacoes" onExport={() => exportarCotacoesCsv(filtro, filtrosTabela.apiFilters)} />
-          </div>
           <AnalyticalDataTable
             titulo="Cotações Analíticas"
+            acoesCabecalho={<ExportButton nomeArquivo="cotacoes" onExport={() => exportarCotacoesCsv(filtro, filtrosTabela.apiFilters)} />}
             dados={tabela.data?.conteudo ?? []}
             colunas={colunas}
             chaveLinha="numeroCotacao"

@@ -262,8 +262,11 @@ export default function ContasAPagarPage() {
 
   return (
     <div className="w-full">
-      <FilterBar onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
-        <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+      <FilterBar
+        period={(
+          <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+        )}
+        onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
         <FiliaisParceirosFilter opcoes={filiais.data ?? []} filiaisSelecionadas={filtros.filiais ?? []} parceirosSelecionados={filtros.parceirosLogisticos ?? []} onFiliaisChange={(valores) => setFiltro('filiais', valores)} onParceirosChange={(valores) => setFiltro('parceirosLogisticos', valores)} isLoading={filiais.isLoading} />
         <AsyncMultiSelect label="Plano Contas" opcoes={(planoContas.data ?? []).map((item) => item.classificacao)} selecionados={filtros.classificacoes ?? []} onChange={(valores) => setFiltro('classificacoes', valores)} isLoading={planoContas.isLoading} />
         <AsyncMultiSelect label="Pago" opcoes={['PAGO', 'Sim', 'Nao']} selecionados={filtros.pago ?? []} onChange={(valores) => setFiltro('pago', valores)} />
@@ -282,8 +285,8 @@ export default function ContasAPagarPage() {
         <ChartWrapper titulo="Conciliação" chartKey="contasPagarConciliacao" option={conciliacaoOption} isLoading={graficos.isLoading} isEmpty={conciliacao.length === 0} />
       </div>
 
-      <div className="mb-3 flex justify-end"><ExportButton nomeArquivo="contas-a-pagar" onExport={() => exportarContasAPagarCsv(filtro, filtrosTabela.apiFilters)} /></div>
-      <AnalyticalDataTable titulo="Lançamentos Analiticos" dados={tabela.data?.conteudo ?? []} colunas={colunas} chaveLinha="lancamentoNumero" filtros={filtrosTabela.filters} hiddenActiveCount={filtrosTabela.hiddenActiveCount} hasAnyFilter={filtrosTabela.hasAnyFilter} onTextFilterChange={filtrosTabela.setTextFilter} onMultiFilterChange={filtrosTabela.setMultiFilter} onColumnFilterChange={filtrosTabela.setColumnFilter} onClearFilters={filtrosTabela.clearTableFilters} statusOptions={statusTabelaOptions} isLoading={tabela.isLoading} error={tabela.error} errorFallbackMessage="Erro ao carregar lançamentos analíticos." totalRegistros={tabela.data?.totalElementos} paginaAtual={paginacaoTabela.pagina} tamanhoPagina={paginacaoTabela.tamanhoPagina} onPaginaChange={paginacaoTabela.setPagina} onTamanhoPaginaChange={paginacaoTabela.setTamanhoPagina} />
+
+      <AnalyticalDataTable acoesCabecalho={<ExportButton nomeArquivo="contas-a-pagar" onExport={() => exportarContasAPagarCsv(filtro, filtrosTabela.apiFilters)} />} titulo="Lançamentos Analiticos" dados={tabela.data?.conteudo ?? []} colunas={colunas} chaveLinha="lancamentoNumero" filtros={filtrosTabela.filters} hiddenActiveCount={filtrosTabela.hiddenActiveCount} hasAnyFilter={filtrosTabela.hasAnyFilter} onTextFilterChange={filtrosTabela.setTextFilter} onMultiFilterChange={filtrosTabela.setMultiFilter} onColumnFilterChange={filtrosTabela.setColumnFilter} onClearFilters={filtrosTabela.clearTableFilters} statusOptions={statusTabelaOptions} isLoading={tabela.isLoading} error={tabela.error} errorFallbackMessage="Erro ao carregar lançamentos analíticos." totalRegistros={tabela.data?.totalElementos} paginaAtual={paginacaoTabela.pagina} tamanhoPagina={paginacaoTabela.tamanhoPagina} onPaginaChange={paginacaoTabela.setPagina} onTamanhoPaginaChange={paginacaoTabela.setTamanhoPagina} />
     </div>
   );
 }

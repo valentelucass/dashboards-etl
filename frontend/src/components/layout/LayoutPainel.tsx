@@ -73,57 +73,32 @@ function BuildInfoFooter() {
     [buildInfo.builtAt],
   );
   const dataPrincipal = dataDeploy ?? dataBuild;
-  const rotuloPrincipal = dataDeploy ? 'Deploy' : 'Build';
+  const rotuloPrincipal = dataDeploy ? 'Portal atualizado em' : 'Versão gerada em';
 
   if (!dataPrincipal && isDevBuild) {
     return null;
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-[11px]">
-      {dataPrincipal ? (
-        <span
-          className="inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 font-medium"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-bg)',
-            color: 'var(--color-text-muted)',
-          }}
-          title={`${rotuloPrincipal} registrado em ${dataPrincipal}`}
-        >
-          <CalendarClock size={13} aria-hidden="true" />
-          <span>{rotuloPrincipal}</span>
-          <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+    <div
+      className="flex min-w-0 items-center gap-2.5 text-xs"
+      style={{ color: 'var(--color-text-muted)' }}
+      title={!isDevBuild ? `Versão ${buildId}` : undefined}
+    >
+      <CalendarClock size={16} className="shrink-0" aria-hidden="true" />
+      <div className="space-y-1">
+        <p>{dataPrincipal ? rotuloPrincipal : 'Versão publicada'}</p>
+        {dataPrincipal && (
+          <time
+            dateTime={dataDeploy ? buildInfo.deployedAt : buildInfo.builtAt}
+            className="block font-medium tabular-nums"
+            style={{ color: 'var(--color-text-subtle)' }}
+            title="Horário de Brasília"
+          >
             {dataPrincipal}
-          </span>
-        </span>
-      ) : (
-        <span
-          className="inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 font-medium"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-bg)',
-            color: 'var(--color-text-muted)',
-          }}
-          title="Build publicado"
-        >
-          <CalendarClock size={13} aria-hidden="true" />
-          <span>Build</span>
-        </span>
-      )}
-      {!isDevBuild && (
-        <span
-          className="inline-flex h-7 items-center rounded-md border px-2.5 font-mono font-semibold"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-card)',
-            color: 'var(--color-text-muted)',
-          }}
-          title="Identificador do build"
-        >
-          #{buildId}
-        </span>
-      )}
+          </time>
+        )}
+      </div>
     </div>
   );
 }
@@ -135,19 +110,17 @@ export default function LayoutPainel() {
       <main className="flex-1 w-full overflow-auto px-3 py-3 sm:px-5 sm:py-4">
         <Outlet />
       </main>
-      <footer className="mt-auto border-t px-4 py-3 sm:px-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <footer className="mt-auto border-t px-4 py-4 sm:px-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
+        <div className="flex w-full flex-wrap items-center justify-between gap-x-8 gap-y-4">
           <div className="min-w-0 space-y-1">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
-                DASHBOARDS
-              </p>
-              <BuildInfoFooter />
-            </div>
+            <p className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+              Rodogarcia <span aria-hidden="true" className="mx-1 opacity-40">·</span> Dashboards
+            </p>
             <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-              Painel de indicadores operacionais e logísticos.
+              © {new Date().getFullYear()} Rodogarcia. Todos os direitos reservados.
             </p>
           </div>
+          <BuildInfoFooter />
           <div className="flex flex-col gap-1 text-left sm:items-end sm:text-right">
             <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
               Desenvolvido por{' '}
@@ -158,11 +131,14 @@ export default function LayoutPainel() {
                 className="font-medium transition-opacity hover:opacity-70"
                 style={{ color: 'var(--color-primary)' }}
               >
-                @valentelucass
+                Lucas Andrade
               </a>
             </p>
             <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-              Suporte: lucasmac.dev@gmail.com
+              Suporte:{' '}
+              <a href="mailto:lucasmac.dev@gmail.com" className="transition-opacity hover:opacity-70 focus-visible:underline">
+                lucasmac.dev@gmail.com
+              </a>
             </p>
           </div>
         </div>

@@ -403,7 +403,7 @@ export default function AdminSetoresPage() {
     <div className="space-y-5">
       <section className="rounded-[20px] border p-4 shadow-sm sm:p-5" style={SURFACE_STYLE}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid items-start gap-4 border-b pb-4 xl:grid-cols-[minmax(11rem,1fr)_minmax(11rem,1fr)_13rem_minmax(24rem,2fr)]" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="grid min-w-0 items-start gap-4 border-b pb-4 lg:grid-cols-2 [&>*]:min-w-0" style={{ borderColor: 'var(--color-border)' }}>
             <label className="space-y-1">
               <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Nome do setor</span>
               <input
@@ -427,17 +427,19 @@ export default function AdminSetoresPage() {
               />
             </label>
 
-            <div className="space-y-1 xl:mt-1 xl:min-h-16 xl:border-l xl:pl-4" style={{ borderColor: 'var(--color-border)' }}>
-              <span className="block text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Escopo de filiais</span>
-              <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>Dados das filiais selecionadas.</p>
-            </div>
+            <div className="space-y-3 lg:col-span-2">
+              <div className="space-y-1">
+                <span className="block text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Escopo de filiais</span>
+                <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>Dados das filiais selecionadas.</p>
+              </div>
 
-            <FiliaisPermitidasSplitSelect
-              opcoes={filiaisDisponiveis}
-              selecionadas={form.filiaisPermitidas}
-              onChange={(filiaisPermitidas) => setForm((atual) => ({ ...atual, filiaisPermitidas }))}
-              isLoading={filiais.isLoading}
-            />
+              <FiliaisPermitidasSplitSelect
+                opcoes={filiaisDisponiveis}
+                selecionadas={form.filiaisPermitidas}
+                onChange={(filiaisPermitidas) => setForm((atual) => ({ ...atual, filiaisPermitidas }))}
+                isLoading={filiais.isLoading}
+              />
+            </div>
           </div>
 
           <div className="space-y-3">

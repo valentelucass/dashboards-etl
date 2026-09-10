@@ -216,7 +216,7 @@ export default function DataTable<T>({
             </p>
           </div>
           {(acoesCabecalho || paginacaoAtiva) && (
-            <div className="flex flex-wrap items-center justify-end gap-3">
+            <div role="group" aria-label={`Controles de ${titulo ?? 'tabela'}`} className="flex max-w-full flex-wrap items-center justify-end gap-2">
               {acoesCabecalho}
               {paginacaoAtiva && (
                 <label className="flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>

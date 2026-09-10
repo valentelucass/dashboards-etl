@@ -130,6 +130,7 @@ export default function IndicadoresGestaoSection<T>({
   onToggleTable,
 }: IndicadoresGestaoSectionProps<T>) {
   const hasTableError = Boolean(tableError);
+  const showLoadingHeader = tableLoading && !(tableFilters && onTableTextFilterChange && onTableMultiFilterChange && onTableColumnFilterChange && onTableClearFilters);
   const tableRegionId = useId();
   const totalTabela = tableTotal ?? tableData.length;
   const resumoTabela = hasTableError
@@ -137,6 +138,17 @@ export default function IndicadoresGestaoSection<T>({
     : tableTotal == null
     ? `${tableData.length} registros carregados`
     : `${totalTabela} registros encontrados`;
+  const tableActions = (
+    <>
+      <ExportButton nomeArquivo={exportName} onExport={onExport} />
+      <button type="button" onClick={onToggleTable} aria-expanded={isExpanded} aria-controls={tableRegionId}
+        className="inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+        {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+        {isExpanded ? 'Ocultar tabela' : 'Mostrar tabela'}
+      </button>
+    </>
+  );
 
   return (
     <section
@@ -156,20 +168,6 @@ export default function IndicadoresGestaoSection<T>({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <ExportButton dados={tableData as unknown as Record<string, unknown>[]} nomeArquivo={exportName} onExport={onExport} />
-          <button
-            type="button"
-            onClick={onToggleTable}
-            aria-expanded={isExpanded}
-            aria-controls={tableRegionId}
-            className="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors lg:max-2xl:hidden"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-          >
-            {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-            {isExpanded ? 'Ocultar tabela' : 'Mostrar tabela'}
-          </button>
-        </div>
       </div>
 
       {Boolean(error) && (
@@ -214,7 +212,7 @@ export default function IndicadoresGestaoSection<T>({
         className="overflow-hidden rounded-[20px] border"
         style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}
       >
-        <div
+        {(!isExpanded || showLoadingHeader) && <div
           className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
           style={{ borderBottom: isExpanded ? '1px solid var(--color-border)' : 'none' }}
         >
@@ -226,16 +224,8 @@ export default function IndicadoresGestaoSection<T>({
               {resumoTabela}
             </div>
           </div>
-          <div className="text-xs lg:max-2xl:hidden" style={{ color: 'var(--color-text-subtle)' }}>
-            {isExpanded ? 'Tabela expandida' : 'Tabela recolhida por padrão'}
-          </div>
-          <button type="button" onClick={onToggleTable} aria-expanded={isExpanded} aria-controls={tableRegionId}
-            className="hidden items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] lg:max-2xl:inline-flex"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
-            {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-            {isExpanded ? 'Ocultar tabela' : 'Mostrar tabela'}
-          </button>
-        </div>
+          <div role="group" aria-label={`Controles de ${tableTitle}`} className="flex flex-wrap items-center gap-2">{tableActions}</div>
+        </div>}
 
         <div id={tableRegionId} hidden={!isExpanded}>
         {isExpanded ? (
@@ -243,6 +233,7 @@ export default function IndicadoresGestaoSection<T>({
             {tableFilters && onTableTextFilterChange && onTableMultiFilterChange && onTableColumnFilterChange && onTableClearFilters ? (
               <AnalyticalDataTable
                 titulo={tableTitle}
+                acoesCabecalho={tableActions}
                 dados={tableData}
                 colunas={tableColumns}
                 chaveLinha={rowKey}
@@ -274,7 +265,7 @@ export default function IndicadoresGestaoSection<T>({
                 isLoading={tableLoading}
                 error={tableError}
                 errorFallbackMessage={`Erro ao carregar ${tableTitle}.`}
-                mostrarCabecalho={false}
+                acoesCabecalho={tableActions}
                 totalRegistros={tableTotal}
                 paginaAtual={tablePage}
                 tamanhoPagina={tablePageSize}

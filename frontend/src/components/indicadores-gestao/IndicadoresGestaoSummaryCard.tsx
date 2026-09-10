@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { KpiDefinition } from '../../constants/kpiDictionary';
 import { getGoalToneStyle, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
 import TooltipKpi from '../shared/TooltipKpi';
+import './IndicadoresGestaoOverview.css';
 
 interface IndicadoresGestaoSummaryCardProps {
   definition: KpiDefinition;
@@ -33,55 +34,46 @@ export default function IndicadoresGestaoSummaryCard({
 
   return (
     <TooltipKpi definition={definition} className="h-full">
-      <div
-        className="flex h-full w-full flex-col rounded-[20px] border p-4 shadow-sm transition-colors"
+      <article
+        className="gestao-scorecard"
+        data-tone={tone}
         style={{
           backgroundColor: 'var(--color-card)',
           borderColor: tone === 'neutral' ? 'var(--color-border)' : style.border,
         }}
       >
-        <div className="mb-3 flex min-h-[76px] items-start justify-between gap-3">
-          <div>
-            <h3 className="min-h-10 text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-              {title}
-            </h3>
-            <p className="mt-1 min-h-8 text-xs leading-4 line-clamp-2" style={{ color: 'var(--color-text-subtle)' }}>
-              {description}
-            </p>
-          </div>
-          {icon ? <span style={{ color: 'var(--color-text-subtle)' }}>{icon}</span> : null}
-        </div>
+        <header className="gestao-scorecard-heading">
+          <h3>{title}</h3>
+          {icon ? <span className="gestao-scorecard-icon" aria-hidden="true" style={{ backgroundColor: style.badgeBg, color: style.text }}>{icon}</span> : null}
+        </header>
+        <p className="sr-only">{description}</p>
 
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
-            {value}
-          </span>
+        <strong className="gestao-scorecard-value">{value}</strong>
+
+        <div className="gestao-scorecard-state">
           <span
-            className="rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-wide"
+            className="gestao-goal-badge"
             style={{ backgroundColor: style.badgeBg, color: style.badgeText }}
           >
             {statusLabel}
           </span>
+          <span className="gestao-scorecard-goal">{goalLabel}</span>
         </div>
-
-        <div className="text-xs font-medium" style={{ color: 'var(--color-text-subtle)' }}>
-          {goalLabel}
-        </div>
-        <div className="mt-1 min-h-10 text-xs leading-5 line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
+        <div className="gestao-scorecard-detail">
           {detail}
         </div>
         {progressPct != null ? (
-          <div className="mt-auto pt-3">
+          <div className="gestao-scorecard-coverage">
             <div className="mb-1 flex items-center justify-between text-[11px]" style={{ color: 'var(--color-text-subtle)' }}>
               <span>Cobertura da meta</span>
               <span>{widthPct.toLocaleString('pt-BR', { maximumFractionDigits: widthPct % 1 === 0 ? 0 : 1 })}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: style.track }}>
+            <div className="gestao-goal-track" role="progressbar" aria-label={`${title}: cobertura da meta`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={widthPct} style={{ backgroundColor: style.track }}>
               <div className="h-full rounded-full transition-all duration-300" style={{ width: `${widthPct}%`, backgroundColor: style.fill }} />
             </div>
           </div>
         ) : null}
-      </div>
+      </article>
     </TooltipKpi>
   );
 }

@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
+import { CircleCheck } from 'lucide-react';
 import type { KpiDefinition } from '../../constants/kpiDictionary';
 import { getGoalToneStyle, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
 import TooltipKpi from '../shared/TooltipKpi';
+import './IndicadoresGestaoOverview.css';
 
 export interface PanoramaOperacionalItem {
   id: string;
@@ -33,7 +35,7 @@ function formatarProgresso(progressPct?: number | null): string {
 
 export default function IndicadoresGestaoPanoramaSection({
   title = 'Panorama Operacional',
-  description = 'Resumo visual dos cinco indicadores para leitura imediata em tela cheia.',
+  description = 'Cobertura das metas e prioridades para direcionar a operação.',
   items,
 }: IndicadoresGestaoPanoramaSectionProps) {
   const alertItems = items
@@ -42,158 +44,102 @@ export default function IndicadoresGestaoPanoramaSection({
       || (left.progressPct ?? 100) - (right.progressPct ?? 100)
       || left.title.localeCompare(right.title))
     .slice(0, 3);
+  const allGoalsMet = items.length > 0 && items.every((item) => item.tone === 'positive');
+  const positiveStyle = getGoalToneStyle('positive');
 
   return (
-    <section
-      aria-label={title}
-      className="mb-7 rounded-[26px] border px-5 py-4 shadow-sm lg:mb-8 lg:px-6 lg:py-5"
-      style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-    >
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+    <section aria-label={title} className="gestao-panorama">
+      <header className="gestao-panorama-heading">
         <div>
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
-            {title}
-          </h2>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
-            {description}
-          </p>
+          <h2>{title}</h2>
+          <p>{description}</p>
         </div>
-        <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          Comparativo visual das metas oficiais
-        </div>
-      </div>
+        <span className="gestao-panorama-reference">100% de cobertura = meta atendida</span>
+      </header>
 
-      <div className="space-y-2.5">
-        {items.map((item) => {
-          const style = getGoalToneStyle(item.tone);
-          const progressPct = Math.max(0, Math.min(item.progressPct ?? 0, 100));
-
-          return (
-            <TooltipKpi
-              key={item.id}
-              definition={item.definition}
-              className="w-full"
-              style={{ flex: '0 0 auto' }}
-            >
-              <article
-                className="w-full rounded-[20px] border px-4 py-[14px] transition-colors lg:px-5 lg:py-3"
-                style={{
-                  backgroundColor: 'var(--color-bg)',
-                  borderColor: item.tone === 'neutral' ? 'var(--color-border)' : style.border,
-                }}
-              >
-                <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1.55fr)_auto_auto_minmax(320px,1.95fr)] lg:items-center">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      {item.icon ? (
-                        <span className="shrink-0" style={{ color: style.text }}>
-                          {item.icon}
-                        </span>
-                      ) : null}
-                      <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                        {item.title}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-left lg:text-right">
-                    <div className="text-xl font-bold leading-none" style={{ color: 'var(--color-text)' }}>
-                      {item.value}
-                    </div>
-                  </div>
-
-                  <div className="lg:justify-self-start">
-                    <span
-                      className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide"
-                      style={{ backgroundColor: style.badgeBg, color: style.badgeText }}
-                    >
-                      {item.statusLabel}
-                    </span>
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="mb-1.5 flex items-center justify-between gap-3 text-[11px]" style={{ color: 'var(--color-text-subtle)' }}>
-                      <span className="truncate">{item.detail}</span>
-                      <span className="shrink-0 font-semibold" style={{ color: style.text }}>
-                        {formatarProgresso(item.progressPct)}
-                      </span>
-                    </div>
-                    {item.progressPct != null ? (
-                      <div className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: style.track }}>
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{ width: `${progressPct}%`, backgroundColor: style.fill }}
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </article>
-            </TooltipKpi>
-          );
-        })}
-      </div>
-
-      <div
-        className="mt-4 rounded-[22px] border px-4 py-3.5 xl:px-5 xl:py-4"
-        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
-      >
-        <div className="mb-2.5 flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-              Atenções do Período
-            </h3>
-            <p className="mt-1 text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-              Os maiores gaps operacionais do recorte filtrado.
-            </p>
+      <div className="gestao-panorama-body">
+        <div className="gestao-comparison" aria-label="Comparativo de cobertura das metas">
+          <div className="gestao-comparison-heading">
+            <h3>Cobertura da meta</h3>
+            <span>Referência 100%</span>
           </div>
-          <div className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
-            Top 3 gaps operacionais
-          </div>
-        </div>
-
-        {alertItems.length > 0 ? (
-          <div className="grid gap-2 xl:grid-cols-3">
-            {alertItems.map((item) => {
+          <div className="gestao-comparison-lanes">
+            {items.map((item) => {
               const style = getGoalToneStyle(item.tone);
+              const progressPct = Math.max(0, Math.min(item.progressPct ?? 0, 100));
 
               return (
-                <article
-                  key={`${item.id}-attention`}
-                  className="rounded-[18px] border px-3.5 py-3"
-                  style={{
-                    backgroundColor: 'var(--color-bg)',
-                    borderColor: style.border,
-                  }}
-                >
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+                <TooltipKpi key={item.id} definition={item.definition} className="w-full" style={{ flex: '0 0 auto' }}>
+                  <article className="gestao-comparison-lane" data-tone={item.tone}>
+                    <div className="gestao-lane-heading">
+                      <h4>
+                        {item.icon ? <span aria-hidden="true" style={{ color: style.text }}>{item.icon}</span> : null}
                         {item.title}
-                      </div>
+                      </h4>
+                      <strong style={{ color: style.text }}>{formatarProgresso(item.progressPct)}</strong>
                     </div>
-                    <span
-                      className="inline-flex shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
-                      style={{ backgroundColor: style.badgeBg, color: style.badgeText }}
-                    >
-                      {item.statusLabel}
-                    </span>
-                  </div>
-                  <div className="text-xs leading-5" style={{ color: 'var(--color-text-subtle)' }}>
-                    {item.alertDetail ?? item.detail}
-                  </div>
-                </article>
+                    {item.progressPct != null ? (
+                      <div
+                        className="gestao-goal-track gestao-comparison-track"
+                        role="progressbar"
+                        aria-label={item.title + ': cobertura da meta'}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={progressPct}
+                        style={{ backgroundColor: style.track }}
+                      >
+                        <div className="h-full rounded-full" style={{ width: progressPct + '%', backgroundColor: style.fill }} />
+                      </div>
+                    ) : null}
+                    <div className="gestao-lane-detail">
+                      <span>{item.detail}</span>
+                      <span className="gestao-lane-status" style={{ color: style.text }}>{item.statusLabel}</span>
+                    </div>
+                    <span className="sr-only">Resultado atual: {item.value}</span>
+                  </article>
+                </TooltipKpi>
               );
             })}
           </div>
-        ) : (
-          <div
-            className="rounded-[18px] border border-dashed px-3.5 py-3 text-xs"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-subtle)' }}
-          >
-            Nenhum alerta crítico no período.
-          </div>
-        )}
+        </div>
+
+        <aside className="gestao-attention" aria-label="Atenções do Período">
+          <header className="gestao-attention-heading">
+            <h3>Atenções do Período</h3>
+            <p>Prioridade pelos maiores gaps relativos à meta.</p>
+          </header>
+          {alertItems.length > 0 ? (
+            <ol className="gestao-attention-list">
+              {alertItems.map((item, index) => {
+                const style = getGoalToneStyle(item.tone);
+                return (
+                  <li key={item.id + '-attention'} className="gestao-attention-item" style={{ borderColor: style.border }}>
+                    <div className="gestao-attention-order">
+                      <span className="gestao-attention-rank" aria-label={'Prioridade ' + (index + 1)} style={{ color: style.text }}>
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className="gestao-goal-badge" style={{ backgroundColor: style.badgeBg, color: style.badgeText }}>
+                        {item.statusLabel}
+                      </span>
+                    </div>
+                    <h4>{item.title}</h4>
+                    <p>{item.alertDetail ?? item.detail}</p>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <div className="gestao-attention-empty">
+              {allGoalsMet ? (
+                <>
+                  <CircleCheck size={40} aria-hidden="true" style={{ color: positiveStyle.text }} />
+                  <strong style={{ color: positiveStyle.text }}>Todas as metas atendidas</strong>
+                </>
+              ) : <span aria-hidden="true">—</span>}
+              <p>Nenhum alerta crítico no período.</p>
+            </div>
+          )}
+        </aside>
       </div>
     </section>
   );

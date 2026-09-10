@@ -406,6 +406,15 @@ export default function ManifestosPage() {
   return (
     <div className="w-full">
       <FilterBar
+        period={(
+          <DateRangePicker
+            dataInicio={dataInicio}
+            dataFim={dataFim}
+            onDataInicioChange={setDataInicio}
+            onDataFimChange={setDataFim}
+            onRangeChange={setDataRange}
+          />
+        )}
         onClear={limparFiltros}
         activeFilters={activeFilters}
         dataInicio={dataInicio}
@@ -427,13 +436,6 @@ export default function ManifestosPage() {
           </button>
         ) : null}
       >
-        <DateRangePicker
-          dataInicio={dataInicio}
-          dataFim={dataFim}
-          onDataInicioChange={setDataInicio}
-          onDataFimChange={setDataFim}
-          onRangeChange={setDataRange}
-        />
         <div className="flex w-full min-w-[148px] flex-col gap-1 self-end justify-self-start md:w-auto">
           <label
             htmlFor="manifestos-numero"
@@ -555,10 +557,8 @@ export default function ManifestosPage() {
         />
       </div>
 
-      <div className="mb-3 flex justify-end">
-        <ExportButton nomeArquivo="manifestos" onExport={() => exportarManifestosCsv(filtro, filtrosTabela.apiFilters)} />
-      </div>
       <AnalyticalDataTable
+        acoesCabecalho={<ExportButton nomeArquivo="manifestos" onExport={() => exportarManifestosCsv(filtro, filtrosTabela.apiFilters)} />}
         titulo="Manifestos Analíticos"
         dados={tabelaConteudo}
         colunas={colunas}

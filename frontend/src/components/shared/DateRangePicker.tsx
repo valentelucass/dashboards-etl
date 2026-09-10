@@ -69,7 +69,7 @@ export default function DateRangePicker({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="date-range-picker flex min-w-0 flex-col gap-1.5">
       {label ? (
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
@@ -86,9 +86,9 @@ export default function DateRangePicker({
           ) : null}
         </div>
       ) : null}
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="date-range-controls flex flex-wrap items-end gap-4">
       {/* Bloco: campos De / Até */}
-      <div className="flex items-end gap-2">
+      <div className="date-range-inputs flex items-end gap-2">
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="date-inicio"
@@ -128,13 +128,13 @@ export default function DateRangePicker({
 
       {/* Separador visual */}
       <div
-        className="hidden h-9 w-px self-end sm:block"
+        className="date-range-divider hidden h-9 w-px self-end sm:block"
         style={{ backgroundColor: 'var(--color-border)' }}
         aria-hidden="true"
       />
 
       {/* Bloco: atalhos de período */}
-      <div className="flex flex-col gap-1.5">
+      <div className="date-range-presets flex flex-col gap-1.5">
         <span
           className="text-xs font-medium leading-4"
           style={{ color: 'var(--color-text-muted)' }}

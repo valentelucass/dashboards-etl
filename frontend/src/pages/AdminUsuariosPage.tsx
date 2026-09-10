@@ -1299,7 +1299,7 @@ export default function AdminUsuariosPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid w-full gap-4 xl:grid-cols-4">
+          <div className="grid w-full gap-4 lg:grid-cols-3 [&>*]:min-w-0">
             <label className="space-y-1">
               <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Nome</span>
               <input
@@ -1353,21 +1353,9 @@ export default function AdminUsuariosPage() {
               </span>
             </label>
 
-            <div className="flex w-full flex-col space-y-1">
-              <span className="block text-sm font-medium opacity-0" aria-hidden="true">Importar usuários</span>
-              <button
-                type="button"
-                onClick={() => setIsImportModalOpen(true)}
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:-translate-y-px hover:opacity-90 ${FOCUS_RING_CLASS}`}
-                style={{ backgroundColor: 'var(--color-primary)' }}
-              >
-                <Upload size={16} />
-                Importar usuários (Excel)
-              </button>
-            </div>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3 [&>*]:min-w-0">
             <label className="space-y-1">
               <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>
                 Confirmar senha {editing ? '(opcional)' : '(obrigatória)'}
@@ -1488,7 +1476,7 @@ export default function AdminUsuariosPage() {
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 lg:flex lg:flex-wrap [&>label]:min-w-0 [&>label]:lg:flex-[1_1_16rem] [&>label>input]:shrink-0">
               {(papeis.data ?? []).map((papel: PapelAdmin) => (
                 <label
                   key={papel.id}
@@ -1567,6 +1555,15 @@ export default function AdminUsuariosPage() {
               className="rounded-xl bg-[#21478A] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
             >
               {editing ? 'Salvar alterações' : 'Criar usuário'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-80 ${FOCUS_RING_CLASS}`}
+              style={SECONDARY_BUTTON_STYLE}
+            >
+              <Upload size={16} aria-hidden="true" />
+              Importar usuários (Excel)
             </button>
             {editing && (
               <button

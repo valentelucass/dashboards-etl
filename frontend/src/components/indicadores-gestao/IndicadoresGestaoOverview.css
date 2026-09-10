@@ -1,0 +1,112 @@
+/* Somente a apresentação dos cinco resultados e do panorama; as metas e tons vêm da política vigente. */
+.gestao-scoreboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.gestao-scorecard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "heading value" "state state" "detail detail" "coverage coverage";
+  align-content: start;
+  gap: 10px 16px;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 16px;
+  border: 1px solid;
+  border-radius: 20px;
+  color: var(--color-text);
+}
+.gestao-scorecard-heading { grid-area: heading; display: flex; align-items: start; justify-content: space-between; gap: 8px; min-width: 0; }
+.gestao-scorecard-heading h3 { font-size: 14px; font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
+.gestao-scorecard-icon { display: none; flex-shrink: 0; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9px; }
+.gestao-scorecard-value { grid-area: value; align-self: center; font-size: 32px; line-height: 1.1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gestao-scorecard-state { grid-area: state; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+.gestao-goal-badge { display: inline-flex; align-items: center; border-radius: 6px; padding: 4px 7px; font-size: 10px; line-height: 14px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.gestao-scorecard-goal { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.gestao-scorecard-detail { grid-area: detail; color: var(--color-text-muted); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
+.gestao-scorecard-coverage { grid-area: coverage; align-self: end; }
+.gestao-goal-track { position: relative; height: 8px; border-radius: 4px; overflow: hidden; }
+.gestao-goal-track::after { content: ""; position: absolute; inset: 0 0 0 auto; width: 2px; background: var(--color-text-subtle); opacity: 0.6; }
+
+.gestao-panorama { margin-bottom: 28px; padding: 18px; border: 1px solid var(--color-border); border-radius: 26px; background: var(--color-card); color: var(--color-text); }
+.gestao-panorama-heading { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.gestao-panorama-heading h2 { font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.gestao-panorama-heading p { margin-top: 3px; color: var(--color-text-subtle); font-size: 13px; line-height: 20px; }
+.gestao-panorama-reference { padding: 6px 9px; border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text-muted); font-size: 11px; line-height: 16px; }
+.gestao-panorama-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.gestao-comparison { min-width: 0; }
+.gestao-comparison-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 5px; color: var(--color-text-muted); font-size: 11px; line-height: 18px; }
+.gestao-comparison-heading h3 { font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.gestao-comparison-lanes { display: grid; }
+.gestao-comparison-lanes > * { border-radius: 0; }
+.gestao-comparison-lanes > * + * { border-top: 1px solid var(--color-border); }
+.gestao-comparison-lane { width: 100%; min-width: 0; padding: 12px 0; }
+.gestao-lane-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 8px; }
+.gestao-lane-heading h4 { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; font-weight: 600; min-width: 0; }
+.gestao-lane-heading h4 > span { flex-shrink: 0; }
+.gestao-lane-heading strong { font-size: 22px; line-height: 26px; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; white-space: nowrap; }
+.gestao-comparison-track { height: 10px; }
+.gestao-lane-detail { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; color: var(--color-text-muted); font-size: 11px; line-height: 16px; }
+.gestao-lane-status { font-weight: 600; white-space: nowrap; }
+.gestao-attention { display: flex; flex-direction: column; min-width: 0; padding-top: 18px; border-top: 1px solid var(--color-border); }
+.gestao-attention-heading { margin-bottom: 12px; }
+.gestao-attention-heading h3 { font-size: 15px; line-height: 22px; font-weight: 600; }
+.gestao-attention-heading p { margin-top: 3px; color: var(--color-text-muted); font-size: 12px; line-height: 18px; }
+.gestao-attention-list { display: grid; flex: 1; grid-auto-rows: minmax(min-content, 1fr); gap: 10px; }
+.gestao-attention-item { min-width: 0; padding: 12px 14px; border: 1px solid; border-radius: 12px; background: var(--color-bg); }
+.gestao-attention-order { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.gestao-attention-rank { font-size: 20px; line-height: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gestao-attention-item h4 { font-size: 13px; line-height: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.gestao-attention-item p { margin-top: 4px; color: var(--color-text-subtle); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
+.gestao-attention-empty { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 120px; padding: 20px; border: 1px dashed var(--color-border); border-radius: 12px; color: var(--color-text-muted); text-align: center; font-size: 13px; }
+.gestao-attention-empty > span { font-size: 30px; }
+
+@media (width >= 40rem) {
+  .gestao-scoreboard { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .gestao-scoreboard > * { grid-column: span 2; }
+  .gestao-scoreboard > :nth-last-child(-n + 2) { grid-column: span 3; }
+  .gestao-scorecard { grid-template-columns: minmax(0, 1fr); grid-template-areas: "heading" "value" "state" "detail" "coverage"; grid-template-rows: auto auto auto 1fr auto; gap: 10px; }
+  .gestao-scorecard-heading { min-height: 40px; }
+  .gestao-scorecard-icon { display: flex; }
+  .gestao-scorecard-value { font-size: 40px; }
+  .gestao-scorecard-detail { min-height: 36px; }
+}
+
+@media (width >= 64rem) {
+  .gestao-scoreboard { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .gestao-scoreboard > *, .gestao-scoreboard > :nth-last-child(-n + 2) { grid-column: auto; }
+  .gestao-scorecard { padding: 14px; gap: 8px; }
+  .gestao-scorecard-icon { display: none; }
+  .gestao-scorecard-heading { min-height: 40px; }
+  .gestao-scorecard-value { font-size: clamp(34px, 3.25vw, 44px); }
+  .gestao-panorama { padding: 20px; margin-bottom: 32px; }
+  .gestao-panorama-body { grid-template-columns: minmax(0, 1.85fr) minmax(270px, 1fr); gap: 24px; }
+  .gestao-attention { padding: 0 0 0 20px; border-top: 0; border-left: 1px solid var(--color-border); }
+  .gestao-attention-item { display: flex; flex-direction: column; justify-content: center; }
+  .gestao-lane-heading h4 { font-size: 14px; line-height: 20px; }
+}
+
+@media (width >= 80rem) {
+  .gestao-scorecard-icon { display: flex; }
+}
+
+@media (width >= 96rem) {
+  .gestao-scorecard { padding: 16px 20px; }
+  .gestao-scorecard-heading h3 { font-size: 16px; line-height: 20px; }
+  .gestao-scorecard-value { font-size: 48px; }
+  .gestao-scorecard-state { gap: 8px; }
+  .gestao-goal-badge { font-size: 11px; }
+  .gestao-scorecard-detail { font-size: 13px; line-height: 18px; }
+  .gestao-panorama { padding: 20px 24px; }
+  .gestao-panorama-body { grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr); gap: 32px; }
+  .gestao-attention { padding-left: 24px; }
+  .gestao-lane-heading h4 { font-size: 16px; }
+  .gestao-lane-heading strong { font-size: 26px; }
+  .gestao-lane-detail { font-size: 12px; }
+  .gestao-attention-item h4 { font-size: 15px; line-height: 20px; }
+  .gestao-attention-item p { font-size: 13px; }
+}

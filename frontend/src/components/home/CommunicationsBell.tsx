@@ -23,14 +23,14 @@ export default function CommunicationsBell({ className = '' }: { className?: str
           {unreadCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{unreadCount > 99 ? '99+' : unreadCount}</span>}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={10} collisionPadding={12} className="z-[120] p-0"
+      <PopoverContent align="end" sideOffset={10} collisionPadding={12} className="z-[120] flex flex-col"
         aria-label="Comunicados do Command Center"
-        style={{ width: 'min(400px, calc(100vw - 24px))', minWidth: 0 }}>
-        <div className="flex items-center justify-between border-b p-4" style={{ borderColor: 'var(--color-border)' }}>
+        style={{ width: 'min(400px, calc(100vw - 24px))', minWidth: 0, padding: 0, maxHeight: 'min(480px, calc(100dvh - 24px), var(--radix-popover-content-available-height, 480px))' }}>
+        <div className="flex shrink-0 items-center justify-between border-b p-4" style={{ borderColor: 'var(--color-border)' }}>
           <div><h2 className="text-sm font-bold">Comunicações</h2><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{query.isError ? 'Lista indisponível' : query.isPending ? 'Consultando novidades…' : unreadCount ? unreadLabel : 'Você está em dia'}</p></div>
           <button type="button" onClick={() => setOpen(false)} aria-label="Fechar comunicações" className="rounded-lg p-2 focus-visible:ring-2"><X size={16} /></button>
         </div>
-        <div className="max-h-[min(480px,65dvh)] space-y-2 overflow-y-auto p-3">
+        <div aria-label="Lista de comunicações" className="min-h-0 max-h-[390px] space-y-2 overflow-y-auto overscroll-contain p-3" style={{ scrollbarGutter: 'stable' }}>
           {query.isPending && <p role="status" className="p-2 text-sm">Carregando comunicações…</p>}
           {query.isError && <div role="alert" className="p-2 text-sm">Não foi possível atualizar as comunicações. <button type="button" className="underline" onClick={() => void query.refetch()}>Tentar novamente</button></div>}
           {leitura.isError && <p role="alert" className="p-2 text-xs text-negative">Não foi possível registrar a leitura. Abra o comunicado novamente para tentar.</p>}

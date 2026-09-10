@@ -698,6 +698,15 @@ export default function IntegracoesPage() {
   return (
     <div className="w-full">
       <FilterBar
+        period={(
+          <DateRangePicker
+            dataInicio={dataInicio}
+            dataFim={dataFim}
+            onDataInicioChange={setDataInicio}
+            onDataFimChange={setDataFim}
+            onRangeChange={setDataRange}
+          />
+        )}
         dataInicio={dataInicio}
         dataFim={dataFim}
         activeFilters={destinoSelecionado
@@ -730,13 +739,6 @@ export default function IntegracoesPage() {
           </div>
         )}
       >
-        <DateRangePicker
-          dataInicio={dataInicio}
-          dataFim={dataFim}
-          onDataInicioChange={setDataInicio}
-          onDataFimChange={setDataFim}
-          onRangeChange={setDataRange}
-        />
       </FilterBar>
 
       {integracoes.isError && (

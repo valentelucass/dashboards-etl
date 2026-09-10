@@ -444,8 +444,11 @@ export default function TrackingPage() {
 
   return (
     <div className="w-full">
-      <FilterBar onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
-        <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+      <FilterBar
+        period={(
+          <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+        )}
+        onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
         <AsyncMultiSelect
           label="Filial Atual"
           opcoes={filiaisDisponiveis}
@@ -473,10 +476,8 @@ export default function TrackingPage() {
         </div>
       </div>
 
-      <div className="mt-6 mb-3 flex justify-end">
-        <ExportButton nomeArquivo="localizacao-cargas" onExport={() => exportarTrackingCsv(filtro, filtrosTabela.apiFilters)} />
-      </div>
       <AnalyticalDataTable
+        acoesCabecalho={<ExportButton nomeArquivo="localizacao-cargas" onExport={() => exportarTrackingCsv(filtro, filtrosTabela.apiFilters)} />}
         titulo="Detalhamento de Cargas"
         dados={tabela.data?.conteudo ?? []}
         colunas={colunas}

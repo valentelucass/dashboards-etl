@@ -16,6 +16,7 @@ import { GLOBAL_KPI_GOAL_BRANCH_ID } from '../../api/endpoints/indicadoresGestao
 import { getApiErrorMessage } from '../../utils/apiError';
 import { competenciaParaMonthInput, formatarCompetenciaMeta, normalizarCompetenciaApi } from '../../utils/competencia';
 import { formatarDataHora } from '../../utils/formatadores';
+import './KpiGoalsManagerPanel.css';
 
 interface KpiGoalsManagerPanelProps {
   open: boolean;
@@ -124,19 +125,18 @@ function GoalInputs({
   onChange: (goals: KpiGoalsMap) => void;
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-5">
+    <div className="kpi-goals-fields">
       {KPI_GOAL_INDICATOR_KEYS.map((indicatorKey) => {
         const isInherited = inheritedMode && globalGoals && sameGoal(value[indicatorKey], globalGoals[indicatorKey]);
         return (
           <label
             key={indicatorKey}
-            className="space-y-1 rounded-xl border px-3 py-3"
-            style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
+            className="kpi-goals-field"
           >
-            <span className="block min-h-8 text-xs font-semibold leading-4" style={{ color: 'var(--color-text)' }}>
+            <span className="kpi-goals-field-label" style={{ color: 'var(--color-text)' }}>
               {GOAL_LABELS[indicatorKey]}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="kpi-goals-input">
               <input
                 type="number"
                 min="0"
@@ -150,15 +150,16 @@ function GoalInputs({
                     [indicatorKey]: Number.isFinite(nextValue) ? nextValue : 0,
                   });
                 }}
-                className={`h-10 min-w-0 flex-1 rounded-lg border px-2 text-sm tabular-nums ${FOCUS_RING_CLASS}`}
-                style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                className={`h-10 w-full min-w-0 flex-1 rounded-lg px-3 text-sm tabular-nums ${FOCUS_RING_CLASS}`}
+                style={{ backgroundColor: 'transparent', color: 'var(--color-text)' }}
+                aria-label={GOAL_LABELS[indicatorKey]}
                 disabled={disabled}
               />
-              <span className="text-sm font-semibold" style={{ color: 'var(--color-text-muted)' }}>%</span>
+              <span aria-hidden="true" className="pr-3 text-sm font-semibold" style={{ color: 'var(--color-text-muted)' }}>%</span>
             </div>
-            {isInherited ? (
+            {globalGoals ? (
               <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-                valor herdado: {formatGoal(DEFAULT_GOALS[indicatorKey])}
+                {isInherited ? 'Valor herdado' : 'Meta global'}: {formatGoal(globalGoals[indicatorKey])}
               </span>
             ) : null}
           </label>
@@ -222,18 +223,19 @@ export default function KpiGoalsManagerPanel({
   const historyTotalPages = history?.totalPaginas ?? 0;
   const historyTotalElements = history?.totalElementos ?? 0;
   const competenciaLabel = formatarCompetenciaMeta(competencia);
+  const canEdit = Boolean(data) && !isLoading && !isSaving && !error;
 
   useEffect(() => {
     if (!open) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGlobalForm(cloneGoals(globalGoals));
-  }, [globalGoals, open]);
+  }, [globalGoals, competencia, open]);
 
   useEffect(() => {
     if (!open) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBranchForm(cloneGoals(branchEffectiveGoals));
-  }, [branchEffectiveGoals, open]);
+  }, [branchEffectiveGoals, branchId, competencia, open]);
 
   useEffect(() => {
     if (!open || branchId || selectableBranches.length === 0) return;
@@ -246,7 +248,7 @@ export default function KpiGoalsManagerPanel({
 
   async function handleGlobalSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (branchSpecificBranches.length > 0) {
+    if (!canEdit || branchSpecificBranches.length > 0) {
       return;
     }
     try {
@@ -258,7 +260,7 @@ export default function KpiGoalsManagerPanel({
 
   async function handleBranchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!branchId) return;
+    if (!canEdit || !branchId) return;
     try {
       await onSaveBranch(branchId, branchForm);
     } catch {
@@ -267,6 +269,7 @@ export default function KpiGoalsManagerPanel({
   }
 
   async function handleRemoveOverride(selectedBranchId: string) {
+    if (!canEdit) return;
     try {
       await onRemoveOverride(selectedBranchId);
     } catch {
@@ -276,19 +279,36 @@ export default function KpiGoalsManagerPanel({
 
   return (
     <section
-      className="mb-5 rounded-[20px] border p-5 shadow-sm"
+      className="kpi-goals-manager mb-5 rounded-[20px] border p-4 sm:p-5 shadow-sm"
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
       aria-label="Gerenciamento de metas dos indicadores"
     >
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div className="kpi-goals-manager-heading">
         <div>
           <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
             Gerenciar Metas
           </h2>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
-            Metas por competência, overrides por filial e histórico de alterações.
+            Metas globais, exceções por filial e histórico de alterações.
           </p>
         </div>
+        <label className="kpi-goals-competencia block space-y-1">
+          <span className="text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+            Competência
+          </span>
+          <input
+            type="month"
+            min="2000-01"
+            max="2100-12"
+            required
+            aria-label="Competência das metas"
+            value={competenciaParaMonthInput(competencia)}
+            onChange={(event) => onCompetenciaChange(normalizarCompetenciaApi(event.target.value))}
+            className={`h-11 w-full rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
+            style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+            disabled={isSaving}
+          />
+        </label>
         {isLoading ? (
           <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: 'rgba(37, 99, 235, 0.12)', color: '#1d4ed8' }}>
             Carregando metas
@@ -308,9 +328,9 @@ export default function KpiGoalsManagerPanel({
         </p>
       ) : null}
 
-      <div className="space-y-5">
-        <form onSubmit={handleGlobalSubmit} className="rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="kpi-goals-manager-sections">
+        <form onSubmit={handleGlobalSubmit} aria-label="Meta Global" className="kpi-goals-section rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="kpi-goals-section-heading">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
                 Meta Global (aplica em todas as filiais)
@@ -321,7 +341,7 @@ export default function KpiGoalsManagerPanel({
             </div>
             <button
               type="submit"
-              disabled={isLoading || isSaving || branchSpecificBranches.length > 0}
+              disabled={!canEdit || branchSpecificBranches.length > 0}
               className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
               style={{ backgroundColor: 'var(--color-primary)' }}
             >
@@ -330,12 +350,12 @@ export default function KpiGoalsManagerPanel({
             </button>
           </div>
 
-          <GoalInputs value={globalForm} disabled={isLoading || isSaving || branchSpecificBranches.length > 0} onChange={setGlobalForm} />
+          <GoalInputs value={globalForm} disabled={!canEdit || branchSpecificBranches.length > 0} onChange={setGlobalForm} />
 
           {branchSpecificBranches.length > 0 ? (
-            <div className="mt-4 rounded-xl border px-4 py-3" style={{ borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.10)' }}>
+            <div className="mt-3 rounded-xl border px-3 py-2.5" style={{ borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.10)' }}>
               <p className="text-sm font-semibold" style={{ color: '#92400e' }}>
-                Existem {branchSpecificBranches.length} filiais com metas específicas. Para alterar a meta global, remova primeiro todas as metas isoladas por filial nos cards abaixo.
+                Existem {branchSpecificBranches.length} filiais com metas específicas. Para alterar a meta global, remova primeiro todas as metas isoladas por filial na lista abaixo.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {branchSpecificBranches.map((branch) => (
@@ -349,8 +369,8 @@ export default function KpiGoalsManagerPanel({
           ) : null}
         </form>
 
-        <form onSubmit={handleBranchSubmit} className="rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <form onSubmit={handleBranchSubmit} aria-label="Meta Específica por Filial" className="kpi-goals-section rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="kpi-goals-section-heading">
             <div className="flex flex-wrap items-center gap-3">
               <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
                 Meta Específica por Filial
@@ -368,11 +388,36 @@ export default function KpiGoalsManagerPanel({
                 {branchOverride ? 'Meta Específica' : 'Herdando Global'}
               </span>
             </div>
+            <div className="kpi-goals-branch-selector">
+              <label className="block space-y-1">
+                <span className="text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+                  Filial
+                </span>
+                <select
+                  value={branchId}
+                  aria-label="Filial das metas"
+                  title={branchLabel(branchId)}
+                  onChange={(event) => onBranchChange(event.target.value)}
+                  className={`h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
+                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                  disabled={isSaving}
+                >
+                  {selectableBranches.length === 0 ? (
+                    <option value="">Nenhuma filial disponível</option>
+                  ) : null}
+                  {selectableBranches.map((option) => (
+                    <option key={option} value={option}>
+                      {branchLabel(option)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               {branchOverride ? (
                 <button
                   type="button"
-                  disabled={isSaving}
+                  disabled={!canEdit}
                   onClick={() => void handleRemoveOverride(branchId)}
                   className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
                   style={{ borderColor: '#dc2626', color: '#dc2626' }}
@@ -383,7 +428,7 @@ export default function KpiGoalsManagerPanel({
               ) : null}
               <button
                 type="submit"
-                disabled={isLoading || isSaving || !branchId}
+                disabled={!canEdit || !branchId}
                 className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
                 style={{ backgroundColor: 'var(--color-primary)' }}
               >
@@ -393,65 +438,31 @@ export default function KpiGoalsManagerPanel({
             </div>
           </div>
 
-          <div className="mb-4 grid max-w-2xl grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_12rem]">
-            <label className="block space-y-1">
-              <span className="text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
-                Filial
-              </span>
-              <select
-                value={branchId}
-                onChange={(event) => onBranchChange(event.target.value)}
-                className={`h-11 w-full rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
-                style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-                disabled={isSaving}
-              >
-                {selectableBranches.length === 0 ? (
-                  <option value="">Nenhuma filial disponível</option>
-                ) : null}
-                {selectableBranches.map((option) => (
-                  <option key={option} value={option}>
-                    {branchLabel(option)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block space-y-1">
-              <span className="text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
-                Competência
-              </span>
-              <input
-                type="month"
-                value={competenciaParaMonthInput(competencia)}
-                onChange={(event) => onCompetenciaChange(normalizarCompetenciaApi(event.target.value))}
-                className={`h-11 w-full rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
-                style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-                disabled={isSaving}
-              />
-            </label>
-          </div>
+
 
           <GoalInputs
             value={branchForm}
             globalGoals={globalGoals}
             inheritedMode
-            disabled={isLoading || isSaving || !branchId}
+            disabled={!canEdit || !branchId}
             onChange={setBranchForm}
           />
 
-          <div className="mt-5 rounded-xl border px-4 py-3" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
+          <div className="kpi-goals-history" style={{ borderColor: 'var(--color-border)' }}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
                 Histórico de Alterações
+                <span className="ml-2 text-xs font-normal" style={{ color: 'var(--color-text-muted)' }}>Todas as competências</span>
               </h4>
               <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                 {historyTotalElements} registro{historyTotalElements === 1 ? '' : 's'}
               </span>
             </div>
-            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2 2xl:grid-cols-3">
               {isHistoryLoading ? (
-                <p className="text-sm md:col-span-2 xl:col-span-3" style={{ color: 'var(--color-text-muted)' }}>Carregando histórico...</p>
+                <p className="text-sm lg:col-span-2 2xl:col-span-3" style={{ color: 'var(--color-text-muted)' }}>Carregando histórico...</p>
               ) : historyItems.length === 0 ? (
-                <p className="text-sm md:col-span-2 xl:col-span-3" style={{ color: 'var(--color-text-muted)' }}>Sem histórico para esta filial.</p>
+                <p className="text-sm lg:col-span-2 2xl:col-span-3" style={{ color: 'var(--color-text-muted)' }}>Sem histórico para esta filial.</p>
               ) : (
                 historyItems.map((item, index) => (
                   <div
@@ -567,6 +578,7 @@ export default function KpiGoalsManagerPanel({
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <button
                       type="button"
+                      disabled={isSaving}
                       onClick={() => onBranchChange(branch.branchId)}
                       className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold ${FOCUS_RING_CLASS}`}
                       style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
@@ -576,7 +588,7 @@ export default function KpiGoalsManagerPanel({
                     </button>
                     <button
                       type="button"
-                      disabled={isSaving}
+                      disabled={!canEdit}
                       onClick={() => void handleRemoveOverride(branch.branchId)}
                       className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
                       style={{ borderColor: '#dc2626', color: '#dc2626' }}

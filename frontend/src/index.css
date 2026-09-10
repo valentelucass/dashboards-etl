@@ -1,5 +1,30 @@
 @import "tailwindcss";
 
+/* Os controles crescem juntos; a quebra preserva período e dimensões completos. */
+.dashboard-filter-period { flex: 1 1 48rem; min-width: 0; }
+.dashboard-filter-dimensions { display: flex; align-items: end; gap: 12px; min-width: 0; }
+.dashboard-filter-fields {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 12px;
+}
+.dashboard-filter-fields > * { width: 100%; min-width: 0; justify-self: stretch; }
+.dashboard-filter-fields > * > input { width: 100%; min-width: 0; }
+.dashboard-filter-fields > * > span:first-child { flex-wrap: wrap; }
+.dashboard-filter-period .date-range-controls { gap: 12px; }
+.dashboard-filter-period .date-range-inputs { flex: 0 0 21rem; min-width: 0; }
+.dashboard-filter-period .date-range-inputs > div { flex: 1; min-width: 0; gap: 4px; }
+.dashboard-filter-period input[type="date"] { width: 100%; min-width: 0; height: 40px; padding-inline: 10px; }
+.dashboard-filter-period .date-range-divider { display: none; }
+.dashboard-filter-period .date-range-presets { flex: 1 1 25rem; min-width: 0; gap: 4px; }
+.dashboard-filter-period .date-range-presets > div { flex-wrap: wrap; }
+.dashboard-filter-period .date-range-presets button { flex: 1 1 auto; min-width: 36px; padding-inline: 8px; height: 40px; white-space: nowrap; }
+@media (width >= 64rem) {
+  .dashboard-filter-fields { grid-template-columns: repeat(var(--filter-count), minmax(0, 1fr)); }
+}
+
 /* Organização de notebooks: referência 1265px, isolada entre lg e 2xl. */
 @media (width >= 64rem) and (width < 96rem) {
   .fretes-goals-form {

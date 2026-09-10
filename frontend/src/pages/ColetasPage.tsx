@@ -526,14 +526,17 @@ export default function ColetasPage() {
 
   return (
     <div className="w-full">
-      <FilterBar onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
-        <DateRangePicker
-          dataInicio={dataInicio}
-          dataFim={dataFim}
-          onDataInicioChange={setDataInicio}
-          onDataFimChange={setDataFim}
-          onRangeChange={setDataRange}
-        />
+      <FilterBar
+        period={(
+          <DateRangePicker
+            dataInicio={dataInicio}
+            dataFim={dataFim}
+            onDataInicioChange={setDataInicio}
+            onDataFimChange={setDataFim}
+            onRangeChange={setDataRange}
+          />
+        )}
+        onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
         <FiliaisParceirosFilter
           opcoes={filiais.data ?? EMPTY_ARRAY}
           filiaisSelecionadas={filtros.filiais ?? EMPTY_ARRAY}
@@ -590,11 +593,9 @@ export default function ColetasPage() {
         <ChartWrapper titulo="Coletas em aberto" chartKey="coletasAging" option={agingOption} isLoading={graficos.isLoading} isEmpty={false} altura={350} className="2xl:col-span-3" />
       </div>
 
-      <div className="mb-3 flex justify-end">
-        <ExportButton nomeArquivo="coletas" onExport={() => exportarColetasCsv(filtro, filtrosTabela.apiFilters)} />
-      </div>
       <AnalyticalDataTable
         titulo="Coletas Analíticas"
+        acoesCabecalho={<ExportButton nomeArquivo="coletas" onExport={() => exportarColetasCsv(filtro, filtrosTabela.apiFilters)} />}
         dados={tabelaConteudo}
         colunas={colunas}
         chaveLinha="id"

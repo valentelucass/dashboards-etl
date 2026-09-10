@@ -475,8 +475,11 @@ export default function EtlSaudePage() {
 
   return (
     <div className="w-full">
-      <FilterBar onClear={limparFiltros} dataInicio={dataInicio} dataFim={dataFim}>
-        <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+      <FilterBar
+        period={(
+          <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+        )}
+        onClear={limparFiltros} dataInicio={dataInicio} dataFim={dataFim}>
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores do ETL.')} tipo={getTipoErro(overview.error)} />}

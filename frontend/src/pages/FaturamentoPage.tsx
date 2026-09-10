@@ -1134,6 +1134,15 @@ export default function FaturamentoPage() {
   return (
     <div className="w-full">
       <FilterBar
+        period={(
+          <DateRangePicker
+            dataInicio={dataInicio}
+            dataFim={dataFim}
+            onDataInicioChange={setDataInicio}
+            onDataFimChange={setDataFim}
+            onRangeChange={setDataRange}
+          />
+        )}
         onClear={limparFiltros}
         activeFilters={activeFilters}
         dataInicio={dataInicio}
@@ -1158,13 +1167,6 @@ export default function FaturamentoPage() {
           </button>
         ) : null}
       >
-        <DateRangePicker
-          dataInicio={dataInicio}
-          dataFim={dataFim}
-          onDataInicioChange={setDataInicio}
-          onDataFimChange={setDataFim}
-          onRangeChange={setDataRange}
-        />
         <FiliaisParceirosFilter
           opcoes={filiais.data ?? []}
           filiaisSelecionadas={filtros.filiais ?? []}
@@ -1358,11 +1360,9 @@ export default function FaturamentoPage() {
       </div>
 
       <div ref={faturamentoTableRef}>
-        <div className="mb-3 flex justify-end">
-          <ExportButton nomeArquivo="faturamento" onExport={() => exportarFaturamentoCsv(filtro, filtrosTabela.apiFilters)} />
-        </div>
         <AnalyticalDataTable
           titulo="Faturamento Analítico"
+          acoesCabecalho={<ExportButton nomeArquivo="faturamento" onExport={() => exportarFaturamentoCsv(filtro, filtrosTabela.apiFilters)} />}
           dados={tabelaConteudo}
           colunas={colunas}
           chaveLinha="id"

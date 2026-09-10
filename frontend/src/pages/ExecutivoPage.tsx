@@ -337,8 +337,11 @@ export default function ExecutivoPage() {
 
   return (
     <div className="w-full">
-      <FilterBar onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
-        <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+      <FilterBar
+        period={(
+          <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+        )}
+        onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
         <FiliaisParceirosFilter
           opcoes={filiais.data ?? []}
           filiaisSelecionadas={filtros.filiais ?? []}

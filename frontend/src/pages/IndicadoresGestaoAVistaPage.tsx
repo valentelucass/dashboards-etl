@@ -488,11 +488,17 @@ export default function IndicadoresGestaoAVistaPage() {
   }
 
   function alterarFilialPainelMetas(branchId: string) {
+    atualizarGlobais.reset();
+    atualizarFilial.reset();
+    removerOverride.reset();
     setGoalsPanelBranchId(branchId);
     setGoalsHistoryPage(1);
   }
 
   function alterarCompetenciaPainelMetas(competencia: string) {
+    atualizarGlobais.reset();
+    atualizarFilial.reset();
+    removerOverride.reset();
     setGoalsPanelCompetencia(normalizarCompetenciaApi(competencia));
     setGoalsHistoryPage(1);
   }
@@ -1054,6 +1060,9 @@ export default function IndicadoresGestaoAVistaPage() {
   return (
     <div className="w-full" data-indicadores-gestao-top>
       <FilterBar
+        period={(
+          <DateRangePicker dataInicio={dataInicioIndicadores} dataFim={dataFimIndicadores} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
+        )}
         onClear={limparFiltros}
         activeFilters={activeFilters}
         dataInicio={dataInicioIndicadores}
@@ -1070,7 +1079,6 @@ export default function IndicadoresGestaoAVistaPage() {
           </button>
         ) : null}
       >
-        <DateRangePicker dataInicio={dataInicioIndicadores} dataFim={dataFimIndicadores} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
         <FiliaisParceirosFilter
           filialLabel="Filial base"
           parceiroLabel="Parceiro logístico base"
@@ -1106,7 +1114,7 @@ export default function IndicadoresGestaoAVistaPage() {
         />
       ) : null}
 
-      <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-5">
+      <div className="gestao-scoreboard" role="group" aria-label="Resultados dos indicadores de gestão">
         <IndicadoresGestaoSummaryCard
           definition={KpiDictionary.gestaoAVista.resumo.performanceFretes}
           title="Nova Tela de Fretes = Performance"

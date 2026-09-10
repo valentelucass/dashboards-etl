@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { Children, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
 
@@ -12,6 +12,7 @@ export interface ActiveFilter {
 }
 
 interface FilterBarProps {
+  period?: ReactNode;
   children?: ReactNode;
   onClear?: () => void;
   activeFilters?: ActiveFilter[];
@@ -68,6 +69,7 @@ function FilterBadge({ label, count, valueLabel, onRemove }: ActiveFilter) {
 
 // ── main component ────────────────────────────────────────────────────
 export default function FilterBar({
+  period,
   children,
   onClear,
   activeFilters,
@@ -114,7 +116,8 @@ export default function FilterBar({
   const hasActive = filtersWithValues.length > 0;
   const totalActive = filtersWithValues.reduce((s, f) => s + f.count, 0);
   const showDate = dataInicio && dataFim;
-  const hasFilterControls = Boolean(children);
+  const dimensionCount = Children.toArray(children).length;
+  const hasFilterControls = Boolean(period || dimensionCount);
 
   // ── barra recolhida (sempre visível) ──────────────────────────────
   const collapsedBar = (
@@ -227,39 +230,53 @@ export default function FilterBar({
             initial={{ y: -8, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.15 }}
-            className="mt-2 rounded-[20px] border p-5 shadow-sm"
+            className="mt-2 rounded-[20px] border p-4 shadow-sm"
             style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
           >
-            {/* Filtros agrupados — data + dimensionais lado a lado */}
+            {/* Período e dimensões quebram como grupos completos, sem campos isolados. */}
             <div
               role="group"
               aria-label="Opções de filtro"
-              className="flex flex-wrap items-end gap-4"
+              className="dashboard-filter-options flex flex-wrap items-end gap-3"
             >
-              {children}
+              {period && <div className="dashboard-filter-period">{period}</div>}
+              {(dimensionCount > 0 || onClear) && (
+                <div
+                  className="dashboard-filter-dimensions"
+                  style={{
+                    flexGrow: dimensionCount,
+                    flexBasis: dimensionCount * 150 + Math.max(0, dimensionCount - 1) * 12 + (onClear ? 120 : 0),
+                  }}
+                >
+                  {dimensionCount > 0 && (
+                    <div className="dashboard-filter-fields" style={{ '--filter-count': dimensionCount } as CSSProperties}>
+                      {children}
+                    </div>
+                  )}
+                  {onClear && (
+                    <button
+                      type="button"
+                      onClick={onClear}
+                      className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+                      style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
+                    >
+                      <X size={13} aria-hidden="true" />
+                      Limpar filtros
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Rodapé: badges de ativos + botão limpar */}
-            {(hasActive || onClear) && (
+            {/* A faixa adicional só ocupa espaço quando há seleções a mostrar. */}
+            {hasActive && (
               <div
-                className="mt-4 flex flex-wrap items-center gap-2 border-t pt-4"
+                className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3"
                 style={{ borderColor: 'var(--color-border)' }}
               >
                 {filtersWithValues.map((f) => (
                   <FilterBadge key={f.label} {...f} />
                 ))}
-                {onClear && (
-                  <button
-                    type="button"
-                    onClick={onClear}
-                    className="ml-auto cursor-pointer rounded-lg border px-3 py-1 text-xs font-medium
-                               transition-all duration-150 hover:opacity-70 active:scale-[0.97]
-                               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
-                  >
-                    Limpar filtros
-                  </button>
-                )}
               </div>
             )}
           </motion.div>
@@ -336,6 +353,7 @@ export default function FilterBar({
                     aria-label="Opções de filtro"
                     className="flex flex-col gap-4"
                   >
+                    {period}
                     {children}
                   </div>
 

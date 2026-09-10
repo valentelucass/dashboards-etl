@@ -1001,14 +1001,17 @@ export default function PerformancePage() {
 
   return (
     <div className="w-full">
-      <FilterBar onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
-        <DateRangePicker
-          dataInicio={dataInicio}
-          dataFim={dataFim}
-          onDataInicioChange={setDataInicio}
-          onDataFimChange={setDataFim}
-          onRangeChange={setDataRange}
-        />
+      <FilterBar
+        period={(
+          <DateRangePicker
+            dataInicio={dataInicio}
+            dataFim={dataFim}
+            onDataInicioChange={setDataInicio}
+            onDataFimChange={setDataFim}
+            onRangeChange={setDataRange}
+          />
+        )}
+        onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
         <FiliaisParceirosFilter
           opcoes={filiais.data ?? []}
           filiaisSelecionadas={filtros.filiais ?? []}
@@ -1183,8 +1186,7 @@ export default function PerformancePage() {
         </div>
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center justify-end gap-3">
-        {drillTabelaResumo ? (
+      {drillTabelaResumo ? (
           <span
             className="mr-auto inline-flex min-w-0 max-w-full items-center rounded-md border px-3 py-1.5 text-xs font-medium"
             style={{
@@ -1195,10 +1197,9 @@ export default function PerformancePage() {
           >
             <span className="truncate">{drillTabelaResumo}</span>
           </span>
-        ) : null}
-        <ExportButton nomeArquivo="performance" onExport={() => exportarPerformanceCsv(filtro, filtrosTabelaComDrill)} />
-      </div>
+      ) : null}
       <PerformanceTabela
+        acoesCabecalho={<ExportButton nomeArquivo="performance" onExport={() => exportarPerformanceCsv(filtro, filtrosTabelaComDrill)} />}
         pagina={tabela.data}
         filtros={filtrosTabela.filters}
         hiddenActiveCount={filtrosTabela.hiddenActiveCount}
