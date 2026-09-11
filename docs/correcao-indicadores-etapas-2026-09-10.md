@@ -1,5 +1,19 @@
 # Integrações separadas por etapa — 10/09/2026
 
+## Dados conferidos após reinício — 21:27 BRT
+
+A rota do Satélite agora responde HTTP 200/versão 1, e a captura enviada pelo usuário coincide com os agregados: XML/dados 0, comprovantes 267, pendentes 4, bloqueados 1.614 e sem confirmação/classificação 1.520 no filtro 01–10/09. Não houve perda de dados: ao consultar 11/08–10/09, Vedacit retorna 75 XMLs e 2.133 comprovantes confirmados. A série XML possui confirmações até 20/08; a tela antiga duplicava o total geral entre etapas.
+
+O worker está com o novo pacote, mas o cadastro efetivo PM2 ainda não contém `WORK_SFTP_CLIENTES_XML_ENABLED=true`; a fonte XML também permanece desabilitada por `SFTP_RODOGARCIA_ENABLED=false` no `.env`. As flags do ecosystem preparado não foram aplicadas pelo início por nome. O ciclo das 21:23–21:24 não executou XML e terminou com zero envios. A visualização foi validada; a ativação/recuperação operacional é a pendência distinta registrada no Satélite, em `docs/verificacao-xml-apos-reinicio-2026-09-10.md`.
+
+## Pacote operacional atualizado — 21:19 BRT
+
+Os dois processos Satélite efetivamente reiniciaram às 20:51, mas continuaram usando o JAR antigo de 09/09. A consulta direta ainda retornou 404 às 21:10. A pedido explícito do usuário, o Satélite foi recompilado com Java 17 e empacotado novamente; os 42 testes direcionados passaram. O candidato mais recente é `satelite-tms-api/target/unit-tests/coverage-20260910-211250-997/satelite-0.0.1-SNAPSHOT.jar`, SHA-256 `6C5976AE48C418D4D8C5E2408E035DA49218B9F604C9D31A3B67234338DCADF6`. Seus 1.249 arquivos de aplicação coincidem com a compilação testada; a rota está no controller e H2 não foi empacotado.
+
+A substituição autorizada no caminho usado pelo PM2 (`satelite-tms-api/target/satelite-0.0.1-SNAPSHOT.jar`) foi **concluída às 21:19 BRT**, com SHA-256 `6C5976AE48C418D4D8C5E2408E035DA49218B9F604C9D31A3B67234338DCADF6` conferido no destino. A primeira tentativa foi bloqueada pelo Windows por arquivo em uso. Após o usuário parar `Satelite-API-19090` e `WORK-SFTP-CLIENTES`, ambos foram conferidos como `stopped`, PID 0, e a troca atômica foi concluída. Backup íntegro do pacote antigo `EBC700C7...` e evidência `instalacao.json` estão em `satelite-tms-api/target/publicacao-pm2-20260910-2114/`. Nenhum processo foi iniciado/reiniciado pela IA. **Falta o reinício humano e o aceite HTTP 200/versão 1**, incluindo a sessão autenticada do Dashboard. O ambiente já registrado no PM2 não foi alterado; a ativação XML e o primeiro lote continuam no procedimento específico Vedacit.
+
+As referências abaixo ao pacote operacional antigo descrevem o diagnóstico anterior à troca; não representam mais o arquivo instalado.
+
 ## Diagnóstico após o reinício humano — 20:13 BRT
 
 O HTTP 404 foi reproduzido diretamente no Satélite, em `127.0.0.1:19090`, para o novo endpoint e o período 01–10/09. O PM2 carrega `satelite-tms-api/target/satelite-0.0.1-SNAPSHOT.jar`, modificado em 09/09 às 23:30, SHA-256 `EBC700C71B264A50EC933FDD290B3761DBB915152420AE5D6626746ADB7F60E2`. A classe de controller desse pacote **não contém** `indicadores-etapas`. Reiniciar esse mesmo arquivo não incorpora as alterações do código.

@@ -40,15 +40,27 @@ it('exibe zero XML e 269 comprovantes sem repetir a base', async () => {
   expect(resumo.textContent).toContain('"data":[0,3]');
   expect(screen.queryByText('546')).toBeNull();
   expect(screen.queryByText('99,3%')).toBeNull();
-  expect(screen.getByRole('status').textContent).toContain('52 etapas sem confirmação datada');
+  expect(screen.queryByRole('status')).toBeNull();
 });
 
 it('separa pendentes, bloqueados e sem evidência em cada etapa', async () => {
-  vi.mocked(clienteAxios.get).mockResolvedValue({ data: resposta });
-  abrir(['VEDACIT']);
-  const rows = within(await screen.findByRole('table')).getAllByRole('row');
-  expect(rows[1].textContent).toContain('VEDACIT · XML/Dados077552');
-  expect(rows[2].textContent).toContain('VEDACIT · Comprovante16950');
+  vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, etapas: [
+    { sistemaDestino: 'PPG', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
+      pendentesAtuais: 0, bloqueadosAtuais: 0, semConfirmacaoDatada: 39 },
+    { sistemaDestino: 'SELIA', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
+      pendentesAtuais: 2, bloqueadosAtuais: 0, semConfirmacaoDatada: 0 },
+    ...resposta.etapas,
+  ] } });
+  abrir();
+  const rows = within(await screen.findByRole('table', { name: 'Pendências de VEDACIT' })).getAllByRole('row');
+  expect(rows[1].textContent).toContain('XML/Dados077552');
+  expect(rows[2].textContent).toContain('Comprovante16950');
+  expect(screen.getAllByRole('table').map(table => within(table).getByText(/^Pendências de /).textContent))
+    .toEqual(['Pendências de VEDACIT', 'Pendências de SELIA', 'Pendências de PPG']);
+  expect(within(screen.getByRole('table', { name: 'Pendências de SELIA' })).getByRole('row', { name: /AddEvents/ }).textContent)
+    .toContain('AddEvents200');
+  expect(within(screen.getByRole('table', { name: 'Pendências de PPG' })).getByRole('row', { name: /XML\/\s*Dados/ }).textContent)
+    .toContain('XML/Dados0039');
   expect(screen.getByText(/Todas as datas, respeitando/)).toBeTruthy();
 });
 

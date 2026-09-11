@@ -831,9 +831,9 @@ export const KpiDictionary = {
     },
     saldoPorEtapa: {
       titulo: 'Pendências atuais por etapa',
-      descricao: 'Separa XML/dados e comprovantes por destino, mostrando pendências, bloqueios e casos sem confirmação datada/classificação.',
-      calculo: 'Contagens SQL por destino e etapa, com classes exclusivas. Sucesso sem data própria e status ausente/desconhecido entram em Sem confirmação datada.',
-      observacao: 'Saldo atual de todas as datas; não é posição histórica ao final do período selecionado. Sucesso datado tem precedência sobre cópias pendentes do mesmo documento. Logs arquivados ficam fora. As falhas no período podem também estar no saldo atual.',
+      descricao: 'Agrupa XML/dados e comprovantes por integração, com pendentes em amarelo, bloqueados em vermelho e registros a conferir em azul.',
+      calculo: 'Contagens SQL por destino e etapa, com classes exclusivas. A conferir reúne os registros sem confirmação datada ou sem classificação, incluindo sucesso sem data própria e status ausente/desconhecido.',
+      observacao: 'Saldo atual de todas as datas; não é posição histórica ao final do período selecionado. Integrações com bloqueios aparecem primeiro, seguidas das que têm pendências, registros a conferir e saldo zerado. Uma nota pode aparecer nas duas etapas. Sucesso datado tem precedência sobre cópias pendentes do mesmo documento; logs arquivados ficam fora. As falhas no período podem também estar no saldo atual.',
     },
     origemComprovantesCiclo: {
       titulo: 'Origem dos comprovantes',
