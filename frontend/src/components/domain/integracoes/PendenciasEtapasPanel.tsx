@@ -4,6 +4,8 @@ import type { IndicadorEtapa } from '../../../api/endpoints/integracoesEtapas';
 import { formatarNumero } from '../../../utils/formatadores';
 import { rotuloEtapa } from '../../../utils/integracoesEtapas';
 import TooltipKpi from '../../shared/TooltipKpi';
+import TableHeaderTooltip from '../../shared/TableHeaderTooltip';
+import { COLUNAS_PENDENCIAS_INTEGRACOES } from '../../../constants/kpiDictionary';
 
 const SITUACOES = {
   bloqueado: { label: 'Com bloqueios', classe: 'bg-[var(--color-negative-badge-bg)] text-[var(--color-negative-text)]' },
@@ -94,11 +96,12 @@ export default function PendenciasEtapasPanel({ etapas, estado }: {
                   <colgroup><col className="w-[34%]" /><col className="w-[22%]" /><col className="w-[22%]" /><col className="w-[22%]" /></colgroup>
                   <thead className="text-[10px] text-[var(--color-text-muted)]">
                     <tr className="border-b border-[var(--color-border)]">
-                      <th scope="col" className="px-3 py-2 text-left font-medium">Etapa</th>
-                      <th scope="col" className="px-1 py-2 text-center font-medium">Pendentes</th>
-                      <th scope="col" className="px-1 py-2 text-center font-medium">Bloqueados</th>
-                      <th scope="col" className="px-1 py-2 text-center font-medium"
-                        title="Sem confirmação datada ou sem classificação">A conferir</th>
+                      {Object.entries(COLUNAS_PENDENCIAS_INTEGRACOES).map(([chave, coluna]) => (
+                        <th key={chave} scope="col"
+                          className={`py-1 font-medium ${chave === 'etapa' ? 'px-3 text-left' : 'px-1 text-center'}`}>
+                          <TableHeaderTooltip label={coluna.label} content={coluna.descricao} trigger="label" />
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>

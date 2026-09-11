@@ -5,9 +5,10 @@ import { Popover, PopoverAnchor, PopoverContent } from '../ui/popover';
 interface TableHeaderTooltipProps {
   label: string;
   content: string;
+  trigger?: 'icon' | 'label';
 }
 
-export default function TableHeaderTooltip({ label, content }: TableHeaderTooltipProps) {
+export default function TableHeaderTooltip({ label, content, trigger = 'icon' }: TableHeaderTooltipProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
@@ -37,7 +38,9 @@ export default function TableHeaderTooltip({ label, content }: TableHeaderToolti
           aria-label={`Detalhes da coluna ${label}`}
           aria-describedby={open ? tooltipId : undefined}
           aria-expanded={open}
-          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-[var(--color-card)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]"
+          className={`inline-flex h-6 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-[var(--color-card)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)] ${
+            trigger === 'label' ? 'max-w-full cursor-help px-0.5 underline decoration-dotted underline-offset-4' : 'w-6'
+          }`}
           style={{ color: 'var(--color-text-muted)' }}
           onBlur={handleBlur}
           onClick={(event) => {
@@ -56,7 +59,7 @@ export default function TableHeaderTooltip({ label, content }: TableHeaderToolti
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <Info size={13} aria-hidden="true" />
+          {trigger === 'label' ? label : <Info size={13} aria-hidden="true" />}
         </button>
       </PopoverAnchor>
       <PopoverContent

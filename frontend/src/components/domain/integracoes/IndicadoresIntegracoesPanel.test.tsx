@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { EChartsOption } from 'echarts';
 import IndicadoresIntegracoesPanel from './IndicadoresIntegracoesPanel';
@@ -71,6 +71,35 @@ it('erro de contrato não é exibido como zero ou como sucesso antigo', async ()
   expect(screen.getAllByText('—')).toHaveLength(4);
   expect(screen.queryByRole('table')).toBeNull();
   expect(screen.queryByText('273')).toBeNull();
+});
+
+it('explica as quatro colunas por mouse, teclado e toque sem alterar os números', async () => {
+  vi.mocked(clienteAxios.get).mockResolvedValue({ data: resposta });
+  abrir();
+  const tabela = within(await screen.findByRole('table', { name: 'Pendências de VEDACIT' }));
+  const explicacoes = [
+    ['Etapa', 'A mesma nota pode aparecer nas duas etapas'],
+    ['Pendentes', 'aguardam processamento ou tratamento de erro'],
+    ['Bloqueados', 'Precisam de correção ou conferência'],
+    ['A conferir', 'não significa que o documento deixou de ser enviado'],
+  ];
+  for (const [coluna, explicacao] of explicacoes) {
+    const botao = tabela.getByRole('button', { name: `Detalhes da coluna ${coluna}` });
+    fireEvent.mouseEnter(botao);
+    expect((await screen.findByRole('tooltip')).textContent).toContain(explicacao);
+    fireEvent.mouseLeave(botao);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  }
+  const conferir = tabela.getByRole('button', { name: 'Detalhes da coluna A conferir' });
+  fireEvent.focus(conferir);
+  expect((await screen.findByRole('tooltip')).textContent).toContain('sem data de confirmação');
+  fireEvent.keyDown(conferir, { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  fireEvent.click(conferir);
+  expect((await screen.findByRole('tooltip')).textContent).toContain('não entram nos envios confirmados');
+  fireEvent.click(conferir);
+  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  expect(tabela.getAllByRole('row')[1].textContent).toContain('XML/Dados077552');
 });
 
 it('alterar o destino não mantém o gráfico da seleção anterior enquanto carrega', async () => {

@@ -84,7 +84,6 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
         {periodos.map(item => (
           <TooltipKpi key={item.key} kpiName={item.kpi}>
             <KpiCard label={item.label} valor={valor(item.valor)} metaLabel="Referência" metaValue={item.base}
-              tone={disponivel ? item.tone : 'neutral'}
               valorStyle={disponivel ? { color: getGoalToneStyle(item.tone).text } : undefined} />
           </TooltipKpi>
         ))}

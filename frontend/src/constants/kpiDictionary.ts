@@ -9,6 +9,25 @@ export interface KpiDefinitionGroup {
   readonly [key: string]: KpiDefinition | KpiDefinitionGroup;
 }
 
+export const COLUNAS_PENDENCIAS_INTEGRACOES = {
+  etapa: {
+    label: 'Etapa',
+    descricao: 'Parte da integração acompanhada: XML/dados ou eventos (AddEvents/Ocorrência), e comprovante de entrega. A mesma nota pode aparecer nas duas etapas.',
+  },
+  pendentes: {
+    label: 'Pendentes',
+    descricao: 'Etapas que ainda aguardam processamento ou tratamento de erro. Exclui os bloqueados e os registros a conferir. É o saldo atual, considerando todas as datas.',
+  },
+  bloqueados: {
+    label: 'Bloqueados',
+    descricao: 'Etapas impedidas de avançar por falta de informações ou arquivos, recusa do cliente ou dúvida sobre o recebimento do comprovante. Precisam de correção ou conferência antes de liberar uma nova tentativa.',
+  },
+  conferir: {
+    label: 'A conferir',
+    descricao: 'Registros sem data de confirmação ou sem classificação suficiente. Por isso, não entram nos envios confirmados. Esse número, sozinho, não significa que o documento deixou de ser enviado.',
+  },
+} as const;
+
 const percentualSemBase =
   'Quando o denominador é zero, o indicador retorna 0%.';
 
