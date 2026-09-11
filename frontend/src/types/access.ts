@@ -77,6 +77,7 @@ export interface UsuarioOnlineResumo {
   nome: string;
   email: string;
   ultimaAtividade: string | null;
+  ultimaRotaAcessada?: string | null;
 }
 
 export interface UsuarioPayload {
@@ -111,6 +112,7 @@ export interface UsuariosSessaoResumo {
   usuariosInativos: number;
   usuariosOnline: number;
   usuariosOnlineDetalhes: UsuarioOnlineResumo[];
+  usuariosRecentes?: UsuarioOnlineResumo[];
 }
 
 export interface PermissaoOverride {

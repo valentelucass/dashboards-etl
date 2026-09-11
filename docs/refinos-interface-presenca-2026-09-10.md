@@ -1,5 +1,10 @@
 # Refinos de interface e presença — 10/09/2026
 
+As descrições de presença por 15 minutos e abertura por hover/foco abaixo são
+históricas. Foram substituídas por pulso de página em foco de até 75 segundos e
+detalhes somente no clique, conforme
+[correção de presença](presenca-online-agora-2026-09-10.md).
+
 Os seis itens solicitados estão implementados:
 
 1. `LayoutPainel`: versão/data fica junto ao copyright, à esquerda, com divisor vertical. Créditos e suporte permanecem à direita no desktop; os grupos quebram no mobile.

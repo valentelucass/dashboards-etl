@@ -6,6 +6,7 @@ public record UsuarioOnlineResumoDTO(
         String id,
         String nome,
         String email,
-        OffsetDateTime ultimaAtividade
+        OffsetDateTime ultimaAtividade,
+        String ultimaRotaAcessada
 ) {
 }

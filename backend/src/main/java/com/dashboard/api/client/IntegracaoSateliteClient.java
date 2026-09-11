@@ -125,6 +125,14 @@ public class IntegracaoSateliteClient {
     }
 
     public ResponseEntity<String> buscarResumoTabelas(String dataInicial, String dataFinal, List<String> destinos) {
+        return buscarResumoPorRota(ROTA_RESUMO_TABELAS, dataInicial, dataFinal, destinos);
+    }
+
+    public ResponseEntity<String> buscarIndicadoresEtapas(String dataInicial, String dataFinal, List<String> destinos) {
+        return buscarResumoPorRota(ROTA_INTEGRACOES_CLIENTES + "/indicadores-etapas", dataInicial, dataFinal, destinos);
+    }
+
+    private ResponseEntity<String> buscarResumoPorRota(String rota, String dataInicial, String dataFinal, List<String> destinos) {
         MultiValueMap<String, String> parametrosSatelite = new LinkedMultiValueMap<>();
         adicionarParametroOpcional(parametrosSatelite, "dataInicial", dataInicial);
         adicionarParametroOpcional(parametrosSatelite, "dataFinal", dataFinal);
@@ -133,7 +141,7 @@ public class IntegracaoSateliteClient {
         }
 
         URI uri = UriComponentsBuilder
-                .fromUriString(sateliteBaseUrl + ROTA_RESUMO_TABELAS)
+                .fromUriString(sateliteBaseUrl + rota)
                 .queryParams(parametrosSatelite)
                 .build()
                 .encode()

@@ -21,6 +21,17 @@ class IntegracoesServiceTest {
     @Mock private IntegracaoSateliteClient client;
 
     @Test
+    void falhaNosIndicadoresSeparadosNaoUsaResumoLegado() {
+        when(client.buscarIndicadoresEtapas(anyString(), anyString(), any())).thenThrow(new ResourceAccessException("offline"));
+        assertThatThrownBy(() -> new IntegracoesService(client).consultarIndicadoresEtapas(
+                "2026-09-01", "2026-09-10", List.of("VEDACIT")))
+                .isInstanceOf(ResponseStatusException.class)
+                .extracting(error -> ((ResponseStatusException) error).getStatusCode())
+                .isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        org.mockito.Mockito.verify(client, org.mockito.Mockito.never()).buscarResumoTabelas(any(), any(), any());
+    }
+
+    @Test
     void delegaAgregadosDiretamenteAoSateliteSemConsultaESL() {
         IntegracoesService service = new IntegracoesService(client);
         var params = new LinkedMultiValueMap<String, String>();

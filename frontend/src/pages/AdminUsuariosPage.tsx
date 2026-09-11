@@ -52,6 +52,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 
 interface UsuarioRow extends UsuarioAdmin {
+  presencaAtual: boolean | null;
+  propriaConta: boolean;
   acoes: string;
   detalhes: string;
   papelResumo: string;
@@ -272,14 +274,14 @@ function formatTempoUltimoPulso(valor: string | null): string {
   if (!timestamp) return 'Sem pulso registrado';
 
   const segundos = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (segundos < 10) return 'Ativo agora';
-  if (segundos < 60) return `Ativo há ${segundos}s`;
+  if (segundos < 10) return 'Sinal recebido agora';
+  if (segundos < 60) return `Último sinal há ${segundos}s`;
 
   const minutos = Math.floor(segundos / 60);
-  if (minutos < 60) return `Ativo há ${minutos} min`;
+  if (minutos < 60) return `Último sinal há ${minutos} min`;
 
   const horas = Math.floor(minutos / 60);
-  return `Ativo há ${horas}h ${minutos % 60}min`;
+  return `Último sinal há ${horas}h ${minutos % 60}min`;
 }
 
 function PresenceUserRow({ usuario, online, podeVerTrilha }: {
@@ -345,13 +347,15 @@ function OnlineUsersCard({
   usuarios,
   recentes,
   isLoading,
+  isError,
   totalOnline,
   podeVerTrilha,
 }: {
   podeVerTrilha: boolean;
   usuarios: Array<Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>>;
-  recentes: UsuarioAdmin[];
+  recentes: Array<Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>>;
   isLoading: boolean;
+  isError: boolean;
   totalOnline: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -364,10 +368,10 @@ function OnlineUsersCard({
         </div>
         <div className="min-w-0">
           <TooltipKpi kpiName="administracao.usuariosOnline"><div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold leading-none" style={{ color: '#10b981' }}>{totalOnline}</span>
+            <span className="text-2xl font-bold leading-none" style={{ color: '#10b981' }}>{isError || isLoading ? '—' : totalOnline}</span>
             <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>Online agora</span>
           </div></TooltipKpi>
-          <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}><span className="h-2 w-2 rounded-full bg-[#10b981] motion-safe:animate-pulse" aria-hidden="true" />Outras pessoas em atividade</div>
+          <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>{isError ? 'Presença indisponível' : isLoading ? 'Consultando presença...' : 'Outras pessoas com a página em foco'}</div>
         </div>
         <PopoverTrigger asChild>
           <button type="button" aria-label="Ver detalhes de presença" title="Ver detalhes de presença" className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
@@ -375,25 +379,26 @@ function OnlineUsersCard({
           </button>
         </PopoverTrigger>
       </div>
-      <PopoverContent side="bottom" align="end" sideOffset={10} collisionPadding={12} className="overflow-hidden p-0 shadow-xl" style={{ width: 'min(48rem, calc(100vw - 1.5rem))', color: 'var(--color-text)', backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+      <PopoverContent side="bottom" align="end" sideOffset={10} collisionPadding={12} className="overflow-y-auto p-0 shadow-xl" style={{ width: 'min(48rem, calc(100vw - 1.5rem))', maxHeight: 'min(640px, var(--radix-popover-content-available-height))', color: 'var(--color-text)', backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
         <div className="border-b px-5 py-4" style={{ borderColor: 'var(--color-border)' }}>
           <div className="flex items-center gap-2"><Users size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" /><h2 className="text-base font-bold">Presença de usuários</h2></div>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>Acompanhe a atividade das outras pessoas no portal.</p>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>Página em foco com sinal nos últimos 75 segundos. Atualização a cada 15 segundos.</p>
         </div>
+        {isError ? <p role="alert" className="p-5 text-sm">Não foi possível atualizar a presença. Aguardando nova consulta.</p> :
         <div className="grid gap-0 md:grid-cols-2">
           <section className="p-4 md:border-r" style={{ borderColor: 'var(--color-border)' }}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><span className="rounded-full px-2 py-0.5 text-xs font-bold" style={ONLINE_BADGE_STYLE}>{totalOnline}</span></div>
+            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><span className="rounded-full px-2 py-0.5 text-xs font-bold" style={ONLINE_BADGE_STYLE}>{isLoading ? '—' : totalOnline}</span></div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
               {isLoading ? <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Carregando presença...</p> : usuarios.length > 0 ? usuarios.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online podeVerTrilha={podeVerTrilha} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhum usuário online agora.</p>}
             </div>
           </section>
           <section className="border-t p-4 md:border-l-0 md:border-t-0" style={{ borderColor: 'var(--color-border)' }}>
-            <div className="mb-3"><h3 className="text-sm font-bold">Vistos recentemente</h3><p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>Últimas pessoas que ficaram offline.</p></div>
+            <div className="mb-3"><h3 className="text-sm font-bold">Vistos recentemente</h3><p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>Últimos registros sem presença confirmada agora.</p></div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
               {recentes.length > 0 ? recentes.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online={false} podeVerTrilha={podeVerTrilha} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
             </div>
           </section>
-        </div>
+        </div>}
       </PopoverContent>
     </Popover>
   );
@@ -486,7 +491,9 @@ function renderStatusBadge(ativo: boolean) {
   );
 }
 
-function renderOnlineBadge(isOnline: boolean) {
+function renderOnlineBadge(isOnline: boolean | null, propriaConta: boolean) {
+  if (propriaConta) return <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Sua conta</span>;
+  if (isOnline === null) return <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Presença indisponível</span>;
   return (
     <span
       className="inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
@@ -609,7 +616,7 @@ function renderUltimaTelaCell(row: UsuarioRow) {
   return (
     <div className="min-w-[10rem] max-w-[12rem] space-y-1 whitespace-normal">
       <div className="flex flex-wrap items-center gap-2">
-        {renderOnlineBadge(row.isOnline)}
+        {renderOnlineBadge(row.presencaAtual, row.propriaConta)}
         <span className="truncate text-sm font-medium" style={{ color: 'var(--color-text)' }} title={row.ultimaRotaAcessada ?? undefined}>
           {row.ultimaRotaAcessada ?? 'Sem registro'}
         </span>
@@ -784,6 +791,11 @@ export default function AdminUsuariosPage() {
     () =>
       (usuarios.data ?? []).map((usuario) => ({
         ...usuario,
+        propriaConta: usuario.id === operador?.id,
+        presencaAtual: resumoSessoes.isError || !resumoSessoes.data ? null :
+          resumoSessoes.data.usuariosOnlineDetalhes.some(item => item.id === usuario.id),
+        ultimaAtividade: resumoSessoes.data?.usuariosOnlineDetalhes.find(item => item.id === usuario.id)?.ultimaAtividade ?? usuario.ultimaAtividade,
+        ultimaRotaAcessada: resumoSessoes.data?.usuariosOnlineDetalhes.find(item => item.id === usuario.id)?.ultimaRotaAcessada ?? usuario.ultimaRotaAcessada,
         detalhes: usuario.id,
         papelResumo: papeis.data?.find((papel) => papel.nome === usuario.papel)?.descricao ?? formatRoleName(usuario.papel),
         permissoesResumo: permissionSummary(usuario.permissoesEfetivas, catalogo.data ?? []),
@@ -797,7 +809,7 @@ export default function AdminUsuariosPage() {
         senhaResumo: `${formatPasswordStatus(usuario.statusSenha)} • ${usuario.algoritmoSenha}${usuario.passwordResetRequestedAt ? ' • Redefinição solicitada' : ''}`,
         acoes: usuario.id,
       })),
-    [catalogo.data, papeis.data, usuarios.data],
+    [catalogo.data, papeis.data, usuarios.data, resumoSessoes.data, resumoSessoes.isError, operador?.id],
   );
 
   const resumoUsuarios = resumoSessoes.data ?? {
@@ -815,18 +827,17 @@ export default function AdminUsuariosPage() {
   );
   const usuariosVistosRecentemente = useMemo(
     () =>
-      (usuarios.data ?? [])
-        .filter((usuario) => usuario.ativo && usuario.id !== operador?.id && !usuario.isOnline && Boolean(usuario.ultimaAtividade))
-        .sort((a, b) => timestampAtividade(b.ultimaAtividade) - timestampAtividade(a.ultimaAtividade))
-        .slice(0, 12),
-    [usuarios.data, operador?.id],
+      (resumoSessoes.data?.usuariosRecentes ?? [])
+        .filter((usuario) => usuario.id !== operador?.id && !usuariosOnlineAgora.some(online => online.id === usuario.id))
+        .map(usuario => ({ ...usuario, ultimaRotaAcessada: usuario.ultimaRotaAcessada ?? null })),
+    [resumoSessoes.data?.usuariosRecentes, operador?.id, usuariosOnlineAgora],
   );
   const usuariosOnlineComDetalhes = useMemo(
     () => usuariosOnlineAgora.map((usuario) => ({
       ...usuario,
-      ultimaRotaAcessada: usuarios.data?.find((item) => item.id === usuario.id)?.ultimaRotaAcessada ?? null,
+      ultimaRotaAcessada: usuario.ultimaRotaAcessada ?? null,
     })),
-    [usuarios.data, usuariosOnlineAgora],
+    [usuariosOnlineAgora],
   );
   const usuariosOrdenadosPorNome = useMemo(
     () => [...(usuarios.data ?? [])].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
@@ -1161,7 +1172,7 @@ export default function AdminUsuariosPage() {
       ordenavel: false,
       formato: (_, row) => (
         <div className="flex items-center gap-2">
-          {renderOnlineBadge(row.isOnline)}
+          {renderOnlineBadge(row.presencaAtual, row.propriaConta)}
           {renderUsuarioDetailsPopover(row)}
           {renderActionMenu(row)}
         </div>
@@ -1300,6 +1311,7 @@ export default function AdminUsuariosPage() {
             <OnlineUsersCard
               usuarios={usuariosOnlineComDetalhes}
               recentes={usuariosVistosRecentemente}
+              isError={resumoSessoes.isError}
               isLoading={resumoSessoes.isLoading}
               totalOnline={resumoUsuarios.usuariosOnline}
               podeVerTrilha={resumoUsuarios.podeVerTrilha ?? false}

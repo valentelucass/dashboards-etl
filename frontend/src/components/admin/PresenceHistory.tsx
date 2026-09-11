@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import clienteAxios from '../../api/clienteAxios';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -29,13 +30,15 @@ export default function PresenceHistory({ usuarioId, nome, children }: { usuario
   const [open, setOpen] = useState(false);
   const [pagina, setPagina] = useState(0);
   const [dia, setDia] = useState(diaBrasilia);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const abrir = () => { clearTimeout(closeTimer.current); setOpen(true); };
-  const fechar = () => { closeTimer.current = setTimeout(() => setOpen(false), 180); };
+  const alterarAbertura = (aberto: boolean) => {
+    if (aberto) { setDia(diaBrasilia()); setPagina(0); }
+    setOpen(aberto);
+  };
   useEffect(() => {
+    if (!open) return;
     const timer = setInterval(() => { const hoje = diaBrasilia(); if (hoje !== dia) { setDia(hoje); setPagina(0); } }, 1000);
-    return () => { clearInterval(timer); clearTimeout(closeTimer.current); };
-  }, [dia]);
+    return () => clearInterval(timer);
+  }, [dia, open]);
   const query = useQuery({
     queryKey: ['admin', 'acesso', 'navegacao-dia', usuarioId, dia, pagina],
     queryFn: async ({ signal }) => (await clienteAxios.get<NavegacaoDia>(`/api/admin/acesso/usuarios/${usuarioId}/navegacao-dia`, { params: { pagina }, signal })).data,
@@ -48,19 +51,20 @@ export default function PresenceHistory({ usuarioId, nome, children }: { usuario
   const dados = query.data?.dia === dia ? query.data : undefined;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={alterarAbertura}>
       <PopoverTrigger asChild>
-        <button type="button" onMouseEnter={abrir} onMouseLeave={fechar} onFocus={abrir}
-          onClick={event => { event.preventDefault(); abrir(); }}
+        <button type="button"
           className="block w-full rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
           aria-label={`Ver acessos de hoje de ${nome}`}>
           {children}
         </button>
       </PopoverTrigger>
-      <PopoverContent side="left" align="start" sideOffset={8} collisionPadding={12}
-        onMouseEnter={abrir} onMouseLeave={fechar} onOpenAutoFocus={event => event.preventDefault()}
+      <PopoverContent side="bottom" align="start" sideOffset={8} collisionPadding={12}
         style={{ width: 'min(360px, calc(100vw - 24px))', maxHeight: 'var(--radix-popover-content-available-height)', overflowY: 'auto', zIndex: 60 }}>
-        <h4 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>Acessos de hoje</h4>
+        <div className="flex items-center justify-between gap-3">
+          <h4 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>Acessos de hoje</h4>
+          <button type="button" aria-label="Fechar acessos de hoje" onClick={() => setOpen(false)} className="rounded p-1 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><X size={16} /></button>
+        </div>
         <p className="mt-1 break-words text-xs" style={{ color: 'var(--color-text-subtle)' }}>{nome}</p>
         <p className="mt-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>Horários de Brasília. Tempo estimado com a página em foco; atualizado a cada 30 segundos. Somente o dia atual.</p>
         {query.isPending && <p className="py-4 text-xs" role="status">Carregando acessos...</p>}

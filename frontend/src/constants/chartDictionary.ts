@@ -336,6 +336,27 @@ export const chartDictionary = {
     agrupamento: "GROUP BY COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Conciliado]))), N''), N'Sem conciliação')",
   },
 
+  integracoesDadosPorDia: {
+    ...integracoesBase,
+    descricao: 'Resultados datados de XML, dados ou eventos, separados dos comprovantes.',
+    calculoTecnico: 'GET indicadores-etapas; etapa DADOS, agrupamento SQL pela data_processamento_dados após deduplicação de registros ativos.',
+    calculoNegocio: 'Conta sucessos com data própria e resultados ERRO_DESTINO/ERRO_VALIDACAO datados em cada dia. Dias sem resultados aparecem com zero.',
+    agrupamento: 'Dia da etapa, respeitando destinos selecionados. XML Vedacit por CT-e; demais destinos por ocorrência. Não é histórico de todas as tentativas.',
+  },
+  integracoesComprovantesPorDia: {
+    ...integracoesBase,
+    descricao: 'Resultados datados de comprovantes/POD, separados de XML e eventos.',
+    calculoTecnico: 'GET indicadores-etapas; etapa COMPROVANTE, agrupamento SQL pela data_processamento_canhoto após deduplicação de registros ativos.',
+    calculoNegocio: 'Conta sucessos e falhas datados da própria etapa. Sucesso antigo de XML não transforma falha de comprovante em sucesso. Dias vazios aparecem com zero.',
+    agrupamento: 'Dia do comprovante, respeitando destinos selecionados. Vedacit por NF-e/CT-e efetivo; demais destinos por ocorrência.',
+  },
+  integracoesResultadosEtapas: {
+    ...integracoesBase,
+    descricao: 'Compara resultados confirmados e com falha de cada etapa no período selecionado.',
+    calculoTecnico: 'Contagens exatas sucessosPeriodo/falhasPeriodo do GET indicadores-etapas. Sem reconstrução por percentual ou duplicação de totalRegistros.',
+    calculoNegocio: 'Cada barra usa exclusivamente os resultados datados de sua etapa. Sucesso datado tem precedência sobre cópias pendentes, preservando a primeira data disponível. Bloqueados e casos sem confirmação aparecem no saldo atual separado.',
+    agrupamento: 'Destino e etapa; mesmos grupos usados nos gráficos diários. Status NAO_APLICAVEL/IGNORADO não conta como envio. Histórico sobrescrito ou arquivado não é reconstituído.',
+  },
   integracoesSazonalidade: {
     ...integracoesBase,
     descricao: 'Acompanha a evolução diária de sucessos e erros das integrações de XML e comprovantes com os destinos atendidos.',

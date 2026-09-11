@@ -136,12 +136,17 @@ export async function buscarResumoSessoesUsuariosAdmin(): Promise<UsuariosSessao
     'buscarResumoSessoesUsuariosAdmin',
     'usuario-online',
     data.usuariosOnlineDetalhes ?? [],
-    ['nome', 'email'],
+    ['nome', 'email', 'ultimaRotaAcessada'],
+  );
+  const usuariosRecentes = normalizeAdminAccessItems<UsuarioOnlineResumo>(
+    'buscarResumoSessoesUsuariosAdmin', 'usuario-recente', data.usuariosRecentes ?? [],
+    ['nome', 'email', 'ultimaRotaAcessada'],
   );
 
   return {
     ...data,
     usuariosOnlineDetalhes,
+    usuariosRecentes,
   };
 }
 

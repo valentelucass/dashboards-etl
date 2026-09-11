@@ -57,7 +57,11 @@ export function useResumoSessoesUsuariosAdmin() {
   return useQuery({
     queryKey: ADMIN_USUARIOS_RESUMO_QUERY_KEY,
     queryFn: buscarResumoSessoesUsuariosAdmin,
-    refetchInterval: 30000,
+    refetchInterval: 15000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    retry: false,
   });
 }
 

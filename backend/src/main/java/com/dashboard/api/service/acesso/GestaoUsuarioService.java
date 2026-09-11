@@ -141,12 +141,10 @@ public class GestaoUsuarioService {
         }
 
         List<UsuarioOnlineResumoDTO> usuariosOnline = usuarioRepository.findUsuariosOnlineResumo(operador).stream()
-                .map(usuario -> new UsuarioOnlineResumoDTO(
-                        String.valueOf(usuario.getId()),
-                        usuario.getNome(),
-                        usuario.getEmail(),
-                        parseUltimaAtividade(usuario.getUltimaAtividade())
-                ))
+                .map(this::resumoPresenca)
+                .toList();
+        List<UsuarioOnlineResumoDTO> usuariosRecentes = usuarioRepository.findUsuariosRecentesResumo(operador).stream()
+                .map(this::resumoPresenca)
                 .toList();
 
         return new UsuarioSessaoResumoDTO(
@@ -155,8 +153,14 @@ public class GestaoUsuarioService {
                 valorLong(resumo.getUsuariosInativos()),
                 valorLong(resumo.getUsuariosOnline()),
                 usuariosOnline,
-                operadorEhUsuarioSupremo()
+                operadorEhUsuarioSupremo(),
+                usuariosRecentes
         );
+    }
+
+    private UsuarioOnlineResumoDTO resumoPresenca(UsuarioRepository.UsuarioOnlineResumoProjection usuario) {
+        return new UsuarioOnlineResumoDTO(String.valueOf(usuario.getId()), usuario.getNome(), usuario.getEmail(),
+                parseUltimaAtividade(usuario.getUltimaAtividade()), formatarRotaNegocio(usuario.getUltimaRotaAcessada()));
     }
 
     @Transactional

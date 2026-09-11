@@ -465,7 +465,18 @@ class GestaoUsuarioServiceTest {
             public String getUltimaAtividade() {
                 return "2026-07-08T19:20:10.1234567-03:00";
             }
+
+            @Override
+            public String getUltimaRotaAcessada() { return "/coletas"; }
         }));
+
+        var recente = org.mockito.Mockito.mock(UsuarioRepository.UsuarioOnlineResumoProjection.class);
+        when(recente.getId()).thenReturn(98L);
+        when(recente.getNome()).thenReturn("Pessoa recente");
+        when(recente.getEmail()).thenReturn("recente@empresa.com");
+        when(recente.getUltimaAtividade()).thenReturn("2026-07-08T19:18:10Z");
+        when(recente.getUltimaRotaAcessada()).thenReturn("/cotacoes");
+        when(usuarioRepository.findUsuariosRecentesResumo(org.mockito.ArgumentMatchers.anyString())).thenReturn(List.of(recente));
 
         var resultado = service.resumoSessoesUsuarios();
 
@@ -477,6 +488,10 @@ class GestaoUsuarioServiceTest {
         assertEquals("99", resultado.usuariosOnlineDetalhes().get(0).id());
         assertEquals("Admin Online", resultado.usuariosOnlineDetalhes().get(0).nome());
         assertEquals("admin@empresa.com", resultado.usuariosOnlineDetalhes().get(0).email());
+        assertEquals("Coletas", resultado.usuariosOnlineDetalhes().get(0).ultimaRotaAcessada());
+        assertEquals(1, resultado.usuariosRecentes().size());
+        assertEquals("98", resultado.usuariosRecentes().get(0).id());
+        assertEquals("Cotações", resultado.usuariosRecentes().get(0).ultimaRotaAcessada());
         assertEquals(
                 OffsetDateTime.parse("2026-07-08T19:20:10.1234567-03:00"),
                 resultado.usuariosOnlineDetalhes().get(0).ultimaAtividade()

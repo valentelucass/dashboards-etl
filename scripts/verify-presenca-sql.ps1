@@ -1,9 +1,10 @@
 # Valida a implementação em tabelas temporárias, com dados artificiais, somente em DEV.
+param([string]$OutputDirectory = (Join-Path '.tmp/presenca-sql' (Get-Date -Format 'yyyyMMdd-HHmmss')))
 $ErrorActionPreference = 'Stop'
 $presenceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 Push-Location -LiteralPath $presenceRoot
 try {
-    & node scripts/verify-presenca-sql.mjs
+    & node scripts/verify-presenca-sql.mjs $OutputDirectory
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao gerar cenários SQL.' }
     $presenceEnv = @{}
     foreach ($line in Get-Content -LiteralPath '.env.development.local' -Encoding UTF8) {
@@ -16,9 +17,9 @@ try {
     $previousSqlPassword = $env:SQLCMDPASSWORD
     try {
         $env:SQLCMDPASSWORD = $presenceEnv['DB_PASSWORD']
-        & sqlcmd -S $presenceServer -d DASHBOARDS_DEV -U $presenceEnv['DB_USER'] -C -b -l 5 -t 20 -i '.tmp/six-refinements/presenca.sql' -o '.tmp/six-refinements/presenca-sql.log'
+        & sqlcmd -S $presenceServer -d DASHBOARDS_DEV -U $presenceEnv['DB_USER'] -C -b -l 5 -t 20 -i (Join-Path $OutputDirectory 'presenca.sql') -o (Join-Path $OutputDirectory 'presenca-sql.log')
         if ($LASTEXITCODE -ne 0) { throw 'Verificação SQL falhou; consulte o log local.' }
     } finally { $env:SQLCMDPASSWORD = $previousSqlPassword }
-    Get-Content -LiteralPath '.tmp/six-refinements/presenca-sql.log' -Encoding UTF8
+    Get-Content -LiteralPath (Join-Path $OutputDirectory 'presenca-sql.log') -Encoding UTF8
 
 } finally { Pop-Location }

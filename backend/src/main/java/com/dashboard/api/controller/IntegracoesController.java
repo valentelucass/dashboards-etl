@@ -90,6 +90,14 @@ public class IntegracoesController {
                 .body(respostaSatelite.getBody());
     }
 
+    @GetMapping(value = "/indicadores-etapas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> consultarIndicadoresEtapas(
+            @RequestParam String dataInicial, @RequestParam String dataFinal,
+            @RequestParam(required = false) List<String> destino
+    ) {
+        return encaminharJson(integracoesService.consultarIndicadoresEtapas(dataInicial, dataFinal, destino));
+    }
+
     @GetMapping(value = "/resumo-tabelas", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> consultarResumoTabelas(
             @RequestParam(required = false) String dataInicial,

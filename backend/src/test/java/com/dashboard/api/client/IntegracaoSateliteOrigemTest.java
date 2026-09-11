@@ -16,6 +16,26 @@ import com.dashboard.api.service.IntegracoesService;
 
 class IntegracaoSateliteOrigemTest {
     @Test
+    void preservaContagensSeparadasEPeriodoPorTodasAsCamadas() {
+        var server = new AtomicReference<MockRestServiceServer>();
+        var builder = new RestTemplateBuilder().additionalCustomizers(
+                template -> server.set(MockRestServiceServer.bindTo(template).build()));
+        var client = new IntegracaoSateliteClient(builder, "http://satelite.test");
+        String body = "{\"versao\":1,\"etapas\":[{\"etapa\":\"DADOS\",\"sucessosPeriodo\":0},{\"etapa\":\"COMPROVANTE\",\"sucessosPeriodo\":269}]}";
+        server.get().expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo(
+                    org.hamcrest.Matchers.startsWith("http://satelite.test/api/auditoria/integracoes-clientes/indicadores-etapas?")))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(queryParam("destino", "VEDACIT", "SELIA"))
+                .andExpect(queryParam("dataInicial", "2026-09-01"))
+                .andExpect(queryParam("dataFinal", "2026-09-10"))
+                .andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        var response = new IntegracoesController(new IntegracoesService(client))
+                .consultarIndicadoresEtapas("2026-09-01", "2026-09-10", java.util.List.of("VEDACIT", "SELIA"));
+        assertThat(response.getBody()).isEqualTo(body);
+        server.get().verify();
+    }
+
+    @Test
     void preservaOrigemPaginaEContagemPeloControllerServiceECliente() {
         var server = new AtomicReference<MockRestServiceServer>();
         var builder = new RestTemplateBuilder().additionalCustomizers(

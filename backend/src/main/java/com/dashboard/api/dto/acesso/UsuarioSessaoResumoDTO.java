@@ -8,14 +8,16 @@ public record UsuarioSessaoResumoDTO(
         long usuariosInativos,
         long usuariosOnline,
         List<UsuarioOnlineResumoDTO> usuariosOnlineDetalhes,
-        boolean podeVerTrilha
+        boolean podeVerTrilha,
+        List<UsuarioOnlineResumoDTO> usuariosRecentes
 ) {
     public UsuarioSessaoResumoDTO(long total, long ativos, long inativos, long online, List<UsuarioOnlineResumoDTO> detalhes) {
-        this(total, ativos, inativos, online, detalhes, false);
+        this(total, ativos, inativos, online, detalhes, false, List.of());
     }
 
     public UsuarioSessaoResumoDTO {
         usuariosOnlineDetalhes = usuariosOnlineDetalhes == null ? List.of() : List.copyOf(usuariosOnlineDetalhes);
+        usuariosRecentes = usuariosRecentes == null ? List.of() : List.copyOf(usuariosRecentes);
     }
 
     public UsuarioSessaoResumoDTO(

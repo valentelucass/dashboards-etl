@@ -49,9 +49,9 @@ export const KpiDictionary = {
   administracao: {
     usuariosOnline: {
       titulo: 'Online agora',
-      descricao: 'Outras pessoas com conta ativa e atividade registrada nos últimos 15 minutos.',
-      calculo: 'Contagem de usuários ativos com último acesso nos últimos 15 minutos, excluindo a conta de quem consulta.',
-      observacao: 'A lista de presença usa a mesma regra. A trilha de hoje, disponível ao usuário supremo, estima o tempo da página em foco por pulsos de 30 segundos; intervalos acima de 75 segundos não são somados.',
+      descricao: 'Outras pessoas com conta ativa e página em foco confirmada recentemente.',
+      calculo: 'Contagem de contas ativas com página em foco e último sinal entre agora e 75 segundos atrás, excluindo quem consulta. Requisições automáticas não comprovam presença.',
+      observacao: 'A página envia um sinal a cada 30 segundos; a lista é consultada a cada 15 segundos. Ao perder foco, a presença é encerrada no próximo sinal recebido. Sem comunicação, expira após 75 segundos e aparece na próxima atualização. Não mede o tempo conectado nem a atenção da pessoa. Reiniciar o servidor não apaga o histórico.',
     },
   },
   coletas: {
@@ -805,6 +805,36 @@ export const KpiDictionary = {
   },
 
   integracoes: {
+    dadosConfirmados: {
+      titulo: 'XML / dados confirmados',
+      descricao: 'Etapas de XML, dados ou eventos com sucesso e data própria dentro do período selecionado.',
+      calculo: 'Contagem exata por destino e documento/ocorrência, com status de dados SUCESSO, ENVIADO ou PROCESSADO e data da etapa no período.',
+      observacao: 'Considera registros ativos. Vedacit agrupa XML por CT-e e preserva a primeira confirmação datada disponível; outros destinos usam ocorrência. Não usa a data do comprovante nem o status geral. O estado atual não reconstitui todas as tentativas ou comprova recebimento remoto de históricos divergentes.',
+    },
+    comprovantesConfirmados: {
+      titulo: 'Comprovantes confirmados',
+      descricao: 'Etapas de comprovante/POD com sucesso e data própria dentro do período selecionado.',
+      calculo: 'Contagem exata com status de comprovante SUCESSO, ENVIADO ou PROCESSADO e data da etapa no período; nunca copia o total de XML.',
+      observacao: 'Considera registros ativos. Vedacit agrupa pelo par NF-e/CT-e efetivo; outros destinos usam ocorrência. Usa a primeira confirmação datada disponível por grupo. Não conta NAO_APLICAVEL como envio nem reconstitui tentativas sobrescritas.',
+    },
+    etapasPendentes: {
+      titulo: 'Etapas pendentes',
+      descricao: 'Saldo atual de etapas ainda pendentes, incluindo erros a tratar, separado dos bloqueados.',
+      calculo: 'Soma de pendentesAtuais por destino/etapa, sem recorte de datas e respeitando a integração selecionada.',
+      observacao: 'O mesmo documento pode ter pendência de XML e comprovante. Exclui sucessos, ignorados/não aplicáveis, bloqueados e registros sem confirmação/classificação, que aparecem separadamente.',
+    },
+    etapasBloqueadas: {
+      titulo: 'Etapas bloqueadas',
+      descricao: 'Saldo atual impedido de avançar por origem, destino ou resposta de comprovante ambígua.',
+      calculo: 'Dados PENDENTE_ORIGEM ou comprovante classificado BLOQUEADO_ORIGEM, BLOQUEADO_DESTINO ou TIMEOUT_AMBIGUO, após deduplicação.',
+      observacao: 'Respeita o destino selecionado e inclui todas as datas. Não soma esses bloqueios como envios ou sucesso.',
+    },
+    saldoPorEtapa: {
+      titulo: 'Pendências atuais por etapa',
+      descricao: 'Separa XML/dados e comprovantes por destino, mostrando pendências, bloqueios e casos sem confirmação datada/classificação.',
+      calculo: 'Contagens SQL por destino e etapa, com classes exclusivas. Sucesso sem data própria e status ausente/desconhecido entram em Sem confirmação datada.',
+      observacao: 'Saldo atual de todas as datas; não é posição histórica ao final do período selecionado. Sucesso datado tem precedência sobre cópias pendentes do mesmo documento. Logs arquivados ficam fora. As falhas no período podem também estar no saldo atual.',
+    },
     origemComprovantesCiclo: {
       titulo: 'Origem dos comprovantes',
       descricao: 'De onde o processo busca os comprovantes de entrega: arquivos no SFTP ou consulta à API ESL.',
