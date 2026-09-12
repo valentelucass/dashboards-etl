@@ -37,6 +37,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 @Service
 public class GestaoUsuarioService {
@@ -131,19 +132,21 @@ public class GestaoUsuarioService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = Isolation.SERIALIZABLE)
     public UsuarioSessaoResumoDTO resumoSessoesUsuarios() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String operador = authentication == null ? "" : authentication.getName();
-        UsuarioRepository.UsuarioSessaoResumoProjection resumo = usuarioRepository.calcularResumoSessoes(operador);
+        // Mesmo relógio e leitura estável para contagem, online e recentes.
+        String agora = usuarioRepository.agoraPresenca();
+        UsuarioRepository.UsuarioSessaoResumoProjection resumo = usuarioRepository.calcularResumoSessoes(operador, agora);
         if (resumo == null) {
             return new UsuarioSessaoResumoDTO(0, 0, 0, 0);
         }
 
-        List<UsuarioOnlineResumoDTO> usuariosOnline = usuarioRepository.findUsuariosOnlineResumo(operador).stream()
+        List<UsuarioOnlineResumoDTO> usuariosOnline = usuarioRepository.findUsuariosOnlineResumo(operador, agora).stream()
                 .map(this::resumoPresenca)
                 .toList();
-        List<UsuarioOnlineResumoDTO> usuariosRecentes = usuarioRepository.findUsuariosRecentesResumo(operador).stream()
+        List<UsuarioOnlineResumoDTO> usuariosRecentes = usuarioRepository.findUsuariosRecentesResumo(operador, agora).stream()
                 .map(this::resumoPresenca)
                 .toList();
 

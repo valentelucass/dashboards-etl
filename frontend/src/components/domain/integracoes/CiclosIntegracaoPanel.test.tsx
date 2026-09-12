@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CiclosIntegracaoPanel from './CiclosIntegracaoPanel';
 import type { WorkSftpClienteStatus } from '../../../api/endpoints/integracoesServico';
@@ -29,9 +29,48 @@ function abrir() {
 beforeEach(() => {
   responderCom(ciclo);
 });
-afterEach(() => { cleanup(); queryClient?.clear(); vi.resetAllMocks(); });
+afterEach(() => { cleanup(); queryClient?.clear(); vi.useRealTimers(); vi.resetAllMocks(); });
+
+it('atualiza o ciclo aberto em um minuto sem inventar finalizacao ou proximo ciclo', async () => {
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+  const aberto = { ...ciclo, statusCiclo: 'EM_EXECUCAO', fimUltimoCiclo: null,
+    proximaExecucaoEstimada: null, atualizadoEm: new Date().toISOString(), enviados: 5 };
+  responderCom(aberto);
+  abrir();
+  expect((await screen.findAllByText('5 comprovantes enviados')).length).toBe(2);
+  expect(screen.getByText('Em andamento · parcial')).toBeTruthy();
+  expect(screen.queryByText('Próximo ciclo estimado')).toBeNull();
+  const antes = vi.mocked(clienteAxios.get).mock.calls.length;
+  responderCom({ ...aberto, enviados: 8 });
+  await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+  expect((await screen.findAllByText('8 comprovantes enviados')).length).toBe(2);
+  expect(vi.mocked(clienteAxios.get).mock.calls.length).toBeGreaterThanOrEqual(antes + 2);
+});
+
+it('avisa quando o ultimo progresso ficou antigo sem declarar termino', async () => {
+  responderCom({ ...ciclo, statusCiclo: 'EM_EXECUCAO', fimUltimoCiclo: null,
+    proximaExecucaoEstimada: null, atualizadoEm: '2020-01-01T10:00:00' });
+  abrir();
+  expect((await screen.findAllByText('Sem atualização recente')).length).toBe(2);
+  expect(screen.queryByText('Próximo ciclo estimado')).toBeNull();
+});
 
 describe('CiclosIntegracaoPanel', () => {
+  it('separa XML de comprovantes e exibe motivo sem transformar ausencia de medicao em zero', async () => {
+    responderCom({ ...ciclo, statusCiclo: 'FALHA', xmlHabilitado: true, xmlAvaliados: 20,
+      xmlEnviados: 0, xmlErros: 6, xmlJaProcessados: 14, xmlPendentes: 0,
+      motivoFalha: 'XML_RETIDO: Falhas XML auditadas' });
+    abrir();
+    expect((await screen.findAllByText('XML: 0 confirmados · 6 falhas')).length).toBe(2);
+    expect(screen.getAllByText('Há falhas na etapa XML. Consulte a auditoria dos documentos.').length).toBe(2);
+    expect(screen.getAllByText('0 comprovantes enviados').length).toBe(2);
+  });
+
+  it('identifica ciclos antigos sem medicao XML', async () => {
+    abrir();
+    expect((await screen.findAllByText('XML: sem medição neste ciclo.')).length).toBe(2);
+    expect(screen.queryByText('XML: 0 confirmados · 0 falhas')).toBeNull();
+  });
   it('explica as unidades e separa arquivos, tratamento do ciclo e pendencias acumuladas', async () => {
     abrir();
     expect((await screen.findAllByText('3.058 arquivos reconhecidos')).length).toBe(2);
@@ -131,4 +170,18 @@ describe('CiclosIntegracaoPanel', () => {
     expect((await screen.findAllByText('3.058 arquivos reconhecidos')).length).toBe(2);
     expect(screen.queryByText('Contagens não disponíveis nesta execução.')).toBeNull();
   });
+});
+
+it('distingue a consulta atual do ciclo antigo e retira a previsão vencida', async () => {
+  responderCom(ciclo); abrir();
+  expect(await screen.findByText(/A fonte ainda não informa o progresso/)).toBeTruthy();
+  expect(screen.getByText(/Consulta realizada em/)).toBeTruthy();
+  expect(screen.getByText(/Estimativa anterior vencida/)).toBeTruthy();
+  expect(screen.queryByText('Próximo ciclo estimado')).toBeNull();
+});
+
+it('não informa ausência de contrato quando a origem devolve progresso medido', async () => {
+  responderCom({ ...ciclo, atualizadoEm: new Date().toISOString() }); abrir();
+  await screen.findByRole('table');
+  expect(screen.queryByText(/A fonte ainda não informa o progresso/)).toBeNull();
 });

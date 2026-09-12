@@ -56,7 +56,7 @@ export function useUsuariosAdmin() {
 export function useResumoSessoesUsuariosAdmin() {
   return useQuery({
     queryKey: ADMIN_USUARIOS_RESUMO_QUERY_KEY,
-    queryFn: buscarResumoSessoesUsuariosAdmin,
+    queryFn: ({ signal }) => buscarResumoSessoesUsuariosAdmin(signal),
     refetchInterval: 15000,
     staleTime: 0,
     refetchOnWindowFocus: true,

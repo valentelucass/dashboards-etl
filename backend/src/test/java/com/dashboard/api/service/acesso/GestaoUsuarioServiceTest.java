@@ -424,7 +424,8 @@ class GestaoUsuarioServiceTest {
 
     @Test
     void resumoSessoesUsuariosIncluiDetalhesDosUsuariosOnline() {
-        when(usuarioRepository.calcularResumoSessoes(org.mockito.ArgumentMatchers.anyString())).thenReturn(new UsuarioRepository.UsuarioSessaoResumoProjection() {
+        when(usuarioRepository.agoraPresenca()).thenReturn("2026-07-08T19:20:30-03:00");
+        when(usuarioRepository.calcularResumoSessoes(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.eq("2026-07-08T19:20:30-03:00"))).thenReturn(new UsuarioRepository.UsuarioSessaoResumoProjection() {
             @Override
             public Long getTotalUsuarios() {
                 return 3L;
@@ -445,7 +446,7 @@ class GestaoUsuarioServiceTest {
                 return 1L;
             }
         });
-        when(usuarioRepository.findUsuariosOnlineResumo(org.mockito.ArgumentMatchers.anyString())).thenReturn(List.of(new UsuarioRepository.UsuarioOnlineResumoProjection() {
+        when(usuarioRepository.findUsuariosOnlineResumo(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.eq("2026-07-08T19:20:30-03:00"))).thenReturn(List.of(new UsuarioRepository.UsuarioOnlineResumoProjection() {
             @Override
             public Long getId() {
                 return 99L;
@@ -476,7 +477,7 @@ class GestaoUsuarioServiceTest {
         when(recente.getEmail()).thenReturn("recente@empresa.com");
         when(recente.getUltimaAtividade()).thenReturn("2026-07-08T19:18:10Z");
         when(recente.getUltimaRotaAcessada()).thenReturn("/cotacoes");
-        when(usuarioRepository.findUsuariosRecentesResumo(org.mockito.ArgumentMatchers.anyString())).thenReturn(List.of(recente));
+        when(usuarioRepository.findUsuariosRecentesResumo(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.eq("2026-07-08T19:20:30-03:00"))).thenReturn(List.of(recente));
 
         var resultado = service.resumoSessoesUsuarios();
 

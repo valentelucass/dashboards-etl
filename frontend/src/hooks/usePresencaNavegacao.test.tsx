@@ -32,14 +32,16 @@ it('encerra o trecho ao perder foco, suspende pulsos ocultos e volta ao recupera
   expect(state.put.mock.calls.at(-1)?.[1].visivel).toBe(true);
 });
 
-it('cancela chamadas da rota ou identidade anterior e deixa de registrar após logout', async () => {
+it('preserva fluxo e ordem entre rotas e cancela somente ao encerrar a identidade', async () => {
   const hook = renderHook(usePresencaNavegacao); await tick();
   const primeiroSignal = state.put.mock.calls[0][2].signal;
   state.pathname = '/coletas'; hook.rerender(); await tick();
-  expect(primeiroSignal.aborted).toBe(true);
+  expect(primeiroSignal.aborted).toBe(false);
+  expect(state.put.mock.calls[1][1].fluxoId).toBe(state.put.mock.calls[0][1].fluxoId);
   expect(state.put.mock.calls.at(-1)?.[1].rota).toBe('/coletas');
   state.id = ''; hook.rerender(); await tick(60000);
   expect(state.put).toHaveBeenCalledTimes(2);
+  expect(primeiroSignal.aborted).toBe(true);
 });
 
 it('não registra uma aba inicialmente oculta e retoma depois de falha de rede', async () => {
@@ -49,4 +51,34 @@ it('não registra uma aba inicialmente oculta e retoma depois de falha de rede',
   vi.mocked(document.hasFocus).mockReturnValue(true);
   act(() => window.dispatchEvent(new Event('focus'))); await tick(); await tick(30000);
   expect(state.put).toHaveBeenCalledTimes(2);
+});
+
+it('pagehide encerra a presença mesmo que o navegador ainda informe foco', async () => {
+  renderHook(usePresencaNavegacao); await tick();
+  act(() => window.dispatchEvent(new Event('pagehide'))); await tick();
+  expect(state.put.mock.calls.at(-1)?.[1].visivel).toBe(false);
+  await tick(60000); expect(state.put).toHaveBeenCalledTimes(2);
+  act(() => window.dispatchEvent(new Event('pageshow'))); await tick();
+  expect(state.put.mock.calls.at(-1)?.[1].visivel).toBe(true);
+});
+
+it('repete uma saída que falhou mesmo enquanto a aba está sem foco', async () => {
+  renderHook(usePresencaNavegacao); await tick();
+  state.put.mockRejectedValueOnce(new Error('offline'));
+  vi.mocked(document.hasFocus).mockReturnValue(false);
+  act(() => window.dispatchEvent(new Event('blur'))); await tick();
+  await tick(30000);
+  expect(state.put.mock.calls.slice(1).map(call => call[1].visivel)).toEqual([false, false]);
+  await tick(30000); expect(state.put).toHaveBeenCalledTimes(3);
+});
+
+it('uma resposta lenta não faz um pulso pendente recuperar foco de uma aba já deixada', async () => {
+  let concluir: (valor: object) => void = () => {};
+  state.put.mockImplementationOnce(() => new Promise(resolve => { concluir = resolve; }));
+  renderHook(usePresencaNavegacao); await tick();
+  await tick(30000);
+  vi.mocked(document.hasFocus).mockReturnValue(false);
+  act(() => window.dispatchEvent(new Event('blur')));
+  await act(async () => concluir({})); await tick();
+  expect(state.put.mock.calls.map(call => call[1].visivel)).toEqual([true, false]);
 });

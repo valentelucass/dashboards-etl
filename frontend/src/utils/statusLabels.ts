@@ -23,6 +23,8 @@ export const STATUS_OPERACIONAL_LABELS: Record<string, string> = {
   completed: 'Concluído',
   complete: 'Concluído',
   concluido: 'Concluído',
+  em_execucao: 'Em andamento',
+  sem_atualizacao: 'Sem atualização recente',
   encerrado: 'Encerrado',
   encerrada: 'Encerrada',
   canceled: 'Cancelado',

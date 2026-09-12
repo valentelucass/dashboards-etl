@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { CircleHelp, Clock3, Eye, EyeOff, KeyRound, MapPin, MoreHorizontal, Pencil, Upload, UserCheck, UserX, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import PresenceHistory from '../components/admin/PresenceHistory';
+import { PresenceHistoryContent } from '../components/admin/PresenceHistory';
 import TooltipKpi from '../components/shared/TooltipKpi';
 import { useAutenticacao } from '../contexts/AutenticacaoContext';
 import FiliaisPermitidasSplitSelect from '../components/admin/FiliaisPermitidasSplitSelect';
@@ -284,7 +284,8 @@ function formatTempoUltimoPulso(valor: string | null): string {
   return `Último sinal há ${horas}h ${minutos % 60}min`;
 }
 
-function PresenceUserRow({ usuario, online, podeVerTrilha }: {
+function PresenceUserRow({ usuario, online, podeVerTrilha, onSelect }: {
+  onSelect: () => void;
   podeVerTrilha: boolean;
   usuario: Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>;
   online: boolean;
@@ -304,7 +305,7 @@ function PresenceUserRow({ usuario, online, podeVerTrilha }: {
       </div>
     </div>
   );
-  return podeVerTrilha ? <PresenceHistory usuarioId={usuario.id} nome={usuario.nome}>{conteudo}</PresenceHistory> : conteudo;
+  return podeVerTrilha ? <button type="button" id={`presenca-pessoa-${usuario.id}`} onClick={onSelect} aria-label={`Ver acessos de hoje de ${usuario.nome}`} className={`block w-full rounded-xl text-left ${FOCUS_RING_CLASS}`}>{conteudo}</button> : conteudo;
 }
 
 function AccessSummaryItem({
@@ -350,6 +351,7 @@ function OnlineUsersCard({
   isError,
   totalOnline,
   podeVerTrilha,
+  atualizadoEm,
 }: {
   podeVerTrilha: boolean;
   usuarios: Array<Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>>;
@@ -357,11 +359,13 @@ function OnlineUsersCard({
   isLoading: boolean;
   isError: boolean;
   totalOnline: number;
+  atualizadoEm: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [selecionado, setSelecionado] = useState<{ id: string; nome: string } | null>(null);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(aberto) => { setOpen(aberto); setSelecionado(null); }}>
       <div className="grid min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
           <Users size={19} strokeWidth={2.2} aria-hidden="true" />
@@ -380,25 +384,31 @@ function OnlineUsersCard({
         </PopoverTrigger>
       </div>
       <PopoverContent side="bottom" align="end" sideOffset={10} collisionPadding={12} className="overflow-y-auto p-0 shadow-xl" style={{ width: 'min(48rem, calc(100vw - 1.5rem))', maxHeight: 'min(640px, var(--radix-popover-content-available-height))', color: 'var(--color-text)', backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+        {selecionado && podeVerTrilha ? <PresenceHistoryContent key={selecionado.id} usuarioId={selecionado.id} nome={selecionado.nome} onClose={() => {
+          const pessoaId = selecionado.id;
+          setSelecionado(null);
+          requestAnimationFrame(() => document.getElementById(`presenca-pessoa-${pessoaId}`)?.focus());
+        }} /> : <>
         <div className="border-b px-5 py-4" style={{ borderColor: 'var(--color-border)' }}>
           <div className="flex items-center gap-2"><Users size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" /><h2 className="text-base font-bold">Presença de usuários</h2></div>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>Página em foco com sinal nos últimos 75 segundos. Atualização a cada 15 segundos.</p>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>Outras pessoas com a página em foco e sinal nos últimos 75 segundos. Sua conta não entra nesta lista.</p>
+          <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>{!isError && atualizadoEm > 0 ? `Consulta realizada às ${new Date(atualizadoEm).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' })}. ` : ''}Atualização a cada 15 segundos.</p>
         </div>
         {isError ? <p role="alert" className="p-5 text-sm">Não foi possível atualizar a presença. Aguardando nova consulta.</p> :
         <div className="grid gap-0 md:grid-cols-2">
           <section className="p-4 md:border-r" style={{ borderColor: 'var(--color-border)' }}>
             <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><span className="rounded-full px-2 py-0.5 text-xs font-bold" style={ONLINE_BADGE_STYLE}>{isLoading ? '—' : totalOnline}</span></div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-              {isLoading ? <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Carregando presença...</p> : usuarios.length > 0 ? usuarios.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online podeVerTrilha={podeVerTrilha} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhum usuário online agora.</p>}
+              {isLoading ? <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Carregando presença...</p> : usuarios.length > 0 ? usuarios.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online podeVerTrilha={podeVerTrilha} onSelect={() => setSelecionado(usuario)} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhuma outra pessoa com presença confirmada agora.</p>}
             </div>
           </section>
           <section className="border-t p-4 md:border-l-0 md:border-t-0" style={{ borderColor: 'var(--color-border)' }}>
-            <div className="mb-3"><h3 className="text-sm font-bold">Vistos recentemente</h3><p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>Últimos registros sem presença confirmada agora.</p></div>
+            <div className="mb-3"><h3 className="text-sm font-bold">Vistos recentemente</h3><p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>Sinais de foco das últimas 24 horas, sem presença confirmada agora.</p></div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-              {recentes.length > 0 ? recentes.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online={false} podeVerTrilha={podeVerTrilha} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
+              {recentes.length > 0 ? recentes.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online={false} podeVerTrilha={podeVerTrilha} onSelect={() => setSelecionado(usuario)} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
             </div>
           </section>
-        </div>}
+        </div>}</>}
       </PopoverContent>
     </Popover>
   );
@@ -1309,6 +1319,7 @@ export default function AdminUsuariosPage() {
               acaoUsuario={{ label: 'Redefinir', onClick: abrirRedefinicaoSenha }}
             />
             <OnlineUsersCard
+              atualizadoEm={resumoSessoes.dataUpdatedAt}
               usuarios={usuariosOnlineComDetalhes}
               recentes={usuariosVistosRecentemente}
               isError={resumoSessoes.isError}

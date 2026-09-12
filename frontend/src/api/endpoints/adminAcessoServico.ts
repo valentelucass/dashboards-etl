@@ -130,8 +130,8 @@ export async function buscarUsuariosAdmin(): Promise<UsuarioAdmin[]> {
   return normalizeAdminAccessItems('buscarUsuariosAdmin', 'usuario', data, ['nome', 'setorNome', 'papel', 'ultimaRotaAcessada']);
 }
 
-export async function buscarResumoSessoesUsuariosAdmin(): Promise<UsuariosSessaoResumo> {
-  const { data } = await clienteAxios.get<UsuariosSessaoResumo>('/api/admin/acesso/usuarios/resumo-sessoes');
+export async function buscarResumoSessoesUsuariosAdmin(signal?: AbortSignal): Promise<UsuariosSessaoResumo> {
+  const { data } = await clienteAxios.get<UsuariosSessaoResumo>('/api/admin/acesso/usuarios/resumo-sessoes', { signal, timeout: 10000 });
   const usuariosOnlineDetalhes = normalizeAdminAccessItems<UsuarioOnlineResumo>(
     'buscarResumoSessoesUsuariosAdmin',
     'usuario-online',

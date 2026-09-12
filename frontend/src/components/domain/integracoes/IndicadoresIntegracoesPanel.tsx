@@ -8,7 +8,7 @@ import KpiCard from '../../shared/KpiCard';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { buildBaseBarOption, buildBaseLineOption, getEchartsThemeTokens } from '../../../utils/echartsBuilders';
 import { formatarNumero } from '../../../utils/formatadores';
-import { OPERATIONAL_QUERY_POLLING_OPTIONS } from '../../../utils/pollingUtils';
+import { INTEGRATION_QUERY_POLLING_OPTIONS } from '../../../utils/pollingUtils';
 import { completarDiasEtapas, rotuloEtapa } from '../../../utils/integracoesEtapas';
 import { getGoalToneStyle } from '../../../utils/indicadoresGestaoVistaUi';
 import PendenciasEtapasPanel from './PendenciasEtapasPanel';
@@ -20,7 +20,7 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
 }) {
   const { isDark } = useEchartsTheme();
   const query = useQuery({
-    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    ...INTEGRATION_QUERY_POLLING_OPTIONS,
     queryKey: ['integracoes', 'indicadores-etapas', inicio, fim, destinos],
     queryFn: ({ signal }) => buscarIndicadoresEtapas(inicio, fim, destinos, signal),
     staleTime: 60_000,

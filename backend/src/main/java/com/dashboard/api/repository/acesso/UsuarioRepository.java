@@ -73,6 +73,9 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
             """, nativeQuery = true)
     List<UsuarioAcessoResumoProjection> findAcessoResumoSemUltimaRota();
 
+    @Query(value = "SELECT CONVERT(varchar(33), SYSDATETIMEOFFSET(), 127)", nativeQuery = true)
+    String agoraPresenca();
+
     @Query(value = """
             SELECT
                    CAST(COUNT_BIG(1) AS bigint) AS [totalUsuarios],
@@ -81,14 +84,14 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
                    CAST(COALESCE(SUM(CASE
                         WHEN u.ativo = 1 AND u.email <> :operador AND u.login <> :operador
                              AND n.rota_atual IS NOT NULL
-                             AND n.ultimo_pulso >= DATEADD(SECOND, -75, SYSDATETIMEOFFSET())
-                             AND n.ultimo_pulso <= SYSDATETIMEOFFSET() THEN 1
+                             AND n.ultimo_pulso >= DATEADD(SECOND, -75, CAST(:agora AS DATETIMEOFFSET))
+                             AND n.ultimo_pulso <= CAST(:agora AS DATETIMEOFFSET) THEN 1
                         ELSE 0
                    END), 0) AS bigint) AS [usuariosOnline]
             FROM acesso.usuarios u
             LEFT JOIN acesso.usuario_navegacao_dia n ON n.usuario_id = u.id
             """, nativeQuery = true)
-    UsuarioSessaoResumoProjection calcularResumoSessoes(@Param("operador") String operador);
+    UsuarioSessaoResumoProjection calcularResumoSessoes(@Param("operador") String operador, @Param("agora") String agora);
 
     @Query(value = """
             SELECT
@@ -101,29 +104,31 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
             JOIN acesso.usuario_navegacao_dia n ON n.usuario_id = u.id
             WHERE u.ativo = 1 AND u.email <> :operador AND u.login <> :operador
               AND n.rota_atual IS NOT NULL
-              AND n.ultimo_pulso >= DATEADD(SECOND, -75, SYSDATETIMEOFFSET())
-              AND n.ultimo_pulso <= SYSDATETIMEOFFSET()
+              AND n.ultimo_pulso >= DATEADD(SECOND, -75, CAST(:agora AS DATETIMEOFFSET))
+              AND n.ultimo_pulso <= CAST(:agora AS DATETIMEOFFSET)
             ORDER BY n.ultimo_pulso DESC, LOWER(u.nome)
             """, nativeQuery = true)
-    List<UsuarioOnlineResumoProjection> findUsuariosOnlineResumo(@Param("operador") String operador);
+    List<UsuarioOnlineResumoProjection> findUsuariosOnlineResumo(@Param("operador") String operador, @Param("agora") String agora);
 
     @Query(value = """
             SELECT TOP (12) u.id AS [id], u.nome AS [nome], u.email AS [email],
-                   CONVERT(varchar(33), COALESCE(n.ultimo_pulso, u.ultima_atividade), 127) AS [ultimaAtividade],
-                   u.ultima_rota_acessada AS [ultimaRotaAcessada]
+                   CONVERT(varchar(33), n.ultimo_pulso, 127) AS [ultimaAtividade],
+                   COALESCE(n.rota_atual, JSON_VALUE(n.visitas,
+                       CASE WHEN n.indice_atual >= 0 THEN CONCAT('$[', n.indice_atual, '].rota') ELSE '$.rota' END)) AS [ultimaRotaAcessada]
             FROM acesso.usuarios u
             LEFT JOIN acesso.usuario_navegacao_dia n ON n.usuario_id = u.id
             WHERE u.ativo = 1 AND u.email <> :operador AND u.login <> :operador
-              AND (n.ultimo_pulso IS NOT NULL OR u.ultima_atividade IS NOT NULL)
+              AND n.ultimo_pulso >= DATEADD(DAY, -1, CAST(:agora AS DATETIMEOFFSET))
+              AND n.ultimo_pulso <= CAST(:agora AS DATETIMEOFFSET)
               AND NOT EXISTS (
                   SELECT 1 FROM acesso.usuario_navegacao_dia p
                   WHERE p.usuario_id = u.id AND p.rota_atual IS NOT NULL
-                    AND p.ultimo_pulso >= DATEADD(SECOND, -75, SYSDATETIMEOFFSET())
-                    AND p.ultimo_pulso <= SYSDATETIMEOFFSET()
+                    AND p.ultimo_pulso >= DATEADD(SECOND, -75, CAST(:agora AS DATETIMEOFFSET))
+                    AND p.ultimo_pulso <= CAST(:agora AS DATETIMEOFFSET)
               )
-            ORDER BY COALESCE(n.ultimo_pulso, u.ultima_atividade) DESC, LOWER(u.nome)
+            ORDER BY n.ultimo_pulso DESC, LOWER(u.nome)
             """, nativeQuery = true)
-    List<UsuarioOnlineResumoProjection> findUsuariosRecentesResumo(@Param("operador") String operador);
+    List<UsuarioOnlineResumoProjection> findUsuariosRecentesResumo(@Param("operador") String operador, @Param("agora") String agora);
 
     @Query(value = """
             SELECT CAST(CASE

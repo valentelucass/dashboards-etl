@@ -42,16 +42,20 @@ public class NavegacaoDiaSqlRepository {
                 IF @continuo = 1
                 BEGIN
                     DECLARE @path NVARCHAR(100) = N'$[' + CAST(@indice AS NVARCHAR(12)) + N']';
-                    DECLARE @segundos INT = CAST(JSON_VALUE(@visitas, @path + N'.segundos') AS INT)
-                        + DATEDIFF(SECOND, @pulso, @agora);
-                    SET @visitas = JSON_MODIFY(@visitas, @path + N'.segundos', @segundos);
+                    -- Preservar frações entre pulsos evita inflar trocas rápidas de foco.
+                    DECLARE @milissegundos BIGINT = COALESCE(
+                        TRY_CAST(JSON_VALUE(@visitas, @path + N'.milissegundos') AS BIGINT),
+                        CAST(JSON_VALUE(@visitas, @path + N'.segundos') AS BIGINT) * 1000)
+                        + DATEDIFF_BIG(MILLISECOND, @pulso, @agora);
+                    SET @visitas = JSON_MODIFY(@visitas, @path + N'.milissegundos', @milissegundos);
+                    SET @visitas = JSON_MODIFY(@visitas, @path + N'.segundos', @milissegundos / 1000);
                     SET @visitas = JSON_MODIFY(@visitas, @path + N'.fim', CONVERT(VARCHAR(33), @agora, 127));
                 END;
                 IF :visivel = 1 AND (@continuo = 0 OR @anterior <> :rota OR @fluxo <> :fluxoId)
                 BEGIN
                     DECLARE @nova NVARCHAR(MAX) = (SELECT :rota AS rota,
                         CONVERT(VARCHAR(33), @agora, 127) AS inicio,
-                        CONVERT(VARCHAR(33), @agora, 127) AS fim, 0 AS segundos
+                        CONVERT(VARCHAR(33), @agora, 127) AS fim, 0 AS segundos, 0 AS milissegundos
                         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER);
                     SET @visitas = JSON_MODIFY(@visitas, 'append $', JSON_QUERY(@nova));
                     SET @indice = @indice + 1;
@@ -81,20 +85,35 @@ public class NavegacaoDiaSqlRepository {
     public NavegacaoDiaDTO buscar(long usuarioId, int pagina) {
         // Uma única leitura captura o documento e seu dia antes da paginação.
         return jdbc.query("""
-                DECLARE @dia DATE = CAST(SYSDATETIMEOFFSET() AT TIME ZONE 'E. South America Standard Time' AS DATE);
+                DECLARE @agora DATETIMEOFFSET(3) = SYSDATETIMEOFFSET();
+                DECLARE @dia DATE = CAST(@agora AT TIME ZONE 'E. South America Standard Time' AS DATE);
                 DECLARE @visitas NVARCHAR(MAX) = N'[]';
-                SELECT @visitas = n.visitas FROM acesso.usuario_navegacao_dia n
+                DECLARE @atualizado DATETIMEOFFSET(3);
+                SELECT @visitas = n.visitas, @atualizado = n.ultimo_pulso FROM acesso.usuario_navegacao_dia n
                   JOIN acesso.usuarios u ON u.id = n.usuario_id AND u.ativo = 1
                  WHERE n.usuario_id = :usuarioId AND n.dia = @dia;
-                SELECT CONVERT(VARCHAR(10), @dia, 23) AS dia, (SELECT COUNT_BIG(*) FROM OPENJSON(@visitas)) AS total,
+                ;WITH por_pagina AS (
+                    SELECT MAX(CAST(j.[key] AS INT)) AS ordem, v.rota,
+                           MIN(v.inicio) AS inicio, MAX(v.fim) AS fim,
+                           SUM(COALESCE(v.milissegundos, v.segundos * 1000)) / 1000 AS segundos,
+                           COUNT_BIG(*) AS trechos
+                      FROM OPENJSON(@visitas) j
+                      CROSS APPLY OPENJSON(j.value) WITH (
+                          rota VARCHAR(100), inicio DATETIMEOFFSET(3), fim DATETIMEOFFSET(3),
+                          segundos BIGINT, milissegundos BIGINT
+                      ) v
+                     GROUP BY v.rota
+                )
+                SELECT CONVERT(VARCHAR(10), @dia, 23) AS dia,
+                       (SELECT COUNT_BIG(*) FROM por_pagina) AS total,
+                       (SELECT COALESCE(SUM(segundos), 0) FROM por_pagina) AS segundosTotal,
+                       CONVERT(VARCHAR(33), @atualizado, 127) AS atualizadoEm,
                        pagina.*
                   FROM (SELECT 1 AS unico) base
                   OUTER APPLY (
-                    SELECT CAST(j.[key] AS INT) AS ordem, v.* FROM OPENJSON(@visitas) j
-                    CROSS APPLY OPENJSON(j.value) WITH (
-                        rota VARCHAR(100), inicio VARCHAR(33), fim VARCHAR(33), segundos BIGINT
-                    ) v
-                    ORDER BY CAST(j.[key] AS INT) DESC
+                    SELECT ordem, rota, CONVERT(VARCHAR(33), inicio, 127) AS inicio,
+                           CONVERT(VARCHAR(33), fim, 127) AS fim, segundos, trechos
+                      FROM por_pagina ORDER BY ordem DESC
                     OFFSET :offset ROWS FETCH NEXT 10 ROWS ONLY
                   ) pagina
                 ORDER BY ordem DESC
@@ -103,13 +122,17 @@ public class NavegacaoDiaSqlRepository {
                     var visitas = new java.util.ArrayList<NavegacaoDiaDTO.Visita>();
                     String dia = null;
                     long total = 0;
+                    long segundosTotal = 0;
+                    String atualizadoEm = null;
                     while (rs.next()) {
                         dia = rs.getString("dia"); total = rs.getLong("total");
+                        segundosTotal = rs.getLong("segundosTotal"); atualizadoEm = rs.getString("atualizadoEm");
                         if (rs.getObject("ordem") != null) visitas.add(new NavegacaoDiaDTO.Visita(
                                 rs.getInt("ordem"), rs.getString("rota"), rs.getString("inicio"),
-                                rs.getString("fim"), rs.getLong("segundos")));
+                                rs.getString("fim"), rs.getLong("segundos"), rs.getLong("trechos")));
                     }
-                    return new NavegacaoDiaDTO(dia, total, visitas);
+                    return new NavegacaoDiaDTO(dia, total, java.util.List.copyOf(visitas),
+                            "PAGINA", segundosTotal, atualizadoEm);
                 });
     }
 }

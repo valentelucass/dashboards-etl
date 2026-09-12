@@ -66,11 +66,17 @@ const regraHorarioCorteCwbNhb =
 
 export const KpiDictionary = {
   administracao: {
+    navegacaoHoje: {
+      titulo: 'Tempo registrado em foco hoje',
+      descricao: 'Tempo acumulado nos períodos confirmados de cada página durante o dia de Brasília.',
+      calculo: 'O servidor soma os intervalos entre sinais consecutivos de foco separados por até 75 segundos. Agrupa todos os trechos da mesma página antes de paginar; frações de segundo são acumuladas e o resultado exibido é truncado para segundos.',
+      observacao: 'Pausas confirmadas e intervalos sem sinal acima de 75 segundos não são somados. Primeiro e último sinal delimitam os registros, não uma sessão contínua. Uma troca de foco não representa um novo acesso à página. É uma estimativa, sem extrapolação após o último sinal; o histórico anterior preserva a precisão com que foi registrado.',
+    },
     usuariosOnline: {
       titulo: 'Online agora',
       descricao: 'Outras pessoas com conta ativa e página em foco confirmada recentemente.',
       calculo: 'Contagem de contas ativas com página em foco e último sinal entre agora e 75 segundos atrás, excluindo quem consulta. Requisições automáticas não comprovam presença.',
-      observacao: 'A página envia um sinal a cada 30 segundos; a lista é consultada a cada 15 segundos. Ao perder foco, a presença é encerrada no próximo sinal recebido. Sem comunicação, expira após 75 segundos e aparece na próxima atualização. Não mede o tempo conectado nem a atenção da pessoa. Reiniciar o servidor não apaga o histórico.',
+      observacao: 'A página envia um sinal a cada 30 segundos; a lista é consultada a cada 15 segundos. Ao perder foco, a presença é encerrada no próximo sinal recebido. Sem comunicação, expira após 75 segundos e aparece na próxima atualização. Contagem e listas usam a mesma leitura e o relógio do servidor. Recentes exibem sinais de foco das últimas 24 horas. Não mede o tempo conectado nem a atenção da pessoa. Reiniciar o servidor não apaga o histórico.',
     },
   },
   coletas: {
@@ -869,20 +875,20 @@ export const KpiDictionary = {
     processamentoComprovantesCiclo: {
       titulo: 'Resultado deste ciclo',
       descricao: 'NF-es avaliadas são as selecionadas para tratamento no ciclo. Enviados são comprovantes cujo tratamento terminou com sucesso. Pendentes são NF-es que continuam sem conclusão, por exemplo por arquivo indisponível ou documento ocupado por outro processo.',
-      calculo: 'Contagens registradas durante o ciclo: selecionados, enviados e pendentes. Itens ignorados ou com erro também podem participar dos selecionados.',
-      observacao: '1 NF-e avaliada, 0 comprovantes enviados e 1 NF-e pendente significa que o ciclo analisou uma nota, mas não concluiu seu comprovante. Um ciclo concluído pode deixar pendências; sucesso pode incluir confirmação de duplicidade pelo destino.',
+      calculo: 'Comprovantes: selecionados, enviados e pendentes; erros e ignorados também participam dos selecionados. XML: avaliações, confirmações, já processados, pendentes e falhas medidos separadamente. Avaliações incluem recuperação e varredura, podendo avaliar novamente o mesmo CT-e.',
+      observacao: 'As etapas alternam por quantidade e tempo, aguardando a chamada em andamento. Durante a execução, os valores são parciais, atualizados por turno; a tela consulta a cada minuto quando aberta. Uma falha XML impede o fechamento como concluído. Ciclos antigos podem não ter medição XML; ausência não é zero. Confirmações podem incluir duplicidade reconhecida pelo destino.',
     },
     filaComprovantesCiclo: {
-      titulo: 'Pendências ao final do ciclo',
+      titulo: 'Pendências apuradas no ciclo',
       descricao: 'Na fila são NF-es distintas ainda elegíveis na fila normal. Bloqueados são registros impedidos de reenvio por problema de origem ou recusa do destino. Sem confirmação são registros com timeout cujo envio pode ter sido recebido pelo cliente.',
-      calculo: 'Saldo da fila normal referente ao inventário do ciclo; bloqueios e timeouts são contagens acumuladas dos registros ativos do cliente, capturadas ao final da execução.',
+      calculo: 'Saldo da fila normal referente ao inventário do ciclo; bloqueios e timeouts são contagens dos registros ativos do cliente. Durante a execução, mostram a última atualização de turno; após o término, o saldo final.',
       observacao: 'Esses números não devem ser somados: usam critérios e unidades diferentes. Não representam novos erros daquele ciclo. Bloqueios e envios sem confirmação ficam fora do reenvio automático; a fila técnica é tratada separadamente.',
     },
     agendaComprovantesCiclo: {
       titulo: 'Horários do processo',
-      descricao: 'Última execução é o término do ciclo auditado. Próximo ciclo é uma estimativa, calculada a partir desse término.',
-      calculo: 'Próximo ciclo estimado = término do último ciclo + 30 minutos.',
-      observacao: 'A estimativa não confirma que o processo está ligado ou agendado neste momento. Uma parada manual pode impedir a execução no horário exibido.',
+      descricao: 'Em andamento, informa início e última atualização dos resultados parciais. Finalizado, informa término e estimativa do próximo ciclo.',
+      calculo: 'Próximo ciclo estimado = término + 30 minutos, somente após finalizar. O histórico filtra ciclos finalizados pelo término e abertos pelo início, mantendo uma linha por execução.',
+      observacao: 'A tela consulta a cada minuto enquanto aberta e distingue a hora da consulta da atualização na origem. Sem o contrato de progresso, informa que exibe apenas o último ciclo registrado. Mais de dez minutos sem atualização parcial geram aviso, sem inventar término ou declarar parada. Uma estimativa vencida não é apresentada como próximo horário; aguarda novo início informado pelo processo.',
     },
     volumeOperacional: {
       titulo: 'Volume Operacional',

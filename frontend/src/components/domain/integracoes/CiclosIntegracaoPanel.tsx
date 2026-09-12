@@ -10,7 +10,7 @@ import { KpiDictionary, type KpiDefinition } from '../../../constants/kpiDiction
 import { useTabelaPaginadaState } from '../../../hooks/useTabelaPaginadaState';
 import { getApiErrorMessage } from '../../../utils/apiError';
 import { formatarDataHora, formatarNumero } from '../../../utils/formatadores';
-import { OPERATIONAL_QUERY_POLLING_OPTIONS } from '../../../utils/pollingUtils';
+import { INTEGRATION_QUERY_POLLING_OPTIONS } from '../../../utils/pollingUtils';
 import TooltipKpi from '../../shared/TooltipKpi';
 import StatusBadge from '../../shared/StatusBadge';
 
@@ -20,8 +20,16 @@ const muted = { color: 'var(--color-text-muted)' };
 const selectStyle = { ...surface, color: 'var(--color-text)' };
 const empty: WorkSftpClienteStatus[] = [];
 
+function instanteCiclo(value: string | null | undefined) {
+  if (!value) return NaN;
+  // O contrato LocalDateTime do Satélite representa Brasília, inclusive para
+  // quem abre o portal em um computador configurado em outro fuso.
+  return Date.parse(/(?:Z|[+-]\d{2}:\d{2})$/i.test(value) ? value : `${value.replace(' ', 'T')}-03:00`);
+}
+
 function dataHora(value: string | null) {
-  return value ? formatarDataHora(value) : 'Não informado';
+  const instante = instanteCiclo(value);
+  return Number.isFinite(instante) ? formatarDataHora(new Date(instante).toISOString()) : 'Não informado';
 }
 
 function quantidade(value: number, singular: string, plural: string) {
@@ -55,7 +63,8 @@ function Origem({ ciclo, rotulo = false }: { ciclo: WorkSftpClienteStatus; rotul
 function Metricas({ ciclo, grupo, titulo = false }: { ciclo: WorkSftpClienteStatus; grupo: 'arquivos' | 'processamento' | 'fila'; titulo?: boolean }) {
   const definition = grupo === 'arquivos' ? definitions.arquivosOrigemCiclo
     : grupo === 'processamento' ? definitions.processamentoComprovantesCiclo : definitions.filaComprovantesCiclo;
-  const label = grupo === 'arquivos' ? 'Arquivos na origem' : grupo === 'processamento' ? 'Neste ciclo' : 'Pendências ao final';
+  const label = grupo === 'arquivos' ? 'Arquivos na origem' : grupo === 'processamento' ? 'Neste ciclo'
+    : ciclo.statusCiclo === 'EM_EXECUCAO' ? 'Pendências na última atualização' : 'Pendências ao final';
   const apurado = ciclo.statusCiclo === 'CONCLUIDO' || [
     ciclo.arquivosValidos, ciclo.arquivosRejeitados, ciclo.selecionados, ciclo.enviados,
     ciclo.pendentes, ciclo.saldo, ciclo.bloqueios, ciclo.timeoutsAmbiguos,
@@ -80,14 +89,50 @@ function Metricas({ ciclo, grupo, titulo = false }: { ciclo: WorkSftpClienteStat
             <p className="text-xs" style={muted}>{quantidade(ciclo.timeoutsAmbiguos, 'envio sem confirmação', 'envios sem confirmação')} (timeout)</p>
           </div>
         </>}
+        {grupo === 'processamento' && <ResultadoXml ciclo={ciclo} />}
       </div>
     </Explicacao>
   );
 }
 
-function Resultado({ ciclo, compacto = false }: { ciclo: WorkSftpClienteStatus; compacto?: boolean }) {
+function Resultado({ ciclo, compacto = false, verificadoEm = 0 }: { ciclo: WorkSftpClienteStatus; compacto?: boolean; verificadoEm?: number }) {
+  const sinalAntigo = ciclo.statusCiclo === 'EM_EXECUCAO' && ciclo.atualizadoEm
+    && verificadoEm - instanteCiclo(ciclo.atualizadoEm) > 10 * 60_000;
   const duration = Number.isFinite(ciclo.duracaoMs) ? `${formatarNumero(Math.round(ciclo.duracaoMs / 1000))} s` : 'Não informada';
-  return <div className={compacto ? 'flex flex-wrap items-center gap-x-2 gap-y-1' : 'space-y-1'}><StatusBadge status={ciclo.statusCiclo} /><p className="text-xs" style={muted}>Conexão {ciclo.conexao} · {duration}</p></div>;
+  return <div className={compacto ? 'flex flex-wrap items-center gap-x-2 gap-y-1' : 'space-y-1'}>
+    <StatusBadge status={sinalAntigo ? 'SEM_ATUALIZACAO' : ciclo.statusCiclo} /><p className="text-xs" style={muted}>Conexão {ciclo.conexao} · {duration}</p>
+    {sinalAntigo && <p className="w-full text-xs" style={muted}>Sem atualização há mais de 10 minutos. Confira o processo; o término não foi confirmado.</p>}
+    {ciclo.motivoFalha && <p className="w-full max-w-lg break-words text-xs text-negative">{motivoFalhaLegivel(ciclo.motivoFalha)}</p>}
+    {ciclo.statusCiclo === 'FALHA' && !ciclo.motivoFalha && <p className="text-xs" style={muted}>Motivo não registrado neste ciclo.</p>}
+  </div>;
+}
+
+function motivoFalhaLegivel(motivo: string): string {
+  const motivos: Record<string, string> = {
+    TIMEOUT_COMPROVANTE: 'O destino não confirmou o envio. Aguardando conferência.',
+    XML_RETIDO: 'Há falhas na etapa XML. Consulte a auditoria dos documentos.',
+    RECUSA_DESTINO: 'O destino recusou o comprovante.',
+    ADAPTADOR_AUSENTE: 'Este cliente ainda não está preparado para envio neste processo.',
+    CONEXAO: 'Não foi possível conectar à origem dos comprovantes.',
+    INVENTARIO: 'A conexão funcionou, mas não foi possível listar os arquivos.',
+    BANCO_FILA_PROCESSAMENTO: 'Não foi possível concluir o tratamento da fila de documentos.',
+    PROCESSAMENTO: 'Houve falha no tratamento de comprovantes. Consulte a auditoria dos documentos.',
+    INTERROMPIDO: 'A execução foi interrompida.',
+  };
+  return motivos[motivo.split(':', 1)[0]] ?? 'Falha registrada. Consulte a auditoria dos documentos.';
+}
+
+function ResultadoXml({ ciclo }: { ciclo: WorkSftpClienteStatus }) {
+  const medido = ciclo.xmlHabilitado === true && [ciclo.xmlAvaliados, ciclo.xmlEnviados,
+    ciclo.xmlJaProcessados, ciclo.xmlPendentes, ciclo.xmlErros].every((valor) => typeof valor === 'number' && Number.isFinite(valor));
+  return <div className="mt-2 border-t pt-2 text-xs" style={{ borderColor: 'var(--color-border)' }}>
+    {ciclo.xmlHabilitado === false ? <p style={muted}>XML: etapa desabilitada neste ciclo.</p>
+      : !medido ? <p style={muted}>XML: sem medição neste ciclo.</p>
+        : <>
+          <p className="font-semibold">XML: {formatarNumero(ciclo.xmlEnviados!)} confirmados · {formatarNumero(ciclo.xmlErros!)} falhas</p>
+          <p style={muted}>{formatarNumero(ciclo.xmlAvaliados!)} avaliações · {formatarNumero(ciclo.xmlJaProcessados!)} já processados · {formatarNumero(ciclo.xmlPendentes!)} pendentes</p>
+        </>}
+  </div>;
 }
 
 export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataInicio: string; dataFim: string }) {
@@ -96,18 +141,19 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
   const [origem, setOrigem] = useState('');
   const paginacao = useTabelaPaginadaState(`ciclos:${dataInicio}:${dataFim}:${cliente}:${status}:${origem}`);
   const recentes = useQuery({
-    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    ...INTEGRATION_QUERY_POLLING_OPTIONS,
     queryKey: ['integracoes', 'vedacit-sftp', 'clientes'], queryFn: ({ signal }) => buscarStatusWorkSftpClientes(signal),
     staleTime: 60_000, retry: 1,
   });
   const historico = useQuery({
-    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    ...INTEGRATION_QUERY_POLLING_OPTIONS,
     queryKey: ['integracoes', 'vedacit-sftp', 'execucoes', dataInicio, dataFim, cliente, status, origem, paginacao.pagina, paginacao.tamanhoPagina],
     queryFn: ({ signal }) => buscarExecucoesWorkSftpClientes(paginacao.pagina, paginacao.tamanhoPagina, dataInicio, dataFim, cliente || undefined, status || undefined, origem || undefined, signal),
     staleTime: 60_000, retry: 1,
   });
   const todosRecentes = recentes.data ?? empty;
   const cards = todosRecentes.filter((item) => (!cliente || item.cliente === cliente) && (!origem || item.origemComprovantes === origem));
+  const semContratoProgresso = cards.some(item => item.atualizadoEm === undefined);
   const ciclos = historico.data?.itens ?? empty;
   // Não apresentar uma página filtrada artificialmente quando uma API antiga ignorar o filtro.
   const origemNaoAplicada = Boolean(origem && ciclos.some((item) => item.origemComprovantes !== origem));
@@ -120,8 +166,9 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
     <section className="mb-4 min-w-0 space-y-3" aria-labelledby="ciclos-comprovantes-titulo">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="ciclos-comprovantes-titulo" className="text-base font-bold">Ciclos de busca de comprovantes</h2>
-          <p className="mt-1 text-xs" style={muted}>Acompanhe a origem, o resultado e as pendências. Os indicadores têm explicações ao passar o mouse ou focar pelo teclado.</p>
+          <h2 id="ciclos-comprovantes-titulo" className="text-base font-bold">Ciclos de XML e comprovantes</h2>
+          <p className="mt-1 text-xs" style={muted}>Consulta automática a cada minuto com a tela aberta. O progresso depende da última informação registrada pelo processo.</p>
+          {!recentes.isError && recentes.dataUpdatedAt > 0 && <p className="mt-1 text-xs" style={muted}>Consulta realizada em {formatarDataHora(new Date(recentes.dataUpdatedAt).toISOString())}.</p>}
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-xs font-semibold" style={muted}>Cliente
@@ -138,18 +185,23 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
       </div>
       {recentes.isError && <p role="alert" className="text-sm text-negative">{getApiErrorMessage(recentes.error, 'Não foi possível carregar a última execução.')}</p>}
       {recentes.isLoading && <p role="status" className="text-sm" style={muted}>Carregando última execução…</p>}
-      {cards.map((ciclo) => (
+      {!recentes.isError && semContratoProgresso && <p role="status" className="rounded-lg border px-3 py-2 text-sm" style={surface}>A fonte ainda não informa o progresso dos ciclos em andamento. Os quadros abaixo mostram o último ciclo registrado, mesmo que novos documentos estejam sendo processados.</p>}
+      {!recentes.isError && cards.map((ciclo) => (
         <article key={ciclo.cliente} className="rounded-xl border" style={surface} aria-label={`Último ciclo de ${ciclo.cliente}`}>
           <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-4 py-2.5" style={{ borderColor: 'var(--color-border)' }}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <strong className="text-sm">{ciclo.cliente}</strong>
               <Origem ciclo={ciclo} rotulo />
-              <Resultado ciclo={ciclo} compacto />
+              <Resultado ciclo={ciclo} compacto verificadoEm={recentes.dataUpdatedAt} />
             </div>
             <Explicacao definition={definitions.agendaComprovantesCiclo}>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs tabular-nums">
-                <p className="flex flex-wrap items-center gap-x-2"><span style={muted}>Última execução</span><time dateTime={ciclo.fimUltimoCiclo ?? undefined} className="font-medium">{dataHora(ciclo.fimUltimoCiclo)}</time></p>
-                <p className="flex flex-wrap items-center gap-x-2"><span style={muted}>Próximo ciclo estimado</span><time dateTime={ciclo.proximaExecucaoEstimada ?? undefined} className="font-medium">{dataHora(ciclo.proximaExecucaoEstimada)}</time><Info size={12} aria-hidden="true" /></p>
+                <p className="flex flex-wrap items-center gap-x-2"><span style={muted}>{ciclo.statusCiclo === 'EM_EXECUCAO' ? 'Iniciado' : 'Último ciclo finalizado'}</span><time dateTime={(ciclo.statusCiclo === 'EM_EXECUCAO' ? ciclo.inicioUltimoCiclo : ciclo.fimUltimoCiclo) ?? undefined} className="font-medium">{dataHora(ciclo.statusCiclo === 'EM_EXECUCAO' ? ciclo.inicioUltimoCiclo : ciclo.fimUltimoCiclo)}</time></p>
+                {ciclo.statusCiclo === 'EM_EXECUCAO'
+                  ? <p className="flex flex-wrap items-center gap-x-2"><span style={muted}>Última atualização</span><time dateTime={ciclo.atualizadoEm ?? undefined}>{dataHora(ciclo.atualizadoEm ?? null)}</time></p>
+                  : instanteCiclo(ciclo.proximaExecucaoEstimada) <= recentes.dataUpdatedAt
+                    ? <p style={muted}>Estimativa anterior vencida · Novo início ainda não informado.</p>
+                    : <p className="flex flex-wrap items-center gap-x-2"><span style={muted}>Próximo ciclo estimado</span><time dateTime={ciclo.proximaExecucaoEstimada ?? undefined} className="font-medium">{dataHora(ciclo.proximaExecucaoEstimada)}</time><Info size={12} aria-hidden="true" /></p>}
               </div>
             </Explicacao>
           </header>
@@ -163,10 +215,10 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
       {!recentes.isLoading && !recentes.isError && cards.length === 0 && <p className="text-sm" style={muted}>Nenhum último ciclo disponível para o cliente e a origem selecionados.</p>}
       <div className="overflow-hidden rounded-xl border" style={surface}>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2" style={{ borderColor: 'var(--color-border)' }}>
-          <div><h3 className="text-sm font-bold">Histórico de execuções</h3><p className="mt-1 text-xs" style={muted}>Cada linha é um ciclo. O período usa a data de finalização; as pendências mostram a situação naquele momento.</p></div>
+          <div><h3 className="text-sm font-bold">Histórico de execuções</h3><p className="mt-1 text-xs" style={muted}>Cada linha é um ciclo. Em andamento, os valores são parciais e o período usa o início; nos finalizados, usa o término.</p></div>
           <label className="flex flex-wrap items-center gap-2 text-xs font-semibold" style={muted}>Resultado da execução
             <select className="h-9 min-w-32 rounded-lg border px-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)} style={selectStyle}>
-              <option value="">Todos</option><option value="CONCLUIDO">Concluído</option><option value="FALHA">Falha</option>
+              <option value="">Todos</option><option value="EM_EXECUCAO">Em andamento</option><option value="CONCLUIDO">Concluído</option><option value="FALHA">Falha</option>
             </select>
           </label>
         </div>
@@ -177,14 +229,14 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1120px] text-left text-sm">
                     <thead className="border-b text-xs" style={{ ...muted, borderColor: 'var(--color-border)' }}><tr>
-                      <th scope="col" className="px-4 py-3">Cliente</th><th scope="col" className="px-3 py-3">Finalizado</th><th scope="col" className="px-3 py-3">Execução</th>
+                      <th scope="col" className="px-4 py-3">Cliente</th><th scope="col" className="px-3 py-3">Finalização / atualização</th><th scope="col" className="px-3 py-3">Execução</th>
                       <th scope="col" className="px-3 py-3"><Explicacao definition={definitions.origemComprovantesCiclo}><TituloMetrica>Origem dos comprovantes</TituloMetrica></Explicacao></th>
                       <th scope="col" className="px-3 py-3"><Explicacao definition={definitions.arquivosOrigemCiclo}><TituloMetrica>Arquivos na origem</TituloMetrica></Explicacao></th>
                       <th scope="col" className="px-3 py-3"><Explicacao definition={definitions.processamentoComprovantesCiclo}><TituloMetrica>Neste ciclo</TituloMetrica></Explicacao></th>
-                      <th scope="col" className="px-4 py-3"><Explicacao definition={definitions.filaComprovantesCiclo}><TituloMetrica>Pendências ao final</TituloMetrica></Explicacao></th>
+                      <th scope="col" className="px-4 py-3"><Explicacao definition={definitions.filaComprovantesCiclo}><TituloMetrica>Pendências apuradas</TituloMetrica></Explicacao></th>
                     </tr></thead>
                     <tbody>{ciclos.map((ciclo) => <tr key={`${ciclo.cliente}:${ciclo.inicioUltimoCiclo}:${ciclo.fimUltimoCiclo}`} className="border-b align-top last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
-                      <td className="px-4 py-3 font-semibold">{ciclo.cliente}</td><td className="whitespace-nowrap px-3 py-3">{dataHora(ciclo.fimUltimoCiclo)}</td><td className="px-3 py-3"><Resultado ciclo={ciclo} /></td>
+                      <td className="px-4 py-3 font-semibold">{ciclo.cliente}</td><td className="whitespace-nowrap px-3 py-3">{ciclo.statusCiclo === 'EM_EXECUCAO' ? <><p>Em andamento · parcial</p><p className="text-xs" style={muted}>{dataHora(ciclo.atualizadoEm ?? null)}</p></> : dataHora(ciclo.fimUltimoCiclo)}</td><td className="px-3 py-3"><Resultado ciclo={ciclo} verificadoEm={historico.dataUpdatedAt} /></td>
                       <td className="px-3 py-3"><Origem ciclo={ciclo} /></td><td className="px-3 py-3"><Metricas ciclo={ciclo} grupo="arquivos" /></td><td className="px-3 py-3"><Metricas ciclo={ciclo} grupo="processamento" /></td><td className="px-4 py-3"><Metricas ciclo={ciclo} grupo="fila" /></td>
                     </tr>)}</tbody>
                   </table>

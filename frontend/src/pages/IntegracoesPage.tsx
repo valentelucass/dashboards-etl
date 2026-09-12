@@ -27,7 +27,7 @@ import { formatarDataHora, formatarNumero } from '../utils/formatadores';
 import {
   respostaContemDestinoForaDaSelecao,
 } from '../utils/integracoesDestinoFilter';
-import { OPERATIONAL_QUERY_POLLING_OPTIONS } from '../utils/pollingUtils';
+import { INTEGRATION_QUERY_POLLING_OPTIONS } from '../utils/pollingUtils';
 import { combinarStatusOptions } from '../utils/tableStatusOptions';
 
 const QUERY_KEY = ['integracoes'];
@@ -147,7 +147,7 @@ export default function IntegracoesPage() {
   const paginacaoTabela = useTabelaPaginadaState(`${filtrosTabela.resetKey}:${escopoTabelaSelecionado}:${dataInicio}:${dataFim}`);
 
   const integracoes = useQuery({
-    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    ...INTEGRATION_QUERY_POLLING_OPTIONS,
     queryKey: [
       ...QUERY_KEY,
       dataInicio,
