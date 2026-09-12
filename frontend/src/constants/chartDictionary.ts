@@ -347,7 +347,7 @@ export const chartDictionary = {
     ...integracoesBase,
     descricao: 'Resultados datados de comprovantes/POD, separados de XML e eventos.',
     calculoTecnico: 'GET indicadores-etapas v2; comprovantes Vedacit usam primeira_confirmacao_em da auditoria permanente por NF-e/CT-e efetivo. Demais destinos e últimas falhas usam a data própria da etapa. Registros ativos deduplicados.',
-    calculoNegocio: 'Cada comprovante Vedacit com data original confiável conta uma vez. Reenvios não somam no dia. Confirmações com data incerta ficam fora da série e aparecem em aviso separado; zero significa ausência de confirmações datáveis, podendo haver histórico a conferir. Falhas são o último resultado disponível.',
+    calculoNegocio: 'Cada comprovante Vedacit com data original confiável conta uma vez. Reenvios não somam no dia. Confirmações com data incerta ficam fora da série; sua quantidade pode ser consultada no tooltip de Comprovantes confirmados. Zero significa ausência de confirmações datáveis, podendo haver histórico a conferir. Falhas são o último resultado disponível.',
     agrupamento: 'Dia do comprovante, respeitando destinos selecionados. Vedacit por NF-e/CT-e efetivo; demais destinos por ocorrência.',
   },
   integracoesResultadosEtapas: {

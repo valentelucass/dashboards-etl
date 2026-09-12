@@ -840,7 +840,7 @@ export const KpiDictionary = {
       titulo: 'Comprovantes confirmados',
       descricao: 'Etapas de comprovante/POD com sucesso e data própria dentro do período selecionado.',
       calculo: 'Contagem exata com status de comprovante SUCESSO, ENVIADO ou PROCESSADO e data da etapa no período; nunca copia o total de XML.',
-      observacao: 'Vedacit agrupa pelo par NF-e/CT-e efetivo dos registros ativos e usa a primeira data confiável preservada na auditoria permanente de aceites, inclusive evidência arquivada. Reenvios não somam novamente. Confirmações com data original incerta ficam fora do período e aparecem em aviso separado. Outros destinos usam ocorrência. Não conta NAO_APLICAVEL como envio.',
+      observacao: 'Vedacit agrupa pelo par NF-e/CT-e efetivo dos registros ativos e usa a primeira data confiável preservada na auditoria permanente de aceites, inclusive evidência arquivada. Reenvios não somam novamente. Confirmações com data original incerta ficam fora dos totais por período e não são pendências de envio. Outros destinos usam ocorrência. Não conta NAO_APLICAVEL como envio.',
     },
     etapasPendentes: {
       titulo: 'Etapas pendentes',
@@ -857,7 +857,7 @@ export const KpiDictionary = {
     saldoPorEtapa: {
       titulo: 'Pendências atuais por etapa',
       descricao: 'Agrupa XML/dados e comprovantes por integração, com pendentes em amarelo, bloqueados em vermelho e registros a conferir em azul.',
-      calculo: 'Contagens SQL por destino e etapa, com classes exclusivas. A conferir reúne dados sem confirmação datada e status ausente/desconhecido. Comprovantes confirmados sem data original confiável aparecem em aviso separado e não são pendências de envio.',
+      calculo: 'Contagens SQL por destino e etapa, com classes exclusivas. A conferir reúne dados sem confirmação datada e status ausente/desconhecido. Comprovantes confirmados sem data original confiável não são pendências de envio; sua quantidade pode ser consultada no tooltip de Comprovantes confirmados.',
       observacao: 'Saldo atual de todas as datas; não é posição histórica ao final do período selecionado. Integrações com bloqueios aparecem primeiro, seguidas das que têm pendências, registros a conferir e saldo zerado. Uma nota pode aparecer nas duas etapas. Sucesso datado tem precedência sobre cópias pendentes do mesmo documento; logs arquivados ficam fora. As falhas no período podem também estar no saldo atual.',
     },
     origemComprovantesCiclo: {

@@ -27,15 +27,25 @@ function abrir(destinos: string[] = []) {
 }
 afterEach(() => { cleanup(); client?.clear(); vi.resetAllMocks(); });
 
-it('mostra confirmações com data incerta separadas, sem inflar a série ou a fila', async () => {
+it('mantém confirmações com data incerta no tooltip, sem aviso fixo ou alteração dos totais', async () => {
   vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, etapas: resposta.etapas.map(item =>
     ({ ...item, confirmadosSemDataConfiavel: item.etapa === 'COMPROVANTE' ? 702 : 0 })) } });
   abrir();
-  const aviso = await screen.findByRole('status');
-  expect(aviso.textContent).toContain('702 comprovantes confirmados sem data original confiável');
-  expect(aviso.textContent).toContain('não entram em reenvio');
+  await screen.findByRole('table');
+  expect(screen.queryByRole('status')).toBeNull();
+  expect(screen.queryByText(/702 comprovantes/)).toBeNull();
+  expect(screen.queryByText(/XML e comprovantes/)).toBeNull();
   expect(screen.getByRole('region', { name: 'Comprovantes por dia' }).textContent).toContain('"data":[0,269,0]');
   expect(screen.queryByText('971')).toBeNull();
+  const indicador = screen.getByText('Comprovantes confirmados').closest('[tabindex="0"]');
+  expect(indicador).not.toBeNull();
+  fireEvent.focus(indicador!);
+  const tooltip = await screen.findByRole('tooltip');
+  expect(tooltip.textContent).toContain('702 comprovantes confirmados com data a conferir');
+  expect(tooltip.textContent).toContain('todo o histórico das integrações selecionadas');
+  expect(tooltip.textContent).toContain('não são pendências de envio');
+  fireEvent.keyDown(indicador!, { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
 });
 
 it('exibe zero XML e 269 comprovantes sem repetir a base', async () => {

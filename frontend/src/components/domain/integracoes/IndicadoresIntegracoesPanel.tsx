@@ -6,6 +6,7 @@ import ChartWrapper from '../../charts/ChartWrapper';
 import { useEchartsTheme } from '../../charts/useEchartsTheme';
 import KpiCard from '../../shared/KpiCard';
 import TooltipKpi from '../../shared/TooltipKpi';
+import { KpiDictionary } from '../../../constants/kpiDictionary';
 import { buildBaseBarOption, buildBaseLineOption, getEchartsThemeTokens } from '../../../utils/echartsBuilders';
 import { formatarNumero } from '../../../utils/formatadores';
 import { INTEGRATION_QUERY_POLLING_OPTIONS } from '../../../utils/pollingUtils';
@@ -68,6 +69,11 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
   }, [isDark, etapas, inicio, fim, query.data?.evolucao]);
 
   const disponivel = query.data !== undefined && !query.isError;
+  const comprovantesDefinition = KpiDictionary.integracoes.comprovantesConfirmados;
+  const detalhesComprovantes = disponivel && totais.semDataConfiavel > 0 ? {
+    ...comprovantesDefinition,
+    observacao: `${formatarNumero(totais.semDataConfiavel)} comprovantes confirmados com data a conferir, considerando todo o histórico das integrações selecionadas. ${comprovantesDefinition.observacao}`,
+  } : comprovantesDefinition;
   const valor = (numero: number) => disponivel ? formatarNumero(numero) : '—';
   const erro = query.isError
     ? 'Não foi possível carregar os indicadores separados. Confira se o Satélite e a API do Dashboard foram atualizados.'
@@ -83,25 +89,14 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
       {erro && <p role="alert" className="mb-4 rounded-lg border p-3 text-sm text-negative">{erro}</p>}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {periodos.map(item => (
-          <TooltipKpi key={item.key} kpiName={item.kpi}>
+          <TooltipKpi key={item.key} kpiName={item.kpi}
+            definition={item.key === 'pod' ? detalhesComprovantes : undefined}>
             <KpiCard label={item.label} valor={valor(item.valor)} metaLabel="Referência" metaValue={item.base}
               valorStyle={disponivel ? { color: getGoalToneStyle(item.tone).text } : undefined} />
           </TooltipKpi>
         ))}
       </div>
-      <p className="my-3 text-sm text-[var(--color-text-muted)]">
-        XML e comprovantes usam suas próprias datas de confirmação. Cada comprovante Vedacit conta uma vez
-        por NF-e/CT-e, na primeira data preservada na auditoria. Reenvios não aumentam o total diário.
-        As falhas mostram o último resultado disponível. A base pode ser diferente da planilha do gestor.
-      </p>
-      {disponivel && totais.semDataConfiavel > 0 && (
-        <div role="status" className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-          <strong>{formatarNumero(totais.semDataConfiavel)} comprovantes confirmados sem data original confiável.</strong>{' '}
-          Eles permanecem confirmados e não entram em reenvio. Estão fora dos totais por período e dos gráficos
-          diários até a conferência da data original. Esta quantidade considera todas as datas das integrações selecionadas.
-        </div>
-      )}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartWrapper titulo="XML / dados por dia" option={options.dados} altura={350}
           chartKey="integracoesDadosPorDia" isLoading={query.isPending} erro={erro} isEmpty={!disponivel} />
         <ChartWrapper titulo="Comprovantes por dia" option={options.comprovantes} altura={350}
