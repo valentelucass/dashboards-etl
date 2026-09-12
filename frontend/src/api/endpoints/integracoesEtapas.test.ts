@@ -3,9 +3,9 @@ import clienteAxios from '../clienteAxios';
 import { buscarIndicadoresEtapas, type IndicadoresEtapas } from './integracoesEtapas';
 vi.mock('../clienteAxios', () => ({ default: { get: vi.fn() } }));
 
-const resposta: IndicadoresEtapas = { versao: 1, dataInicial: '2026-09-01', dataFinal: '2026-09-10',
+const resposta: IndicadoresEtapas = { versao: 2, dataInicial: '2026-09-01', dataFinal: '2026-09-10',
   etapas: [{ sistemaDestino: 'VEDACIT', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
-    pendentesAtuais: 0, bloqueadosAtuais: 775, semConfirmacaoDatada: 52 }], evolucao: [] };
+    pendentesAtuais: 0, bloqueadosAtuais: 775, semConfirmacaoDatada: 52, confirmadosSemDataConfiavel: 0 }], evolucao: [] };
 beforeEach(() => vi.resetAllMocks());
 
 it('preserva zero XML e bloqueios, encaminhando período, destino e cancelamento', async () => {
@@ -21,6 +21,9 @@ it('preserva zero XML e bloqueios, encaminhando período, destino e cancelamento
 });
 
 it.each([
+  { ...resposta, versao: 1 },
+  { ...resposta, etapas: [{ ...resposta.etapas[0], confirmadosSemDataConfiavel: undefined }] },
+  { ...resposta, etapas: [{ ...resposta.etapas[0], confirmadosSemDataConfiavel: -1 }] },
   { totalRegistros: 273, percentualXmlSucesso: 100 },
   { ...resposta, dataInicial: '2026-08-01' },
   { ...resposta, etapas: [{ ...resposta.etapas[0], sistemaDestino: 'PPG' }] },

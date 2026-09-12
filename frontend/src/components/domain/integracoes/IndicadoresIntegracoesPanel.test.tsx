@@ -13,11 +13,11 @@ vi.mock('../../charts/ChartWrapper', () => ({ default: ({ titulo, option }: { ti
   <section aria-label={titulo}><pre>{JSON.stringify(option.series)}</pre></section>
 ) }));
 
-const resposta: IndicadoresEtapas = { versao: 1, dataInicial: '2026-09-01', dataFinal: '2026-09-03', etapas: [
+const resposta: IndicadoresEtapas = { versao: 2, dataInicial: '2026-09-01', dataFinal: '2026-09-03', etapas: [
   { sistemaDestino: 'VEDACIT', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
-    pendentesAtuais: 0, bloqueadosAtuais: 775, semConfirmacaoDatada: 52 },
+    pendentesAtuais: 0, bloqueadosAtuais: 775, semConfirmacaoDatada: 52, confirmadosSemDataConfiavel: 0 },
   { sistemaDestino: 'VEDACIT', etapa: 'COMPROVANTE', sucessosPeriodo: 269, falhasPeriodo: 3,
-    pendentesAtuais: 1, bloqueadosAtuais: 695, semConfirmacaoDatada: 0 },
+    pendentesAtuais: 1, bloqueadosAtuais: 695, semConfirmacaoDatada: 0, confirmadosSemDataConfiavel: 0 },
 ], evolucao: [{ data: '2026-09-02', etapa: 'COMPROVANTE', sucessos: 269, falhas: 3 }] };
 let client: QueryClient;
 function abrir(destinos: string[] = []) {
@@ -26,6 +26,17 @@ function abrir(destinos: string[] = []) {
     inicio="2026-09-01" fim="2026-09-03" destinos={destinos} /></QueryClientProvider>);
 }
 afterEach(() => { cleanup(); client?.clear(); vi.resetAllMocks(); });
+
+it('mostra confirmações com data incerta separadas, sem inflar a série ou a fila', async () => {
+  vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, etapas: resposta.etapas.map(item =>
+    ({ ...item, confirmadosSemDataConfiavel: item.etapa === 'COMPROVANTE' ? 702 : 0 })) } });
+  abrir();
+  const aviso = await screen.findByRole('status');
+  expect(aviso.textContent).toContain('702 comprovantes confirmados sem data original confiável');
+  expect(aviso.textContent).toContain('não entram em reenvio');
+  expect(screen.getByRole('region', { name: 'Comprovantes por dia' }).textContent).toContain('"data":[0,269,0]');
+  expect(screen.queryByText('971')).toBeNull();
+});
 
 it('exibe zero XML e 269 comprovantes sem repetir a base', async () => {
   vi.mocked(clienteAxios.get).mockResolvedValue({ data: resposta });
@@ -46,9 +57,9 @@ it('exibe zero XML e 269 comprovantes sem repetir a base', async () => {
 it('separa pendentes, bloqueados e sem evidência em cada etapa', async () => {
   vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, etapas: [
     { sistemaDestino: 'PPG', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
-      pendentesAtuais: 0, bloqueadosAtuais: 0, semConfirmacaoDatada: 39 },
+      pendentesAtuais: 0, bloqueadosAtuais: 0, semConfirmacaoDatada: 39, confirmadosSemDataConfiavel: 0 },
     { sistemaDestino: 'SELIA', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
-      pendentesAtuais: 2, bloqueadosAtuais: 0, semConfirmacaoDatada: 0 },
+      pendentesAtuais: 2, bloqueadosAtuais: 0, semConfirmacaoDatada: 0, confirmadosSemDataConfiavel: 0 },
     ...resposta.etapas,
   ] } });
   abrir();

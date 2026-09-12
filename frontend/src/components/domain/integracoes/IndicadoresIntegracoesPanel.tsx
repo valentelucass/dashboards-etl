@@ -32,7 +32,8 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
     comprovantes: acc.comprovantes + (item.etapa === 'COMPROVANTE' ? item.sucessosPeriodo : 0),
     pendentes: acc.pendentes + item.pendentesAtuais,
     bloqueados: acc.bloqueados + item.bloqueadosAtuais,
-  }), { dados: 0, comprovantes: 0, pendentes: 0, bloqueados: 0 }), [etapas]);
+    semDataConfiavel: acc.semDataConfiavel + item.confirmadosSemDataConfiavel,
+  }), { dados: 0, comprovantes: 0, pendentes: 0, bloqueados: 0, semDataConfiavel: 0 }), [etapas]);
 
   const options = useMemo(() => {
     const tokens = getEchartsThemeTokens(isDark);
@@ -89,9 +90,17 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
         ))}
       </div>
       <p className="my-3 text-sm text-[var(--color-text-muted)]">
-        XML e comprovantes usam suas próprias datas de confirmação. Os resultados abaixo são os últimos
-        registros disponíveis de cada etapa; não representam todas as tentativas de envio.
+        XML e comprovantes usam suas próprias datas de confirmação. Cada comprovante Vedacit conta uma vez
+        por NF-e/CT-e, na primeira data preservada na auditoria. Reenvios não aumentam o total diário.
+        As falhas mostram o último resultado disponível. A base pode ser diferente da planilha do gestor.
       </p>
+      {disponivel && totais.semDataConfiavel > 0 && (
+        <div role="status" className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+          <strong>{formatarNumero(totais.semDataConfiavel)} comprovantes confirmados sem data original confiável.</strong>{' '}
+          Eles permanecem confirmados e não entram em reenvio. Estão fora dos totais por período e dos gráficos
+          diários até a conferência da data original. Esta quantidade considera todas as datas das integrações selecionadas.
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartWrapper titulo="XML / dados por dia" option={options.dados} altura={350}
           chartKey="integracoesDadosPorDia" isLoading={query.isPending} erro={erro} isEmpty={!disponivel} />

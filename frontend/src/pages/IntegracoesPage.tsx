@@ -84,7 +84,7 @@ function criarColunas(): ColunaTabelaAnalitica<IntegracaoPendencia>[] {
     { chave: 'statusDados', label: 'Status Dados/Evento', largura: '160px', filtroTabela: 'status', formato: renderStatus },
     { chave: 'statusCanhoto', label: 'Status Comprovante/POD', largura: '190px', filtroTabela: 'status', formato: renderStatus },
     { chave: 'dataProcessamentoDados', label: 'Data XML / dados', largura: '190px', formato: formatarData },
-    { chave: 'dataProcessamentoCanhoto', label: 'Data comprovante', largura: '190px', formato: formatarData },
+    { chave: 'dataProcessamentoCanhoto', label: 'Último retorno comprovante', largura: '230px', formato: formatarData },
     { chave: 'dataProcessamento', label: 'Última atualização', largura: '210px', formato: formatarData },
   ];
 }
