@@ -132,6 +132,22 @@ public class IntegracaoSateliteClient {
         return buscarResumoPorRota(ROTA_INTEGRACOES_CLIENTES + "/indicadores-etapas", dataInicial, dataFinal, destinos);
     }
 
+    public ResponseEntity<String> buscarIndicadoresOperacionais(String inicio, String fim, List<String> destinos) {
+        return buscarResumoPorRota(ROTA_INTEGRACOES_CLIENTES + "/indicadores-operacionais", inicio, fim, destinos);
+    }
+
+    public ResponseEntity<String> buscarPendenciasEtapas(List<String> destinos, String etapa, String acao, int pagina, int tamanho) {
+        var params = new LinkedMultiValueMap<String, String>();
+        if (destinos != null) params.put("destino", destinos);
+        params.set("etapa", etapa); params.set("acao", acao);
+        params.set("pagina", String.valueOf(Math.max(0, pagina)));
+        params.set("tamanho", String.valueOf(Math.max(1, Math.min(100, tamanho))));
+        URI uri = UriComponentsBuilder.fromUriString(sateliteBaseUrl + ROTA_INTEGRACOES_CLIENTES + "/pendencias-etapas")
+                .queryParams(params).build().encode().toUri();
+        var headers = new HttpHeaders(); headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    }
+
     private ResponseEntity<String> buscarResumoPorRota(String rota, String dataInicial, String dataFinal, List<String> destinos) {
         MultiValueMap<String, String> parametrosSatelite = new LinkedMultiValueMap<>();
         adicionarParametroOpcional(parametrosSatelite, "dataInicial", dataInicial);

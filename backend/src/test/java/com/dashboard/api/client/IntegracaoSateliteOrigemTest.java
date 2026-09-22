@@ -16,6 +16,29 @@ import com.dashboard.api.service.IntegracoesService;
 
 class IntegracaoSateliteOrigemTest {
     @Test
+    void preservaContratoOperacionalSemRecalcularEEncaminhaDetalhamentoPaginado() {
+        var server = new AtomicReference<MockRestServiceServer>();
+        var builder = new RestTemplateBuilder().additionalCustomizers(
+                template -> server.set(MockRestServiceServer.bindTo(template).build()));
+        var client = new IntegracaoSateliteClient(builder, "http://satelite.test");
+        var controller = new IntegracoesController(new IntegracoesService(client));
+        String body = "{\"versao\":3,\"etapas\":[],\"historicoDesde\":null}";
+        server.get().expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo(
+                org.hamcrest.Matchers.startsWith("http://satelite.test/api/auditoria/integracoes-clientes/indicadores-operacionais?")))
+                .andExpect(queryParam("destino", "VEDACIT", "SELIA"))
+                .andExpect(queryParam("dataInicial", "2026-09-01"))
+                .andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        server.get().expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo(
+                org.hamcrest.Matchers.startsWith("http://satelite.test/api/auditoria/integracoes-clientes/pendencias-etapas?")))
+                .andExpect(method(HttpMethod.GET)).andExpect(queryParam("destino", "VEDACIT"))
+                .andExpect(queryParam("etapa", "DADOS")).andExpect(queryParam("acao", "AGUARDANDO_ORIGEM"))
+                .andExpect(queryParam("pagina", "1")).andExpect(queryParam("tamanho", "25"))
+                .andRespond(withSuccess("{\"itens\":[],\"totalElementos\":0}", MediaType.APPLICATION_JSON));
+        assertThat(controller.consultarIndicadoresOperacionais("2026-09-01", "2026-09-21", java.util.List.of("VEDACIT", "SELIA")).getBody()).isEqualTo(body);
+        assertThat(controller.consultarPendenciasEtapas(java.util.List.of("VEDACIT"), "DADOS", "AGUARDANDO_ORIGEM", 1, 25).getBody()).contains("totalElementos");
+        server.get().verify();
+    }
+    @Test
     void preservaContagensSeparadasEPeriodoPorTodasAsCamadas() {
         var server = new AtomicReference<MockRestServiceServer>();
         var builder = new RestTemplateBuilder().additionalCustomizers(

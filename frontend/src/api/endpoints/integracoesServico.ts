@@ -73,6 +73,7 @@ export interface IntegracoesAuditoriaResponse {
 }
 
 export interface WorkSftpClienteStatus {
+  resultadoExecucao?: 'EM_EXECUCAO' | 'CONCLUIDO' | 'COM_PENDENCIAS' | 'FALHA_TECNICA' | 'INTERROMPIDO' | 'NAO_CLASSIFICADO' | null;
   atualizadoEm?: string | null;
   xmlHabilitado?: boolean | null;
   xmlAvaliados?: number | null;

@@ -56,6 +56,14 @@ public class IntegracoesService {
         return consultarSatelite(() -> integracaoSateliteClient.buscarIndicadoresEtapas(dataInicial, dataFinal, destinos));
     }
 
+    public ResponseEntity<String> consultarIndicadoresOperacionais(String inicio, String fim, List<String> destinos) {
+        return consultarSatelite(() -> integracaoSateliteClient.buscarIndicadoresOperacionais(inicio, fim, destinos));
+    }
+
+    public ResponseEntity<String> consultarPendenciasEtapas(List<String> destinos, String etapa, String acao, int pagina, int tamanho) {
+        return consultarSatelite(() -> integracaoSateliteClient.buscarPendenciasEtapas(destinos, etapa, acao, pagina, tamanho));
+    }
+
     public ResponseEntity<String> consultarStatusSftpClientes() {
         return consultarSatelite(integracaoSateliteClient::buscarStatusSftpClientes);
     }

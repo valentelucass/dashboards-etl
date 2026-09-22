@@ -98,6 +98,20 @@ public class IntegracoesController {
         return encaminharJson(integracoesService.consultarIndicadoresEtapas(dataInicial, dataFinal, destino));
     }
 
+    @GetMapping(value = "/indicadores-operacionais", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> consultarIndicadoresOperacionais(
+            @RequestParam String dataInicial, @RequestParam String dataFinal,
+            @RequestParam(required=false) List<String> destino) {
+        return encaminharJson(integracoesService.consultarIndicadoresOperacionais(dataInicial, dataFinal, destino));
+    }
+
+    @GetMapping(value = "/pendencias-etapas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> consultarPendenciasEtapas(
+            @RequestParam(required=false) List<String> destino, @RequestParam String etapa, @RequestParam String acao,
+            @RequestParam(defaultValue="0") int pagina, @RequestParam(defaultValue="25") int tamanho) {
+        return encaminharJson(integracoesService.consultarPendenciasEtapas(destino, etapa, acao, pagina, tamanho));
+    }
+
     @GetMapping(value = "/resumo-tabelas", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> consultarResumoTabelas(
             @RequestParam(required = false) String dataInicial,

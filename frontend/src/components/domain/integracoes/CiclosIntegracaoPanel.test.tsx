@@ -59,11 +59,58 @@ describe('CiclosIntegracaoPanel', () => {
   it('separa XML de comprovantes e exibe motivo sem transformar ausencia de medicao em zero', async () => {
     responderCom({ ...ciclo, statusCiclo: 'FALHA', xmlHabilitado: true, xmlAvaliados: 20,
       xmlEnviados: 0, xmlErros: 6, xmlJaProcessados: 14, xmlPendentes: 0,
-      motivoFalha: 'XML_RETIDO: Falhas XML auditadas' });
+      errosComprovante: 0, motivoFalha: 'XML_RETIDO: Falhas XML auditadas' });
     abrir();
-    expect((await screen.findAllByText('XML: 0 confirmados · 6 falhas')).length).toBe(2);
-    expect(screen.getAllByText('Há falhas na etapa XML. Consulte a auditoria dos documentos.').length).toBe(2);
+    expect((await screen.findAllByText('XML: 0 confirmados')).length).toBe(2);
+    expect(screen.getAllByText('XML com impedimentos').length).toBe(2);
+    expect(screen.getAllByText('6 avaliações sem conclusão (falhas ou retenções)').length).toBe(2);
+    expect(screen.getAllByText('Há XMLs retidos ou com erro. O motivo individual está na auditoria dos documentos.').length).toBe(2);
+    expect(screen.queryByText(/0 pendentes/)).toBeNull();
+    expect(screen.queryByText(/A origem recusou/)).toBeNull();
     expect(screen.getAllByText('0 comprovantes enviados').length).toBe(2);
+  });
+
+  it('explica acesso recusado somente quando o ciclo traz esse diagnostico e preserva filtro de falhas', async () => {
+    responderCom({ ...ciclo, statusCiclo: 'FALHA', xmlHabilitado: true, xmlAvaliados: 11,
+      xmlEnviados: 0, xmlErros: 10, xmlJaProcessados: 1, xmlPendentes: 0,
+      errosComprovante: 0, motivoFalha: 'XML_ACESSO_ORIGEM: detalhe controlado' });
+    abrir();
+    expect((await screen.findAllByText('XML sem acesso à origem')).length).toBe(2);
+    expect(screen.getAllByText('10 avaliações sem conclusão por bloqueio de acesso').length).toBe(2);
+    expect(screen.getAllByText('A origem recusou o acesso aos XMLs. É necessário liberar o acesso ou disponibilizar os arquivos no SFTP.').length).toBe(2);
+    fireEvent.change(screen.getByLabelText('Resultado da execução'), { target: { value: 'FALHA' } });
+    await waitFor(() => expect(ultimoParametro('status')).toBe('FALHA'));
+    expect(screen.queryByText('Concluído', { selector: 'span' })).toBeNull();
+  });
+
+  it.each([
+    ['XML_PROCESSAMENTO: erro', 0, 'OK'],
+    ['XML_FALHAS_MISTAS: erro', 0, 'OK'],
+    ['TIMEOUT_COMPROVANTE: erro', 1, 'OK'],
+    ['XML_RETIDO: erro', 1, 'OK'],
+    ['XML_RETIDO: erro', undefined, 'OK'],
+    ['XML_RETIDO: erro', 0, 'FALHA'],
+    ['CAUSA_DESCONHECIDA: segredo que nao deve aparecer', 0, 'OK'],
+  ])('preserva falha para causa %s, erros de comprovante %s e conexao %s', async (motivoFalha, errosComprovante, conexao) => {
+    responderCom({ ...ciclo, statusCiclo: 'FALHA', xmlHabilitado: true, xmlAvaliados: 11,
+      xmlEnviados: 0, xmlErros: 10, xmlJaProcessados: 1, xmlPendentes: 0,
+      errosComprovante, motivoFalha, conexao });
+    abrir();
+    expect((await screen.findAllByText('FALHA', { selector: 'span' })).length).toBe(2);
+    expect(screen.queryByText('XML com impedimentos')).toBeNull();
+    expect(screen.queryByText('XML sem acesso à origem')).toBeNull();
+    expect(screen.queryByText(/segredo que nao deve aparecer/)).toBeNull();
+  });
+
+  it('mantem ciclo aberto em andamento mesmo com bloqueio e apresenta pendencia XML medida', async () => {
+    responderCom({ ...ciclo, statusCiclo: 'EM_EXECUCAO', fimUltimoCiclo: null,
+      atualizadoEm: new Date().toISOString(), xmlHabilitado: true, xmlAvaliados: 11,
+      xmlEnviados: 0, xmlErros: 8, xmlJaProcessados: 1, xmlPendentes: 2,
+      errosComprovante: 0, motivoFalha: 'XML_ACESSO_ORIGEM: acesso recusado' });
+    abrir();
+    expect((await screen.findAllByText('Em andamento', { selector: 'span' })).length).toBe(2);
+    expect(screen.getAllByText('2 avaliações aguardando documento na origem').length).toBe(2);
+    expect(screen.queryByText('XML sem acesso à origem')).toBeNull();
   });
 
   it('identifica ciclos antigos sem medicao XML', async () => {
@@ -184,4 +231,26 @@ it('não informa ausência de contrato quando a origem devolve progresso medido'
   responderCom({ ...ciclo, atualizadoEm: new Date().toISOString() }); abrir();
   await screen.findByRole('table');
   expect(screen.queryByText(/A fonte ainda não informa o progresso/)).toBeNull();
+});
+
+it('ciclo com sete envios e retenções destaca as confirmações e usa o resultado documental do servidor', async () => {
+  responderCom({ ...ciclo, statusCiclo: 'FALHA', resultadoExecucao: 'COM_PENDENCIAS', enviados: 7,
+    xmlHabilitado: true, xmlAvaliados: 30, xmlEnviados: 7, xmlJaProcessados: 18, xmlPendentes: 0, xmlErros: 5,
+    errosComprovante: 0, motivoFalha: 'XML_FALHAS_MISTAS: detalhes' });
+  abrir();
+  await waitFor(() => expect(screen.getAllByText('Finalizado com pendências', { selector: 'span' }).length).toBe(2));
+  expect(screen.getAllByText('7 comprovantes enviados').length).toBe(2);
+  expect(screen.queryByText('Falha', { selector: 'span' })).toBeNull();
+  expect(screen.getAllByText('Ver ocorrências do ciclo').length).toBe(2);
+  fireEvent.change(screen.getByLabelText('Resultado da execução'), { target: { value: 'COM_PENDENCIAS' } });
+  await waitFor(() => expect(ultimoParametro('status')).toBe('COM_PENDENCIAS'));
+});
+
+it('falha técnica real preserva os envios confirmados do mesmo ciclo', async () => {
+  responderCom({ ...ciclo, statusCiclo: 'FALHA', resultadoExecucao: 'FALHA_TECNICA', enviados: 7,
+    motivoFalha: 'BANCO_FILA_PROCESSAMENTO: indisponível' });
+  abrir();
+  await waitFor(() => expect(screen.getAllByText('Falha técnica', { selector: 'span' }).length).toBe(2));
+  expect(screen.getAllByText('7 comprovantes enviados').length).toBe(2);
+  expect(screen.queryByText('Finalizado com pendências', { selector: 'span' })).toBeNull();
 });

@@ -1,132 +1,77 @@
-import { Fragment, useMemo } from 'react';
-import { Building2 } from 'lucide-react';
-import type { IndicadorEtapa } from '../../../api/endpoints/integracoesEtapas';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ACOES_ETAPA, buscarPendenciasEtapas, type AcaoEtapa, type EtapaOperacional } from '../../../api/endpoints/integracoesOperacionais';
+import type { EtapaIntegracao } from '../../../api/endpoints/integracoesEtapas';
 import { formatarNumero } from '../../../utils/formatadores';
 import { rotuloEtapa } from '../../../utils/integracoesEtapas';
+import { INTEGRATION_QUERY_POLLING_OPTIONS } from '../../../utils/pollingUtils';
 import TooltipKpi from '../../shared/TooltipKpi';
-import TableHeaderTooltip from '../../shared/TableHeaderTooltip';
-import { COLUNAS_PENDENCIAS_INTEGRACOES } from '../../../constants/kpiDictionary';
 
-const SITUACOES = {
-  bloqueado: { label: 'Com bloqueios', classe: 'bg-[var(--color-negative-badge-bg)] text-[var(--color-negative-text)]' },
-  pendente: { label: 'Com pendências', classe: 'bg-[var(--color-warning-badge-bg)] text-[var(--color-warning-badge-text)]' },
-  conferir: { label: 'A conferir', classe: 'bg-blue-500/10 text-blue-700 dark:text-blue-300' },
-  regular: { label: 'Sem pendências', classe: 'bg-[var(--color-positive-badge-bg)] text-[var(--color-positive-text)]' },
-} as const;
+const campos: Record<AcaoEtapa, keyof Pick<EtapaOperacional, 'aguardandoProcessamento' | 'novaTentativa' | 'aguardandoOrigem' | 'aguardandoConfirmacao' | 'intervencao' | 'semConfirmacaoDatada'>> = {
+  AGUARDANDO_PROCESSAMENTO: 'aguardandoProcessamento', NOVA_TENTATIVA: 'novaTentativa', AGUARDANDO_ORIGEM: 'aguardandoOrigem',
+  AGUARDANDO_CONFIRMACAO: 'aguardandoConfirmacao', INTERVENCAO: 'intervencao', A_CONFERIR: 'semConfirmacaoDatada',
+};
+const motivos: Record<string, string> = { ACESSO_ORIGEM_RECUSADO: 'A origem recusou o acesso ao XML', ESPERA_ACESSO_ORIGEM: 'Aguardando liberação do acesso',
+  METADADO_ENTREGA: 'Aguardando data de entrega válida', DOCUMENTO_AUSENTE: 'Documento ausente na origem', ...ACOES_ETAPA };
+const dataHora = (v: string | null) => v ? `${v.slice(0, 10).split('-').reverse().join('/')} ${v.slice(11, 16)}` : 'Não registrada';
+type Selecao = { destino: string; etapa: EtapaIntegracao; acao: AcaoEtapa; pagina: number };
 
-function prioridade(etapas: IndicadorEtapa[]) {
-  if (etapas.some(item => item.bloqueadosAtuais > 0)) return 0;
-  if (etapas.some(item => item.pendentesAtuais > 0)) return 1;
-  if (etapas.some(item => item.semConfirmacaoDatada > 0)) return 2;
-  return 3;
-}
-
-function Quantidade({ valor, situacao }: { valor: number; situacao: 'pendente' | 'bloqueado' | 'conferir' }) {
-  return (
-    <span className={`inline-flex min-w-8 items-center justify-center rounded-md px-1.5 py-1 text-xs tabular-nums ${
-      valor > 0 ? `font-semibold ${SITUACOES[situacao].classe}` : 'text-[var(--color-text-muted)]'
-    }`}>
-      {formatarNumero(valor)}
-    </span>
-  );
-}
-
-export default function PendenciasEtapasPanel({ etapas, estado }: {
-  etapas: IndicadorEtapa[];
-  estado: 'carregando' | 'indisponivel' | 'disponivel';
-}) {
+export default function PendenciasEtapasPanel({ etapas, estado }: { etapas: EtapaOperacional[]; estado: 'carregando' | 'indisponivel' | 'disponivel' }) {
+  const [selecao, setSelecao] = useState<Selecao | null>(null);
   const grupos = useMemo(() => {
-    const porIntegracao = new Map<string, IndicadorEtapa[]>();
-    for (const etapa of etapas) {
-      const grupo = porIntegracao.get(etapa.sistemaDestino) ?? [];
-      grupo.push(etapa);
-      porIntegracao.set(etapa.sistemaDestino, grupo);
-    }
-    return [...porIntegracao].map(([integracao, itens]) => ({
-      integracao,
-      itens: [...itens].sort((a, b) => a.etapa === b.etapa ? 0 : a.etapa === 'DADOS' ? -1 : 1),
-      prioridade: prioridade(itens),
-    })).sort((a, b) => a.prioridade - b.prioridade || a.integracao.localeCompare(b.integracao));
+    const mapa = new Map<string, EtapaOperacional[]>();
+    for (const e of etapas) mapa.set(e.sistemaDestino, [...(mapa.get(e.sistemaDestino) ?? []), e]);
+    return [...mapa].map(([nome, itens]) => ({ nome, itens: itens.sort((a,b) => a.etapa === b.etapa ? 0 : a.etapa === 'DADOS' ? -1 : 1) }))
+      .sort((a,b) => Number(b.itens.some(e => e.intervencao > 0)) - Number(a.itens.some(e => e.intervencao > 0)) || a.nome.localeCompare(b.nome));
   }, [etapas]);
-
-  return (
-    <section aria-label="Pendências atuais por etapa"
-      className={`mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${
-        estado === 'disponivel' && grupos.length === 1 ? 'max-w-3xl' : ''
-      }`}>
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <TooltipKpi kpiName="integracoes.saldoPorEtapa">
-            <h2 className="text-sm font-semibold">Pendências atuais por etapa</h2>
-          </TooltipKpi>
-          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-            Todas as datas, respeitando a integração selecionada.
-          </p>
-        </div>
-        {estado === 'disponivel' && grupos.length > 1 && (
-          <span className="rounded-md bg-[var(--color-bg)] px-2 py-1 text-[11px] text-[var(--color-text-muted)]">
-            Bloqueios primeiro
-          </span>
-        )}
-      </div>
-
-      {estado !== 'disponivel' ? (
-        <p className="py-3 text-sm text-[var(--color-text-muted)]">
-          {estado === 'carregando' ? 'Carregando…' : 'Indicadores indisponíveis.'}
-        </p>
-      ) : grupos.length === 0 ? (
-        <p className="py-3 text-sm text-[var(--color-text-muted)]">Nenhuma etapa registrada para a seleção.</p>
-      ) : (
-        <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
-          {grupos.map(grupo => {
-            const situacao = [SITUACOES.bloqueado, SITUACOES.pendente, SITUACOES.conferir, SITUACOES.regular][grupo.prioridade];
-            return (
-              <div key={grupo.integracao} className="min-w-0 overflow-hidden rounded-xl border border-[var(--color-border)]">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg)]/50 px-3 py-2.5">
-                  <h3 className="flex min-w-0 items-center gap-2 text-xs font-bold tracking-wide">
-                    <Building2 size={14} className="shrink-0 text-[var(--color-text-muted)]" aria-hidden="true" />
-                    {grupo.integracao}
-                  </h3>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${situacao.classe}`}>
-                    {situacao.label}
-                  </span>
-                </div>
-                <table className="w-full table-fixed text-xs">
-                  <caption className="sr-only">Pendências de {grupo.integracao}</caption>
-                  <colgroup><col className="w-[34%]" /><col className="w-[22%]" /><col className="w-[22%]" /><col className="w-[22%]" /></colgroup>
-                  <thead className="text-[10px] text-[var(--color-text-muted)]">
-                    <tr className="border-b border-[var(--color-border)]">
-                      {Object.entries(COLUNAS_PENDENCIAS_INTEGRACOES).map(([chave, coluna]) => (
-                        <th key={chave} scope="col"
-                          className={`py-1 font-medium ${chave === 'etapa' ? 'px-3 text-left' : 'px-1 text-center'}`}>
-                          <TableHeaderTooltip label={coluna.label} content={coluna.descricao} trigger="label" />
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {grupo.itens.map(item => (
-                      <tr key={item.etapa} className="border-b border-[var(--color-border)] transition-colors last:border-0 hover:bg-[var(--color-bg)]/60">
-                        <th scope="row" className="break-words px-3 py-2.5 text-left font-medium leading-snug">
-                          {rotuloEtapa(item).split('/').map((parte, indice) => (
-                            <Fragment key={indice}>{indice > 0 && <>/<wbr /></>}{parte}</Fragment>
-                          ))}
-                        </th>
-                        <td className="px-1 py-1.5 text-center"><Quantidade valor={item.pendentesAtuais} situacao="pendente" /></td>
-                        <td className="px-1 py-1.5 text-center"><Quantidade valor={item.bloqueadosAtuais} situacao="bloqueado" /></td>
-                        <td className="px-1 py-1.5 text-center"><Quantidade valor={item.semConfirmacaoDatada} situacao="conferir" /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      <p className="mt-3 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
-        Uma nota pode ter pendência nas duas etapas. A conferir: registros sem confirmação datada ou sem classificação.
-      </p>
-    </section>
-  );
+  const selecaoVisivel = selecao && estado === 'disponivel' && etapas.some(e => e.sistemaDestino === selecao.destino && e.etapa === selecao.etapa) ? selecao : null;
+  const detalhes = useQuery({ ...INTEGRATION_QUERY_POLLING_OPTIONS, queryKey: ['integracoes', 'pendencias-etapas', selecaoVisivel],
+    queryFn: ({ signal }) => buscarPendenciasEtapas(selecaoVisivel!.destino, selecaoVisivel!.etapa, selecaoVisivel!.acao, selecaoVisivel!.pagina, signal),
+    enabled: !!selecaoVisivel, retry: 1, staleTime: 60_000 });
+  return <section aria-label="Pendências atuais por etapa" className="mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
+    <TooltipKpi kpiName="integracoes.saldoPorEtapa"><h2 className="text-sm font-semibold">Pendências atuais por etapa</h2></TooltipKpi>
+    <p className="mb-3 mt-1 text-xs text-[var(--color-text-muted)]">Todas as datas, respeitando a integração selecionada. Selecione uma quantidade para consultar os documentos.</p>
+    {estado !== 'disponivel' ? <p className="text-sm text-[var(--color-text-muted)]">{estado === 'carregando' ? 'Carregando…' : 'Indicadores indisponíveis.'}</p>
+      : grupos.length === 0 ? <p className="text-sm text-[var(--color-text-muted)]">Nenhuma etapa registrada para a seleção.</p>
+        : <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
+          {grupos.map(g => <div key={g.nome} className="min-w-0 rounded-xl border border-[var(--color-border)] p-3">
+            <h3 className="mb-2 text-sm font-semibold">{g.nome}</h3>
+            <table className="w-full text-xs"><caption className="sr-only">Pendências de {g.nome}</caption>
+              <thead><tr className="border-b border-[var(--color-border)]"><th scope="col" className="py-2 text-left">Próxima ação</th>
+                {g.itens.map(e => <th key={e.etapa} scope="col" className="px-1 text-center">{rotuloEtapa(e)}</th>)}
+              </tr></thead>
+              <tbody>{(Object.keys(ACOES_ETAPA) as AcaoEtapa[]).map(acao => <tr key={acao} className="border-b border-[var(--color-border)] last:border-0">
+                <th scope="row" className="py-2 text-left font-normal">{ACOES_ETAPA[acao]}</th>
+                {g.itens.map(e => <td key={e.etapa} className="px-1 text-center"><button type="button" disabled={e[campos[acao]] === 0}
+                  aria-label={`Ver ${ACOES_ETAPA[acao]} de ${g.nome} · ${rotuloEtapa(e)}`}
+                  onClick={() => setSelecao({ destino: g.nome, etapa: e.etapa, acao, pagina: 0 })}
+                  className={`min-w-9 rounded-md px-2 py-1 tabular-nums disabled:text-[var(--color-text-muted)] enabled:font-semibold enabled:underline enabled:decoration-dotted enabled:underline-offset-4 ${
+                    e[campos[acao]] === 0 ? '' : acao === 'INTERVENCAO' ? 'text-negative bg-[var(--color-negative-badge-bg)]' : acao === 'AGUARDANDO_ORIGEM' || acao === 'AGUARDANDO_CONFIRMACAO' ? 'text-[var(--color-warning-badge-text)] bg-[var(--color-warning-badge-bg)]' : 'text-blue-700 dark:text-blue-300 bg-blue-500/10'}`}>
+                  {formatarNumero(e[campos[acao]])}
+                </button></td>)}
+              </tr>)}</tbody>
+            </table>
+          </div>)}
+        </div>}
+    <p className="mt-3 text-xs text-[var(--color-text-muted)]">Uma nota pode aparecer nas duas etapas. A conferir inclui histórico sem confirmação datada ou sem classificação. Timeout exige conferência antes de novo envio.</p>
+    {selecaoVisivel && <div className="mt-4 border-t border-[var(--color-border)] pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">{selecaoVisivel.destino} · {ACOES_ETAPA[selecaoVisivel.acao]}</h3>
+        <button type="button" onClick={() => setSelecao(null)} className="text-xs underline">Fechar documentos</button></div>
+      {detalhes.isError ? <p role="alert" className="mt-3 text-sm text-negative">Não foi possível carregar os documentos desta seleção.</p>
+        : detalhes.isPending ? <p role="status" className="mt-3 text-sm">Carregando documentos…</p>
+          : <><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[650px] text-left text-xs"><caption className="sr-only">Documentos da pendência selecionada</caption>
+            <thead><tr>{['Documento', 'Motivo', 'Acompanhada desde', 'Última avaliação', 'Nova avaliação a partir de'].map(h => <th key={h} scope="col" className="p-2">{h}</th>)}</tr></thead>
+            <tbody>{detalhes.data.itens.map(i => <tr key={`${i.id}:${i.etapa}`} className="border-t border-[var(--color-border)]">
+              <td className="p-2">{i.documento}</td><td className="p-2">{motivos[i.motivo] ?? ACOES_ETAPA[i.acao]}</td>
+              <td className="p-2">{dataHora(i.pendenteDesde)}</td><td className="p-2">{dataHora(i.ultimaAvaliacao)}</td>
+              <td className="p-2">{i.proximaAvaliacao ? dataHora(i.proximaAvaliacao) : 'Sem programação registrada'}</td>
+            </tr>)}</tbody>
+          </table></div>{detalhes.data.itens.length === 0 && <p className="text-sm">Nenhum documento nesta seleção.</p>}
+          <div className="mt-3 flex flex-wrap items-center justify-end gap-3 text-xs">
+            <span>{formatarNumero(detalhes.data.totalElementos)} documentos · página {selecaoVisivel.pagina + 1}</span>
+            <button type="button" disabled={selecaoVisivel.pagina === 0} onClick={() => setSelecao({ ...selecaoVisivel, pagina: selecaoVisivel.pagina - 1 })} className="disabled:opacity-40">Anterior</button>
+            <button type="button" disabled={(selecaoVisivel.pagina + 1) * 25 >= detalhes.data.totalElementos} onClick={() => setSelecao({ ...selecaoVisivel, pagina: selecaoVisivel.pagina + 1 })} className="disabled:opacity-40">Próxima</button>
+          </div><p className="mt-2 text-xs text-[var(--color-text-muted)]">Horários de Brasília. A programação indica quando a reavaliação pode ocorrer; não garante envio. A idade anterior ao início do acompanhamento não é inferida.</p></>}
+    </div>}
+  </section>;
 }

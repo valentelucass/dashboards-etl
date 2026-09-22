@@ -65,6 +65,11 @@ export default defineConfig(({ command, mode, isPreview }) => {
       host: '127.0.0.1',
       port: DEV_FRONTEND_PORT,
       strictPort: true,
+      watch: {
+        // Perfis de navegador em .tmp têm arquivos bloqueados no Windows.
+        // Artefatos gerados também não devem participar do monitoramento/HMR.
+        ignored: [/(?:^|[\\/])(?:\.tmp|dist|dist-prod|dist-ssr|coverage|logs)(?:[\\/]|$)/],
+      },
       allowedHosts: [...LOCAL_DEV_HOSTS, ...(tunnelOrigin ? [new URL(tunnelOrigin).hostname] : [])],
       proxy: isDevServer ? { '^/api(?:/|\\?|$)': criarProxyApiDev(tunnelOrigin) } : undefined,
     },

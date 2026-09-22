@@ -72,7 +72,7 @@ export default function PermissionOverrideMatrix({
   disabled,
 }: PermissionOverrideMatrixProps) {
   return (
-    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+    <div className="flex flex-wrap gap-2.5">
       {catalogo.map((item) => {
         const herdado = Boolean(baseline[item.chave]);
         const negado = valor[item.chave] === 'deny';
@@ -90,7 +90,7 @@ export default function PermissionOverrideMatrix({
         return (
           <div
             key={item.chave}
-            className={`flex min-h-[154px] min-w-0 flex-col rounded-xl border p-3.5 ${disabled ? 'opacity-60' : ''}`}
+            className={`flex h-[156px] min-w-0 flex-[1_1_17rem] flex-col rounded-xl border p-3.5 ${disabled ? 'opacity-60' : ''}`}
             style={cardStyle}
           >
             <div className="min-h-[61px] min-w-0">
@@ -99,9 +99,10 @@ export default function PermissionOverrideMatrix({
               {item.rota && <div className="mt-1 truncate text-xs leading-4" title={item.rota} style={{ color: 'var(--color-text-muted)' }}>{item.rota}</div>}
             </div>
 
-            <div className="mt-auto flex flex-wrap gap-1.5 text-xs">
+            <div className="mt-auto flex gap-1.5 whitespace-nowrap text-xs">
               <span
-                className="rounded-full px-2 py-1 font-medium"
+                className="min-w-0 truncate rounded-full px-2 py-1 font-medium"
+                title={`Herdado: ${herdado ? 'permitido' : 'negado'}`}
                 style={
                   herdado
                     ? getToneBadgeStyle('var(--color-primary)')
@@ -114,7 +115,8 @@ export default function PermissionOverrideMatrix({
                 Herdado: {herdado ? 'permitido' : 'negado'}
               </span>
               <span
-                className="rounded-full px-2 py-1 font-medium"
+                className="min-w-0 truncate rounded-full px-2 py-1 font-medium"
+                title={`Final: ${acessoFinal ? 'permitido' : 'negado'}`}
                 style={acessoFinal ? getToneBadgeStyle('#10b981') : getToneBadgeStyle('#ef4444')}
               >
                 Final: {acessoFinal ? 'permitido' : 'negado'}
@@ -135,7 +137,7 @@ export default function PermissionOverrideMatrix({
                         [item.chave]: opcao.valor,
                       })
                     }
-                    className="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed"
+                    className="rounded-full border px-[clamp(0.25rem,1.5vw,0.75rem)] py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed"
                     style={
                       ativo
                         ? {

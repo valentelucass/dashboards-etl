@@ -54,6 +54,8 @@ export const CORES_STATUS: Record<string, string> = {
   error: '#ef4444',
   failed: '#ef4444',
   falha: '#ef4444',
+  'falha técnica': '#ef4444',
+  interrompido: '#ef4444',
   erro_api: '#ef4444',
   incompleto: '#f97316',
   incompleto_limite: '#f97316',

@@ -5,20 +5,20 @@ import { afterEach, expect, it, vi } from 'vitest';
 import type { EChartsOption } from 'echarts';
 import IndicadoresIntegracoesPanel from './IndicadoresIntegracoesPanel';
 import clienteAxios from '../../../api/clienteAxios';
-import type { IndicadoresEtapas } from '../../../api/endpoints/integracoesEtapas';
+import type { IndicadoresOperacionais } from '../../../api/endpoints/integracoesOperacionais';
 
 vi.mock('../../../api/clienteAxios', () => ({ default: { get: vi.fn() } }));
 vi.mock('../../charts/useEchartsTheme', () => ({ useEchartsTheme: () => ({ isDark: true }) }));
 vi.mock('../../charts/ChartWrapper', () => ({ default: ({ titulo, option }: { titulo: string; option: EChartsOption }) => (
   <section aria-label={titulo}><pre>{JSON.stringify(option.series)}</pre></section>
 ) }));
-
-const resposta: IndicadoresEtapas = { versao: 2, dataInicial: '2026-09-01', dataFinal: '2026-09-03', etapas: [
-  { sistemaDestino: 'VEDACIT', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
-    pendentesAtuais: 0, bloqueadosAtuais: 775, semConfirmacaoDatada: 52, confirmadosSemDataConfiavel: 0 },
-  { sistemaDestino: 'VEDACIT', etapa: 'COMPROVANTE', sucessosPeriodo: 269, falhasPeriodo: 3,
-    pendentesAtuais: 1, bloqueadosAtuais: 695, semConfirmacaoDatada: 0, confirmadosSemDataConfiavel: 0 },
-], evolucao: [{ data: '2026-09-02', etapa: 'COMPROVANTE', sucessos: 269, falhas: 3 }] };
+const resposta: IndicadoresOperacionais = { versao: 3, dataInicial: '2026-09-01', dataFinal: '2026-09-03',
+  historicoDesde: '2026-09-02T12:00:00', escopoTransmissoes: 'VEDACIT', atividade: [], etapas: [
+    { sistemaDestino: 'VEDACIT', etapa: 'DADOS', sucessosPeriodo: 0, aguardandoProcessamento: 0,
+      novaTentativa: 2, aguardandoOrigem: 160, aguardandoConfirmacao: 0, intervencao: 1, semConfirmacaoDatada: 52, confirmadosSemDataConfiavel: 0 },
+    { sistemaDestino: 'VEDACIT', etapa: 'COMPROVANTE', sucessosPeriodo: 269, aguardandoProcessamento: 1,
+      novaTentativa: 3, aguardandoOrigem: 205, aguardandoConfirmacao: 67, intervencao: 10, semConfirmacaoDatada: 0, confirmadosSemDataConfiavel: 0 },
+  ], evolucao: [{ data: '2026-09-02', etapa: 'COMPROVANTE', sucessos: 269 }] };
 let client: QueryClient;
 function abrir(destinos: string[] = []) {
   client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0, gcTime: 0 } } });
@@ -27,109 +27,81 @@ function abrir(destinos: string[] = []) {
 }
 afterEach(() => { cleanup(); client?.clear(); vi.resetAllMocks(); });
 
-it('mantém confirmações com data incerta no tooltip, sem aviso fixo ou alteração dos totais', async () => {
+it('preserva 702 confirmações com data incerta no tooltip sem somá-las ao período ou à fila', async () => {
   vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, etapas: resposta.etapas.map(item =>
     ({ ...item, confirmadosSemDataConfiavel: item.etapa === 'COMPROVANTE' ? 702 : 0 })) } });
   abrir();
-  await screen.findByRole('table');
-  expect(screen.queryByRole('status')).toBeNull();
+  await screen.findByRole('table', { name: 'Pendências de VEDACIT' });
   expect(screen.queryByText(/702 comprovantes/)).toBeNull();
-  expect(screen.queryByText(/XML e comprovantes/)).toBeNull();
   expect(screen.getByRole('region', { name: 'Comprovantes por dia' }).textContent).toContain('"data":[0,269,0]');
   expect(screen.queryByText('971')).toBeNull();
-  const indicador = screen.getByText('Comprovantes confirmados').closest('[tabindex="0"]');
-  expect(indicador).not.toBeNull();
-  fireEvent.focus(indicador!);
+  fireEvent.focus(screen.getByText('Comprovantes confirmados').closest('[tabindex="0"]')!);
   const tooltip = await screen.findByRole('tooltip');
   expect(tooltip.textContent).toContain('702 comprovantes confirmados com data a conferir');
-  expect(tooltip.textContent).toContain('todo o histórico das integrações selecionadas');
   expect(tooltip.textContent).toContain('não são pendências de envio');
-  fireEvent.keyDown(indicador!, { key: 'Escape' });
-  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
 });
-
-it('exibe zero XML e 269 comprovantes sem repetir a base', async () => {
-  vi.mocked(clienteAxios.get).mockResolvedValue({ data: resposta });
-  abrir();
-  await screen.findByRole('table');
-  const xml = screen.getByRole('region', { name: 'XML / dados por dia' });
-  const pod = screen.getByRole('region', { name: 'Comprovantes por dia' });
-  expect(xml.textContent).toContain('"data":[0,0,0]');
-  expect(pod.textContent).toContain('"data":[0,269,0]');
-  const resumo = screen.getByRole('region', { name: 'Resultados por etapa no período' });
-  expect(resumo.textContent).toContain('"data":[0,269]');
-  expect(resumo.textContent).toContain('"data":[0,3]');
-  expect(screen.queryByText('546')).toBeNull();
-  expect(screen.queryByText('99,3%')).toBeNull();
-  expect(screen.queryByRole('status')).toBeNull();
-});
-
-it('separa pendentes, bloqueados e sem evidência em cada etapa', async () => {
-  vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, etapas: [
-    { sistemaDestino: 'PPG', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
-      pendentesAtuais: 0, bloqueadosAtuais: 0, semConfirmacaoDatada: 39, confirmadosSemDataConfiavel: 0 },
-    { sistemaDestino: 'SELIA', etapa: 'DADOS', sucessosPeriodo: 0, falhasPeriodo: 0,
-      pendentesAtuais: 2, bloqueadosAtuais: 0, semConfirmacaoDatada: 0, confirmadosSemDataConfiavel: 0 },
-    ...resposta.etapas,
+it('separa confirmações do saldo e da atividade repetida', async () => {
+  vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, atividade: [
+    { data: '2026-09-02', etapa: 'DADOS', avaliacoes: 10, enviosIniciados: 0, reenviosIniciados: 0,
+      consultasOrigem: 1, retencoes: 10, confirmacoesAvaliadas: 0 },
   ] } });
   abrir();
-  const rows = within(await screen.findByRole('table', { name: 'Pendências de VEDACIT' })).getAllByRole('row');
-  expect(rows[1].textContent).toContain('XML/Dados077552');
-  expect(rows[2].textContent).toContain('Comprovante16950');
-  expect(screen.getAllByRole('table').map(table => within(table).getByText(/^Pendências de /).textContent))
-    .toEqual(['Pendências de VEDACIT', 'Pendências de SELIA', 'Pendências de PPG']);
-  expect(within(screen.getByRole('table', { name: 'Pendências de SELIA' })).getByRole('row', { name: /AddEvents/ }).textContent)
-    .toContain('AddEvents200');
-  expect(within(screen.getByRole('table', { name: 'Pendências de PPG' })).getByRole('row', { name: /XML\/\s*Dados/ }).textContent)
-    .toContain('XML/Dados0039');
-  expect(screen.getByText(/Todas as datas, respeitando/)).toBeTruthy();
+  const tabela = within(await screen.findByRole('table', { name: 'Pendências de VEDACIT' }));
+  expect(tabela.getByRole('row', { name: /Aguardando origem/ }).textContent).toContain('160205');
+  expect(tabela.getByRole('row', { name: /Aguardando confirmação/ }).textContent).toContain('067');
+  expect(tabela.getByRole('row', { name: /Exige intervenção/ }).textContent).toContain('110');
+  expect(screen.getByText('438')).toBeTruthy();
+  expect(screen.getByText('11')).toBeTruthy();
+  const resumo = screen.getByRole('region', { name: 'Confirmações por etapa no período' });
+  expect(resumo.textContent).toContain('"data":[0,269]');
+  expect(resumo.textContent).not.toContain('Com falha');
+  expect(screen.getByRole('region', { name: 'XML / dados por dia' }).textContent).toContain('"data":[0,0,0]');
+  fireEvent.click(screen.getByText('Avaliações e tentativas no período'));
+  expect(within(screen.getByRole('table', { name: 'Histórico de avaliações e tentativas' })).getAllByRole('row')[1].textContent)
+    .toContain('02/09/2026XML/Dados1000110');
 });
-
-it('erro de contrato não é exibido como zero ou como sucesso antigo', async () => {
-  vi.mocked(clienteAxios.get).mockResolvedValue({ data: { totalRegistros: 273, percentualXmlSucesso: 100 } });
+it('abre documentos paginados sem inventar idade histórica ou programação', async () => {
+  vi.mocked(clienteAxios.get).mockImplementation(async (url, config) => {
+    if (!url.endsWith('/pendencias-etapas')) return { data: resposta };
+    const p = config?.params as URLSearchParams;
+    expect(p.get('destino')).toBe('VEDACIT'); expect(p.get('etapa')).toBe('DADOS'); expect(p.get('acao')).toBe('AGUARDANDO_ORIGEM');
+    return { data: { pagina: Number(p.get('pagina')), tamanho: 25, totalElementos: 26, itens: [
+      { id: 123, sistemaDestino: 'VEDACIT', etapa: 'DADOS', acao: 'AGUARDANDO_ORIGEM', documento: 'CT-e 000012345',
+        motivo: 'ACESSO_ORIGEM_RECUSADO', pendenteDesde: null, ultimaAvaliacao: '2026-09-02T12:00:00', proximaAvaliacao: null },
+    ] } };
+  });
   abrir();
-  await screen.findByRole('alert');
+  fireEvent.click(await screen.findByRole('button', { name: 'Ver Aguardando origem de VEDACIT · XML/Dados' }));
+  const docs = within(await screen.findByRole('table', { name: 'Documentos da pendência selecionada' }));
+  expect(docs.getByText('Não registrada')).toBeTruthy();
+  expect(docs.getByText('Sem programação registrada')).toBeTruthy();
+  expect(docs.getByText('A origem recusou o acesso ao XML')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  await screen.findByText('26 documentos · página 2');
+  fireEvent.click(screen.getByRole('button', { name: 'Fechar documentos' }));
+  expect(screen.queryByRole('table', { name: 'Documentos da pendência selecionada' })).toBeNull();
+});
+it('recusa contrato antigo sem exibir zeros', async () => {
+  vi.mocked(clienteAxios.get).mockResolvedValue({ data: { versao: 2, totalRegistros: 273 } });
+  abrir(); await screen.findByRole('alert');
   expect(screen.getAllByText('—')).toHaveLength(4);
   expect(screen.queryByRole('table')).toBeNull();
-  expect(screen.queryByText('273')).toBeNull();
 });
-
-it('explica as quatro colunas por mouse, teclado e toque sem alterar os números', async () => {
-  vi.mocked(clienteAxios.get).mockResolvedValue({ data: resposta });
-  abrir();
-  const tabela = within(await screen.findByRole('table', { name: 'Pendências de VEDACIT' }));
-  const explicacoes = [
-    ['Etapa', 'A mesma nota pode aparecer nas duas etapas'],
-    ['Pendentes', 'aguardam processamento ou tratamento de erro'],
-    ['Bloqueados', 'Precisam de correção ou conferência'],
-    ['A conferir', 'não significa que o documento deixou de ser enviado'],
-  ];
-  for (const [coluna, explicacao] of explicacoes) {
-    const botao = tabela.getByRole('button', { name: `Detalhes da coluna ${coluna}` });
-    fireEvent.mouseEnter(botao);
-    expect((await screen.findByRole('tooltip')).textContent).toContain(explicacao);
-    fireEvent.mouseLeave(botao);
-    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
-  }
-  const conferir = tabela.getByRole('button', { name: 'Detalhes da coluna A conferir' });
-  fireEvent.focus(conferir);
-  expect((await screen.findByRole('tooltip')).textContent).toContain('sem data de confirmação');
-  fireEvent.keyDown(conferir, { key: 'Escape' });
-  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
-  fireEvent.click(conferir);
-  expect((await screen.findByRole('tooltip')).textContent).toContain('não entram nos envios confirmados');
-  fireEvent.click(conferir);
-  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
-  expect(tabela.getAllByRole('row')[1].textContent).toContain('XML/Dados077552');
+it('não representa ausência de histórico de tentativas como zero', async () => {
+  vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, historicoDesde: null } });
+  abrir(); await screen.findByRole('table');
+  fireEvent.click(screen.getByText('Avaliações e tentativas no período'));
+  expect(screen.getByText(/O histórico detalhado ainda não possui registros/)).toBeTruthy();
+  expect(screen.getByText(/Datas anteriores ao início da medição não representam zero tentativas/)).toBeTruthy();
 });
-
-it('alterar o destino não mantém o gráfico da seleção anterior enquanto carrega', async () => {
+it('trocar integração oculta detalhes e indicadores anteriores enquanto carrega', async () => {
   vi.mocked(clienteAxios.get).mockResolvedValueOnce({ data: resposta });
-  const view = abrir();
-  await screen.findByRole('table');
+  const view = abrir(); await screen.findByRole('table');
   vi.mocked(clienteAxios.get).mockImplementation(() => new Promise(() => {}));
+  fireEvent.click(screen.getByRole('button', { name: 'Ver Aguardando origem de VEDACIT · XML/Dados' }));
   view.rerender(<QueryClientProvider client={client}><IndicadoresIntegracoesPanel
     inicio="2026-09-01" fim="2026-09-03" destinos={['PPG']} /></QueryClientProvider>);
   await waitFor(() => expect(screen.getAllByText('—')).toHaveLength(4));
   expect(screen.queryByRole('table')).toBeNull();
+  expect(screen.queryByText('Fechar documentos')).toBeNull();
 });

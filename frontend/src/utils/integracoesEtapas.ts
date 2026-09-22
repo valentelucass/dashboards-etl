@@ -18,3 +18,16 @@ export function completarDiasEtapas(inicio: string, fim: string, valores: DiaEta
   }
   return resultado;
 }
+
+export function completarDiasConfirmacoes(inicio: string, fim: string, valores: Omit<DiaEtapa, 'falhas'>[], etapa: EtapaIntegracao): Omit<DiaEtapa, 'falhas'>[] {
+  const index = new Map(valores.filter(item => item.etapa === etapa).map(item => [item.data, item]));
+  const resultado: Omit<DiaEtapa, 'falhas'>[] = [];
+  const dia = new Date(`${inicio}T00:00:00Z`);
+  const limite = new Date(`${fim}T00:00:00Z`);
+  while (dia <= limite) {
+    const data = dia.toISOString().slice(0, 10);
+    resultado.push(index.get(data) ?? { data, etapa, sucessos: 0 });
+    dia.setUTCDate(dia.getUTCDate() + 1);
+  }
+  return resultado;
+}

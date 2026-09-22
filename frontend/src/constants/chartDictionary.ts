@@ -338,22 +338,22 @@ export const chartDictionary = {
 
   integracoesDadosPorDia: {
     ...integracoesBase,
-    descricao: 'Resultados datados de XML, dados ou eventos, separados dos comprovantes.',
-    calculoTecnico: 'GET indicadores-etapas; etapa DADOS, agrupamento SQL pela data_processamento_dados após deduplicação de registros ativos.',
-    calculoNegocio: 'Conta sucessos com data própria e resultados ERRO_DESTINO/ERRO_VALIDACAO datados em cada dia. Dias sem resultados aparecem com zero.',
-    agrupamento: 'Dia da etapa, respeitando destinos selecionados. XML Vedacit por CT-e; demais destinos por ocorrência. Não é histórico de todas as tentativas.',
+    descricao: 'Confirmações diárias de XML, dados ou eventos, separadas dos comprovantes e das pendências.',
+    calculoTecnico: 'GET indicadores-operacionais v3; etapa DADOS, agrupamento SQL pela primeira data de confirmação disponível após deduplicação dos registros ativos.',
+    calculoNegocio: 'Conta somente sucessos datados no dia. Dias sem confirmação datável aparecem com zero. Reavaliações com erro não se misturam à produção confirmada.',
+    agrupamento: 'XML Vedacit por CT-e; demais destinos por ocorrência, respeitando o filtro. Avaliações e tentativas possuem histórico separado.',
   },
   integracoesComprovantesPorDia: {
     ...integracoesBase,
-    descricao: 'Resultados datados de comprovantes/POD, separados de XML e eventos.',
-    calculoTecnico: 'GET indicadores-etapas v2; comprovantes Vedacit usam primeira_confirmacao_em da auditoria permanente por NF-e/CT-e efetivo. Demais destinos e últimas falhas usam a data própria da etapa. Registros ativos deduplicados.',
-    calculoNegocio: 'Cada comprovante Vedacit com data original confiável conta uma vez. Reenvios não somam no dia. Confirmações com data incerta ficam fora da série; sua quantidade pode ser consultada no tooltip de Comprovantes confirmados. Zero significa ausência de confirmações datáveis, podendo haver histórico a conferir. Falhas são o último resultado disponível.',
+    descricao: 'Confirmações diárias de comprovantes/POD, separadas de XML e das tentativas.',
+    calculoTecnico: 'GET indicadores-operacionais v3; comprovantes Vedacit usam primeira_confirmacao_em da auditoria permanente por NF-e/CT-e efetivo. Demais destinos usam a primeira data própria disponível após deduplicação.',
+    calculoNegocio: 'Cada comprovante com data confiável conta uma vez. Reenvios não somam novamente. Confirmações com data incerta ficam fora da série e constam no tooltip do indicador. Zero representa ausência de confirmações datáveis, não ausência de atividade.',
     agrupamento: 'Dia do comprovante, respeitando destinos selecionados. Vedacit por NF-e/CT-e efetivo; demais destinos por ocorrência.',
   },
   integracoesResultadosEtapas: {
     ...integracoesBase,
-    descricao: 'Compara resultados confirmados e com falha de cada etapa no período selecionado.',
-    calculoTecnico: 'Contagens exatas sucessosPeriodo/falhasPeriodo do GET indicadores-etapas. Sem reconstrução por percentual ou duplicação de totalRegistros.',
+    descricao: 'Compara confirmações de cada etapa no período selecionado.',
+    calculoTecnico: 'Contagens exatas sucessosPeriodo do GET indicadores-operacionais v3. Sem reconstrução por percentual ou soma com tentativas e pendências.',
     calculoNegocio: 'Cada barra usa exclusivamente os resultados datados de sua etapa. Sucesso datado tem precedência sobre cópias pendentes, preservando a primeira data disponível. Bloqueados e casos sem confirmação aparecem no saldo atual separado.',
     agrupamento: 'Destino e etapa; mesmos grupos usados nos gráficos diários. Status NAO_APLICAVEL/IGNORADO não conta como envio. Histórico sobrescrito ou arquivado não é reconstituído.',
   },
@@ -388,7 +388,7 @@ export const chartDictionary = {
     calculoTecnico: 'Leitura paginada de /api/auditoria/vedacit-sftp/execucoes no Satélite, via proxy autenticado do Dashboard.',
     calculoNegocio:
       'Exibe o resultado do ciclo, conexão, inventário e processamento para identificar execução saudável, falha isolada e saldo pendente sem acionar integrações externas.',
-    agrupamento: 'Ordenado por término do ciclo em ordem decrescente, com filtros de cliente, resultado e período.',
+    agrupamento: 'Ordenado por início do ciclo e ID, em ordem decrescente. Período usa término para finalizados e início para abertos; filtro de resultado separa pendências documentais de falhas técnicas.',
   },
 
   cotacoesSerie: {

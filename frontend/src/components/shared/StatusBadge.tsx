@@ -3,6 +3,7 @@ import { formatarStatusOperacional } from '../../utils/statusLabels';
 
 interface StatusBadgeProps {
   status: string;
+  tone?: 'warning';
 }
 
 const TEXT_COLORS_BY_HEX: Record<string, string> = {
@@ -32,7 +33,7 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-export default function StatusBadge({ status }: StatusBadgeProps) {
+export default function StatusBadge({ status, tone }: StatusBadgeProps) {
   const statusLabel = formatarStatusOperacional(status) || 'Sem status';
   const statusNormalizado = statusLabel.trim().toLowerCase();
   const statusComUnderscore = statusNormalizado.replace(/\s+/g, '_');
@@ -42,7 +43,9 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
   return (
     <span
       className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide"
-      style={{ backgroundColor: hexToRgba(textColor, 0.14), color: textColor }}
+      style={tone === 'warning'
+        ? { backgroundColor: 'var(--color-warning-badge-bg)', color: 'var(--color-warning-badge-text)' }
+        : { backgroundColor: hexToRgba(textColor, 0.14), color: textColor }}
     >
       {statusLabel}
     </span>

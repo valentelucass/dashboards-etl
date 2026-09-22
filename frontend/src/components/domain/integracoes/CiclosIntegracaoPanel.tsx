@@ -77,9 +77,9 @@ function Metricas({ ciclo, grupo, titulo = false }: { ciclo: WorkSftpClienteStat
           <p className="font-semibold">{quantidade(ciclo.arquivosValidos, 'arquivo reconhecido', 'arquivos reconhecidos')}</p>
           <p className="text-xs" style={muted}>{quantidade(ciclo.arquivosRejeitados, 'arquivo rejeitado', 'arquivos rejeitados')}</p>
         </> : grupo === 'processamento' ? <>
-          <p className="font-semibold">{quantidade(ciclo.selecionados, 'NF-e avaliada', 'NF-es avaliadas')}</p>
+          <p className={`font-semibold ${ciclo.enviados > 0 ? 'text-positive' : ''}`}>{quantidade(ciclo.enviados, 'comprovante enviado', 'comprovantes enviados')}</p>
           <div className={titulo ? 'flex flex-wrap gap-x-3 gap-y-1' : 'space-y-1'}>
-            <p className={`text-xs ${ciclo.enviados > 0 ? 'text-positive' : ''}`} style={ciclo.enviados === 0 ? muted : undefined}>{quantidade(ciclo.enviados, 'comprovante enviado', 'comprovantes enviados')}</p>
+            <p className="text-xs" style={muted}>{quantidade(ciclo.selecionados, 'NF-e avaliada', 'NF-es avaliadas')}</p>
             <p className="text-xs" style={muted}>{quantidade(ciclo.pendentes, 'NF-e pendente', 'NF-es pendentes')}</p>
           </div>
         </> : <>
@@ -99,18 +99,40 @@ function Resultado({ ciclo, compacto = false, verificadoEm = 0 }: { ciclo: WorkS
   const sinalAntigo = ciclo.statusCiclo === 'EM_EXECUCAO' && ciclo.atualizadoEm
     && verificadoEm - instanteCiclo(ciclo.atualizadoEm) > 10 * 60_000;
   const duration = Number.isFinite(ciclo.duracaoMs) ? `${formatarNumero(Math.round(ciclo.duracaoMs / 1000))} s` : 'Não informada';
+  const impedimentoXml = !ciclo.resultadoExecucao && somenteImpedimentoXml(ciclo);
+  const comPendencias = ciclo.resultadoExecucao === 'COM_PENDENCIAS';
+  const statusExibido = comPendencias ? 'CICLO_COM_PENDENCIAS'
+    : ciclo.resultadoExecucao === 'FALHA_TECNICA' ? 'FALHA_TECNICA'
+    : ciclo.resultadoExecucao === 'INTERROMPIDO' ? 'INTERROMPIDO'
+    : ciclo.resultadoExecucao === 'NAO_CLASSIFICADO' ? 'FALHA'
+    : impedimentoXml
+    ? codigoMotivo(ciclo) === 'XML_ACESSO_ORIGEM' ? 'XML_SEM_ACESSO' : 'XML_COM_IMPEDIMENTOS'
+    : ciclo.statusCiclo;
   return <div className={compacto ? 'flex flex-wrap items-center gap-x-2 gap-y-1' : 'space-y-1'}>
-    <StatusBadge status={sinalAntigo ? 'SEM_ATUALIZACAO' : ciclo.statusCiclo} /><p className="text-xs" style={muted}>Conexão {ciclo.conexao} · {duration}</p>
+    <StatusBadge status={sinalAntigo ? 'SEM_ATUALIZACAO' : statusExibido} tone={impedimentoXml || comPendencias ? 'warning' : undefined} /><p className="text-xs" style={muted}>Conexão {ciclo.conexao} · {duration}</p>
     {sinalAntigo && <p className="w-full text-xs" style={muted}>Sem atualização há mais de 10 minutos. Confira o processo; o término não foi confirmado.</p>}
-    {ciclo.motivoFalha && <p className="w-full max-w-lg break-words text-xs text-negative">{motivoFalhaLegivel(ciclo.motivoFalha)}</p>}
+    {ciclo.motivoFalha && <details className="w-full max-w-lg text-xs"><summary className="cursor-pointer" style={muted}>Ver ocorrências do ciclo</summary><p className={`mt-1 break-words ${impedimentoXml || comPendencias ? '' : 'text-negative'}`} style={impedimentoXml || comPendencias ? { color: 'var(--color-warning-badge-text)' } : undefined}>{motivoFalhaLegivel(ciclo.motivoFalha)}</p></details>}
     {ciclo.statusCiclo === 'FALHA' && !ciclo.motivoFalha && <p className="text-xs" style={muted}>Motivo não registrado neste ciclo.</p>}
   </div>;
+}
+
+function codigoMotivo(ciclo: WorkSftpClienteStatus) {
+  return ciclo.motivoFalha?.split(':', 1)[0].trim();
+}
+
+function somenteImpedimentoXml(ciclo: WorkSftpClienteStatus) {
+  return ciclo.statusCiclo === 'FALHA' && !!ciclo.fimUltimoCiclo && ciclo.conexao === 'OK'
+    && ciclo.xmlHabilitado === true && (ciclo.xmlErros ?? 0) > 0 && ciclo.errosComprovante === 0
+    && ['XML_RETIDO', 'XML_ACESSO_ORIGEM'].includes(codigoMotivo(ciclo) ?? '');
 }
 
 function motivoFalhaLegivel(motivo: string): string {
   const motivos: Record<string, string> = {
     TIMEOUT_COMPROVANTE: 'O destino não confirmou o envio. Aguardando conferência.',
-    XML_RETIDO: 'Há falhas na etapa XML. Consulte a auditoria dos documentos.',
+    XML_RETIDO: 'Há XMLs retidos ou com erro. O motivo individual está na auditoria dos documentos.',
+    XML_ACESSO_ORIGEM: 'A origem recusou o acesso aos XMLs. É necessário liberar o acesso ou disponibilizar os arquivos no SFTP.',
+    XML_PROCESSAMENTO: 'Não foi possível concluir a execução da etapa XML. Confira o processo e a auditoria.',
+    XML_FALHAS_MISTAS: 'Há bloqueio de acesso aos XMLs e outras falhas ou retenções. Consulte a auditoria dos documentos.',
     RECUSA_DESTINO: 'O destino recusou o comprovante.',
     ADAPTADOR_AUSENTE: 'Este cliente ainda não está preparado para envio neste processo.',
     CONEXAO: 'Não foi possível conectar à origem dos comprovantes.',
@@ -119,7 +141,7 @@ function motivoFalhaLegivel(motivo: string): string {
     PROCESSAMENTO: 'Houve falha no tratamento de comprovantes. Consulte a auditoria dos documentos.',
     INTERROMPIDO: 'A execução foi interrompida.',
   };
-  return motivos[motivo.split(':', 1)[0]] ?? 'Falha registrada. Consulte a auditoria dos documentos.';
+  return motivos[motivo.split(':', 1)[0].trim()] ?? 'Falha registrada. Consulte a auditoria dos documentos.';
 }
 
 function ResultadoXml({ ciclo }: { ciclo: WorkSftpClienteStatus }) {
@@ -129,8 +151,13 @@ function ResultadoXml({ ciclo }: { ciclo: WorkSftpClienteStatus }) {
     {ciclo.xmlHabilitado === false ? <p style={muted}>XML: etapa desabilitada neste ciclo.</p>
       : !medido ? <p style={muted}>XML: sem medição neste ciclo.</p>
         : <>
-          <p className="font-semibold">XML: {formatarNumero(ciclo.xmlEnviados!)} confirmados · {formatarNumero(ciclo.xmlErros!)} falhas</p>
-          <p style={muted}>{formatarNumero(ciclo.xmlAvaliados!)} avaliações · {formatarNumero(ciclo.xmlJaProcessados!)} já processados · {formatarNumero(ciclo.xmlPendentes!)} pendentes</p>
+          <p className={`font-semibold ${ciclo.xmlEnviados! > 0 ? 'text-positive' : ''}`}>XML: {formatarNumero(ciclo.xmlEnviados!)} confirmados</p>
+          {ciclo.xmlErros! > 0 && <p className={somenteImpedimentoXml(ciclo) || ciclo.resultadoExecucao === 'COM_PENDENCIAS' ? undefined : 'text-negative'} style={somenteImpedimentoXml(ciclo) || ciclo.resultadoExecucao === 'COM_PENDENCIAS' ? { color: 'var(--color-warning-badge-text)' } : undefined}>
+            {quantidade(ciclo.xmlErros!, 'avaliação sem conclusão', 'avaliações sem conclusão')}
+            {codigoMotivo(ciclo) === 'XML_ACESSO_ORIGEM' ? ' por bloqueio de acesso' : ' (falhas ou retenções)'}
+          </p>}
+          <p style={muted}>{formatarNumero(ciclo.xmlAvaliados!)} avaliações · {formatarNumero(ciclo.xmlJaProcessados!)} já processados</p>
+          {ciclo.xmlPendentes! > 0 && <p style={muted}>{quantidade(ciclo.xmlPendentes!, 'avaliação aguardando documento na origem', 'avaliações aguardando documento na origem')}</p>}
         </>}
   </div>;
 }
@@ -218,7 +245,7 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
           <div><h3 className="text-sm font-bold">Histórico de execuções</h3><p className="mt-1 text-xs" style={muted}>Cada linha é um ciclo. Em andamento, os valores são parciais e o período usa o início; nos finalizados, usa o término.</p></div>
           <label className="flex flex-wrap items-center gap-2 text-xs font-semibold" style={muted}>Resultado da execução
             <select className="h-9 min-w-32 rounded-lg border px-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)} style={selectStyle}>
-              <option value="">Todos</option><option value="EM_EXECUCAO">Em andamento</option><option value="CONCLUIDO">Concluído</option><option value="FALHA">Falha</option>
+              <option value="">Todos</option><option value="EM_EXECUCAO">Em andamento</option><option value="SEM_PENDENCIAS">Finalizado sem pendências no ciclo</option><option value="COM_PENDENCIAS">Finalizado com pendências</option><option value="FALHA_TECNICA">Falha técnica</option><option value="INTERROMPIDO">Interrompido</option><option value="FALHA">Falhas e impedimentos — classificação original</option>
             </select>
           </label>
         </div>
