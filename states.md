@@ -1,3 +1,9 @@
+## Integração 0770 — cobertura V2 testada em Saúde do ETL
+
+[Uso e implantação](docs/operacao/cobertura-etl-v2-0770.md). Leitura operacional da cobertura V2 preparada em Saúde do ETL para administradores da plataforma e desenvolvedores com acesso à página. Mostra os últimos recebimentos por relatório, sem somar reextrações nem interpretar linhas como títulos, coletas ou fretes distintos. Sem páginas próprias para Consolidação e Ocorrências. API Java e interface passaram nos testes; o ensaio HTTP em processo com JDBC real confirmou 11 relatórios, 89.703 linhas e 103 combinações entidade/data. V1 e dashboard consultados como referência antes de qualquer aplicação. V070 apenas acrescenta um novo synonym; SQL de publicação no repositório ETL V2.
+
+Ainda sem instalação do pacote ou troca de rota em produção. Não havia DASHBOARDS_DEV; testes sem inicializar o portal de produção e sem DDL permanente. Os 26 contratos de negócio e apoio, incluindo referências e validação de granularidade, permanecem pendentes antes da substituição do V1. Sem carga de 90 dias. Estado anterior abaixo preservado.
+
 ## Integração 0769 — verificação de leitura e decisão antes da troca
 
 [Conferência e critérios de aceite](docs/pre-validacao-etl-v2-0769.md). A adaptação já tem mapa 0754, 134 soluções candidatas em 0755 e templates de troca/retorno protegidos em 0758. Na revisão de 10/11/2026, Java 17/JDBC 13.4.0 com TLS validado e a conta atual do portal leram duas views operacionais do V2 e conferiram os 26 objetos e 958 colunas ainda ligados ao V1. Nenhum dos 26 contratos propostos está publicado no V2. Não trocar a origem nesta condição.

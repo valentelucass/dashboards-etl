@@ -5,6 +5,7 @@ import type { EChartsOption } from 'echarts';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import EtlSaudeKpiGrid from '../components/domain/etlSaude/EtlSaudeKpiGrid';
+import EtlV2CoberturaPanel from '../components/domain/etlSaude/EtlV2CoberturaPanel';
 import DataTable, { type ColunaTabela } from '../components/shared/DataTable';
 import DateRangePicker from '../components/shared/DateRangePicker';
 import ExportButton from '../components/shared/ExportButton';
@@ -15,6 +16,7 @@ import MensagemErro from '../components/ui/MensagemErro';
 import { exportarEtlSaudeCsv } from '../api/endpoints/etlSaudeServico';
 import { getApiErrorMessage, getTipoErro } from '../utils/apiError';
 import { useFiltro } from '../contexts/FiltroContext';
+import { useAutenticacao } from '../contexts/AutenticacaoContext';
 import { usePageHeader } from '../contexts/PageHeaderContext';
 import {
   useEtlSaudeEvolucaoInsercoesAtualizacoes,
@@ -26,6 +28,7 @@ import {
 import { buildBaseBarOption, buildBaseLineOption, getEchartsThemeTokens } from '../utils/echartsBuilders';
 import { formatarData, formatarDataHora, formatarNumero, formatarPorcentagem } from '../utils/formatadores';
 import type { EtlLogExtracaoAuditoriaRow } from '../types/etlSaude';
+import { isAdminPlataforma, isDesenvolvedor } from '../utils/accessControl';
 
 type TooltipParam = {
   axisValue?: string | number;
@@ -140,6 +143,7 @@ function ResumoKpi({
 }
 
 export default function EtlSaudePage() {
+  const { usuario } = useAutenticacao();
   const { dataInicio, dataFim, setDataInicio, setDataFim, setDataRange, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
   const filtro = { dataInicio, dataFim };
@@ -462,6 +466,7 @@ export default function EtlSaudePage() {
 
   return (
     <div className="w-full">
+      {(isAdminPlataforma(usuario) || isDesenvolvedor(usuario)) && <EtlV2CoberturaPanel />}
       <FilterBar
         period={(
           <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
