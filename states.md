@@ -1,3 +1,7 @@
+## Integração 0778 — Cadastro de Usuários validado na V2
+
+[Mapa atualizado](docs/pre-validacao-etl-v2-0769.md). A leitura JDBC confirmou os 6.918 usuários ativos migrados do V1 para a V2. São 22 de 26 destinos publicados. Coletas e três consultas de Fretes aguardam fontes complementares. O portal em produção usa as 26 rotas do V1, Flyway 069.
+
 ## Integração 0777 — Oito consultas operacionais validadas na V2
 
 [Mapa atualizado](docs/pre-validacao-etl-v2-0769.md). A V2 tem 21 destinos publicados. As pendências são Usuários, Coletas e três consultas de Fretes. As 26 rotas de produção apontam para o V1, Flyway 069.

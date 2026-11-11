@@ -1,10 +1,10 @@
 # Dashboard e ETL V2: conferência antes da troca — 0769
 
-**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **21 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API. As consultas publicadas da tabela abaixo passaram na leitura JDBC com a conta atual do portal. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
+**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **22 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API. As consultas publicadas da tabela abaixo passaram na leitura JDBC com a conta atual do portal. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
 
 O banco recebeu 89.703 linhas vigentes das 11 entidades. Dez entidades têm datas confirmadas de 02 a 10/11. Faturas por Cliente tem datas de 29/10 a 10/11. O período disponível ainda é menor que o mês usado pelo dashboard. A carga de 90 dias continua reservada à execução manual do operador.
 
-Os outros **cinco destinos ainda precisam de publicação e validação**. A coleta de Usuários chegou a 11.000 registros e a origem indicou mais páginas. Coletas e Fretes precisam de campos que o V1 usa e que os relatórios atuais do ESL não entregam. A carga histórica, a inclusão dos recebimentos auxiliares no ciclo de 60 minutos e o ensaio isolado de troca e retorno continuam pendentes.
+Os outros **quatro destinos ainda precisam de publicação e validação**. Coletas e Fretes precisam de campos que o V1 usa e que os relatórios atuais do ESL não entregam. A carga histórica, a atualização do cadastro de Usuários pela origem, a inclusão dos recebimentos auxiliares no ciclo de 60 minutos e o ensaio isolado de troca e retorno continuam pendentes.
 
 ## Documentação conferida
 
@@ -65,7 +65,7 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 | `vw_dim_filiais` | 2 | Dimensão de filiais e escopo de acesso | Publicado e testado com JDBC |
 | `vw_dim_motoristas` | 2 | Dimensão de motoristas e filtros | Publicado e testado com JDBC |
 | `vw_dim_planocontas` | 3 | Dimensão de planos de contas | Publicado e testado com JDBC |
-| `vw_dim_usuarios` | 3 | Dimensão de usuários da operação; distinta do cadastro do portal | Preparado, aguardando o fim da paginação |
+| `vw_dim_usuarios` | 3 | Dimensão de usuários da operação; distinta do cadastro do portal | Publicado e testado com JDBC após migração inicial dos 6.918 usuários ativos |
 | `vw_dim_veiculos` | 4 | Dimensão de veículos e frota | Publicado e testado com JDBC |
 | `vw_fato_manifestos_dash` | 106 | Manifestos: fato de competência operacional | Publicado e testado com JDBC |
 | `vw_faturas_por_cliente_powerbi` | 42 | Faturas: detalhe e contratos auxiliares | Publicado e testado com JDBC |
@@ -76,13 +76,14 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 | `vw_raster_sm_transit_time` | 37 | Raster: tempos de trânsito | Publicado e testado com JDBC |
 | `vw_sinistros_powerbi` | 34 | Sinistros e indenizações | Publicado e testado com JDBC |
 
-## Dependências dos cinco destinos pendentes
+## Dependências dos quatro destinos pendentes
 
 | Destinos | O que falta conferir ou receber |
 | --- | --- |
-| Coletas (1) | O template 6908 tem 31 campos. Nos 1.082 IDs presentes nos dois bancos, o V1 tem 1.082 endereços de coleta, 1.080 documentos de cliente e 916 horários de atualização de status. Esses campos precisam de uma fonte oficial na V2. |
-| Fretes (3) | O template 6389 tem 114 campos. Entre 3.260 IDs comuns, o V1 tem 3.150 IDs e horários de criação de CT-e e 3.260 registros com valores de ICMS, PIS e COFINS. A V2 precisa desses dados e da regra de atribuição financeira por filial vigente no V1. |
-| Usuários (1) | A coleta no ESL obteve 550 páginas com 20 usuários únicos por página e recebeu indicação de continuação na última página. A publicação exige o fim da paginação. O cadastro do portal é separado. |
+| Coletas (1) | O catálogo do ESL disponibiliza hora da solicitação, endereço, documento do cliente e ID do cancelador, fora do template 6908. Nos 1.082 IDs comuns, há 916 horários de atualização de status no V1 e nenhum deles coincide com a data geral de atualização do relatório. O complemento de dados e a origem do histórico de status e exclusões ainda precisam ser testados. |
+| Fretes (3) | O catálogo do ESL disponibiliza IDs das partes, ID e data de criação de CT-e, além dos campos fiscais, fora do template 6389. Entre 3.260 IDs comuns, o V1 tem 2.986 valores de ICMS diferentes de zero e 26 de PIS e COFINS. O complemento e a regra de atribuição financeira por filial precisam de validação. |
+
+O cadastro inicial de Usuários na V2 reproduziu os 6.918 IDs, nomes e datas de atualização do V1. A consulta usa dados gravados na V2. A origem GraphQL ainda precisa de uma travessia completa para passar a atualizar o cadastro.
 
 Raster passou no recorte de 03 a 10/11, com 284 viagens e 803 paradas publicadas. Coletores produziu os mesmos 84 grupos do procedimento V1 executado com as entradas da V2. Saúde do ETL reconciliou um ciclo real com 11 extrações. As duas consultas de Manifestos reconciliaram 902 manifestos e R$ 5.382.461,72 no recorte vigente. Entre os 103 manifestos compartilhados pelos dois bancos, 55 tiveram o mesmo par de valores de frete e coleta. A comparação de um período comum e fechado continua necessária para a troca.
 
