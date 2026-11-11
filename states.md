@@ -1,3 +1,7 @@
+## Integração 0772 — Cotações: duas cargas na mesma rota validadas
+
+[Regra e validação](docs/operacao/cotacoes-por-trecho-v2-0771.md). O gestor confirmou contar os dois itens calculados com mesma rota e CEP quando as cargas são diferentes. Os dados da V2 conferem com as imagens do ESL. Recaptura testada no SQL Server. Resumo da API, paginação e CSV testados em ambiente isolado após recusa de autenticação no ensaio da API com SQL Server. Três grupos coincidem nos campos de carga disponíveis e diferem em informações fiscais, status ou desconto. Conferir na origem antes do corte.
+
 ## Integração 0771 — Cotações: regra de trechos diferentes testada
 
 [Ensaio e limites](docs/operacao/cotacoes-por-trecho-v2-0771.md). O gestor confirmou contar trechos diferentes separadamente mesmo com o mesmo número. O teste anterior à correção perdeu uma de duas linhas; série, gráficos, resumos, tabela e CSV agora usam as linhas da base filtrada sem agrupar pelo número. SQL candidato do ETL com 54 colunas; ensaio real em leitura confirmou API, 2 páginas, CSV e filtro de filial. 45 testes Java e verificações de tipos/lint/encoding passaram. Em 10 números há conteúdo divergente com a mesma rota/CEP; não escolher ou agrupar sem a regra. View e troca não aplicadas, V1 mantido, sem carga de 90 dias.

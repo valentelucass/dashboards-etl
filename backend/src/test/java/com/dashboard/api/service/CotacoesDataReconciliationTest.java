@@ -2,17 +2,24 @@ package com.dashboard.api.service;
 
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.controller.CotacoesController;
+import com.dashboard.api.definition.DashboardExportDefinition;
+import com.dashboard.api.dto.FiltroConsultaDTO;
+import com.dashboard.api.dto.cotacoes.CotacaoResumoDTO;
 import com.dashboard.api.dto.cotacoes.CotacoesResumoAgregadoDTO;
 import com.dashboard.api.repository.CotacoesDashboardSqlRepository;
 import com.dashboard.api.service.acesso.EscopoFilialService;
+import com.dashboard.api.util.CsvExportWriter;
 import com.dashboard.api.util.PeriodoOffsetDateTimeHelper;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 import javax.sql.DataSource;
@@ -22,27 +29,34 @@ import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.ParsedSql;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class CotacoesDataReconciliationTest {
 
     private static final ZoneId ZONE_ID = ZoneId.of(PeriodoOffsetDateTimeHelper.DEFAULT_ZONE_ID);
 
     private JdbcTemplate jdbcTemplate;
+    private NamedParameterJdbcTemplate namedJdbc;
     private CotacoesController controller;
 
     @BeforeEach
     void setUp() {
         DataSource dataSource = dataSourceH2();
         jdbcTemplate = new JdbcTemplate(dataSource);
+        namedJdbc = new H2CotacoesNamedParameterJdbcTemplate(dataSource);
         criarFuncoesCompatibilidadeSqlServer();
         criarVisaoCotacoesFake();
 
         CotacoesDashboardSqlRepository repository = new CotacoesDashboardSqlRepository(
-                new H2CotacoesNamedParameterJdbcTemplate(dataSource),
+                namedJdbc,
                 new DashboardExportSqlBuilder(PeriodoOffsetDateTimeHelper.padrao()),
                 escopoSemRestricao()
         );
@@ -158,6 +172,55 @@ public class CotacoesDataReconciliationTest {
         assertTotaisIguais(resumo, totaisAnaliticos(dia, dia));
     }
 
+    @Test
+    void consultaEPaginaDuasCargasNaMesmaRotaComMesmoNumero() throws Exception {
+        LocalDate dia = LocalDate.of(2026, 3, 10);
+        inserirCotacao(8889L, dia, "SPO", "ana", "Ana", "Ana",
+                "DOC-TESTE", "Cliente Teste", "Cliente Teste", "Pendente", "418.23", "1.00");
+        inserirCotacao(8889L, dia, "SPO", "ana", "Ana", "Ana",
+                "DOC-TESTE", "Cliente Teste", "Cliente Teste", "Pendente", "1474.34", "2.00");
+        jdbcTemplate.update("""
+                UPDATE [vw_cotacoes_powerbi]
+                SET [Trecho] = 'Origem A x Destino B', [Metadata] = CAST([Volume] AS NVARCHAR(32))
+                WHERE [N° Cotação] = 8889
+                """);
+
+        MockMvcBuilders.standaloneSetup(controller).build()
+                .perform(get("/api/painel/cotacoes/resumo/filial")
+                        .param("dataInicio", dia.toString()).param("dataFim", dia.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].totalCotacoes").value(2))
+                .andExpect(jsonPath("$[0].freteCotado").value(1892.57));
+        Totais resumo = totais(controller.resumoFilial(dia, dia, new LinkedMultiValueMap<>()).getBody());
+        assertThat(resumo.totalCotacoes()).isEqualTo(2);
+        assertThat(resumo.freteCotado()).isEqualByComparingTo("1892.57");
+        assertThat(resumo.volumeM3()).isEqualByComparingTo("3.00");
+        assertTotaisIguais(resumo, totaisAnaliticos(dia, dia));
+
+        var builder = new DashboardExportSqlBuilder(PeriodoOffsetDateTimeHelper.padrao());
+        var periodo = new ValidadorPeriodoService();
+        var escopo = escopoSemRestricao();
+        var filtro = new FiltroConsultaDTO(dia, dia, Map.of());
+        var paginacao = new DashboardTabelaPaginadaService(namedJdbc, builder, periodo, escopo);
+        var primeira = paginacao.buscarCotacoes(filtro, 1, 1);
+        var segunda = paginacao.buscarCotacoes(filtro, 2, 1);
+        assertThat(primeira.totalElementos()).isEqualTo(2);
+        assertThat(segunda.totalElementos()).isEqualTo(2);
+        assertThat(primeira.conteudo()).hasSize(1);
+        assertThat(segunda.conteudo()).hasSize(1);
+        var itens = List.of(primeira.conteudo().get(0), segunda.conteudo().get(0));
+        assertThat(itens).extracting(CotacaoResumoDTO::trecho).containsOnly("Origem A x Destino B");
+        assertThat(itens).extracting(item -> item.valorFrete().stripTrailingZeros())
+                .containsExactlyInAnyOrder(new BigDecimal("418.23"), new BigDecimal("1474.34"));
+        assertThat(primeira.conteudo()).isEqualTo(paginacao.buscarCotacoes(filtro, 1, 1).conteudo());
+
+        var exportacao = new DashboardExportService(namedJdbc, builder, new CsvExportWriter(), periodo, escopo);
+        var arquivo = new ByteArrayOutputStream();
+        exportacao.exportar(DashboardExportDefinition.COTACOES, filtro).getBody().writeTo(arquivo);
+        assertThat(arquivo.toString(StandardCharsets.UTF_8).lines().skip(1).toList()).hasSize(2)
+                .allSatisfy(linha -> assertThat(linha).contains("8889"));
+    }
+
     private DataSource dataSourceH2() {
         JdbcDataSource dataSource = new JdbcDataSource();
         dataSource.setURL("jdbc:h2:mem:cotacoes-reconciliation-" + UUID.randomUUID()
@@ -217,6 +280,7 @@ public class CotacoesDataReconciliationTest {
                     [Data de extracao] TIMESTAMP NOT NULL,
                     [Status Conversão] NVARCHAR(100),
                     [Trecho] NVARCHAR(255),
+                    [Metadata] NVARCHAR(255),
                     [Valor frete] DECIMAL(19,4),
                     [Volume] DECIMAL(19,4),
                     [Usuario Key] NVARCHAR(255),
@@ -380,6 +444,13 @@ public class CotacoesDataReconciliationTest {
 
         H2CotacoesNamedParameterJdbcTemplate(DataSource dataSource) {
             super(dataSource);
+        }
+
+        @Override
+        protected ParsedSql getParsedSql(String sql) {
+            return super.getParsedSql(sql.replace(
+                    "HASHBYTES('SHA2_256', CONVERT(varbinary(max), [Metadata]))",
+                    "HASH('SHA-256', STRINGTOUTF8([Metadata]))"));
         }
 
         @Override

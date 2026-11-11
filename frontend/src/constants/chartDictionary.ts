@@ -14,7 +14,7 @@ const fretesFaturamentoBase = {
 
 const cotacoesBase = {
   tabelasOrigem: 'vw_cotacoes_powerbi',
-  cruzamentos: 'A consulta usa as linhas da base atual que passam pelos filtros. Trechos diferentes podem ter o mesmo número de cotação.',
+  cruzamentos: 'A consulta usa os itens da base atual que passam pelos filtros. Itens diferentes podem ter a mesma rota e o mesmo número de cotação.',
 } as const;
 
 const coletasBase = {
@@ -397,7 +397,7 @@ export const chartDictionary = {
     calculoTecnico:
       "COUNT(1); SUM(CASE WHEN status_normalizado IN (N'convertida', N'convertido') THEN 1 ELSE 0 END); SUM(CASE WHEN status_normalizado IN (N'reprovada', N'reprovado', N'perdida', N'perdido') THEN 1 ELSE 0 END); SUM(valor_frete)",
     calculoNegocio:
-      'Conta os trechos cotados no dia, separa os convertidos e reprovados e soma o valor do frete de cada linha.',
+      'Conta os itens cotados no dia, separa os convertidos e reprovados e soma o valor do frete de cada item.',
     agrupamento: 'GROUP BY data_cotacao',
   },
   cotacoesFunil: {
