@@ -1,10 +1,10 @@
 # Dashboard e ETL V2: conferência antes da troca — 0769
 
-**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **9 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API com JDBC e a conta atual do portal. Calendário, filiais, motoristas, veículos, plano de contas, Sinistros, Inventário e Localização de Cargas passaram na leitura JDBC com a mesma conta. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
+**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **13 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API com JDBC e a conta atual do portal. Calendário, filiais, motoristas, veículos, plano de contas, Sinistros, Inventário, Localização de Cargas, Faturas por Cliente (detalhe e fato), Contas a Pagar e Clientes passaram na leitura JDBC com a mesma conta. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
 
 O banco recebeu 89.703 linhas vigentes das 11 entidades. Dez entidades têm datas confirmadas de 02 a 10/11. Faturas por Cliente tem datas de 29/10 a 10/11. O período disponível ainda é menor que o mês usado pelo dashboard. A carga de 90 dias continua reservada à execução manual do operador.
 
-Os outros **17 destinos da tabela abaixo ainda precisam de publicação e validação**. O calendário publicado reproduz as regras do V1 usando a função da V2. A lista de filiais é obtida dos relatórios vigentes. As referências operacionais por vigência ainda precisam de dados. Raster e Coletores dependem de fontes além dos 11 relatórios. O banco `DASHBOARDS_DEV` ainda não existe nesta instância para o ensaio isolado de troca e retorno.
+Os outros **13 destinos da tabela abaixo ainda precisam de publicação e validação**. O calendário publicado reproduz as regras do V1 usando a função da V2. A lista de filiais é obtida dos relatórios vigentes. As referências operacionais por vigência ainda precisam de dados. Usuários e Raster têm fontes próprias. O indicador de Coletores cruza Inventário, Fretes e Manifestos. O banco `DASHBOARDS_DEV` ainda não existe nesta instância para o ensaio isolado de troca e retorno.
 
 ## Documentação conferida
 
@@ -21,7 +21,8 @@ Referência local do ETL: `docs/catalogos/integracao-etl-v2-dashboard/README.md`
 
 - **Conexão do consumidor:** a conta atual do portal, com Java 17, JDBC 13.4.0 e TLS validado, leu as consultas operacionais `pub.v2_installation_status` e `pub.v2_ingestion_status` no V2. A conta tem leitura no schema publicado e não tem leitura direta de `stg.production_export_latest` nem escrita em `core`. Nenhuma permissão foi ampliada.
 - **Contrato atual:** o cliente Java descreveu os 26 objetos através de `DASHBOARDS`, com 958 nomes de colunas iguais ao inventário; os 26 destinos ainda apontam ao V1. A conferência do catálogo SQL encontrou **0 diferenças** nos atributos de tipo, tamanho, precisão, escala, posição e nulidade registrados em 0754. Flyway do portal: versão 069.
-- **Base nova:** catálogo mostrou apenas duas views operacionais em `pub`. Nenhum dos 26 destinos propostos está instalado. Em `ref`, 0 de 18 tabelas têm linhas; em `core`, 0 de 3; em `mart`, 0 tabelas. Contagens de catálogo não substituem testes de qualidade.
+- **Base nova:** a conferência inicial 0769 encontrou duas views operacionais em `pub` e nenhum dos 26 destinos analíticos. A tabela abaixo registra as publicações e leituras verificadas depois dessa conferência.
+- **Publicações 0776:** posição, nome, tipo, tamanho, precisão e escala de 128 colunas conferem com o V1. O SQL Server marca nove colunas calculadas como potencialmente nulas. A leitura dos dados atuais encontrou zero chaves ou valores obrigatórios nulos nessas colunas. As quatro consultas e a view interna de Faturas não têm dependência de outro banco.
 - **Recebimento:** o total do último lote válido de cada entidade/data foi conferido com a contagem da view `stg.production_export_latest`. A origem observada é única, com **89.703 linhas e 103 combinações de entidade e data**. O diário contém 327.965 linhas históricas acumuladas em 355 capturas gravadas; somá-las duplicaria as reextrações. Capturas que falharam permanecem registradas (13); nenhuma estava em execução no momento da consulta.
 
 | Entidade | Template | Campos | Dias recebidos | Período observado | Linhas atuais |
@@ -51,29 +52,41 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 | `dim_calendario` | 19 | Calendário de competências e dias úteis | Publicado e testado com JDBC |
 | `fato_fretes_faturamento` | 83 | Faturamento e elegibilidade de Fretes | Ausente |
 | `fato_gestao_vista_coletores` | 21 | Gestão à Vista: coletores e cubagem | Ausente |
-| `fato_gestao_vista_faturas` | 54 | Faturas por Cliente e indicadores financeiros | Ausente |
+| `fato_gestao_vista_faturas` | 54 | Faturas por Cliente e indicadores financeiros | Publicado e testado com JDBC |
 | `fato_gestao_vista_fretes` | 54 | Gestão à Vista: Fretes e cubagem | Ausente |
 | `log_extracoes` | 9 | Auditoria e Saúde do ETL | Ausente |
 | `raster_viagem_paradas` | 25 | Raster: paradas e horários de corte | Ausente |
 | `raster_viagens` | 33 | Raster: viagens e horários de corte | Ausente |
 | `vw_bi_monitoramento` | 9 | Saúde do ETL e atualização das fontes | Ausente |
 | `vw_coletas_powerbi` | 41 | Coletas: indicadores, detalhe e exportação | Ausente |
-| `vw_contas_a_pagar_powerbi` | 31 | Contas a Pagar: emissão, pagamentos e conciliação | Ausente |
+| `vw_contas_a_pagar_powerbi` | 31 | Contas a Pagar: emissão, pagamentos e conciliação | Publicado e testado com JDBC |
 | `vw_cotacoes_powerbi` | 54 | Cotações: conversão, descontos e tarifas | Publicado e testado com JDBC |
-| `vw_dim_clientes` | 1 | Dimensão de clientes e filtros | Ausente |
+| `vw_dim_clientes` | 1 | Dimensão de clientes e filtros | Publicado e testado com JDBC |
 | `vw_dim_filiais` | 2 | Dimensão de filiais e escopo de acesso | Publicado e testado com JDBC |
 | `vw_dim_motoristas` | 2 | Dimensão de motoristas e filtros | Publicado e testado com JDBC |
 | `vw_dim_planocontas` | 3 | Dimensão de planos de contas | Publicado e testado com JDBC |
 | `vw_dim_usuarios` | 3 | Dimensão de usuários da operação; distinta do cadastro do portal | Ausente |
 | `vw_dim_veiculos` | 4 | Dimensão de veículos e frota | Publicado e testado com JDBC |
 | `vw_fato_manifestos_dash` | 106 | Manifestos: fato de competência operacional | Ausente |
-| `vw_faturas_por_cliente_powerbi` | 42 | Faturas: detalhe e contratos auxiliares | Ausente |
+| `vw_faturas_por_cliente_powerbi` | 42 | Faturas: detalhe e contratos auxiliares | Publicado e testado com JDBC |
 | `vw_fretes_powerbi` | 123 | Fretes operacionais e Performance | Ausente |
 | `vw_inventario_powerbi` | 34 | Inventário: detalhe e apoio aos indicadores | Publicado e testado com JDBC |
 | `vw_localizacao_cargas_powerbi` | 29 | Tracking e exportação do Localizador | Publicado e testado com JDBC |
 | `vw_manifestos_powerbi` | 105 | Manifestos: projeção operacional | Ausente |
 | `vw_raster_sm_transit_time` | 37 | Raster: tempos de trânsito | Ausente |
 | `vw_sinistros_powerbi` | 34 | Sinistros e indenizações | Publicado e testado com JDBC |
+
+## Dependências dos 13 destinos pendentes
+
+| Destinos | O que falta conferir ou receber |
+| --- | --- |
+| Coletas (1) | O relatório traz a atualização da coleta. Nos 1.396 registros, os campos usados no V1 para horário de atualização do status, cancelador e responsável pela exclusão estavam ausentes. A V2 também precisa publicar o cadastro de usuários e o tratamento de exclusões. |
+| Fretes (3) | Fechar a elegibilidade de faturamento, as datas operacionais, os indicadores de cubagem e a atribuição financeira por filial. A regra de atribuição está cadastrada no V1 e a tabela correspondente da V2 está vazia. |
+| Manifestos (2) | Conferir a composição da receita por manifesto. Os identificadores dos itens usados no V1 estavam ausentes nos dois relatórios. O número da coleta aparece em 4.428 dos 4.879 registros de Fretes e reproduziu os 2.906 vínculos comparáveis entre os bancos. Falta validar a cobertura do vínculo e os totais do fato. |
+| Coletores (1) | Reproduzir o cruzamento de Inventário, Fretes e Manifestos por data, filial e classificação. O indicador do V1 tem 342 linhas para comparação. |
+| Usuários (1) | Carregar e validar o cadastro da operação. O V1 tem 6.918 usuários ativos e a tabela correspondente da V2 está vazia. |
+| Raster (3) | Carregar e conferir a fonte de viagens e paradas. O V1 tem 5.754 viagens e 17.776 paradas. A V2 ainda não tem as tabelas dessa integração. |
+| Saúde do ETL (2) | Registrar o ciclo completo e as métricas por execução. A V2 tem 368 capturas por dia e entidade, sem registros na auditoria de ciclo ou de páginas. |
 
 ## Ordem da adaptação e testes de aceite
 
