@@ -1,3 +1,7 @@
+## Integração 0777 — Oito consultas operacionais validadas na V2
+
+[Mapa atualizado](docs/pre-validacao-etl-v2-0769.md). A V2 tem 21 destinos publicados. As pendências são Usuários, Coletas e três consultas de Fretes. As 26 rotas de produção apontam para o V1, Flyway 069.
+
 ## Integração 0776 — Faturas, Contas a Pagar e Clientes disponíveis na V2
 
 [Mapa atualizado](docs/pre-validacao-etl-v2-0769.md). As quatro consultas passaram na leitura JDBC do portal com metadados compatíveis. A V2 tem 13 dos 26 destinos analíticos publicados. As 26 rotas atuais continuam no V1 e o portal permanece no Flyway 069.
