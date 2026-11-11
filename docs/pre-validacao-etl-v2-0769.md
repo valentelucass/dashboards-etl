@@ -1,10 +1,10 @@
 # Dashboard e ETL V2: conferência antes da troca — 0769
 
-**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **7 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API com JDBC e a conta atual do portal. Calendário, filiais, motoristas, veículos, plano de contas e Sinistros passaram na leitura JDBC com a mesma conta. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
+**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **9 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API com JDBC e a conta atual do portal. Calendário, filiais, motoristas, veículos, plano de contas, Sinistros, Inventário e Localização de Cargas passaram na leitura JDBC com a mesma conta. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
 
 O banco recebeu 89.703 linhas vigentes das 11 entidades. Dez entidades têm datas confirmadas de 02 a 10/11. Faturas por Cliente tem datas de 29/10 a 10/11. O período disponível ainda é menor que o mês usado pelo dashboard. A carga de 90 dias continua reservada à execução manual do operador.
 
-Os outros **19 destinos da tabela abaixo ainda precisam de publicação e validação**. O calendário publicado reproduz as regras do V1 usando a função da V2. A lista de filiais é obtida dos relatórios vigentes. As referências operacionais por vigência ainda precisam de dados. Raster e Coletores dependem de fontes além dos 11 relatórios. O banco `DASHBOARDS_DEV` ainda não existe nesta instância para o ensaio isolado de troca e retorno.
+Os outros **17 destinos da tabela abaixo ainda precisam de publicação e validação**. O calendário publicado reproduz as regras do V1 usando a função da V2. A lista de filiais é obtida dos relatórios vigentes. As referências operacionais por vigência ainda precisam de dados. Raster e Coletores dependem de fontes além dos 11 relatórios. O banco `DASHBOARDS_DEV` ainda não existe nesta instância para o ensaio isolado de troca e retorno.
 
 ## Documentação conferida
 
@@ -69,8 +69,8 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 | `vw_fato_manifestos_dash` | 106 | Manifestos: fato de competência operacional | Ausente |
 | `vw_faturas_por_cliente_powerbi` | 42 | Faturas: detalhe e contratos auxiliares | Ausente |
 | `vw_fretes_powerbi` | 123 | Fretes operacionais e Performance | Ausente |
-| `vw_inventario_powerbi` | 34 | Inventário: detalhe e apoio aos indicadores | Ausente |
-| `vw_localizacao_cargas_powerbi` | 29 | Tracking e exportação do Localizador | Ausente |
+| `vw_inventario_powerbi` | 34 | Inventário: detalhe e apoio aos indicadores | Publicado e testado com JDBC |
+| `vw_localizacao_cargas_powerbi` | 29 | Tracking e exportação do Localizador | Publicado e testado com JDBC |
 | `vw_manifestos_powerbi` | 105 | Manifestos: projeção operacional | Ausente |
 | `vw_raster_sm_transit_time` | 37 | Raster: tempos de trânsito | Ausente |
 | `vw_sinistros_powerbi` | 34 | Sinistros e indenizações | Publicado e testado com JDBC |

@@ -1,3 +1,7 @@
+## Integração 0775 — Inventário e Localização disponíveis na V2
+
+[Mapa atualizado](docs/pre-validacao-etl-v2-0769.md). As duas views passaram em leitura JDBC com a conta do portal e metadados de coluna comparados ao V1. A V2 tem 9 de 26 destinos analíticos publicados. As 26 rotas existentes e o Flyway 069 estão preservados. A troca depende de 17 destinos e da validação integrada.
+
 ## Integração 0774 — Seis destinos adicionais na V2
 
 [Mapa atualizado](docs/pre-validacao-etl-v2-0769.md). Calendário, filiais, motoristas, veículos, plano de contas e Sinistros publicados no V2. A leitura real via JDBC com a conta do dashboard confirmou os seis contratos e as contagens. Sete de 26 destinos analíticos estão publicados. Os 26 synonyms ativos e o Flyway 069 continuam preservados. A troca completa depende dos outros 19 destinos e do ensaio isolado.
