@@ -1,3 +1,7 @@
+## Integração 0774 — Seis destinos adicionais na V2
+
+[Mapa atualizado](docs/pre-validacao-etl-v2-0769.md). Calendário, filiais, motoristas, veículos, plano de contas e Sinistros publicados no V2. A leitura real via JDBC com a conta do dashboard confirmou os seis contratos e as contagens. Sete de 26 destinos analíticos estão publicados. Os 26 synonyms ativos e o Flyway 069 continuam preservados. A troca completa depende dos outros 19 destinos e do ensaio isolado.
+
 ## Integração 0773 — Leitura real da V2 e pendências da troca
 
 [Situação e contratos](docs/pre-validacao-etl-v2-0769.md). Cotações e cobertura publicadas no V2. Os dois endpoints passaram em ensaio com JDBC e a conta do portal, incluindo paginação, CSV e escopo de filial em Cotações. Os três casos pendentes foram conferidos no ESL. Há 1 de 26 destinos analíticos publicados e 89.703 linhas vigentes de 11 entidades. Calendário e filiais operacionais sem dados na V2 e ambiente de ensaio de troca ausente. Flyway do portal na versão 069 e os 26 destinos seguem no V1.

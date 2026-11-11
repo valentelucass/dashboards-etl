@@ -1,10 +1,10 @@
 # Dashboard e ETL V2: conferência antes da troca — 0769
 
-**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **1 dos 26 destinos analíticos publicados** (`vw_cotacoes_powerbi`) e uma consulta adicional de cobertura dos recebimentos. As duas passaram em teste de API com JDBC e a conta atual do portal. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
+**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **7 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API com JDBC e a conta atual do portal. Calendário, filiais, motoristas, veículos, plano de contas e Sinistros passaram na leitura JDBC com a mesma conta. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
 
 O banco recebeu 89.703 linhas vigentes das 11 entidades. Dez entidades têm datas confirmadas de 02 a 10/11. Faturas por Cliente tem datas de 29/10 a 10/11. O período disponível ainda é menor que o mês usado pelo dashboard. A carga de 90 dias continua reservada à execução manual do operador.
 
-Os outros **25 destinos da tabela abaixo ainda precisam de publicação e validação**. O catálogo da V2 tem zero linhas nas tabelas de calendário, filiais operacionais e ratificação de referências. Raster e Coletores dependem de fontes além dos 11 relatórios. O banco `DASHBOARDS_DEV` ainda não existe nesta instância para o ensaio isolado de troca e retorno.
+Os outros **19 destinos da tabela abaixo ainda precisam de publicação e validação**. O calendário publicado reproduz as regras do V1 usando a função da V2. A lista de filiais é obtida dos relatórios vigentes. As referências operacionais por vigência ainda precisam de dados. Raster e Coletores dependem de fontes além dos 11 relatórios. O banco `DASHBOARDS_DEV` ainda não existe nesta instância para o ensaio isolado de troca e retorno.
 
 ## Documentação conferida
 
@@ -48,7 +48,7 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 
 | Objeto consultado em `DASHBOARDS.dbo` | Colunas | Área dependente | Destino V2 |
 | --- | ---: | --- | --- |
-| `dim_calendario` | 19 | Calendário de competências e dias úteis | Ausente |
+| `dim_calendario` | 19 | Calendário de competências e dias úteis | Publicado e testado com JDBC |
 | `fato_fretes_faturamento` | 83 | Faturamento e elegibilidade de Fretes | Ausente |
 | `fato_gestao_vista_coletores` | 21 | Gestão à Vista: coletores e cubagem | Ausente |
 | `fato_gestao_vista_faturas` | 54 | Faturas por Cliente e indicadores financeiros | Ausente |
@@ -61,11 +61,11 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 | `vw_contas_a_pagar_powerbi` | 31 | Contas a Pagar: emissão, pagamentos e conciliação | Ausente |
 | `vw_cotacoes_powerbi` | 54 | Cotações: conversão, descontos e tarifas | Publicado e testado com JDBC |
 | `vw_dim_clientes` | 1 | Dimensão de clientes e filtros | Ausente |
-| `vw_dim_filiais` | 2 | Dimensão de filiais e escopo de acesso | Ausente |
-| `vw_dim_motoristas` | 2 | Dimensão de motoristas e filtros | Ausente |
-| `vw_dim_planocontas` | 3 | Dimensão de planos de contas | Ausente |
+| `vw_dim_filiais` | 2 | Dimensão de filiais e escopo de acesso | Publicado e testado com JDBC |
+| `vw_dim_motoristas` | 2 | Dimensão de motoristas e filtros | Publicado e testado com JDBC |
+| `vw_dim_planocontas` | 3 | Dimensão de planos de contas | Publicado e testado com JDBC |
 | `vw_dim_usuarios` | 3 | Dimensão de usuários da operação; distinta do cadastro do portal | Ausente |
-| `vw_dim_veiculos` | 4 | Dimensão de veículos e frota | Ausente |
+| `vw_dim_veiculos` | 4 | Dimensão de veículos e frota | Publicado e testado com JDBC |
 | `vw_fato_manifestos_dash` | 106 | Manifestos: fato de competência operacional | Ausente |
 | `vw_faturas_por_cliente_powerbi` | 42 | Faturas: detalhe e contratos auxiliares | Ausente |
 | `vw_fretes_powerbi` | 123 | Fretes operacionais e Performance | Ausente |
@@ -73,7 +73,7 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 | `vw_localizacao_cargas_powerbi` | 29 | Tracking e exportação do Localizador | Ausente |
 | `vw_manifestos_powerbi` | 105 | Manifestos: projeção operacional | Ausente |
 | `vw_raster_sm_transit_time` | 37 | Raster: tempos de trânsito | Ausente |
-| `vw_sinistros_powerbi` | 34 | Sinistros e indenizações | Ausente |
+| `vw_sinistros_powerbi` | 34 | Sinistros e indenizações | Publicado e testado com JDBC |
 
 ## Ordem da adaptação e testes de aceite
 
@@ -84,4 +84,4 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 5. **Ensaiar o dashboard em ambiente isolado.** Usar `DASHBOARDS_DEV`, credencial de leitura da publicação e conexão sem dependência de `ETL_SISTEMA`. Comparar SQL → API → tela → exportação, inclusive perfis com e sem acesso, filiais autorizadas, período padrão (último mês), filtros, paginação, ordenação, somas, horários e indicadores com seus dicionários. A cobertura deve comportar esse período e as dependências históricas do cálculo. Documentar e resolver divergências relevantes antes de aprovar a troca.
 6. **Trocar e aposentar em etapas.** Só após os testes, preparar a migration Flyway dos 26 nomes no banco do portal e a paridade de criação do schema. Ensaiar troca e retorno; comprovar que as telas não fazem consultas residuais ao V1. Verificar também outros consumidores, jobs, serviços, integrações e rotinas de publicação antes de desligar o ETL antigo. A varredura de fonte encontrou scripts V1 de publicação para o dashboard e de reprocessamento de Manifestos; a execução atual de outros consumidores ainda não foi inventariada. O operador humano executa a implantação de produção e conserva o retorno até validar a nova rotina.
 
-O ensaio de troca e retorno depende dos destinos restantes, das referências e da cobertura do período. As duas publicações de 11/11 foram instaladas no banco da V2. O Flyway do portal permanece na versão 069, com as rotas atuais preservadas.
+O ensaio de troca e retorno depende dos destinos restantes, das referências e da cobertura do período. O Flyway do portal permanece na versão 069, com as rotas atuais preservadas.
