@@ -100,7 +100,8 @@ public enum DashboardExportDefinition {
                     "origens", List.of("[Origem]"),
                     "destinos", List.of("[Destino]")
             ),
-            List.of("[Data Cotação] DESC", "[N° Cotação] DESC"),
+            List.of("[Data Cotação] DESC", "[N° Cotação] DESC", "[Trecho]",
+                    "HASHBYTES('SHA2_256', CONVERT(varbinary(max), [Metadata]))"),
             null
     ),
     CONTAS_A_PAGAR(

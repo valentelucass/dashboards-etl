@@ -139,6 +139,25 @@ public class CotacoesDataReconciliationTest {
         assertTotaisIguais(porFilial, analiticoFiltrado);
     }
 
+    @Test
+    void resumeDoisTrechosComMesmoNumeroSemPerderFreteCotado() {
+        LocalDate dia = LocalDate.of(2026, 3, 10);
+        inserirCotacao(8888L, dia, "SPO", "ana", "Ana", "Ana",
+                "DOC-TESTE", "Cliente Teste", "Cliente Teste", "Convertida", "100.25", "1.00");
+        inserirCotacao(8888L, dia, "SPO", "ana", "Ana", "Ana",
+                "DOC-TESTE", "Cliente Teste", "Cliente Teste", "Pendente", "200.50", "2.00");
+        jdbcTemplate.update("""
+                UPDATE [vw_cotacoes_powerbi]
+                SET [Trecho] = CASE WHEN [Valor frete] = 100.25 THEN 'PR x Destino A' ELSE 'PR x Destino B' END
+                WHERE [N° Cotação] = 8888
+                """);
+
+        Totais resumo = totais(controller.resumoFilial(dia, dia, new LinkedMultiValueMap<>()).getBody());
+        assertThat(resumo.totalCotacoes()).isEqualTo(2);
+        assertThat(resumo.freteCotado()).isEqualByComparingTo("300.75");
+        assertTotaisIguais(resumo, totaisAnaliticos(dia, dia));
+    }
+
     private DataSource dataSourceH2() {
         JdbcDataSource dataSource = new JdbcDataSource();
         dataSource.setURL("jdbc:h2:mem:cotacoes-reconciliation-" + UUID.randomUUID()
@@ -197,6 +216,7 @@ public class CotacoesDataReconciliationTest {
                     [Data Cotação] TIMESTAMP WITH TIME ZONE NOT NULL,
                     [Data de extracao] TIMESTAMP NOT NULL,
                     [Status Conversão] NVARCHAR(100),
+                    [Trecho] NVARCHAR(255),
                     [Valor frete] DECIMAL(19,4),
                     [Volume] DECIMAL(19,4),
                     [Usuario Key] NVARCHAR(255),

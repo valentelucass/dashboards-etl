@@ -1,3 +1,7 @@
+## Integração 0771 — Cotações: regra de trechos diferentes testada
+
+[Ensaio e limites](docs/operacao/cotacoes-por-trecho-v2-0771.md). O gestor confirmou contar trechos diferentes separadamente mesmo com o mesmo número. O teste anterior à correção perdeu uma de duas linhas; série, gráficos, resumos, tabela e CSV agora usam as linhas da base filtrada sem agrupar pelo número. SQL candidato do ETL com 54 colunas; ensaio real em leitura confirmou API, 2 páginas, CSV e filtro de filial. 45 testes Java e verificações de tipos/lint/encoding passaram. Em 10 números há conteúdo divergente com a mesma rota/CEP; não escolher ou agrupar sem a regra. View e troca não aplicadas, V1 mantido, sem carga de 90 dias.
+
 ## Integração 0770 — cobertura V2 testada em Saúde do ETL
 
 [Uso e implantação](docs/operacao/cobertura-etl-v2-0770.md). Leitura operacional da cobertura V2 preparada em Saúde do ETL para administradores da plataforma e desenvolvedores com acesso à página. Mostra os últimos recebimentos por relatório, sem somar reextrações nem interpretar linhas como títulos, coletas ou fretes distintos. Sem páginas próprias para Consolidação e Ocorrências. API Java e interface passaram nos testes; o ensaio HTTP em processo com JDBC real confirmou 11 relatórios, 89.703 linhas e 103 combinações entidade/data. V1 e dashboard consultados como referência antes de qualquer aplicação. V070 apenas acrescenta um novo synonym; SQL de publicação no repositório ETL V2.

@@ -14,7 +14,7 @@ const fretesFaturamentoBase = {
 
 const cotacoesBase = {
   tabelasOrigem: 'vw_cotacoes_powerbi',
-  cruzamentos: 'Nenhum JOIN; CTE base_filtrada -> base_deduplicada por ROW_NUMBER() PARTITION BY [N° Cotação].',
+  cruzamentos: 'A consulta usa as linhas da base atual que passam pelos filtros. Trechos diferentes podem ter o mesmo número de cotação.',
 } as const;
 
 const coletasBase = {
@@ -397,7 +397,7 @@ export const chartDictionary = {
     calculoTecnico:
       "COUNT(1); SUM(CASE WHEN status_normalizado IN (N'convertida', N'convertido') THEN 1 ELSE 0 END); SUM(CASE WHEN status_normalizado IN (N'reprovada', N'reprovado', N'perdida', N'perdido') THEN 1 ELSE 0 END); SUM(valor_frete)",
     calculoNegocio:
-      'Conta cotações deduplicadas do dia, separa convertidas e perdidas/reprovadas, e soma o valor de frete associado à oportunidade.',
+      'Conta os trechos cotados no dia, separa os convertidos e reprovados e soma o valor do frete de cada linha.',
     agrupamento: 'GROUP BY data_cotacao',
   },
   cotacoesFunil: {

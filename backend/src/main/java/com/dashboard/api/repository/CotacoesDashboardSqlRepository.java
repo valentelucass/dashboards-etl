@@ -148,25 +148,12 @@ public class CotacoesDashboardSqlRepository {
                     SELECT *
                     %s
                 ),
-                base_deduplicada AS (
-                    SELECT *
-                    FROM (
-                        SELECT
-                            base_filtrada.*,
-                            ROW_NUMBER() OVER (
-                                PARTITION BY [N° Cotação]
-                                ORDER BY [Data de extracao] DESC, [Data Cotação] DESC, [N° Cotação] DESC
-                            ) AS [__rn]
-                        FROM base_filtrada
-                    ) dedup
-                    WHERE [__rn] = 1
-                ),
                 base_metricas AS (
                     SELECT
                         CAST([Data Cotação] AS date) AS data_cotacao,
                         COALESCE(TRY_CONVERT(DECIMAL(19,4), [Valor frete]), 0) AS valor_frete,
                         %s AS status_normalizado
-                    FROM base_deduplicada
+                    FROM base_filtrada
                     WHERE [Data Cotação] IS NOT NULL
                 )
                 SELECT
@@ -231,22 +218,6 @@ public class CotacoesDashboardSqlRepository {
                     SELECT *
                     %s
                 ),
-                base_deduplicada AS (
-                    SELECT *
-                    FROM (
-                        SELECT
-                            base_filtrada.*,
-                            ROW_NUMBER() OVER (
-                                PARTITION BY [N° Cotação]
-                                ORDER BY
-                                    TRY_CONVERT(datetime2, CONVERT(NVARCHAR(64), [Data de extracao])) DESC,
-                                    TRY_CONVERT(datetimeoffset, CONVERT(NVARCHAR(64), [Data Cotação])) DESC,
-                                    [N° Cotação] DESC
-                            ) AS [__rn]
-                        FROM base_filtrada
-                    ) dedup
-                    WHERE [__rn] = 1
-                ),
                 base_metricas AS (
                     SELECT
                         TRY_CONVERT(BIGINT, [N° Cotação]) AS numero_cotacao,
@@ -272,8 +243,9 @@ public class CotacoesDashboardSqlRepository {
                         %s AS cidade_destino,
                         %s AS uf_destino,
                         TRY_CONVERT(datetimeoffset, CONVERT(NVARCHAR(64), [CT-e/Data de emissão])) AS cte_emissao,
-                        TRY_CONVERT(datetimeoffset, CONVERT(NVARCHAR(64), [Nfse/Data de emissão])) AS nfse_emissao
-                    FROM base_deduplicada
+                        TRY_CONVERT(datetimeoffset, CONVERT(NVARCHAR(64), [Nfse/Data de emissão])) AS nfse_emissao,
+                        HASHBYTES('SHA2_256', CONVERT(varbinary(max), [Metadata])) AS ordem_linha
+                    FROM base_filtrada
                 )
                 SELECT
                     numero_cotacao,
@@ -309,7 +281,7 @@ public class CotacoesDashboardSqlRepository {
                     cte_emissao,
                     nfse_emissao
                 FROM base_metricas
-                ORDER BY data_cotacao DESC, numero_cotacao DESC
+                ORDER BY data_cotacao DESC, numero_cotacao DESC, trecho, ordem_linha
                 OFFSET 0 ROWS FETCH NEXT :limite ROWS ONLY
                 """.formatted(
                 source.sql(),
@@ -413,22 +385,6 @@ public class CotacoesDashboardSqlRepository {
                     SELECT *
                     %s
                 ),
-                base_deduplicada AS (
-                    SELECT *
-                    FROM (
-                        SELECT
-                            base_filtrada.*,
-                            ROW_NUMBER() OVER (
-                                PARTITION BY [N° Cotação]
-                                ORDER BY
-                                    TRY_CONVERT(datetime2, CONVERT(NVARCHAR(64), [Data de extracao])) DESC,
-                                    TRY_CONVERT(datetimeoffset, CONVERT(NVARCHAR(64), [Data Cotação])) DESC,
-                                    [N° Cotação] DESC
-                            ) AS [__rn]
-                        FROM base_filtrada
-                    ) dedup
-                    WHERE [__rn] = 1
-                ),
                 base_metricas AS (
                     SELECT
                         %s AS agrupador_id,
@@ -436,7 +392,7 @@ public class CotacoesDashboardSqlRepository {
                         %s AS status_normalizado,
                         %s AS valor_frete,
                         %s AS volume_m3
-                    FROM base_deduplicada
+                    FROM base_filtrada
                 ),
                 agregado AS (
                     SELECT
@@ -583,19 +539,6 @@ public class CotacoesDashboardSqlRepository {
                     SELECT *
                     %s
                 ),
-                base_deduplicada AS (
-                    SELECT *
-                    FROM (
-                        SELECT
-                            base_filtrada.*,
-                            ROW_NUMBER() OVER (
-                                PARTITION BY [N° Cotação]
-                                ORDER BY [Data de extracao] DESC, [Data Cotação] DESC, [N° Cotação] DESC
-                            ) AS [__rn]
-                        FROM base_filtrada
-                    ) dedup
-                    WHERE [__rn] = 1
-                ),
                 base_metricas AS (
                     SELECT
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Status Conversão]))), N''), N'Sem status') AS status_exibicao,
@@ -607,7 +550,7 @@ public class CotacoesDashboardSqlRepository {
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(50), [UF Origem]))), N''), N'Sem UF origem') AS uf_origem,
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(50), [UF Destino]))), N''), N'Sem UF destino') AS uf_destino,
                         %s AS tipo_operacao_normalizado
-                    FROM base_deduplicada
+                    FROM base_filtrada
                 )
                 """.formatted(
                 source.sql(),

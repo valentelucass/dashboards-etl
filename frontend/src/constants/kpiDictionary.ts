@@ -645,8 +645,8 @@ export const KpiDictionary = {
   cotacoes: {
     totalCotacoes: {
       titulo: 'Total de Cotações',
-      descricao: 'Quantidade de linhas de cotação no período selecionado.',
-      calculo: 'Contagem de Cotações Filtradas.',
+      descricao: 'Quantidade de trechos cotados no período selecionado. Trechos diferentes contam separadamente, mesmo com o mesmo número de cotação.',
+      calculo: 'Contagem das linhas da base atual que passam pelos filtros.',
       observacao: periodoCotacoes,
     },
     valorPotencial: {

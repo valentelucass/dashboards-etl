@@ -99,7 +99,7 @@ class CotacoesDashboardSqlRepositoryTest {
 
         assertThat(sqlCaptor.getValue())
                 .contains("SELECT TOP (40)")
-                .contains("ROW_NUMBER() OVER")
+                .doesNotContain("PARTITION BY [N° Cotação]")
                 .contains("GROUP BY agrupador_id")
                 .contains("ORDER BY volume_m3 DESC, total_cotacoes DESC, entidade")
                 .contains("COUNT(1) AS total_cotacoes")
