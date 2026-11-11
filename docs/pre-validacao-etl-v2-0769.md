@@ -1,6 +1,10 @@
 # Dashboard e ETL V2: conferência antes da troca — 0769
 
-**Resultado em 10/11/2026 às 21:25, horário de Brasília:** conexão de leitura comprovada. A adaptação foi documentada em 0754, detalhada em 0755 e teve o roteiro de troca e retorno preparado em 0758. Ela ainda não pode substituir o V1: os **26 objetos de negócio e apoio** usados pelo portal continuam em `ETL_SISTEMA`; **nenhum dos 26 destinos propostos** existe em `ETL_SISTEMA_V2.pub`. Os dados recebidos pelo V2 já são reais, mas ainda precisam virar as consultas de negócio que as telas consomem.
+**Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **1 dos 26 destinos analíticos publicados** (`vw_cotacoes_powerbi`) e uma consulta adicional de cobertura dos recebimentos. As duas passaram em teste de API com JDBC e a conta atual do portal. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
+
+O banco recebeu 89.703 linhas vigentes das 11 entidades. Dez entidades têm datas confirmadas de 02 a 10/11. Faturas por Cliente tem datas de 29/10 a 10/11. O período disponível ainda é menor que o mês usado pelo dashboard. A carga de 90 dias continua reservada à execução manual do operador.
+
+Os outros **25 destinos da tabela abaixo ainda precisam de publicação e validação**. O catálogo da V2 tem zero linhas nas tabelas de calendário, filiais operacionais e ratificação de referências. Raster e Coletores dependem de fontes além dos 11 relatórios. O banco `DASHBOARDS_DEV` ainda não existe nesta instância para o ensaio isolado de troca e retorno.
 
 ## Documentação conferida
 
@@ -55,7 +59,7 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 | `vw_bi_monitoramento` | 9 | Saúde do ETL e atualização das fontes | Ausente |
 | `vw_coletas_powerbi` | 41 | Coletas: indicadores, detalhe e exportação | Ausente |
 | `vw_contas_a_pagar_powerbi` | 31 | Contas a Pagar: emissão, pagamentos e conciliação | Ausente |
-| `vw_cotacoes_powerbi` | 54 | Cotações: conversão, descontos e tarifas | Ausente |
+| `vw_cotacoes_powerbi` | 54 | Cotações: conversão, descontos e tarifas | Publicado e testado com JDBC |
 | `vw_dim_clientes` | 1 | Dimensão de clientes e filtros | Ausente |
 | `vw_dim_filiais` | 2 | Dimensão de filiais e escopo de acesso | Ausente |
 | `vw_dim_motoristas` | 2 | Dimensão de motoristas e filtros | Ausente |
@@ -80,4 +84,4 @@ Todos os nomes abaixo são consultados hoje no portal ou fazem parte da sua inte
 5. **Ensaiar o dashboard em ambiente isolado.** Usar `DASHBOARDS_DEV`, credencial de leitura da publicação e conexão sem dependência de `ETL_SISTEMA`. Comparar SQL → API → tela → exportação, inclusive perfis com e sem acesso, filiais autorizadas, período padrão (último mês), filtros, paginação, ordenação, somas, horários e indicadores com seus dicionários. A cobertura deve comportar esse período e as dependências históricas do cálculo. Documentar e resolver divergências relevantes antes de aprovar a troca.
 6. **Trocar e aposentar em etapas.** Só após os testes, preparar a migration Flyway dos 26 nomes no banco do portal e a paridade de criação do schema. Ensaiar troca e retorno; comprovar que as telas não fazem consultas residuais ao V1. Verificar também outros consumidores, jobs, serviços, integrações e rotinas de publicação antes de desligar o ETL antigo. A varredura de fonte encontrou scripts V1 de publicação para o dashboard e de reprocessamento de Manifestos; a execução atual de outros consumidores ainda não foi inventariada. O operador humano executa a implantação de produção e conserva o retorno até validar a nova rotina.
 
-Nesta etapa houve varredura e consultas de leitura. Ainda não é possível fazer o ensaio de resultado de ponta a ponta: a interface de negócio do V2 não existe. A configuração, os synonyms, os processos de produção e a extração permaneceram como estavam.
+O ensaio de troca e retorno depende dos destinos restantes, das referências e da cobertura do período. As duas publicações de 11/11 foram instaladas no banco da V2. O Flyway do portal permanece na versão 069, com as rotas atuais preservadas.

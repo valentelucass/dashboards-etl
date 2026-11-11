@@ -12,4 +12,6 @@ O histórico real desse recorte tinha 25 lotes completos (4.295 linhas arquivada
 
 **Validação 0772:** os dados lidos da V2 para as duas cargas na mesma rota conferem com as imagens do ESL. Um teste isolado com os mesmos fretes e volumes cobre o resumo da API, a paginação e o CSV. No SQL Server, a simulação de recaptura atualizou o valor de um item e manteve a contagem em dois. A conexão do ensaio da API ao SQL Server retornou erro de autenticação 18456 nesta rodada.
 
-**Pendente antes do corte:** há três grupos em que rota, CEPs e os campos de carga observáveis coincidem, mas campos fiscais, status ou desconto variam. O template não traz o identificador do item; conferir esses casos na origem sem deduplicar por CEP ou escolher um preço. As demais dependências permanecem no [mapa 0769](../pre-validacao-etl-v2-0769.md).
+**Validação no ESL em 11/11/2026:** as fichas mostram dois itens na 147372, dois na 147758 e três na 148085. Nos três casos, há pares com rota, CEPs, volume, valor da nota e peso iguais. A lista de trechos calculados do ESL confirma que são itens separados, e a publicação devolveu a quantidade de cada ficha.
+
+A view de Cotações está instalada no V2. A API, a paginação e o CSV passaram em ensaio com o cliente JDBC e a conta do portal. O teste usou a publicação diretamente e também leu o synonym atual do V1. A troca dos synonyms e o retorno ainda dependem das publicações listadas no [mapa 0769](../pre-validacao-etl-v2-0769.md).

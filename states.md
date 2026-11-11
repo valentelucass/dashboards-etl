@@ -1,3 +1,7 @@
+## Integração 0773 — Leitura real da V2 e pendências da troca
+
+[Situação e contratos](docs/pre-validacao-etl-v2-0769.md). Cotações e cobertura publicadas no V2. Os dois endpoints passaram em ensaio com JDBC e a conta do portal, incluindo paginação, CSV e escopo de filial em Cotações. Os três casos pendentes foram conferidos no ESL. Há 1 de 26 destinos analíticos publicados e 89.703 linhas vigentes de 11 entidades. Calendário e filiais operacionais sem dados na V2 e ambiente de ensaio de troca ausente. Flyway do portal na versão 069 e os 26 destinos seguem no V1.
+
 ## Integração 0772 — Cotações: duas cargas na mesma rota validadas
 
 [Regra e validação](docs/operacao/cotacoes-por-trecho-v2-0771.md). O gestor confirmou contar os dois itens calculados com mesma rota e CEP quando as cargas são diferentes. Os dados da V2 conferem com as imagens do ESL. Recaptura testada no SQL Server. Resumo da API, paginação e CSV testados em ambiente isolado após recusa de autenticação no ensaio da API com SQL Server. Três grupos coincidem nos campos de carga disponíveis e diferem em informações fiscais, status ou desconto. Conferir na origem antes do corte.
