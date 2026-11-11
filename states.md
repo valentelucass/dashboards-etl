@@ -1,3 +1,11 @@
+## Integração 0769 — verificação de leitura e decisão antes da troca
+
+[Conferência e critérios de aceite](docs/pre-validacao-etl-v2-0769.md). A adaptação já tem mapa 0754, 134 soluções candidatas em 0755 e templates de troca/retorno protegidos em 0758. Na revisão de 10/11/2026, Java 17/JDBC 13.4.0 com TLS validado e a conta atual do portal leram duas views operacionais do V2 e conferiram os 26 objetos e 958 colunas ainda ligados ao V1. Nenhum dos 26 contratos propostos está publicado no V2. Não trocar a origem nesta condição.
+
+O V2 já recebeu 89.703 linhas atuais de 11 entidades, 508 campos de origem e 103 combinações entidade/data; o recebimento em staging não entrega os fatos, dimensões e indicadores do dashboard. Consolidação Detalhada e Ocorrências ficam no ETL, sem telas próprias no dashboard por enquanto. A troca abrange as telas já existentes.
+
+Pendências: publicar os contratos de negócio e as referências no V2, validar valores e dependências do V1 em SQL, ensaiar API/tela/exportação e permissões em `DASHBOARDS_DEV`, e comprovar troca e retorno antes de aposentar a origem V1. `DASHBOARDS` continua dono dos dados internos do portal. Sem migration, alteração de conexão, reinício ou carga de 90 dias nesta revisão. A nota 0758 abaixo descreve o marco histórico, anterior ao recebimento real.
+
 # Estado Atual do Sistema
 
 ## Stack Tecnológica
