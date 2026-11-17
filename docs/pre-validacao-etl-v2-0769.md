@@ -1,5 +1,16 @@
 # Dashboard e ETL V2: conferência antes da troca — 0769
 
+## Revalidação com 90 dias carregados em 17/11/2026
+
+A carga inicial da V2 confirmou 1.170 combinações de fonte e data, com 1.102.511 registros vigentes das 13 fontes entre 16/08 e 13/11. As 26 consultas atuais do portal têm destinos na V2. A comparação de posição, nome, tamanho, precisão e escala confirmou as 958 colunas. O ensaio em `DASHBOARDS_DEV` apontou as 26 consultas para a V2 e voltou ao V1 dentro de uma transação revertida. Nos dois sentidos, as 26 consultas e 958 colunas puderam ser descritas.
+
+A prova com o JDBC e a conta do portal excedeu 35 segundos na consulta de faturamento de Fretes por data. Outra sondagem usou nove segundos por consulta. Treze dos 26 destinos retornaram dentro desse limite. A sondagem confirma leitura e tempo de resposta nos recortes usados pelo teste. As telas ainda precisam ser exercitadas com filtros e totais do período habitual.
+
+A preparação temporária dos dados de Fretes no SQL produziu os 987 registros elegíveis do recorte de 06/11 e respondeu à contagem em 0,22 segundo depois do preparo. O preparo levou cerca de 56 segundos. O ensaio mais amplo de materialização, incluindo o detalhe de Fretes, ainda excedeu 100 segundos. A publicação precisa ser validada para o volume inteiro e para as próximas atualizações antes da troca em produção.
+
+A atualização de 14 a 17/11 foi iniciada no ciclo `8fb0a620afa340629011268516768958`. O Raster tem oito dias recebidos na V2, de 03 a 10/11. A instalação de ajustes SQL ficou pendente quando a conexão com a credencial administrativa retornou o erro 18456. As 26 consultas do portal em produção continuam ligadas ao V1.
+
+
 **Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **22 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API. As consultas publicadas da tabela abaixo passaram na leitura JDBC com a conta atual do portal. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
 
 O banco recebeu 89.703 linhas vigentes das 11 entidades. Dez entidades têm datas confirmadas de 02 a 10/11. Faturas por Cliente tem datas de 29/10 a 10/11. O período disponível ainda é menor que o mês usado pelo dashboard. A carga de 90 dias continua reservada à execução manual do operador.
