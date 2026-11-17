@@ -29,6 +29,11 @@ spring:
       max-lifetime: 1800000
       connection-init-sql: SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON
 
+  # O timeout JPA não alcança JdbcTemplate/NamedParameterJdbcTemplate.
+  jdbc:
+    template:
+      query-timeout: 30s
+
   flyway:
     enabled: true
     locations:
@@ -84,6 +89,8 @@ auth:
   refresh-cookie-same-site: ${AUTH_REFRESH_COOKIE_SAME_SITE:Lax}
 
 dashboard:
+  consultas-analiticas:
+    max-concorrentes: 3
   periodo:
     zone-id: ${DASHBOARD_PERIODO_ZONE_ID:America/Sao_Paulo}
   indicadores:

@@ -1,3 +1,16 @@
+## Login / saturação de conexões e VM 64 GiB — 17/11/2026
+
+Diagnóstico e limites em [docs/operacao/login-pool-2026-11-17.md](docs/operacao/login-pool-2026-11-17.md). Login e refresh retornaram 503 local/público porque as dez conexões da API estavam ocupadas por nove consultas Performance e uma Coletas; sete aguardavam memória SQL. O login falhou no limitador de tentativas antes de verificar senha. UI/readiness 200 não provaram disponibilidade de autenticação. V071 confirmada às 18:26:44; causa de plano/cardinalidade do ETL ainda requer análise própria.
+
+Preparado timeout JDBC de 30 s (JPA já tinha 30 s) e limite global por instância de três leituras analíticas, deixando margem de pelo menos duas conexões em relação ao pool configurado. Excesso recebe 503/Retry-After; autenticação e permissões preservadas. Exportações assíncronas conservam vaga até concluir o trabalho. Checkout isolado do commit-base mais a correção aprovou 717 testes em 97 classes, incluindo saturação com conexões Hikari/H2, autenticação de fixture disponível, recuperação e timeout no statement real do template.
+
+A pedido do responsável após ampliar a VM de 32 para 64 GiB: teto SQL 8→16 GiB aplicado sem reinício; mínimo 4 GiB preservado. Executor compartilhado agora permite duas tarefas de até 4 GiB cada, exige espaço para a tarefa mais 8 GiB livres e mantém limite de 85% de comprometimento e prazo padrão de 120 min. Trava antiga continua contando processos em andamento; terceira tarefa recusada em teste. Heap 384 MiB, pool produtivo 10 e espera de conexão 10 s preservados. Mais memória reduziu esperas SQL de sete para três, mas manteve dez conexões ocupadas. O responsável relatou retorno do login seguido de lentidão e nova instabilidade; fotografia posterior confirmou nova saturação. Não declarar resolução.
+
+### Tarefas Pendentes — login
+
+- Instalação humana da proteção e aceite de autenticação/navegação concorrente no runtime atualizado. JAR operacional e PID 22120 preservados; nenhum restart, encerramento de sessão, cancelamento SQL ou troca de fonte. Não declarar login resolvido em produção antes desse aceite.
+- Analisar e otimizar planos/cardinalidades das publicações V2 no repositório proprietário do ETL, com paridade medida. Não ampliar concorrência ou alterar fonte para mascarar consultas demoradas.
+
 ## Integração 0778 — Cadastro de Usuários validado na V2
 
 [Mapa atualizado](docs/pre-validacao-etl-v2-0769.md). A leitura JDBC confirmou os 6.918 usuários ativos migrados do V1 para a V2. São 22 de 26 destinos publicados. Coletas e três consultas de Fretes aguardam fontes complementares. O portal em produção usa as 26 rotas do V1, Flyway 069.
