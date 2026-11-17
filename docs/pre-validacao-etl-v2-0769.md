@@ -1,5 +1,12 @@
 # Dashboard e ETL V2: conferência antes da troca — 0769
 
+## Troca em produção em 17/11/2026
+
+A pedido do operador, a migration V071 passou as 26 consultas analíticas de `DASHBOARDS` para as views publicadas em `ETL_SISTEMA_V2.pub`. O Flyway validou o histórico e registrou a execução às 18h26, no horário de Brasília. A conta do portal confirmou os 26 destinos e 958 colunas e leu dados de Coletas, Sinistros e Calendário. A API e a interface responderam HTTP 200.
+
+A atualização iniciada para os dias 14 a 17/11 segue em andamento. Consultas mais pesadas podem demorar, conforme a sondagem abaixo. A troca e o retorno dos 26 destinos foram ensaiados em `DASHBOARDS_DEV`. O script de retorno está preparado como migration V072 e permanece fora da pasta de execução automática.
+
+
 ## Revalidação com 90 dias carregados em 17/11/2026
 
 A carga inicial da V2 confirmou 1.170 combinações de fonte e data, com 1.102.511 registros vigentes das 13 fontes entre 16/08 e 13/11. As 26 consultas atuais do portal têm destinos na V2. A comparação de posição, nome, tamanho, precisão e escala confirmou as 958 colunas. O ensaio em `DASHBOARDS_DEV` apontou as 26 consultas para a V2 e voltou ao V1 dentro de uma transação revertida. Nos dois sentidos, as 26 consultas e 958 colunas puderam ser descritas.
@@ -8,7 +15,7 @@ A prova com o JDBC e a conta do portal excedeu 35 segundos na consulta de fatura
 
 A preparação temporária dos dados de Fretes no SQL produziu os 987 registros elegíveis do recorte de 06/11 e respondeu à contagem em 0,22 segundo depois do preparo. O preparo levou cerca de 56 segundos. O ensaio mais amplo de materialização, incluindo o detalhe de Fretes, ainda excedeu 100 segundos. A publicação precisa ser validada para o volume inteiro e para as próximas atualizações antes da troca em produção.
 
-A atualização de 14 a 17/11 foi iniciada no ciclo `8fb0a620afa340629011268516768958`. O Raster tem oito dias recebidos na V2, de 03 a 10/11. A instalação de ajustes SQL ficou pendente quando a conexão com a credencial administrativa retornou o erro 18456. As 26 consultas do portal em produção continuam ligadas ao V1.
+A atualização de 14 a 17/11 foi iniciada no ciclo `8fb0a620afa340629011268516768958`. O Raster tem oito dias recebidos na V2, de 03 a 10/11. A instalação de ajustes SQL ficou pendente quando a conexão com a credencial administrativa retornou o erro 18456. Naquela medição, as 26 consultas do portal em produção ainda estavam ligadas ao V1.
 
 
 **Estado verificado em 11/11/2026.** Os 26 nomes analíticos do portal continuam ligados a `ETL_SISTEMA`. A V2 tem **22 dos 26 destinos analíticos publicados** e uma consulta adicional de cobertura dos recebimentos. Cotações e cobertura passaram em teste de API. As consultas publicadas da tabela abaixo passaram na leitura JDBC com a conta atual do portal. [Cotações](operacao/cotacoes-por-trecho-v2-0771.md) · [Cobertura](operacao/cobertura-etl-v2-0770.md).
