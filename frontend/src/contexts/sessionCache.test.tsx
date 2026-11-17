@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AutenticacaoProvider } from './AutenticacaoContext';
+import { AutenticacaoProvider, useAutenticacao } from './AutenticacaoContext';
+import { restaurarSessao } from '../api/endpoints/authServico';
 import { createDashboardQueryClient } from '../config/queryClient';
-import { limparSessao, obterSessao, salvarSessao } from '../utils/gerenciadorSessao';
+import { deveTentarRestaurarSessao, limparSessao, obterSessao, salvarSessao } from '../utils/gerenciadorSessao';
+import { SessaoExpiradaError, SessaoTemporariamenteIndisponivelError } from '../utils/authSession';
 import type { IUsuarioSessao } from '../types/auth';
 
 vi.mock('../api/endpoints/authServico', () => ({
@@ -27,6 +29,27 @@ function montar() {
   render(<QueryClientProvider client={client}><AutenticacaoProvider><span>Portal</span></AutenticacaoProvider></QueryClientProvider>);
   return client;
 }
+
+function EstadoBootstrap() {
+  const { usuario: sessao, carregandoSessao } = useAutenticacao();
+  return <span>{carregandoSessao ? 'Carregando' : sessao ? 'Com sessão' : 'Sem sessão'}</span>;
+}
+
+describe('restauração da sessão ao recarregar a página', () => {
+  it.each([
+    [new SessaoTemporariamenteIndisponivelError(), true],
+    [new SessaoExpiradaError(), false],
+  ])('só limpa a tentativa de recuperação quando a sessão expirou (%s)', async (error, podeRestaurar) => {
+    localStorage.setItem('dashboard_refresh_ativo', '1');
+    vi.mocked(restaurarSessao).mockRejectedValueOnce(error);
+    const client = createDashboardQueryClient();
+    render(<QueryClientProvider client={client}><AutenticacaoProvider><EstadoBootstrap /></AutenticacaoProvider></QueryClientProvider>);
+
+    await screen.findByText('Sem sessão');
+    expect(deveTentarRestaurarSessao()).toBe(podeRestaurar);
+    client.clear();
+  });
+});
 
 describe('isolamento do cache da sessão', () => {
   it.each([

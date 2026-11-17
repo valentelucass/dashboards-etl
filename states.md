@@ -1,5 +1,11 @@
 ## Login / saturação de conexões e VM 64 GiB — 17/11/2026
 
+### Validação com a carga real e recarga da página
+
+O DEV de auditoria apontou 27 destinos para a V2. Na rodada de 90 dias, 57 chamadas registraram 43 prazos SQL excedidos, 11 respostas 200 e três erros de parâmetros do ensaio. Localização foi repetida com filial válida e continuou indisponível. Integrações acionou o Satélite com as datas corretas e recebeu 503. As 15 telas pós-login abriram no navegador de teste, com indisponibilidade de dados nas áreas afetadas. Houve 1.115.442 ocorrências nas 13 fontes, e 11 delas tinham cobertura somente até 13/11. A produção permaneceu intacta.
+
+Na abertura após recarga, uma falha temporária de refresh mantém o sinal de que a sessão pode ser restaurada. Se o servidor confirmar expiração, a interface limpa esse sinal. A mudança evita perder a recuperação por indisponibilidade sem abrir acesso sem autenticação. A otimização de dados deve ser qualificada usando a cópia DEV com volume real antes da instalação em produção.
+
 ### Coletas e encerramento indevido de sessão
 
 Às 19:54, cinco consultas de Coletas aguardavam memória de execução, enquanto cinco de Performance ocupavam as demais conexões. Os `OPTIONS` retornaram 200. O Firefox registrou 401 demorados nas consultas protegidas, seguido de refresh e logout. Os logs confirmaram falta de conexão na leitura de permissões, refresh e logout. O backend agora devolve 503 na falha de banco ao verificar permissões, sem autorizar a requisição. O cliente preserva a sessão quando a renovação falha temporariamente. Expiração confirmada segue o fluxo de encerramento existente. Evidência e limites em [docs/operacao/login-pool-2026-11-17.md](docs/operacao/login-pool-2026-11-17.md).

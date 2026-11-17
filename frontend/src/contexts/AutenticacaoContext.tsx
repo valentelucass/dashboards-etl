@@ -116,10 +116,12 @@ export function AutenticacaoProvider({ children }: { children: ReactNode }) {
           if (!ativo) return;
 
           setUsuario(restaurada);
-        } catch {
+        } catch (error) {
           if (!ativo) return;
 
-          limparSessao();
+          if (resolverAcaoBootstrapSessao(error) === 'encerrar_sessao') {
+            limparSessao();
+          }
           setUsuario(null);
         } finally {
           if (ativo) setCarregandoSessao(false);
