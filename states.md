@@ -1,5 +1,9 @@
 ## Login / saturação de conexões e VM 64 GiB — 17/11/2026
 
+### Coletas e encerramento indevido de sessão
+
+Às 19:54, cinco consultas de Coletas aguardavam memória de execução, enquanto cinco de Performance ocupavam as demais conexões. Os `OPTIONS` retornaram 200. O Firefox registrou 401 demorados nas consultas protegidas, seguido de refresh e logout. Os logs confirmaram falta de conexão na leitura de permissões, refresh e logout. O backend agora devolve 503 na falha de banco ao verificar permissões, sem autorizar a requisição. O cliente preserva a sessão quando a renovação falha temporariamente. Expiração confirmada segue o fluxo de encerramento existente. Evidência e limites em [docs/operacao/login-pool-2026-11-17.md](docs/operacao/login-pool-2026-11-17.md).
+
 Diagnóstico e limites em [docs/operacao/login-pool-2026-11-17.md](docs/operacao/login-pool-2026-11-17.md). Login e refresh retornaram 503 local/público porque as dez conexões da API estavam ocupadas por nove consultas Performance e uma Coletas; sete aguardavam memória SQL. O login falhou no limitador de tentativas antes de verificar senha. UI/readiness 200 não provaram disponibilidade de autenticação. V071 confirmada às 18:26:44; causa de plano/cardinalidade do ETL ainda requer análise própria.
 
 Preparado timeout JDBC de 30 s (JPA já tinha 30 s) e limite global por instância de três leituras analíticas, deixando margem de pelo menos duas conexões em relação ao pool configurado. Excesso recebe 503/Retry-After; autenticação e permissões preservadas. Exportações assíncronas conservam vaga até concluir o trabalho. Checkout isolado do commit-base mais a correção aprovou 717 testes em 97 classes, incluindo saturação com conexões Hikari/H2, autenticação de fixture disponível, recuperação e timeout no statement real do template.

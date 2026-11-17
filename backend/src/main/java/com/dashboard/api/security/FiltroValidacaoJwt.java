@@ -1,7 +1,10 @@
 package com.dashboard.api.security;
 
+import com.dashboard.api.exception.RespostaErroHttpWriter;
 import com.dashboard.api.repository.acesso.UsuarioSessaoSqlRepository;
 import com.dashboard.api.service.acesso.AutenticacaoService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.PersistenceException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,10 +12,13 @@ import jakarta.servlet.ServletException;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
@@ -24,15 +30,18 @@ public class FiltroValidacaoJwt extends OncePerRequestFilter {
     private final GerenciadorTokenJwt gerenciadorToken;
     private final AutenticacaoService autenticacaoService;
     private final UsuarioSessaoSqlRepository usuarioSessaoSqlRepository;
+    private final ObjectMapper objectMapper;
 
     public FiltroValidacaoJwt(
             GerenciadorTokenJwt gerenciadorToken,
             AutenticacaoService autenticacaoService,
-            UsuarioSessaoSqlRepository usuarioSessaoSqlRepository
+            UsuarioSessaoSqlRepository usuarioSessaoSqlRepository,
+            ObjectMapper objectMapper
     ) {
         this.gerenciadorToken = gerenciadorToken;
         this.autenticacaoService = autenticacaoService;
         this.usuarioSessaoSqlRepository = usuarioSessaoSqlRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -65,6 +74,11 @@ public class FiltroValidacaoJwt extends OncePerRequestFilter {
                     if (!authorities.isEmpty() && !request.getRequestURI().equals("/api/sessao/presenca")) {
                         registrarAtividade(usuario, request);
                     }
+                } catch (DataAccessException | TransactionException | PersistenceException ex) {
+                    log.error("Falha de banco ao carregar permissões da sessão: {}", ex.getMessage(), ex);
+                    RespostaErroHttpWriter.escrever(response, objectMapper, HttpStatus.SERVICE_UNAVAILABLE,
+                            "Service Unavailable", "Serviço de dados temporariamente indisponível.");
+                    return;
                 } catch (Exception ex) {
                     log.error("Falha ao carregar permissões para o usuário '{}': {}", usuario, ex.getMessage(), ex);
                 }

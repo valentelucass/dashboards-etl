@@ -2,6 +2,7 @@ package com.dashboard.api.security;
 
 import com.dashboard.api.repository.acesso.UsuarioSessaoSqlRepository;
 import com.dashboard.api.service.acesso.AutenticacaoService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterChain;
 import java.util.List;
@@ -35,7 +36,7 @@ class FiltroValidacaoJwtTest {
     @BeforeEach
     void prepare() {
         SecurityContextHolder.clearContext();
-        filter = new FiltroValidacaoJwt(tokens, authentication, sessions);
+        filter = new FiltroValidacaoJwt(tokens, authentication, sessions, new ObjectMapper().findAndRegisterModules());
         request = new MockHttpServletRequest("GET", "/api/painel/coletas");
         response = new MockHttpServletResponse();
     }

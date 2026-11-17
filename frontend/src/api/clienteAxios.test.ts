@@ -1,6 +1,7 @@
+import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 import clienteAxios, { tratarErroRespostaApi, type RetryableRequestConfig } from './clienteAxios';
-import { SessaoExpiradaError } from '../utils/authSession';
+import { SessaoExpiradaError, SessaoTemporariamenteIndisponivelError } from '../utils/authSession';
 import type { LoginResponse } from '../types/auth';
 
 function criarConfig(url: string): RetryableRequestConfig {
@@ -153,7 +154,7 @@ describe('tratarErroRespostaApi', () => {
     expect(reexecutarRequisicao).not.toHaveBeenCalled();
   });
 
-  it('desloga e rejeita quando o refresh falha', async () => {
+  it('desloga e rejeita quando o refresh confirma sessao expirada', async () => {
     const limparSessao = vi.fn();
     const revogarSessaoRemota = vi.fn().mockResolvedValue(undefined);
     const erroRefresh = new SessaoExpiradaError();
@@ -169,6 +170,35 @@ describe('tratarErroRespostaApi', () => {
 
     expect(limparSessao).toHaveBeenCalledTimes(1);
     expect(revogarSessaoRemota).toHaveBeenCalledTimes(1);
+    expect(reexecutarRequisicao).not.toHaveBeenCalled();
+  });
+
+  it.each([503, 504, undefined])('preserva a sessao e libera a fila se o refresh falha temporariamente (%s)', async (status) => {
+    const limparSessao = vi.fn();
+    const revogarSessaoRemota = vi.fn();
+    const reexecutarRequisicao = vi.fn();
+    const configRefresh = { ...criarConfig('/api/auth/refresh'), headers: new AxiosHeaders() };
+    const erroRefresh = new AxiosError('Falha no refresh', status ? undefined : 'ECONNABORTED', configRefresh,
+      undefined, status ? { status, statusText: 'Indisponível', headers: {}, config: configRefresh, data: {} } : undefined);
+    let rejeitarRefresh!: (error: unknown) => void;
+    const renovarSessao = vi.fn(() => new Promise<LoginResponse>((_, reject) => { rejeitarRefresh = reject; }));
+    const deps = { limparSessao, revogarSessaoRemota, renovarSessao, reexecutarRequisicao };
+
+    const primeira = tratarErroRespostaApi(criarErro401(criarConfig('/api/painel/coletas')), deps);
+    const segunda = tratarErroRespostaApi(criarErro401(criarConfig('/api/painel/coletas/serie')), deps);
+    rejeitarRefresh(erroRefresh);
+
+    const resultados = await Promise.allSettled([primeira, segunda]);
+    resultados.forEach((resultado) => {
+      expect(resultado.status).toBe('rejected');
+      if (resultado.status === 'rejected') {
+        expect(resultado.reason).toBeInstanceOf(SessaoTemporariamenteIndisponivelError);
+        expect(resultado.reason.cause).toBe(erroRefresh);
+      }
+    });
+    expect(renovarSessao).toHaveBeenCalledTimes(1);
+    expect(limparSessao).not.toHaveBeenCalled();
+    expect(revogarSessaoRemota).not.toHaveBeenCalled();
     expect(reexecutarRequisicao).not.toHaveBeenCalled();
   });
 

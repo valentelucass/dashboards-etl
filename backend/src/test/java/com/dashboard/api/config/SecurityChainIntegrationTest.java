@@ -25,6 +25,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -141,6 +142,21 @@ class SecurityChainIntegrationTest {
         verifyNoInteractions(auth, service);
     }
 
+    @Test void bancoIndisponivelNaVerificacaoDoJwtRetorna503SemEncerrarSessao() throws Exception {
+        when(auth.authoritiesFor("permitido")).thenThrow(new CannotCreateTransactionException("pool ocupado"));
+
+        mvc.perform(get("/api/painel/performance/status")
+                .header("Origin", "https://portal.example.test")
+                .header("Authorization", "Bearer " + tokens.gerarToken("permitido")))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("status").value(503))
+                .andExpect(header().string("Access-Control-Allow-Origin", "https://portal.example.test"))
+                .andExpect(header().doesNotExist("Set-Cookie"));
+
+        verifyNoInteractions(limits, service);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
     @Test void limiteBloqueiaServicoMesmoComJwtValido() throws Exception {
         when(limits.consumirChamadaApi(anyString())).thenReturn(new RateLimitService.RateLimitDecision(false, 30, 121));
         mvc.perform(get("/api/painel/performance/status").header("Authorization", "Bearer " + tokens.gerarToken("permitido")))
@@ -172,7 +188,7 @@ class SecurityChainIntegrationTest {
         @Bean DashboardExportService exports() { return mock(DashboardExportService.class); }
         @Bean RateLimitService limits() { return mock(RateLimitService.class); }
         @Bean GerenciadorTokenJwt tokens() { return new GerenciadorTokenJwt("chave-sintetica-de-teste-00000000000000000000000", 5); }
-        @Bean FiltroValidacaoJwt jwt(GerenciadorTokenJwt tokens, AutenticacaoService auth) { return new FiltroValidacaoJwt(tokens, auth, mock(UsuarioSessaoSqlRepository.class)); }
+        @Bean FiltroValidacaoJwt jwt(GerenciadorTokenJwt tokens, AutenticacaoService auth, ObjectMapper mapper) { return new FiltroValidacaoJwt(tokens, auth, mock(UsuarioSessaoSqlRepository.class), mapper); }
         @Bean FiltroApiKey apiKey(ObjectMapper mapper) { return new FiltroApiKey("synthetic-internal-key", mapper); }
         @Bean FiltroRateLimitApi rateLimit(RateLimitService limits, ObjectMapper mapper) { return new FiltroRateLimitApi(limits, mock(AuditService.class), new IpClienteResolver(false), mapper); }
         @Bean CorsConfigurationSource corsConfigurationSource() {

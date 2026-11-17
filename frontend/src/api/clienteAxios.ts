@@ -3,7 +3,7 @@ import type { InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_URL, API_REQUEST_TIMEOUT_MS, AUTH_REQUEST_TIMEOUT_MS } from '../config/api';
 import type { LoginResponse } from '../types/auth';
 import { limparSessao, obterAccessToken, salvarSessaoDoLogin } from '../utils/gerenciadorSessao';
-import { SessaoExpiradaError, normalizarErroSessao } from '../utils/authSession';
+import { SessaoExpiradaError, ehSessaoExpiradaError, normalizarErroSessao } from '../utils/authSession';
 import { DATABASE_TIMEOUT_MESSAGE, SERVER_INSTABILITY_MESSAGE } from '../utils/apiError';
 import { createDashboardRequestAdapter } from './dashboardRequestQueue';
 
@@ -220,8 +220,10 @@ async function retentarAposRenovarSessao(
   } catch (refreshError) {
     const erroSessao = normalizarErroSessao(refreshError);
     processQueue(erroSessao);
-    void deps.revogarSessaoRemota?.();
-    deps.limparSessao();
+    if (ehSessaoExpiradaError(erroSessao)) {
+      void deps.revogarSessaoRemota?.();
+      deps.limparSessao();
+    }
     return Promise.reject(erroSessao);
   } finally {
     isRefreshing = false;
