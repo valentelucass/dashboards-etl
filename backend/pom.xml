@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>17</java.version>
+        <mssql-jdbc.version>13.4.0.jre11</mssql-jdbc.version>
         <jjwt.version>0.12.5</jjwt.version>
     </properties>
 
@@ -187,6 +188,15 @@
         </plugins>
     </build>
     <profiles>
+        <profile>
+            <id>prod-build</id>
+            <properties>
+                <production.build.directory>${project.basedir}/../.tmp/production/backend</production.build.directory>
+            </properties>
+            <build>
+                <directory>${production.build.directory}</directory>
+            </build>
+        </profile>
         <profile>
             <id>quality</id>
             <properties>

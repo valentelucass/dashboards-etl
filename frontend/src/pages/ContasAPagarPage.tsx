@@ -1,3 +1,5 @@
+import DashboardSelector from "../components/shared/DashboardSelector";
+import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -218,12 +220,12 @@ export default function ContasAPagarPage() {
   const controlesStyle = { borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' };
   const serieActions = (
     <div className="flex gap-2">
-      <select aria-label="Granularidade temporal" value={granularidade} onChange={(event) => setGranularidade(event.target.value as ContasAPagarGranularidade)} className={controlesBase} style={controlesStyle}>
+      <DashboardSelector aria-label="Granularidade temporal" value={granularidade} onValueChange={selectedValue => setGranularidade(selectedValue as ContasAPagarGranularidade)} className={controlesBase} style={controlesStyle}>
         <option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mês</option>
-      </select>
-      <select aria-label="Data de referência" value={referencia} onChange={(event) => setReferencia(event.target.value as ContasAPagarReferenciaTemporal)} className={controlesBase} style={controlesStyle}>
+      </DashboardSelector>
+      <DashboardSelector aria-label="Data de referência" value={referencia} onValueChange={selectedValue => setReferencia(selectedValue as ContasAPagarReferenciaTemporal)} className={controlesBase} style={controlesStyle}>
         <option value="emissao">Emissão</option><option value="competencia">Competência</option><option value="liquidacao">Liquidação</option>
-      </select>
+      </DashboardSelector>
     </div>
   );
   const criarAcoesDrilldown = (
@@ -235,15 +237,15 @@ export default function ContasAPagarPage() {
     onVoltar: () => void,
   ) => (
     <div className="flex items-center gap-2">
-      <select aria-label="Quantidade exibida" value={limite} onChange={(event) => setLimite(Number(event.target.value) as (typeof LIMITES)[number])} className={controlesBase} style={controlesStyle}>
+      <DashboardSelector aria-label="Quantidade exibida" value={limite} onValueChange={selectedValue => setLimite(Number(selectedValue) as (typeof LIMITES)[number])} className={controlesBase} style={controlesStyle}>
         {LIMITES.map((item) => <option key={item} value={item}>Top {item}</option>)}
-      </select>
-      <select aria-label="Métrica exibida" value={metrica} onChange={(event) => setMetrica(event.target.value as ContasAPagarMetrica)} className={controlesBase} style={controlesStyle}>
+      </DashboardSelector>
+      <DashboardSelector aria-label="Métrica exibida" value={metrica} onValueChange={selectedValue => setMetrica(selectedValue as ContasAPagarMetrica)} className={controlesBase} style={controlesStyle}>
         {METRICAS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-      </select>
-      <button type="button" title={`Drill up para ${labelNivel(nivel === 'despesa' ? 'classificacao' : 'raiz')}`} aria-label="Drill up" disabled={nivel === 'raiz'} onClick={onVoltar} className="flex h-8 w-8 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-35" style={controlesStyle}>
+      </DashboardSelector>
+      <DashboardButton type="button" title={`Drill up para ${labelNivel(nivel === 'despesa' ? 'classificacao' : 'raiz')}`} aria-label="Drill up" disabled={nivel === 'raiz'} onClick={onVoltar} className="flex h-8 w-8 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-35" style={controlesStyle}>
         <ChevronUp size={14} />
-      </button>
+      </DashboardButton>
       {nivel !== 'raiz' ? <ChevronDown size={14} aria-label={`Nível atual: ${labelNivel(nivel)}`} style={{ color: 'var(--color-primary)' }} /> : null}
     </div>
   );

@@ -124,11 +124,16 @@ export function useFaturasPorClienteStatusProcesso(filtro: FaturasPorClienteFilt
   });
 }
 
-export function useFaturasPorClienteStatusEvolucao(filtro: FaturasPorClienteFiltro, granularidade: FaturasPorClienteGranularidade) {
+export function useFaturasPorClienteStatusEvolucao(
+  filtro: FaturasPorClienteFiltro,
+  granularidade: FaturasPorClienteGranularidade,
+  enabled = true,
+) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'status-processo', 'evolucao', filtro, granularidade],
     queryFn: ({ signal }) => buscarFaturasPorClienteStatusEvolucao(filtro, granularidade, signal),
+    enabled,
     staleTime: STALE_TIME,
     retry: 1,
   });

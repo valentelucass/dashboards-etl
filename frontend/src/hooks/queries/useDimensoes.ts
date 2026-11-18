@@ -4,6 +4,7 @@ import {
   buscarClientes,
   buscarPagadores,
   buscarFaturasPorClienteClientesCnpj,
+  buscarFaturasPorClientePagadores,
   buscarMotoristas,
   buscarVeiculos,
   buscarManifestosClassificacoes,
@@ -56,6 +57,16 @@ export function usePagadores(busca: string) {
     queryKey: ['dim', 'pagadores', buscaNormalizada],
     queryFn: ({ signal }) => buscarPagadores(buscaNormalizada, signal),
     placeholderData: (previousData) => previousData,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
+    retry: 1,
+  });
+}
+
+export function useFaturasPorClientePagadores() {
+  return useQuery({
+    queryKey: ['dim', 'faturas-por-cliente', 'pagadores'],
+    queryFn: ({ signal }) => buscarFaturasPorClientePagadores(signal),
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
     retry: 1,

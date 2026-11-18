@@ -1,10 +1,12 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.model.DimFilialEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+@ConsultaAnalitica
 public interface DimFilialRepository extends JpaRepository<DimFilialEntity, String> {
 
     @Query(value = """

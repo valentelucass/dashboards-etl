@@ -1,3 +1,6 @@
+import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { Spinner } from '@astryxdesign/core/Spinner';
+import { Card } from '@astryxdesign/core/Card';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -342,14 +345,14 @@ export default function ExecutivoPage() {
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar visão executiva.')} tipo={getTipoErro(overview.error)} />}
       {overview.isLoading && (
         <div className="mb-6 flex h-24 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+          <Spinner label="Carregando visão executiva" />
         </div>
       )}
       {!overview.isLoading && overview.data && <ExecutivoKpiGrid overview={overview.data} />}
       {!overview.isLoading && !overview.data && !overview.isError && (
-        <div className="mb-6 flex h-24 items-center justify-center rounded-[20px] border text-sm" style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
-          Nenhum dado disponível para o período selecionado.
-        </div>
+        <Card padding={3} className="mb-6">
+          <EmptyState title="Nenhum dado disponível para o período selecionado." isCompact />
+        </Card>
       )}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

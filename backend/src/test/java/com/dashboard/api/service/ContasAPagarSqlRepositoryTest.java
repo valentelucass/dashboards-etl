@@ -63,6 +63,8 @@ class ContasAPagarSqlRepositoryTest {
                 .contains("SUM(COALESCE([Valor a pagar], 0)) AS valor_a_pagar")
                 .contains("SUM(COALESCE([Valor pago], 0)) AS valor_pago")
                 .contains("DATEDIFF(day, [Emissão], [Baixa/Data liquidação])")
+                .contains("LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(MAX), [Conciliado])))) = N'conciliado'")
+                .doesNotContain("LIKE N'%conciliado%'")
                 .doesNotContain("TRY_CONVERT(date, [Emissão])")
                 .doesNotContain("WHERE TRY_CONVERT");
     }

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import ReactECharts from '../../charts/DashboardEChart';
+import AstryxDashboardChart from '../../charts/AstryxDashboardChart';
 import { useEchartsTheme } from '../../charts/useEchartsTheme';
 import ChartCard from '../../shared/ChartCard';
 import TooltipKpi from '../../shared/TooltipKpi';
@@ -13,7 +13,6 @@ import {
   resolverTomCusto,
 } from './manifestosCustoUi';
 
-const ECHARTS_CANVAS_OPTS = { renderer: 'canvas' as const };
 
 interface ManifestosCustoEvolutionCardProps {
   dados?: ManifestosCustosEvolucao;
@@ -164,12 +163,7 @@ export default function ManifestosCustoEvolutionCard({
         </aside>
 
         <div className="min-h-[350px] min-w-0 lg:min-h-0">
-          <ReactECharts
-            option={option}
-            style={{ height: '100%', minHeight: 350, width: '100%' }}
-            opts={ECHARTS_CANVAS_OPTS}
-            notMerge
-          />
+          <AstryxDashboardChart option={option} label="Evolução do Custo Real x Meta Diária Base" style={{ height: "100%", minHeight: 350 }} />
         </div>
 
         <aside className="grid min-h-0 gap-2 sm:grid-cols-2 lg:col-span-2 xl:col-span-1 xl:grid-cols-1" aria-label="Resumo de custo operacional">

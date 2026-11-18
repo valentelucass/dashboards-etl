@@ -1,6 +1,15 @@
+import DashboardButton from "../components/shared/DashboardButton";
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { CircleHelp, Clock3, Eye, EyeOff, KeyRound, MapPin, MoreHorizontal, Pencil, Upload, UserCheck, UserX, Users } from 'lucide-react';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Button } from '@astryxdesign/core/Button';
+import { Card } from '@astryxdesign/core/Card';
+import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
+import { Dialog } from '@astryxdesign/core/Dialog';
+import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList';
+import { Selector } from '@astryxdesign/core/Selector';
+import { FormPasswordField, FormTextField } from '../components/shared/FormTextField';
+import { CircleHelp, Clock3, Eye, KeyRound, MapPin, MoreHorizontal, Pencil, Upload, UserCheck, UserX, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { PresenceHistoryContent } from '../components/admin/PresenceHistory';
 import TooltipKpi from '../components/shared/TooltipKpi';
@@ -9,6 +18,7 @@ import FiliaisPermitidasSplitSelect from '../components/admin/FiliaisPermitidasS
 import PermissionOverrideMatrix from '../components/admin/PermissionOverrideMatrix';
 import UsuariosImportacaoModal from '../components/admin/UsuariosImportacaoModal';
 import DataTable, { type ColunaTabela } from '../components/shared/DataTable';
+import ToastStack from '../components/ui/ToastStack';
 import { usePageHeader } from '../contexts/PageHeaderContext';
 import {
   useAtualizarUsuario,
@@ -42,14 +52,9 @@ import {
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatarDataHoraMinuto } from '../utils/formatadores';
 import { getPasswordPolicyErrors, PASSWORD_POLICY_HINT } from '../utils/passwordPolicy';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { AlertDialog } from '@astryxdesign/core/AlertDialog';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuDivider, DropdownMenuItem } from '@astryxdesign/core/DropdownMenu';
+import { Popover } from '@astryxdesign/core/Popover';
 
 interface UsuarioRow extends UsuarioAdmin {
   presencaAtual: boolean | null;
@@ -93,12 +98,6 @@ const SURFACE_STYLE = {
   borderColor: 'var(--color-border)',
 };
 
-const FIELD_STYLE = {
-  backgroundColor: 'var(--color-bg)',
-  borderColor: 'var(--color-border)',
-  color: 'var(--color-text)',
-};
-
 const SOFT_PANEL_STYLE = {
   backgroundColor: 'var(--color-bg)',
   borderColor: 'var(--color-border)',
@@ -114,11 +113,6 @@ const SECONDARY_BUTTON_STYLE = {
   backgroundColor: 'var(--color-bg)',
   borderColor: 'var(--color-border)',
   color: 'var(--color-text)',
-};
-
-const EDIT_DANGER_STYLE = {
-  borderColor: '#dc2626',
-  color: '#dc2626',
 };
 
 const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
@@ -211,25 +205,8 @@ function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, li
   const [open, setOpen] = useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <div className="grid min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconSurface, color: accent }}>
-          <Icon size={19} strokeWidth={2.2} aria-hidden="true" />
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold leading-none" style={{ color: accent }}>{value}</span>
-            <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{label}</span>
-          </div>
-          <div className="mt-1 truncate text-xs" style={{ color: 'var(--color-text-muted)' }}>{detail}</div>
-        </div>
-        <PopoverTrigger asChild>
-          <button type="button" aria-label={`Ver ${listTitle.toLowerCase()}`} title={`Ver ${listTitle.toLowerCase()}`} className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
-            <CircleHelp size={16} aria-hidden="true" />
-          </button>
-        </PopoverTrigger>
-      </div>
-      <PopoverContent side="bottom" align="start" sideOffset={10} collisionPadding={12} className="p-0 shadow-xl" style={{ width: 'min(22rem, calc(100vw - 1.5rem))', color: 'var(--color-text)', backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+    <Popover label={listTitle} isOpen={open} onOpenChange={setOpen} alignment="start" width="min(22rem, calc(100vw - 24px))" padding={0}
+      content={<div>
         <div className="border-b px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
           <h2 className="text-sm font-bold">{listTitle}</h2>
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>{usuarios.length} usuário{usuarios.length === 1 ? '' : 's'}</p>
@@ -242,7 +219,7 @@ function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, li
                 <p className="truncate text-xs" title={usuario.email} style={{ color: 'var(--color-text-subtle)' }}>{usuario.email}</p>
               </div>
               {acaoUsuario && (
-                <button
+                <DashboardButton
                   type="button"
                   onClick={() => {
                     acaoUsuario.onClick(usuario);
@@ -252,12 +229,29 @@ function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, li
                   style={SECONDARY_BUTTON_STYLE}
                 >
                   {acaoUsuario.label}
-                </button>
+                </DashboardButton>
               )}
             </div>
           )) : <p className="px-3 py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>{emptyMessage}</p>}
         </div>
-      </PopoverContent>
+        </div>}>
+      {trigger => (
+        <div className="grid min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconSurface, color: accent }}>
+          <Icon size={19} strokeWidth={2.2} aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold leading-none" style={{ color: accent }}>{value}</span>
+            <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{label}</span>
+          </div>
+          <div className="mt-1 truncate text-xs" style={{ color: 'var(--color-text-muted)' }}>{detail}</div>
+        </div>
+        <DashboardButton {...trigger} type="button" aria-label={`Ver ${listTitle.toLowerCase()}`} title={`Ver ${listTitle.toLowerCase()}`} className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
+            <CircleHelp size={16} aria-hidden="true" />
+          </DashboardButton>
+      </div>
+      )}
     </Popover>
   );
 }
@@ -268,7 +262,6 @@ function timestampAtividade(valor: string | null): number {
   const timestamp = new Date(valor).getTime();
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
-
 function formatTempoUltimoPulso(valor: string | null): string {
   const timestamp = timestampAtividade(valor);
   if (!timestamp) return 'Sem pulso registrado';
@@ -305,7 +298,7 @@ function PresenceUserRow({ usuario, online, podeVerTrilha, onSelect }: {
       </div>
     </div>
   );
-  return podeVerTrilha ? <button type="button" id={`presenca-pessoa-${usuario.id}`} onClick={onSelect} aria-label={`Ver acessos de hoje de ${usuario.nome}`} className={`block w-full rounded-xl text-left ${FOCUS_RING_CLASS}`}>{conteudo}</button> : conteudo;
+  return podeVerTrilha ? <DashboardButton type="button" id={`presenca-pessoa-${usuario.id}`} onClick={onSelect} aria-label={`Ver acessos de hoje de ${usuario.nome}`} className={`block w-full rounded-xl text-left ${FOCUS_RING_CLASS}`}>{conteudo}</DashboardButton> : conteudo;
 }
 
 function AccessSummaryItem({
@@ -327,17 +320,17 @@ function AccessSummaryItem({
       <div className="mt-1 flex min-w-0 items-center gap-1.5">
         <span className="min-w-0 flex-1 truncate text-sm font-medium" title={value} style={{ color: 'var(--color-text)' }}>{value}</span>
         {canExpand && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button type="button" className={`shrink-0 rounded-md p-1 ${FOCUS_RING_CLASS}`} aria-label={`Ver todas as ${label.toLowerCase()}`} title={`Ver todas as ${label.toLowerCase()}`} style={{ color: 'var(--color-primary)' }}>
-                <MoreHorizontal size={17} aria-hidden="true" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" sideOffset={8} className="p-3" style={{ width: 'min(28rem, calc(100vw - 1.5rem))', color: 'var(--color-text)', backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+          <Popover label={label} alignment="start" width="min(28rem, calc(100vw - 24px))" padding={3}
+      content={<div>
               <h4 className="text-sm font-bold">{label}</h4>
               <p className="mt-2 text-sm leading-6" style={{ color: 'var(--color-text-subtle)' }}>{value}</p>
-            </PopoverContent>
-          </Popover>
+        </div>}>
+      {trigger => (
+        <DashboardButton {...trigger} type="button" className={`shrink-0 rounded-md p-1 ${FOCUS_RING_CLASS}`} aria-label={`Ver todas as ${label.toLowerCase()}`} title={`Ver todas as ${label.toLowerCase()}`} style={{ color: 'var(--color-primary)' }}>
+                <MoreHorizontal size={17} aria-hidden="true" />
+              </DashboardButton>
+      )}
+    </Popover>
         )}
       </div>
     </div>
@@ -365,25 +358,8 @@ function OnlineUsersCard({
   const [selecionado, setSelecionado] = useState<{ id: string; nome: string } | null>(null);
 
   return (
-    <Popover open={open} onOpenChange={(aberto) => { setOpen(aberto); setSelecionado(null); }}>
-      <div className="grid min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
-          <Users size={19} strokeWidth={2.2} aria-hidden="true" />
-        </div>
-        <div className="min-w-0">
-          <TooltipKpi kpiName="administracao.usuariosOnline"><div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold leading-none" style={{ color: '#10b981' }}>{isError || isLoading ? '—' : totalOnline}</span>
-            <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>Online agora</span>
-          </div></TooltipKpi>
-          <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>{isError ? 'Presença indisponível' : isLoading ? 'Consultando presença...' : 'Outras pessoas com a página em foco'}</div>
-        </div>
-        <PopoverTrigger asChild>
-          <button type="button" aria-label="Ver detalhes de presença" title="Ver detalhes de presença" className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
-            <CircleHelp size={16} aria-hidden="true" />
-          </button>
-        </PopoverTrigger>
-      </div>
-      <PopoverContent side="bottom" align="end" sideOffset={10} collisionPadding={12} className="overflow-y-auto p-0 shadow-xl" style={{ width: 'min(48rem, calc(100vw - 1.5rem))', maxHeight: 'min(640px, var(--radix-popover-content-available-height))', color: 'var(--color-text)', backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+    <Popover label="Acessos recentes" isOpen={open} onOpenChange={(aberto) => { setOpen(aberto); setSelecionado(null); }} alignment="end" width="min(48rem, calc(100vw - 24px))" padding={0}
+      content={<div className="max-h-[min(40rem,70dvh)] overflow-y-auto">
         {selecionado && podeVerTrilha ? <PresenceHistoryContent key={selecionado.id} usuarioId={selecionado.id} nome={selecionado.nome} onClose={() => {
           const pessoaId = selecionado.id;
           setSelecionado(null);
@@ -409,7 +385,24 @@ function OnlineUsersCard({
             </div>
           </section>
         </div>}</>}
-      </PopoverContent>
+        </div>}>
+      {trigger => (
+        <div className="grid min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
+          <Users size={19} strokeWidth={2.2} aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <TooltipKpi kpiName="administracao.usuariosOnline"><div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold leading-none" style={{ color: '#10b981' }}>{isError || isLoading ? '—' : totalOnline}</span>
+            <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>Online agora</span>
+          </div></TooltipKpi>
+          <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>{isError ? 'Presença indisponível' : isLoading ? 'Consultando presença...' : 'Outras pessoas com a página em foco'}</div>
+        </div>
+        <DashboardButton {...trigger} type="button" aria-label="Ver detalhes de presença" title="Ver detalhes de presença" className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
+            <CircleHelp size={16} aria-hidden="true" />
+          </DashboardButton>
+      </div>
+      )}
     </Popover>
   );
 }
@@ -425,7 +418,6 @@ function formatFiliaisResumo(filiais: string[], acessoTotal: boolean): string {
   if (acessoTotal) return 'Acesso total';
   return filiais.join(', ') || 'Nenhuma';
 }
-
 function mapOverridesToState(permissoesNegadas: string[], permissoesConcedidas: string[]): PermissionOverrideStateMap {
   const proximo = createEmptyPermissionOverrideState();
 
@@ -640,24 +632,8 @@ function renderUltimaTelaCell(row: UsuarioRow) {
 
 function renderUsuarioDetailsPopover(row: UsuarioRow) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-all duration-150 hover:-translate-y-px hover:bg-[var(--color-bg)] ${FOCUS_RING_CLASS}`}
-          style={SECONDARY_BUTTON_STYLE}
-          aria-label={`Ver detalhes de ${row.nome}`}
-        >
-          <Eye size={14} />
-          Ver mais
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="max-h-[min(34rem,calc(100vh-5rem))] overflow-y-auto p-4"
-        style={{ width: 'min(30rem, calc(100vw - 24px))' }}
-      >
+    <Popover label={"Detalhes de " + row.nome} alignment="end" width="min(30rem, calc(100vw - 24px))" padding={3}
+      content={<div className="max-h-[min(34rem,70dvh)] overflow-y-auto">
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -690,7 +666,18 @@ function renderUsuarioDetailsPopover(row: UsuarioRow) {
           <DetailTextBlock label="Concessões individuais" value={row.concessoesResumo} fallback="Nenhuma" />
           <DetailTextBlock label="Negações individuais" value={row.negacoesResumo} fallback="Nenhuma" />
         </div>
-      </PopoverContent>
+        </div>}>
+      {trigger => (
+        <DashboardButton {...trigger}
+          type="button"
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-all duration-150 hover:-translate-y-px hover:bg-[var(--color-bg)] ${FOCUS_RING_CLASS}`}
+          style={SECONDARY_BUTTON_STYLE}
+          aria-label={`Ver detalhes de ${row.nome}`}
+        >
+          <Eye size={14} />
+          Ver mais
+        </DashboardButton>
+      )}
     </Popover>
   );
 }
@@ -708,10 +695,10 @@ export default function AdminUsuariosPage() {
   const atualizarUsuario = useAtualizarUsuario();
   const excluirUsuario = useExcluirUsuario();
   const redefinirSenhaUsuario = useRedefinirSenhaUsuario();
-
   const [editing, setEditing] = useState<UsuarioAdmin | null>(null);
   const [form, setForm] = useState<UsuarioPayload>(FORM_INICIAL);
   const [erro, setErro] = useState('');
+  const [inativacao, setInativacao] = useState<UsuarioAdmin | null>(null);
   const [sucesso, setSucesso] = useState('');
   const [usuarioParaRedefinirSenha, setUsuarioParaRedefinirSenha] = useState<UsuarioAdmin | null>(null);
   const [senhaTemporaria, setSenhaTemporaria] = useState('');
@@ -895,6 +882,11 @@ export default function AdminUsuariosPage() {
     event.preventDefault();
     setErro('');
 
+    if (!form.setorId) {
+      setErro('Selecione o setor do usuário.');
+      return;
+    }
+
     if (form.senha?.trim()) {
       const errors = getPasswordPolicyErrors(form.senha);
       if (errors.length > 0) {
@@ -931,7 +923,6 @@ export default function AdminUsuariosPage() {
   }
 
   async function handleInativar(usuario: UsuarioAdmin) {
-    if (!window.confirm(`Inativar o usuário "${usuario.email}"?`)) return;
 
     try {
       await excluirUsuario.mutateAsync(usuario.id);
@@ -950,7 +941,6 @@ export default function AdminUsuariosPage() {
 
   function fecharRedefinicaoSenha() {
     if (redefinirSenhaUsuario.isPending) return;
-
     setUsuarioParaRedefinirSenha(null);
     setSenhaTemporaria('');
     setConfirmacaoSenhaTemporaria('');
@@ -1034,78 +1024,18 @@ export default function AdminUsuariosPage() {
     const operacaoRapidaBloqueada = bloqueado || atualizarUsuario.isPending || redefinirSenhaUsuario.isPending;
 
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-all duration-150 hover:-translate-y-px hover:bg-[var(--color-bg)] ${FOCUS_RING_CLASS}`}
-            style={SECONDARY_BUTTON_STYLE}
-            aria-label={`Abrir ações de ${row.nome}`}
-          >
-            <MoreHorizontal size={17} />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[18rem]">
-          <DropdownMenuItem
-            disabled={bloqueado}
-            onSelect={() => startEdit(row)}
-            className="gap-2"
-          >
-            <Pencil size={14} />
-            Editar
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={bloqueado}
-            onSelect={() => void handleInativar(row)}
-            className="gap-2"
-            style={EDIT_DANGER_STYLE}
-          >
-            <UserX size={14} />
-            Inativar
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={bloqueado || redefinirSenhaUsuario.isPending}
-            onSelect={() => abrirRedefinicaoSenha(row)}
-            className="gap-2"
-          >
-            <KeyRound size={14} />
-            Redefinir senha
-          </DropdownMenuItem>
-          <DropdownMenuSeparator
-            className="mx-2 my-1 h-px"
-            style={{ backgroundColor: 'var(--color-border)' }}
-          />
-          <DropdownMenuItem
-            disabled={operacaoRapidaBloqueada}
-            onSelect={() => void handleTogglePermissaoRapida(row, 'can_manage_kpi_goals', !podeGerenciarMetas)}
-            className="gap-2"
-          >
-            <input
-              type="checkbox"
-              checked={podeGerenciarMetas}
-              readOnly
-              className="mt-0.5 h-4 w-4 rounded border-[var(--color-border)]"
-              style={{ accentColor: 'var(--color-primary)' }}
-              tabIndex={-1}
-            />
-            <span>Permitir gerenciar metas de indicadores</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={operacaoRapidaBloqueada}
-            onSelect={() => void handleTogglePermissaoRapida(row, ['can_manage_communications', 'homeComunicados'], !podeGerenciarComunicacoes)}
-            className="gap-2"
-          >
-            <input
-              type="checkbox"
-              checked={podeGerenciarComunicacoes}
-              readOnly
-              className="mt-0.5 h-4 w-4 rounded border-[var(--color-border)]"
-              style={{ accentColor: 'var(--color-primary)' }}
-              tabIndex={-1}
-            />
-            <span>Permitir alterar comunicações</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
+      <DropdownMenu alignment="end" menuWidth={288} hasChevron={false}
+        button={{ label: 'Abrir ações de ' + row.nome, isIconOnly: true, icon: <MoreHorizontal size={17} /> }}>
+        <DropdownMenuItem label="Editar" icon={<Pencil size={14} />} isDisabled={bloqueado} onClick={() => startEdit(row)} />
+        <DropdownMenuItem label="Inativar" icon={<UserX size={14} />} variant="destructive"
+          isDisabled={bloqueado} onClick={() => setInativacao(row)} />
+        <DropdownMenuItem label="Redefinir senha" icon={<KeyRound size={14} />}
+          isDisabled={bloqueado || redefinirSenhaUsuario.isPending} onClick={() => abrirRedefinicaoSenha(row)} />
+        <DropdownMenuDivider />
+        <DropdownMenuCheckboxItem label="Permitir gerenciar metas de indicadores" value={podeGerenciarMetas}
+          isDisabled={operacaoRapidaBloqueada} onChange={allowed => void handleTogglePermissaoRapida(row, 'can_manage_kpi_goals', allowed)} />
+        <DropdownMenuCheckboxItem label="Permitir alterar comunicações" value={podeGerenciarComunicacoes}
+          isDisabled={operacaoRapidaBloqueada} onChange={allowed => void handleTogglePermissaoRapida(row, ['can_manage_communications', 'homeComunicados'], allowed)} />
       </DropdownMenu>
     );
   }
@@ -1191,117 +1121,35 @@ export default function AdminUsuariosPage() {
   ];
 
   return (
-    <div className="space-y-5">
-      {sucesso && (
-        <div
-          role="status"
-          className="fixed right-4 top-4 z-50 rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg"
-          style={{
-            backgroundColor: 'var(--color-positive-badge-bg)',
-            borderColor: 'var(--color-positive-border)',
-            color: 'var(--color-positive-badge-text)',
-          }}
-        >
-          {sucesso}
-        </div>
-      )}
+    <div className="dashboard-admin space-y-5">
+      {sucesso && <ToastStack items={[{ id: 'redefinicao-senha', message: sucesso, tone: 'success' }]} />}
       {usuarioParaRedefinirSenha && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <form
-            onSubmit={handleRedefinirSenha}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="redefinir-senha-titulo"
-            className="w-full max-w-md space-y-5 rounded-2xl border p-6 shadow-xl"
-            style={SURFACE_STYLE}
-          >
+        <Dialog isOpen purpose="form" aria-labelledby="redefinir-senha-titulo"
+          onOpenChange={open => { if (!open && !redefinirSenhaUsuario.isPending) fecharRedefinicaoSenha(); }}
+          width="min(92vw, 30rem)" className="dashboard-admin">
+          <form onSubmit={handleRedefinirSenha} className="space-y-4">
             <div className="space-y-1">
-              <h2 id="redefinir-senha-titulo" className="text-lg font-bold" style={{ color: 'var(--color-text)' }}>
-                Redefinir senha
-              </h2>
+              <h2 id="redefinir-senha-titulo" className="text-lg font-bold">Redefinir senha</h2>
               <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                Defina a senha temporária para {usuarioParaRedefinirSenha.email}. Ela deverá ser informada ao usuário por um canal seguro.
+                Defina a senha temporária para {usuarioParaRedefinirSenha.email}. Informe-a por um canal seguro.
               </p>
             </div>
-
-            {erroRedefinicaoSenha && (
-              <p
-                role="alert"
-                className="rounded-xl border px-3 py-2 text-sm"
-                style={{
-                  backgroundColor: 'var(--color-negative-badge-bg)',
-                  borderColor: 'var(--color-negative-border)',
-                  color: 'var(--color-negative-badge-text)',
-                }}
-              >
-                {erroRedefinicaoSenha}
-              </p>
-            )}
-
-            <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>Senha temporária</span>
-              <div className="relative">
-                <input
-                  type={mostrarSenhaTemporaria ? 'text' : 'password'}
-                  value={senhaTemporaria}
-                  onChange={(event) => setSenhaTemporaria(event.target.value)}
-                  autoComplete="new-password"
-                  className="w-full rounded-xl border px-3 py-2.5 pr-11 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                  style={FIELD_STYLE}
-                  minLength={12}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setMostrarSenhaTemporaria((atual) => !atual)}
-                  aria-label={mostrarSenhaTemporaria ? 'Ocultar senha temporária' : 'Exibir senha temporária'}
-                  title={mostrarSenhaTemporaria ? 'Ocultar senha' : 'Exibir senha'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                  style={{ color: 'var(--color-text-muted)' }}
-                >
-                  {mostrarSenhaTemporaria ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-                </button>
-              </div>
-              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{PASSWORD_POLICY_HINT}</span>
-            </label>
-
-            <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>Confirmar senha temporária</span>
-              <input
-                type={mostrarSenhaTemporaria ? 'text' : 'password'}
-                value={confirmacaoSenhaTemporaria}
-                onChange={(event) => setConfirmacaoSenhaTemporaria(event.target.value)}
-                autoComplete="new-password"
-                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                style={FIELD_STYLE}
-                minLength={12}
-                required
-              />
-            </label>
-
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={fecharRedefinicaoSenha}
-                disabled={redefinirSenhaUsuario.isPending}
-                className={`rounded-xl border px-4 py-2.5 text-sm font-semibold ${FOCUS_RING_CLASS}`}
-                style={SECONDARY_BUTTON_STYLE}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={redefinirSenhaUsuario.isPending}
-                className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 ${FOCUS_RING_CLASS}`}
-                style={{ backgroundColor: 'var(--color-primary)' }}
-              >
-                {redefinirSenhaUsuario.isPending ? 'Redefinindo...' : 'Redefinir senha'}
-              </button>
+            {erroRedefinicaoSenha && <Banner status="error" title={erroRedefinicaoSenha} role="alert" />}
+            <FormPasswordField label="Senha temporária" autoComplete="new-password" required minLength={12}
+              value={senhaTemporaria} onChange={setSenhaTemporaria} hint={PASSWORD_POLICY_HINT}
+              visible={mostrarSenhaTemporaria} onToggle={() => setMostrarSenhaTemporaria(value => !value)} />
+            <FormPasswordField label="Confirmar senha temporária" autoComplete="new-password" required minLength={12}
+              value={confirmacaoSenhaTemporaria} onChange={setConfirmacaoSenhaTemporaria} visible={mostrarSenhaTemporaria} />
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button label="Cancelar" variant="secondary" className="dashboard-form-secondary"
+                isDisabled={redefinirSenhaUsuario.isPending} onClick={fecharRedefinicaoSenha} />
+              <Button label="Redefinir senha" type="submit" variant="primary" className="dashboard-form-submit"
+                isLoading={redefinirSenhaUsuario.isPending} />
             </div>
           </form>
-        </div>
+        </Dialog>
       )}
-      <section className="rounded-[20px] border p-4 shadow-sm sm:p-5" style={SURFACE_STYLE}>
+      <Card padding={0} className="dashboard-admin-card">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-4 md:gap-4">
             <SummaryCard label="Total" detail="usuários cadastrados" value={resumoUsuarios.totalUsuarios} accent="var(--color-primary)" iconSurface="rgba(33, 71, 138, 0.14)" icon={Users} listTitle="Todos os usuários" usuarios={usuariosOrdenadosPorNome} emptyMessage="Nenhum usuário cadastrado." />
@@ -1331,112 +1179,27 @@ export default function AdminUsuariosPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid w-full gap-4 lg:grid-cols-3 [&>*]:min-w-0">
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Nome</span>
-              <input
-                value={form.nome}
-                onChange={(e) => setForm((atual) => ({ ...atual, nome: e.target.value }))}
-                className="w-full rounded-xl border px-3 py-2.5"
-                style={FIELD_STYLE}
-                required
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>E-mail</span>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((atual) => ({ ...atual, email: e.target.value }))}
-                className="w-full rounded-xl border px-3 py-2.5"
-                style={FIELD_STYLE}
-                required
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>
-                Senha {editing ? '(opcional)' : '(obrigatória)'}
-              </span>
-              <div className="relative">
-                <input
-                  type={mostrarSenhaFormulario ? 'text' : 'password'}
-                  value={form.senha ?? ''}
-                  onChange={(e) => setForm((atual) => ({ ...atual, senha: e.target.value }))}
-                  className="w-full rounded-xl border px-3 py-2.5 pr-11"
-                  style={FIELD_STYLE}
-                  minLength={12}
-                  required={!editing}
-                />
-                <button
-                  type="button"
-                  onClick={() => setMostrarSenhaFormulario((atual) => !atual)}
-                  aria-label={mostrarSenhaFormulario ? 'Ocultar senha' : 'Exibir senha'}
-                  title={mostrarSenhaFormulario ? 'Ocultar senha' : 'Exibir senha'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                  style={{ color: 'var(--color-text-muted)' }}
-                >
-                  {mostrarSenhaFormulario ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-                </button>
-              </div>
-              <span className="block text-[11px]" style={{ color: 'var(--color-text-subtle)' }}>
-                {PASSWORD_POLICY_HINT}
-              </span>
-            </label>
-
-          </div>
-
+          <h2>{editing ? 'Editar usuário' : 'Cadastro de usuário'}</h2>
           <div className="grid gap-4 lg:grid-cols-3 [&>*]:min-w-0">
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>
-                Confirmar senha {editing ? '(opcional)' : '(obrigatória)'}
-              </span>
-              <input
-                type={mostrarSenhaFormulario ? 'text' : 'password'}
-                value={form.confirmacaoSenha ?? ''}
-                onChange={(e) => setForm((atual) => ({ ...atual, confirmacaoSenha: e.target.value }))}
-                className="h-11 w-full rounded-xl border px-3"
-                style={FIELD_STYLE}
-                minLength={12}
-                required={!editing}
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Setor</span>
-              <select
-                value={form.setorId}
-                onChange={(e) => setForm((atual) => ({ ...atual, setorId: e.target.value }))}
-                className="h-11 w-full rounded-xl border px-3"
-                style={FIELD_STYLE}
-                required
-              >
-                <option value="">Selecione</option>
-                {(setores.data ?? []).map((setor) => (
-                  <option key={setor.id} value={setor.id}>
-                    {setor.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Status da conta</span>
-              <label
-                className="flex h-11 cursor-pointer items-center justify-between rounded-xl border px-3 text-sm font-semibold"
-                style={form.ativo ? { ...FIELD_STYLE, borderColor: 'var(--color-primary)' } : FIELD_STYLE}
-              >
-                <span style={{ color: 'var(--color-text)' }}>Usuário ativo</span>
-                <input
-                  type="checkbox"
-                  checked={form.ativo}
-                  onChange={(e) => setForm((atual) => ({ ...atual, ativo: e.target.checked }))}
-                  className="h-4 w-4 rounded border-[var(--color-border)]"
-                  style={{ accentColor: 'var(--color-primary)' }}
-                />
-              </label>
-            </div>
+            <FormTextField label="Nome" value={form.nome} required
+              onChange={nome => setForm(atual => ({ ...atual, nome }))} />
+            <FormTextField label="E-mail" type="email" value={form.email} required
+              onChange={email => setForm(atual => ({ ...atual, email }))} />
+            <FormPasswordField label="Senha" value={form.senha ?? ''} required={!editing} isOptional={Boolean(editing)}
+              autoComplete="new-password" minLength={12} hint={PASSWORD_POLICY_HINT}
+              visible={mostrarSenhaFormulario} onToggle={() => setMostrarSenhaFormulario(value => !value)}
+              onChange={senha => setForm(atual => ({ ...atual, senha }))} />
+            <FormPasswordField label="Confirmar senha" value={form.confirmacaoSenha ?? ''} required={!editing} isOptional={Boolean(editing)}
+              autoComplete="new-password" minLength={12} visible={mostrarSenhaFormulario}
+              onChange={confirmacaoSenha => setForm(atual => ({ ...atual, confirmacaoSenha }))} />
+            <Selector label="Setor" placeholder="Selecione" value={form.setorId || undefined} isRequired
+              options={(setores.data ?? []).map(setor => ({ value: setor.id, label: setor.nome }))}
+              onChange={setorId => setForm(atual => ({ ...atual, setorId }))} width="100%" controlClassName="dashboard-admin-selector" />
+            <fieldset className="dashboard-admin-status">
+              <legend>Status da conta</legend>
+              <CheckboxInput label="Usuário ativo" value={form.ativo}
+                onChange={ativo => setForm(atual => ({ ...atual, ativo }))} />
+            </fieldset>
           </div>
 
           <div className="space-y-3">
@@ -1447,39 +1210,20 @@ export default function AdminUsuariosPage() {
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              {ESCOPO_FILIAIS_OPTIONS.map((opcao) => (
-                <label
-                  key={opcao.value}
-                  className="flex items-start gap-3 rounded-2xl border px-4 py-3"
-                  style={
-                    form.escopoFiliaisTipo === opcao.value
-                      ? {
-                          backgroundColor: 'var(--color-bg)',
-                          borderColor: 'var(--color-primary)',
-                        }
-                      : SOFT_PANEL_STYLE
-                  }
-                >
-                  <input
-                    type="radio"
-                    name="escopoFiliaisTipo"
-                    checked={form.escopoFiliaisTipo === opcao.value}
-                    onChange={() => setForm((atual) => ({
-                      ...atual,
-                      escopoFiliaisTipo: opcao.value,
-                      filiaisPermitidasUsuario: opcao.value === 'SELECIONADAS' ? atual.filiaisPermitidasUsuario : [],
-                    }))}
-                    className="mt-1 h-4 w-4 border-[var(--color-border)]"
-                    style={{ accentColor: 'var(--color-primary)' }}
-                  />
-                  <div>
-                    <div className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{opcao.label}</div>
-                    <div className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>{opcao.description}</div>
-                  </div>
-                </label>
+            <RadioList label="Escopo de filiais do usuário" isLabelHidden value={form.escopoFiliaisTipo}
+              controlClassName="dashboard-admin-radio-list" onChange={value => {
+                const option = ESCOPO_FILIAIS_OPTIONS.find(item => item.value === value);
+                if (!option) return;
+                setForm(atual => ({
+                  ...atual,
+                  escopoFiliaisTipo: option.value,
+                  filiaisPermitidasUsuario: option.value === 'SELECIONADAS' ? atual.filiaisPermitidasUsuario : [],
+                }));
+              }}>
+              {ESCOPO_FILIAIS_OPTIONS.map(opcao => (
+                <RadioListItem key={opcao.value} value={opcao.value} label={opcao.label} description={opcao.description} />
               ))}
-            </div>
+            </RadioList>
 
             {form.escopoFiliaisTipo === 'SELECIONADAS' && (
               <FiliaisPermitidasSplitSelect
@@ -1508,35 +1252,13 @@ export default function AdminUsuariosPage() {
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 lg:flex lg:flex-wrap [&>label]:min-w-0 [&>label]:lg:flex-[1_1_16rem] [&>label>input]:shrink-0">
+            <RadioList label="Papel administrativo" isLabelHidden value={form.papel}
+              controlClassName="dashboard-admin-radio-list" onChange={papel => setForm(atual => ({ ...atual, papel }))}>
               {(papeis.data ?? []).map((papel: PapelAdmin) => (
-                <label
-                  key={papel.id}
-                  className="flex items-start gap-3 rounded-2xl border px-4 py-3"
-                  style={
-                    form.papel === papel.nome
-                      ? {
-                          backgroundColor: 'var(--color-bg)',
-                          borderColor: 'var(--color-primary)',
-                        }
-                      : SOFT_PANEL_STYLE
-                  }
-                >
-                  <input
-                    type="radio"
-                    name="papel"
-                    checked={form.papel === papel.nome}
-                    onChange={() => setForm((atual) => ({ ...atual, papel: papel.nome }))}
-                    className="mt-1 h-4 w-4 border-[var(--color-border)]"
-                    style={{ accentColor: 'var(--color-primary)' }}
-                  />
-                  <div>
-                    <div className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{formatRoleName(papel.nome)}</div>
-                    <div className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>{papel.descricao ?? 'Sem descrição'}</div>
-                  </div>
-                </label>
+                <RadioListItem key={papel.id} value={papel.nome} label={formatRoleName(papel.nome)}
+                  description={papel.descricao ?? 'Sem descrição'} />
               ))}
-            </div>
+            </RadioList>
           </div>
 
           <div className="space-y-3">
@@ -1578,38 +1300,17 @@ export default function AdminUsuariosPage() {
             />
           </div>
 
-          {erro && <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">{erro}</p>}
+          {erro && <Banner status="error" title={erro} role="alert" />}
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={salvando}
-              className="rounded-xl bg-[#21478A] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {editing ? 'Salvar alterações' : 'Criar usuário'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsImportModalOpen(true)}
-              className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-80 ${FOCUS_RING_CLASS}`}
-              style={SECONDARY_BUTTON_STYLE}
-            >
-              <Upload size={16} aria-hidden="true" />
-              Importar usuários (Excel)
-            </button>
-            {editing && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl border px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-80"
-                style={SECONDARY_BUTTON_STYLE}
-              >
-                Cancelar edição
-              </button>
-            )}
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" label={editing ? 'Salvar alterações' : 'Criar usuário'} variant="primary"
+              className="dashboard-form-submit" isLoading={salvando} />
+            <Button label="Importar usuários (Excel)" icon={<Upload size={16} />} variant="secondary"
+              className="dashboard-form-secondary" onClick={() => setIsImportModalOpen(true)} />
+            {editing && <Button label="Cancelar edição" variant="ghost" className="dashboard-form-secondary" onClick={resetForm} />}
           </div>
         </form>
-      </section>
+      </Card>
 
       <DataTable
         titulo="Usuários cadastrados"
@@ -1620,8 +1321,12 @@ export default function AdminUsuariosPage() {
         errorFallbackMessage="Não foi possível carregar a lista de usuários."
         colunas={isMobileUsersTable ? colunasUsuariosMobile : colunasUsuariosDesktop}
       />
-
       <UsuariosImportacaoModal open={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
+      {inativacao && (
+        <AlertDialog isOpen title="Inativar usuário?" description={inativacao.email + ' perderá o acesso ao portal.'}
+          actionLabel="Inativar" onOpenChange={open => { if (!open) setInativacao(null); }}
+          onAction={() => { setInativacao(null); void handleInativar(inativacao); }} />
+      )}
     </div>
   );
 }

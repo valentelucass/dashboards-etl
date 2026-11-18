@@ -1,8 +1,9 @@
+import DashboardButton from "../shared/DashboardButton";
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import clienteAxios from '../../api/clienteAxios';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Popover } from '@astryxdesign/core/Popover';
 import { ADMIN_NAV_ITEMS, DASHBOARD_NAV_ITEMS } from '../../utils/accessControl';
 import TooltipKpi from '../shared/TooltipKpi';
 
@@ -57,14 +58,14 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
   const dados = !query.isError && compativel && query.data?.dia === dia ? query.data : undefined;
 
   return <section className="min-w-0 p-4" aria-label={`Acessos de hoje de ${nome}`}>
-    <button type="button" aria-label="Fechar acessos de hoje" onClick={onClose}
+    <DashboardButton type="button" aria-label="Fechar acessos de hoje" onClick={onClose}
       className="mb-3 inline-flex items-center gap-1.5 rounded text-xs font-semibold focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-      style={{ color: 'var(--color-primary)' }}><ArrowLeft size={15} />Voltar às pessoas</button>
+      style={{ color: 'var(--color-primary)' }}><ArrowLeft size={15} />Voltar às pessoas</DashboardButton>
     <h3 className="text-base font-bold">Acessos de hoje</h3>
     <p className="mt-1 break-words text-sm font-medium">{nome}</p>
     <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>Uma linha por página, da mais recente para a mais antiga. Horários de Brasília.</p>
     {query.isPending && <p className="py-5 text-sm" role="status">Carregando acessos...</p>}
-    {query.isError && <div className="py-5 text-sm" role="alert">Não foi possível atualizar os acessos. <button type="button" className="underline" onClick={() => void query.refetch()}>Tentar novamente</button></div>}
+    {query.isError && <div className="py-5 text-sm" role="alert">Não foi possível atualizar os acessos. <DashboardButton type="button" className="underline" onClick={() => void query.refetch()}>Tentar novamente</DashboardButton></div>}
     {!query.isPending && !query.isError && !compativel && <p className="py-5 text-sm" role="status">O resumo por página ainda não está disponível. Aguarde a atualização do serviço.</p>}
     {!query.isPending && !query.isError && compativel && !dados?.visitas.length && <p className="py-5 text-sm">Nenhum acesso registrado hoje.</p>}
     {dados && dados.total > 0 && <>
@@ -83,9 +84,9 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
       <p className="mt-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>Soma dos períodos registrados em foco; pausas ficam de fora. Os horários acima não representam permanência contínua.</p>
       {dados.atualizadoEm && <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>Último sinal da pessoa: {hora(dados.atualizadoEm)} · Consulta a cada 15s.</p>}
       {dados.total > 10 && <div className="mt-3 flex items-center justify-between gap-2 border-t pt-3 text-xs" style={{ borderColor: 'var(--color-border)' }}>
-        <button type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={pagina === 0 || query.isFetching} onClick={() => setPagina(p => p - 1)}>Anterior</button>
+        <DashboardButton type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={pagina === 0 || query.isFetching} onClick={() => setPagina(p => p - 1)}>Anterior</DashboardButton>
         <span>{pagina + 1}/{Math.ceil(dados.total / 10)} · {dados.total} páginas</span>
-        <button type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={(pagina + 1) * 10 >= dados.total || query.isFetching} onClick={() => setPagina(p => p + 1)}>Próxima</button>
+        <DashboardButton type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={(pagina + 1) * 10 >= dados.total || query.isFetching} onClick={() => setPagina(p => p + 1)}>Próxima</DashboardButton>
       </div>}
     </>}
   </section>;
@@ -93,10 +94,12 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
 
 export default function PresenceHistory({ usuarioId, nome, children }: { usuarioId: string; nome: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  return <Popover open={open} onOpenChange={setOpen}>
-    <PopoverTrigger asChild><button type="button" className="block w-full rounded-xl text-left focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" aria-label={`Ver acessos de hoje de ${nome}`}>{children}</button></PopoverTrigger>
-    <PopoverContent side="bottom" align="start" collisionPadding={12} className="overflow-y-auto p-0" style={{ width: 'min(440px, calc(100vw - 24px))', maxHeight: 'var(--radix-popover-content-available-height)' }}>
+  return <Popover label={"Acessos de hoje de " + nome} isOpen={open} onOpenChange={setOpen} alignment="start" width="min(27.5rem, calc(100vw - 24px))" padding={0}
+      content={<div className="max-h-[70dvh] overflow-y-auto">
       {open && <PresenceHistoryContent usuarioId={usuarioId} nome={nome} onClose={() => setOpen(false)} />}
-    </PopoverContent>
-  </Popover>;
+        </div>}>
+      {trigger => (
+        <DashboardButton {...trigger} type="button" className="block w-full rounded-xl text-left focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" aria-label={`Ver acessos de hoje de ${nome}`}>{children}</DashboardButton>
+      )}
+    </Popover>;
 }

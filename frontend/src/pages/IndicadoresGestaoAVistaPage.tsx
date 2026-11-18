@@ -1,3 +1,5 @@
+import { Card } from '@astryxdesign/core/Card';
+import DashboardButton from "../components/shared/DashboardButton";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, BarChart3, Boxes, CheckCircle2, ChevronRight, ChevronUp, Clock3, Gauge, MessageSquarePlus, PackageCheck, Settings, ShieldAlert, Truck } from 'lucide-react';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
@@ -247,7 +249,7 @@ function PerformanceDrilldownBreadcrumbs({
 
   return (
     <div className="flex min-w-0 flex-wrap items-center justify-end gap-1 text-[11px] font-semibold">
-      <button
+      <DashboardButton
         type="button"
         title="Drill up"
         aria-label="Drill up"
@@ -264,17 +266,17 @@ function PerformanceDrilldownBreadcrumbs({
         style={{ borderColor: 'var(--color-border)', color: resolveButtonColor(true, drillUpDesabilitado) }}
       >
         <ChevronUp size={14} />
-      </button>
-      <button
+      </DashboardButton>
+      <DashboardButton
         type="button"
         onClick={() => onNivelClick('RESPONSAVEL')}
         className={buttonClassName}
         style={{ color: nivel === 'RESPONSAVEL' ? 'var(--color-primary)' : 'var(--color-text-muted)' }}
       >
         Responsáveis
-      </button>
+      </DashboardButton>
       <ChevronRight size={12} style={{ color: 'var(--color-text-subtle)' }} />
-      <button
+      <DashboardButton
         type="button"
         disabled={regiaoDesabilitada}
         aria-disabled={regiaoDesabilitada}
@@ -288,9 +290,9 @@ function PerformanceDrilldownBreadcrumbs({
         style={{ color: resolveButtonColor(nivel === 'REGIAO', regiaoDesabilitada) }}
       >
         {responsavel ? `Regiões de ${responsavel}` : 'Regiões'}
-      </button>
+      </DashboardButton>
       <ChevronRight size={12} style={{ color: 'var(--color-text-subtle)' }} />
-      <button
+      <DashboardButton
         type="button"
         disabled={cidadeDesabilitada}
         aria-disabled={cidadeDesabilitada}
@@ -304,7 +306,7 @@ function PerformanceDrilldownBreadcrumbs({
         style={{ color: resolveButtonColor(nivel === 'CIDADE', cidadeDesabilitada) }}
       >
         {regiao ? `Cidades de ${regiao}` : 'Cidades'}
-      </button>
+      </DashboardButton>
     </div>
   );
 }
@@ -931,7 +933,7 @@ export default function IndicadoresGestaoAVistaPage() {
         }
 
         return (
-          <button
+          <DashboardButton
             type="button"
             onClick={() => setHorarioCorteJustificativaSelecionada({ codSolicitacao: row.id, justificativa: row.justificativa })}
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors hover:bg-[var(--color-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -942,7 +944,7 @@ export default function IndicadoresGestaoAVistaPage() {
             title={possuiJustificativa ? 'Justificado' : 'Justificar SM'}
           >
             {possuiJustificativa ? <CheckCircle2 size={15} /> : <MessageSquarePlus size={15} />}
-          </button>
+          </DashboardButton>
         );
       },
     },
@@ -955,7 +957,7 @@ export default function IndicadoresGestaoAVistaPage() {
   const toggleSection = (sectionId: SectionId) => setExpandedSection((current) => current === sectionId ? null : sectionId);
 
   const horariosFonteBox = (
-    <div className="mb-5 rounded-[20px] border p-4 shadow-sm" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+    <Card padding={4} className="mb-5" variant="muted">
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
           <Clock3 size={17} />
@@ -971,18 +973,18 @@ export default function IndicadoresGestaoAVistaPage() {
           Regra: início real da viagem comparado com a data de fim da viagem somada ao horário de corte da rota.
         </div>
       </div>
-    </div>
+    </Card>
   );
 
   const coletoresFilterBox = (
-    <div className="mb-4 rounded-[20px] border px-4 py-3" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+    <Card padding={4} className="mb-4" variant="muted">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>
         Regra operacional
       </div>
       <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
         Ordens de conferência distintas sobre manifestos bipáveis do período.
       </div>
-    </div>
+    </Card>
   );
 
   const performanceForaPrazo = performanceOverview.data?.entregasForaDoPrazo ?? 0;
@@ -1067,7 +1069,7 @@ export default function IndicadoresGestaoAVistaPage() {
         dataInicio={dataInicioIndicadores}
         dataFim={dataFimIndicadores}
         actions={canManageKpiGoals ? (
-          <button
+          <DashboardButton
             type="button"
             onClick={abrirGerenciadorMetas}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-[var(--color-bg)] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1075,7 +1077,7 @@ export default function IndicadoresGestaoAVistaPage() {
           >
             <Settings size={14} aria-hidden="true" />
             Gerenciar Metas
-          </button>
+          </DashboardButton>
         ) : null}
       >
         <FiliaisParceirosFilter

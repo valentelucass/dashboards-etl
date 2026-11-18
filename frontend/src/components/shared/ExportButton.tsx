@@ -1,3 +1,4 @@
+import { Button } from '@astryxdesign/core/Button';
 import { useState } from 'react';
 import { FileSpreadsheet } from 'lucide-react';
 
@@ -32,20 +33,13 @@ export default function ExportButton({ onExport, label = 'Exportar CSV' }: Expor
 
   return (
     <span className="inline-flex flex-col items-end gap-1">
-      <button
-        type="button"
+      <Button
+        label={exportando ? 'Exportando...' : label}
+        icon={<FileSpreadsheet size={14} aria-hidden="true" />}
+        variant="secondary"
         onClick={exportarCsv}
-        disabled={!podeExportar || exportando}
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 hover:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-        style={{
-          backgroundColor: 'var(--color-bg)',
-          borderColor: 'var(--color-border)',
-          color: 'var(--color-text)',
-        }}
-      >
-        <FileSpreadsheet size={14} aria-hidden="true" />
-        {exportando ? 'Exportando...' : label}
-      </button>
+        isDisabled={!podeExportar || exportando}
+      />
       {erro && (
         <span className="text-[11px]" style={{ color: 'var(--color-danger)' }} role="status">
           {erro}

@@ -1,7 +1,9 @@
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useMemo, useRef, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import ReactECharts from '../components/charts/DashboardEChart';
+import AstryxDashboardChart from '../components/charts/AstryxDashboardChart';
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Info, Minus, Settings } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
@@ -172,50 +174,6 @@ function getMetricValue(item: ChartDatum, metric: FaturamentoMetric): number {
   return metric === 'receita' ? item.receita : item.fretes;
 }
 
-function mergeAxis(baseAxis: unknown, optionAxis: unknown) {
-  const mergeSingleAxis = (axis: unknown) => ({
-    ...((baseAxis ?? {}) as object),
-    ...((axis ?? {}) as object),
-  });
-
-  if (Array.isArray(optionAxis)) {
-    return optionAxis.map(mergeSingleAxis);
-  }
-
-  return mergeSingleAxis(optionAxis);
-}
-
-function ThemedEChart({
-  option,
-  altura = MIN_CUSTOM_CHART_HEIGHT,
-  onEvents,
-}: {
-  option: EChartsOption;
-  altura?: number | string;
-  onEvents?: Record<string, (params: unknown) => void>;
-}) {
-  const { baseOption } = useEchartsTheme();
-  const mergedOption: EChartsOption = {
-    ...baseOption,
-    ...option,
-    tooltip: { ...baseOption.tooltip, ...(option.tooltip as object) },
-    legend: { ...baseOption.legend, ...(option.legend as object) },
-    grid: { ...baseOption.grid, ...(option.grid as object) },
-    xAxis: mergeAxis(baseOption.xAxis, option.xAxis),
-    yAxis: mergeAxis(baseOption.yAxis, option.yAxis),
-  };
-
-  return (
-    <ReactECharts
-      option={mergedOption}
-      style={{ height: altura, minHeight: typeof altura === 'number' ? Math.max(altura, MIN_CUSTOM_CHART_HEIGHT) : MIN_CUSTOM_CHART_HEIGHT, width: '100%' }}
-      opts={{ renderer: 'canvas' }}
-      onEvents={onEvents}
-      notMerge
-    />
-  );
-}
-
 function DrillControls({
   level,
   onChange,
@@ -229,7 +187,7 @@ function DrillControls({
 
   return (
     <div className="flex flex-wrap items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-      <button
+      <DashboardButton
         type="button"
         title="Drill up"
         aria-label="Drill up"
@@ -239,8 +197,8 @@ function DrillControls({
         style={{ borderColor: 'var(--color-border)' }}
       >
         <ChevronUp size={14} />
-      </button>
-      <button
+      </DashboardButton>
+      <DashboardButton
         type="button"
         title="Drill down"
         aria-label="Drill down"
@@ -250,11 +208,11 @@ function DrillControls({
         style={{ borderColor: 'var(--color-border)' }}
       >
         <ChevronDown size={14} />
-      </button>
+      </DashboardButton>
 
       <span className="mx-1 hidden sm:inline">Ano &gt; Mês &gt; Dia</span>
       {DRILL_LEVELS.map((item) => (
-        <button
+        <DashboardButton
           key={item}
           type="button"
           onClick={() => onChange(item)}
@@ -265,7 +223,7 @@ function DrillControls({
           }}
         >
           {item}
-        </button>
+        </DashboardButton>
       ))}
     </div>
   );
@@ -305,7 +263,7 @@ function MetricToggle({
   return (
     <div className="flex rounded-lg border p-0.5" style={{ borderColor: 'var(--color-border)' }}>
       {(['receita', 'fretes'] as FaturamentoMetric[]).map((item) => (
-        <button
+        <DashboardButton
           key={item}
           type="button"
           onClick={() => onChange(item)}
@@ -316,7 +274,7 @@ function MetricToggle({
           }}
         >
           {item === 'receita' ? 'Faturamento' : 'Minutas'}
-        </button>
+        </DashboardButton>
       ))}
     </div>
   );
@@ -338,7 +296,7 @@ function DrillBreadcrumb<T extends string>({
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1 rounded-lg border px-1 py-0.5" style={{ borderColor: 'var(--color-border)' }}>
-      <button
+      <DashboardButton
         type="button"
         title="Drill up"
         aria-label="Drill up"
@@ -348,13 +306,13 @@ function DrillBreadcrumb<T extends string>({
         style={{ color: canGoBack ? color : 'var(--color-text-muted)' }}
       >
         <ChevronUp size={13} />
-      </button>
+      </DashboardButton>
       {levels.map((item, index) => {
         const active = item.value === level;
         return (
           <span key={item.value} className="inline-flex items-center gap-1">
             {index > 0 && <span style={{ color: 'var(--color-text-subtle)' }}>&gt;</span>}
-            <button
+            <DashboardButton
               type="button"
               onClick={() => onChange(item.value)}
               className="rounded-md px-1.5 py-1 text-[11px] font-semibold transition"
@@ -364,7 +322,7 @@ function DrillBreadcrumb<T extends string>({
               }}
             >
               {item.label}
-            </button>
+            </DashboardButton>
           </span>
         );
       })}
@@ -734,7 +692,7 @@ function FaturamentoEvolutionCard({
           ))}
         </div>
         <div className="min-h-[350px] min-w-0 flex-1 lg:min-h-0">
-          <ThemedEChart option={option} altura="100%" />
+          <AstryxDashboardChart option={option} label="Evolução do faturamento" style={{ height: "100%", minHeight: MIN_CUSTOM_CHART_HEIGHT }} />
         </div>
       </div>
     </ChartCard>
@@ -802,7 +760,7 @@ function TopClientesTableCard({
     >
       <div className="flex h-full min-h-0 flex-col overflow-x-auto overflow-y-hidden">
         <div className="flex h-full min-h-0 min-w-[560px] flex-1 flex-col">
-          <table className="w-full table-fixed text-sm shrink-0">
+          <Table className="w-full table-fixed text-sm shrink-0">
             <colgroup>
               <col className="w-[70px]" />
               <col />
@@ -810,21 +768,21 @@ function TopClientesTableCard({
               <col className="w-[130px]" />
               <col className="w-[95px]" />
             </colgroup>
-            <thead>
-              <tr className="border-b text-left" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
-                <th className="px-2 py-2 text-center font-bold">Ranking</th>
-                <th className="px-2 py-2 font-bold">Cliente</th>
-                <th className="px-2 py-2 text-right font-bold">Mês Anterior</th>
-                <th className="px-2 py-2 text-right font-bold">Mês Atual</th>
-                <th className="px-2 py-2 text-center font-bold">Variação</th>
-              </tr>
-            </thead>
-          </table>
+            <TableHeader>
+              <TableRow isHeaderRow className="border-b text-left" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+                <TableHeaderCell className="px-2 py-2 text-center font-bold">Ranking</TableHeaderCell>
+                <TableHeaderCell className="px-2 py-2 font-bold">Cliente</TableHeaderCell>
+                <TableHeaderCell className="px-2 py-2 text-right font-bold">Mês Anterior</TableHeaderCell>
+                <TableHeaderCell className="px-2 py-2 text-right font-bold">Mês Atual</TableHeaderCell>
+                <TableHeaderCell className="px-2 py-2 text-center font-bold">Variação</TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+          </Table>
 
           <div
             className="min-h-0 flex-1 overflow-y-auto"
           >
-            <table className="w-full table-fixed text-sm">
+            <Table className="w-full table-fixed text-sm">
               <colgroup>
                 <col className="w-[70px]" />
                 <col />
@@ -832,21 +790,21 @@ function TopClientesTableCard({
                 <col className="w-[130px]" />
                 <col className="w-[95px]" />
               </colgroup>
-              <tbody>
+              <TableBody>
                 {rows.map((row, index) => (
-                  <tr key={`${row.clienteKey}-${index}`} className="border-b last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
-                    <td className="px-2 py-1.5 text-center" style={{ color: 'var(--color-text)' }}>{row.ranking}º</td>
-                    <td className="truncate px-2 py-1.5" title={row.cliente} style={{ color: 'var(--color-text)' }}>{row.cliente}</td>
-                    <td className="px-2 py-1.5 text-right" style={{ color: 'var(--color-text)' }}>{formatarMoeda(row.mesAnterior)}</td>
-                    <td className="px-2 py-1.5 text-right" style={{ color: 'var(--color-text)' }}>{formatarMoeda(row.mesAtual)}</td>
-                    <td className="px-2 py-1.5 text-center">{renderVariacao(row.variacao)}</td>
-                  </tr>
+                  <TableRow key={`${row.clienteKey}-${index}`} className="border-b last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
+                    <TableCell className="px-2 py-1.5 text-center" style={{ color: 'var(--color-text)' }}>{row.ranking}º</TableCell>
+                    <TableCell className="truncate px-2 py-1.5" {...{ title: row.cliente }} style={{ color: 'var(--color-text)' }}>{row.cliente}</TableCell>
+                    <TableCell className="px-2 py-1.5 text-right" style={{ color: 'var(--color-text)' }}>{formatarMoeda(row.mesAnterior)}</TableCell>
+                    <TableCell className="px-2 py-1.5 text-right" style={{ color: 'var(--color-text)' }}>{formatarMoeda(row.mesAtual)}</TableCell>
+                    <TableCell className="px-2 py-1.5 text-center">{renderVariacao(row.variacao)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
-          <table className="w-full table-fixed text-sm shrink-0">
+          <Table className="w-full table-fixed text-sm shrink-0">
             <colgroup>
               <col className="w-[70px]" />
               <col />
@@ -855,15 +813,15 @@ function TopClientesTableCard({
               <col className="w-[95px]" />
             </colgroup>
             <tfoot>
-              <tr className="border-t text-sm font-bold" style={{ borderColor: 'var(--color-text)', color: 'var(--color-text)' }}>
-                <td className="px-2 py-2" />
-                <td className="px-2 py-2">Total</td>
-                <td className="px-2 py-2 text-right">{formatarMoeda(totalAnterior)}</td>
-                <td className="px-2 py-2 text-right">{formatarMoeda(totalAtual)}</td>
-                <td className="px-2 py-2 text-center">{renderVariacao(variacaoTotal)}</td>
-              </tr>
+              <TableRow className="border-t text-sm font-bold" style={{ borderColor: 'var(--color-text)', color: 'var(--color-text)' }}>
+                <TableCell className="px-2 py-2" />
+                <TableCell className="px-2 py-2">Total</TableCell>
+                <TableCell className="px-2 py-2 text-right">{formatarMoeda(totalAnterior)}</TableCell>
+                <TableCell className="px-2 py-2 text-right">{formatarMoeda(totalAtual)}</TableCell>
+                <TableCell className="px-2 py-2 text-center">{renderVariacao(variacaoTotal)}</TableCell>
+              </TableRow>
             </tfoot>
-          </table>
+          </Table>
         </div>
       </div>
     </ChartCard>
@@ -1156,7 +1114,7 @@ export default function FaturamentoPage() {
           </span>
         ) : null}
         actions={canManageFaturamentoGoals ? (
-          <button
+          <DashboardButton
             type="button"
             onClick={abrirGerenciadorMetas}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-[var(--color-bg)] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1164,7 +1122,7 @@ export default function FaturamentoPage() {
           >
             <Settings size={14} aria-hidden="true" />
             Gerenciar Metas
-          </button>
+          </DashboardButton>
         ) : null}
       >
         <FiliaisParceirosFilter

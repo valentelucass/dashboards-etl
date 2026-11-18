@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import ReactECharts from '../../charts/DashboardEChart';
+import AstryxDashboardChart from '../../charts/AstryxDashboardChart';
 import { useEchartsTheme } from '../../charts/useEchartsTheme';
 import ChartCard from '../../shared/ChartCard';
 import TooltipKpi from '../../shared/TooltipKpi';
@@ -58,7 +58,7 @@ export default function ManifestosGaugeCard({
           style={{ flex: '1 1 76%' }}
         >
           <div className="relative min-h-[300px] w-full min-w-0 max-[900px]:min-h-[252px]">
-            <ReactECharts option={option} style={{ height: 300, width: '100%' }} opts={{ renderer: 'canvas' }} notMerge />
+            <AstryxDashboardChart option={option} label={titulo} style={{ height: 300 }} />
             <span className="sr-only">Global: {globalFormatado}</span>
           </div>
         </TooltipKpi>

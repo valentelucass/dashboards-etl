@@ -1,6 +1,10 @@
 import { useId, useMemo, useState } from 'react';
-import { Check, X } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Check, ChevronDown, X } from 'lucide-react';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Button } from '@astryxdesign/core/Button';
+import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
+import { FormTextField } from './FormTextField';
+import { Popover } from '@astryxdesign/core/Popover';
 
 export interface AsyncMultiSelectOpcao {
   value: string;
@@ -17,6 +21,7 @@ interface AsyncMultiSelectProps {
   onChange: (valores: string[]) => void;
   placeholder?: string;
   isLoading?: boolean;
+  erro?: string | null;
   onSearchChange?: (busca: string) => void;
 }
 
@@ -27,6 +32,7 @@ export default function AsyncMultiSelect({
   onChange,
   placeholder = 'Selecionar',
   isLoading,
+  erro,
   onSearchChange,
 }: AsyncMultiSelectProps) {
   const [aberto, setAberto] = useState(false);
@@ -108,164 +114,43 @@ export default function AsyncMultiSelect({
 
   const temSelecao = selecionados.length > 0;
 
+  const selectedLabel = temSelecao ? `${selecionados.length} selecionado(s)` : placeholder;
+
   return (
-    <Popover open={aberto} onOpenChange={handleOpenChange}>
-      <div className="flex w-full min-w-[148px] flex-col gap-1 self-end justify-self-start md:w-auto">
-        <span
-          id={labelId}
-          className="flex min-h-4 items-center gap-1.5 text-xs font-medium leading-4"
-          style={{ color: 'var(--color-text-muted)' }}
-        >
+    <Popover label={label} isOpen={aberto} onOpenChange={handleOpenChange} alignment="start" width="min(22rem, calc(100vw - 24px))" padding={3}
+      content={<div className="dashboard-filter-select-panel">
+        <FormTextField label={`Buscar ${label.toLowerCase()}`} isLabelHidden type="search" hasClear hasAutoFocus
+          value={busca} onChange={handleBuscaChange} placeholder={`Buscar ${label.toLowerCase()}…`} />
+        <div className="dashboard-filter-select-actions">
+          <Button label="Selecionar todos" variant="secondary" size="sm" icon={<Check size={13} />}
+            isDisabled={!temOpcoesDisponiveis || todasDisponiveisSelecionadas} onClick={selecionarTodosDisponiveis} />
+          <Button label="Desmarcar todos" variant="ghost" size="sm" icon={<X size={13} />}
+            isDisabled={!temSelecao} onClick={limparSelecao} />
+        </div>
+
+        <div className="max-h-56 space-y-1 overflow-y-auto">
+          {opcoesFiltradas.map(opcao => (
+            <CheckboxInput key={opcao.value} label={opcao.label} description={opcao.description ?? undefined}
+              value={selecionados.includes(opcao.value)} onChange={() => alternar(opcao.value)} />
+          ))}
+          {isLoading && <p role="status" className="dashboard-form-hint">Carregando…</p>}
+          {erro && <p role="alert" className="dashboard-form-hint">{erro}</p>}
+          {!isLoading && !erro && opcoesFiltradas.length === 0 && <p className="dashboard-form-hint">Nenhuma opção encontrada.</p>}
+        </div>
+        </div>}>
+      {trigger => (
+        <div className="dashboard-filter-select">
+        <span id={labelId} className="dashboard-filter-select-label">
           {label}
-          {temSelecao && (
-            <span
-              className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none"
-              style={{ backgroundColor: 'rgba(33, 71, 138, 0.14)', color: 'var(--color-primary)' }}
-            >
-              {selecionados.length}
-            </span>
-          )}
+          {temSelecao && <Badge label={String(selecionados.length)} variant="info" />}
         </span>
-
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            aria-labelledby={`${labelId} ${valueId}`}
-            className="h-10 w-full cursor-pointer rounded-lg border px-3 text-left text-sm shadow-sm
-                       transition-all duration-150 hover:border-[var(--color-primary)] active:scale-[0.97]
-                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            style={{
-              backgroundColor: 'var(--color-card)',
-              borderColor: aberto ? 'var(--color-primary)' : 'var(--color-border)',
-              boxShadow: aberto ? '0 0 0 2px var(--color-primary)' : undefined,
-            }}
-          >
-            <span
-              id={valueId}
-              className="block truncate font-medium leading-none"
-              style={{ color: temSelecao ? 'var(--color-text)' : 'var(--color-text-muted)' }}
-            >
-              {temSelecao ? `${selecionados.length} selecionado(s)` : placeholder}
-            </span>
-          </button>
-        </PopoverTrigger>
+        <Button {...trigger} label={selectedLabel} variant="secondary" className="dashboard-filter-select-trigger"
+            width="100%" aria-labelledby={`${labelId} ${valueId}`}
+            endContent={<ChevronDown size={14} aria-hidden="true" />}>
+            <span id={valueId} className="truncate">{selectedLabel}</span>
+          </Button>
       </div>
-
-      <PopoverContent>
-        {/* Campo de busca */}
-        <input
-          type="search"
-          value={busca}
-          onChange={(e) => handleBuscaChange(e.target.value)}
-          placeholder={`Buscar ${label.toLowerCase()}…`}
-          className="mb-3 w-full rounded-lg border px-3 py-2 text-sm outline-none
-                     transition-all duration-150 focus:border-[var(--color-primary)]"
-          style={{
-            backgroundColor: 'var(--color-bg)',
-            borderColor: 'var(--color-border)',
-            color: 'var(--color-text)',
-          }}
-          autoFocus
-        />
-
-        {/* Linha de controle */}
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={selecionarTodosDisponiveis}
-              disabled={!temOpcoesDisponiveis || todasDisponiveisSelecionadas}
-              className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border px-2 text-[11px] font-medium
-                         transition-all hover:opacity-80 active:scale-95 disabled:cursor-not-allowed
-                         disabled:opacity-45 disabled:active:scale-100"
-              style={{
-                backgroundColor: 'rgba(33, 71, 138, 0.08)',
-                borderColor: 'rgba(33, 71, 138, 0.24)',
-                color: 'var(--color-primary)',
-              }}
-            >
-              <Check size={13} aria-hidden="true" />
-              <span>Selecionar todos</span>
-            </button>
-            <button
-              type="button"
-              onClick={limparSelecao}
-              disabled={!temSelecao}
-              className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border px-2 text-[11px] font-medium
-                         transition-all hover:bg-[var(--color-bg)] hover:opacity-80 active:scale-95
-                         disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100"
-              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
-            >
-              <X size={13} aria-hidden="true" />
-              <span>Desmarcar todos</span>
-            </button>
-          </div>
-
-          <div className="min-h-4">
-            {isLoading && (
-              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                Carregando…
-              </span>
-            )}
-            {!isLoading && temSelecao && (
-              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                {selecionados.length} selecionado(s)
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Lista */}
-        <div className="max-h-56 space-y-0.5 overflow-y-auto">
-          {opcoesFiltradas.map((opcao) => {
-            const selecionado = selecionados.includes(opcao.value);
-            return (
-              <label
-                key={opcao.value}
-                className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm
-                           transition-all duration-100"
-                style={
-                  selecionado
-                    ? {
-                        color: 'var(--color-primary)',
-                        backgroundColor: 'var(--color-bg)',
-                        fontWeight: 500,
-                      }
-                    : { color: 'var(--color-text)' }
-                }
-                onMouseEnter={(e) => {
-                  if (!selecionado) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-bg)';
-                }}
-                onMouseLeave={(e) => {
-                  if (!selecionado) (e.currentTarget as HTMLElement).style.backgroundColor = '';
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selecionado}
-                  onChange={() => alternar(opcao.value)}
-                  className="shrink-0 cursor-pointer rounded"
-                  style={{ accentColor: 'var(--color-primary)' }}
-                />
-                <span className="min-w-0">
-                  <span className="block truncate">{opcao.label}</span>
-                  {opcao.description && (
-                    <span className="block truncate text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-                      {opcao.description}
-                    </span>
-                  )}
-                </span>
-              </label>
-            );
-          })}
-
-          {!isLoading && opcoesFiltradas.length === 0 && (
-            <p className="py-3 text-center text-xs" style={{ color: 'var(--color-text-muted)' }}>
-              Nenhuma opção encontrada.
-            </p>
-          )}
-        </div>
-      </PopoverContent>
+      )}
     </Popover>
   );
 }

@@ -1,3 +1,5 @@
+import DashboardSelector from "../components/shared/DashboardSelector";
+import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -17,7 +19,7 @@ import { exportarFaturasPorClienteCsv } from '../api/endpoints/faturasPorCliente
 import { getApiErrorMessage, getTipoErro } from '../utils/apiError';
 import { useFiltro } from '../contexts/FiltroContext';
 import { usePageHeader } from '../contexts/PageHeaderContext';
-import { useClientes, useFaturasPorClienteClientesCnpj, useFiliais } from '../hooks/queries/useDimensoes';
+import { useFaturasPorClienteClientesCnpj, useFaturasPorClientePagadores, useFiliais } from '../hooks/queries/useDimensoes';
 import {
   useFaturasPorClienteAging,
   useFaturasPorClienteAgingDrilldown,
@@ -68,6 +70,20 @@ function abreviar(label: string) {
   return label.length > 26 ? `${label.slice(0, 25).trimEnd()}…` : label;
 }
 
+function FiltroPagadores({ selecionados, onChange }: { selecionados: string[]; onChange: (valores: string[]) => void }) {
+  const clientes = useFaturasPorClientePagadores();
+  return <AsyncMultiSelect label="Pagadores" opcoes={clientes.data ?? []} selecionados={selecionados}
+    onChange={onChange} isLoading={clientes.isLoading}
+    erro={clientes.isError ? getApiErrorMessage(clientes.error, 'Erro ao carregar pagadores.') : null} />;
+}
+
+function FiltroCnpjs({ selecionados, onChange }: { selecionados: string[]; onChange: (valores: string[]) => void }) {
+  const clientesCnpj = useFaturasPorClienteClientesCnpj();
+  return <AsyncMultiSelect label="CNPJs" opcoes={clientesCnpj.data ?? []} selecionados={selecionados}
+    onChange={onChange} isLoading={clientesCnpj.isLoading}
+    erro={clientesCnpj.isError ? getApiErrorMessage(clientesCnpj.error, 'Erro ao carregar CNPJs.') : null} />;
+}
+
 export default function FaturasPorClientePage() {
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
@@ -87,8 +103,6 @@ export default function FaturasPorClientePage() {
   const [statusVisao, setStatusVisao] = useState<'distribuicao' | 'evolucao'>('distribuicao');
   const [statusGranularidade, setStatusGranularidade] = useState<FaturasPorClienteGranularidade>('dia');
   const filiais = useFiliais();
-  const clientes = useClientes();
-  const clientesCnpj = useFaturasPorClienteClientesCnpj();
 
   const filtro: FaturasPorClienteFiltro = useMemo(() => ({
     dataInicio, dataFim, filiais: filtros.filiais, parceirosLogisticos: filtros.parceirosLogisticos,
@@ -108,7 +122,8 @@ export default function FaturasPorClientePage() {
   const agingDrilldown = useFaturasPorClienteAgingDrilldown(filtro, agingFaixa, agingNivel, agingCliente);
   const topClientes = useFaturasPorClienteTopClientesDrilldown(filtro, clienteLimite, clienteMetrica, clienteNivel, clienteSelecionado, cnpjSelecionado);
   const statusProcesso = useFaturasPorClienteStatusProcesso(filtro);
-  const statusEvolucao = useFaturasPorClienteStatusEvolucao(filtro, statusGranularidade);
+  const statusEvolucao = useFaturasPorClienteStatusEvolucao(filtro, statusGranularidade, statusVisao === 'evolucao');
+  const agingAtual = agingFaixa ? agingDrilldown : aging;
   const filtrosTabela = useAnalyticalTableFilters();
   const paginacaoTabela = useTabelaPaginadaState(JSON.stringify({ filtro, tabela: filtrosTabela.resetKey }));
   const tabela = useFaturasPorClienteTabelaPaginada(filtro, paginacaoTabela.pagina, paginacaoTabela.tamanhoPagina, filtrosTabela.apiFilters);
@@ -197,7 +212,7 @@ export default function FaturasPorClientePage() {
   }, [agingNivel]);
   const controls = 'h-8 rounded-md border bg-transparent px-2 text-[11px] font-semibold outline-none';
   const controlStyle = { borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' };
-  const drillUp = (disabled: boolean, onClick: () => void) => <button type="button" aria-label="Drill up" title="Drill up" disabled={disabled} onClick={onClick} className="flex h-8 w-8 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-35" style={controlStyle}><ChevronUp size={14} /></button>;
+  const drillUp = (disabled: boolean, onClick: () => void) => <DashboardButton type="button" aria-label="Drill up" title="Drill up" disabled={disabled} onClick={onClick} className="flex h-8 w-8 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-35" style={controlStyle}><ChevronUp size={14} /></DashboardButton>;
 
   const statusTabelaOptions = combinarStatusOptions(['Faturado', 'Aguardando Faturamento'], (statusProcesso.data ?? []).map((item) => item.statusProcesso), (tabela.data?.conteudo ?? []).map((item) => item.statusProcesso), filtros.statusProcesso);
   const colunasResumo: ColunaTabelaAnalitica<FaturaPorClienteResumoRow>[] = [
@@ -211,19 +226,19 @@ export default function FaturasPorClientePage() {
       )}
       onClear={limparFiltros} activeFilters={activeFilters} dataInicio={dataInicio} dataFim={dataFim}>
       <FiliaisParceirosFilter opcoes={filiais.data ?? []} filiaisSelecionadas={filtros.filiais ?? []} parceirosSelecionados={filtros.parceirosLogisticos ?? []} onFiliaisChange={(valores) => setFiltro('filiais', valores)} onParceirosChange={(valores) => setFiltro('parceirosLogisticos', valores)} isLoading={filiais.isLoading} />
-      <AsyncMultiSelect label="Pagadores" opcoes={clientes.data ?? []} selecionados={filtros.pagadores ?? []} onChange={(valores) => setFiltro('pagadores', valores)} isLoading={clientes.isLoading} />
-      <AsyncMultiSelect label="CNPJs" opcoes={clientesCnpj.data ?? []} selecionados={filtros.clientesCnpj ?? []} onChange={(valores) => setFiltro('clientesCnpj', valores)} isLoading={clientesCnpj.isLoading} />
+      <FiltroPagadores selecionados={filtros.pagadores ?? []} onChange={(valores) => setFiltro('pagadores', valores)} />
+      <FiltroCnpjs selecionados={filtros.clientesCnpj ?? []} onChange={(valores) => setFiltro('clientesCnpj', valores)} />
       <AsyncMultiSelect label="Status Processo" opcoes={['Faturado', 'Aguardando Faturamento']} selecionados={filtros.statusProcesso ?? []} onChange={(valores) => setFiltro('statusProcesso', valores)} />
     </FilterBar>
     {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de faturas por cliente.')} tipo={getTipoErro(overview.error)} />}
     {overview.data && <FaturasPorClienteKpiGrid overview={overview.data} />}
     <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <ChartWrapper titulo="Faturamento · Evolução" chartKey="faturasMensal" option={serieOption} actions={<div className="flex gap-2"><select aria-label="Granularidade" value={serieGranularidade} onChange={(event) => setSerieGranularidade(event.target.value as FaturasPorClienteGranularidade)} className={controls} style={controlStyle}><option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mês</option></select><select aria-label="Referência temporal" value={serieReferencia} onChange={(event) => setSerieReferencia(event.target.value as FaturasPorClienteReferenciaTemporal)} className={controls} style={controlStyle}><option value="emissao">Emissão</option><option value="vencimento">Vencimento</option><option value="baixa">Baixa</option></select><select aria-label="Métrica" value={serieMetrica} onChange={(event) => setSerieMetrica(event.target.value as FaturasPorClienteMetrica)} className={controls} style={controlStyle}>{METRICAS_SERIE.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>} isLoading={serie.isLoading} isEmpty={(serie.data ?? []).length === 0} />
-      <ChartWrapper titulo={`Aging Operacional${agingFaixa ? ` · ${agingNivel === 'fatura' ? 'Faturas' : 'Clientes'}` : ''}`} chartKey="faturasAging" option={agingOption} onEvents={agingEvents} actions={<div className="flex items-center gap-2"><select aria-label="Escopo aging" value={agingEscopo} onChange={(event) => { setAgingEscopo(event.target.value as FaturasPorClienteAgingEscopo); setAgingFaixa(null); }} className={controls} style={controlStyle}><option value="todos">Todos</option><option value="a_vencer">A vencer</option><option value="em_atraso">Em atraso</option></select><select aria-label="Métrica aging" value={agingMetrica} onChange={(event) => setAgingMetrica(event.target.value as 'valor' | 'titulos')} className={controls} style={controlStyle}><option value="valor">Valor</option><option value="titulos">Títulos</option></select>{drillUp(!agingFaixa, voltarAging)}{agingFaixa ? <ChevronDown size={14} style={{ color: 'var(--color-primary)' }} /> : null}</div>} isLoading={agingFaixa ? agingDrilldown.isLoading : aging.isLoading} isEmpty={dadosAging.length === 0} />
+      <ChartWrapper titulo="Faturamento · Evolução" chartKey="faturasMensal" option={serieOption} actions={<div className="flex gap-2"><DashboardSelector aria-label="Granularidade" value={serieGranularidade} onValueChange={selectedValue => setSerieGranularidade(selectedValue as FaturasPorClienteGranularidade)} className={controls} style={controlStyle}><option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mês</option></DashboardSelector><DashboardSelector aria-label="Referência temporal" value={serieReferencia} onValueChange={selectedValue => setSerieReferencia(selectedValue as FaturasPorClienteReferenciaTemporal)} className={controls} style={controlStyle}><option value="emissao">Emissão</option><option value="vencimento">Vencimento</option><option value="baixa">Baixa</option></DashboardSelector><DashboardSelector aria-label="Métrica" value={serieMetrica} onValueChange={selectedValue => setSerieMetrica(selectedValue as FaturasPorClienteMetrica)} className={controls} style={controlStyle}>{METRICAS_SERIE.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</DashboardSelector></div>} isLoading={serie.isLoading} isEmpty={(serie.data ?? []).length === 0} erro={serie.isError ? getApiErrorMessage(serie.error, 'Erro ao carregar a evolução de faturamento.') : null} />
+      <ChartWrapper titulo={`Aging Operacional${agingFaixa ? ` · ${agingNivel === 'fatura' ? 'Faturas' : 'Clientes'}` : ''}`} chartKey="faturasAging" option={agingOption} onEvents={agingEvents} actions={<div className="flex items-center gap-2"><DashboardSelector aria-label="Escopo aging" value={agingEscopo} onValueChange={selectedValue => { setAgingEscopo(selectedValue as FaturasPorClienteAgingEscopo); setAgingFaixa(null); }} className={controls} style={controlStyle}><option value="todos">Todos</option><option value="a_vencer">A vencer</option><option value="em_atraso">Em atraso</option></DashboardSelector><DashboardSelector aria-label="Métrica aging" value={agingMetrica} onValueChange={selectedValue => setAgingMetrica(selectedValue as 'valor' | 'titulos')} className={controls} style={controlStyle}><option value="valor">Valor</option><option value="titulos">Títulos</option></DashboardSelector>{drillUp(!agingFaixa, voltarAging)}{agingFaixa ? <ChevronDown size={14} style={{ color: 'var(--color-primary)' }} /> : null}</div>} isLoading={agingAtual.isLoading} isEmpty={dadosAging.length === 0} erro={agingAtual.isError ? getApiErrorMessage(agingAtual.error, 'Erro ao carregar aging.') : null} />
     </div>
     <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <ChartWrapper titulo={`Top Clientes · ${nivelLabel(clienteNivel)}`} chartKey="faturasTopClientes" option={topOption} onEvents={topEvents} actions={<div className="flex items-center gap-2"><select aria-label="Quantidade exibida" value={clienteLimite} onChange={(event) => setClienteLimite(Number(event.target.value) as (typeof LIMITES)[number])} className={controls} style={controlStyle}>{LIMITES.map((item) => <option key={item} value={item}>Top {item}</option>)}</select><select aria-label="Métrica de clientes" value={clienteMetrica} onChange={(event) => setClienteMetrica(event.target.value as FaturasPorClienteMetrica)} className={controls} style={controlStyle}>{METRICAS_CLIENTE.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>{drillUp(clienteNivel === 'cliente', voltarTop)}{clienteNivel !== 'cliente' ? <ChevronDown size={14} style={{ color: 'var(--color-primary)' }} /> : null}</div>} isLoading={topClientes.isLoading} isEmpty={(topClientes.data ?? []).length === 0} />
-      <ChartWrapper titulo={statusVisao === 'distribuicao' ? 'Status do Processo · Distribuição' : 'Status do Processo · Evolução'} chartKey="faturasStatusProcesso" option={statusOption} actions={<div className="flex gap-2"><select aria-label="Visão do status" value={statusVisao} onChange={(event) => setStatusVisao(event.target.value as 'distribuicao' | 'evolucao')} className={controls} style={controlStyle}><option value="distribuicao">Distribuição</option><option value="evolucao">Evolução</option></select>{statusVisao === 'evolucao' ? <select aria-label="Granularidade do status" value={statusGranularidade} onChange={(event) => setStatusGranularidade(event.target.value as FaturasPorClienteGranularidade)} className={controls} style={controlStyle}><option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mês</option></select> : null}</div>} isLoading={statusVisao === 'distribuicao' ? statusProcesso.isLoading : statusEvolucao.isLoading} isEmpty={statusVisao === 'distribuicao' ? (statusProcesso.data ?? []).length === 0 : (statusEvolucao.data ?? []).length === 0} erro={(statusVisao === 'distribuicao' ? statusProcesso.isError : statusEvolucao.isError) ? getApiErrorMessage(statusVisao === 'distribuicao' ? statusProcesso.error : statusEvolucao.error, 'Erro ao carregar status do processo.') : null} />
+      <ChartWrapper titulo={`Top Clientes · ${nivelLabel(clienteNivel)}`} chartKey="faturasTopClientes" option={topOption} onEvents={topEvents} actions={<div className="flex items-center gap-2"><DashboardSelector aria-label="Quantidade exibida" value={clienteLimite} onValueChange={selectedValue => setClienteLimite(Number(selectedValue) as (typeof LIMITES)[number])} className={controls} style={controlStyle}>{LIMITES.map((item) => <option key={item} value={item}>Top {item}</option>)}</DashboardSelector><DashboardSelector aria-label="Métrica de clientes" value={clienteMetrica} onValueChange={selectedValue => setClienteMetrica(selectedValue as FaturasPorClienteMetrica)} className={controls} style={controlStyle}>{METRICAS_CLIENTE.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</DashboardSelector>{drillUp(clienteNivel === 'cliente', voltarTop)}{clienteNivel !== 'cliente' ? <ChevronDown size={14} style={{ color: 'var(--color-primary)' }} /> : null}</div>} isLoading={topClientes.isLoading} isEmpty={(topClientes.data ?? []).length === 0} erro={topClientes.isError ? getApiErrorMessage(topClientes.error, 'Erro ao carregar o ranking de clientes.') : null} />
+      <ChartWrapper titulo={statusVisao === 'distribuicao' ? 'Status do Processo · Distribuição' : 'Status do Processo · Evolução'} chartKey="faturasStatusProcesso" option={statusOption} actions={<div className="flex gap-2"><DashboardSelector aria-label="Visão do status" value={statusVisao} onValueChange={selectedValue => setStatusVisao(selectedValue as 'distribuicao' | 'evolucao')} className={controls} style={controlStyle}><option value="distribuicao">Distribuição</option><option value="evolucao">Evolução</option></DashboardSelector>{statusVisao === 'evolucao' ? <DashboardSelector aria-label="Granularidade do status" value={statusGranularidade} onValueChange={selectedValue => setStatusGranularidade(selectedValue as FaturasPorClienteGranularidade)} className={controls} style={controlStyle}><option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mês</option></DashboardSelector> : null}</div>} isLoading={statusVisao === 'distribuicao' ? statusProcesso.isLoading : statusEvolucao.isLoading} isEmpty={statusVisao === 'distribuicao' ? (statusProcesso.data ?? []).length === 0 : (statusEvolucao.data ?? []).length === 0} erro={(statusVisao === 'distribuicao' ? statusProcesso.isError : statusEvolucao.isError) ? getApiErrorMessage(statusVisao === 'distribuicao' ? statusProcesso.error : statusEvolucao.error, 'Erro ao carregar status do processo.') : null} />
     </div>
 
     <AnalyticalDataTable acoesCabecalho={<ExportButton nomeArquivo="faturas-por-cliente" onExport={() => exportarFaturasPorClienteCsv(filtro, filtrosTabela.apiFilters)} />} titulo="Faturas por Cliente" dados={tabela.data?.conteudo ?? []} colunas={colunasResumo} chaveLinha="idUnico" filtros={filtrosTabela.filters} hiddenActiveCount={filtrosTabela.hiddenActiveCount} hasAnyFilter={filtrosTabela.hasAnyFilter} onTextFilterChange={filtrosTabela.setTextFilter} onMultiFilterChange={filtrosTabela.setMultiFilter} onColumnFilterChange={filtrosTabela.setColumnFilter} onClearFilters={filtrosTabela.clearTableFilters} statusOptions={statusTabelaOptions} statusOptionsLoading={statusProcesso.isLoading} isLoading={tabela.isLoading} error={tabela.error} errorFallbackMessage="Erro ao carregar faturas por cliente." totalRegistros={tabela.data?.totalElementos} paginaAtual={paginacaoTabela.pagina} tamanhoPagina={paginacaoTabela.tamanhoPagina} onPaginaChange={paginacaoTabela.setPagina} onTamanhoPaginaChange={paginacaoTabela.setTamanhoPagina} />

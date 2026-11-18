@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.contaspagar.ContasAPagarCentroCustoDTO;
@@ -35,7 +36,7 @@ public class ContasAPagarSqlRepository {
     private final EscopoFilialService escopoFilialService;
 
     public ContasAPagarSqlRepository(
-            NamedParameterJdbcOperations jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcOperations jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder,
             EscopoFilialService escopoFilialService
     ) {
@@ -63,7 +64,7 @@ public class ContasAPagarSqlRepository {
                         END) AS pagos,
                         SUM(CASE
                             WHEN [Conciliado] IS NOT NULL
-                             AND LOWER(CONVERT(NVARCHAR(MAX), [Conciliado])) LIKE N'%%conciliado%%'
+                             AND LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(MAX), [Conciliado])))) = N'conciliado'
                             THEN 1 ELSE 0
                         END) AS conciliados,
                         AVG(CASE

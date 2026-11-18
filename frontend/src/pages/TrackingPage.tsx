@@ -1,3 +1,5 @@
+import { Card } from '@astryxdesign/core/Card';
+import DashboardButton from "../components/shared/DashboardButton";
 import { useEffect, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -121,7 +123,7 @@ function MatrizRegiaoDestino({
   const linhasReserva = linhas.length > 0 ? Math.max(0, REGIOES_POR_PAGINA - linhasVisiveis.length) : 0;
 
   return (
-    <section className="mb-6 flex h-full min-h-0 flex-col rounded-[20px] border p-4 shadow-sm" style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+    <Card padding={4} className="mb-6 flex h-full min-h-0 flex-col">
       <div className="mb-3 flex shrink-0 flex-col flex-wrap gap-2 border-b pb-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--color-border)' }}>
         <div className="min-w-0">
           <h2 className="truncate text-sm font-bold" style={{ color: 'var(--color-text)' }}>
@@ -139,7 +141,7 @@ function MatrizRegiaoDestino({
           {STATUS_RAPIDOS.map((status) => {
             const ativo = statusSelecionados.includes(status);
             return (
-              <button
+              <DashboardButton
                 key={status}
                 type="button"
                 onClick={() => onToggleStatus(status)}
@@ -155,7 +157,7 @@ function MatrizRegiaoDestino({
                   style={{ backgroundColor: ativo ? 'var(--color-primary)' : 'var(--color-border)' }}
                 />
                 {status}
-              </button>
+              </DashboardButton>
             );
           })}
         </div>
@@ -236,7 +238,7 @@ function MatrizRegiaoDestino({
           {linhas.length === 0 ? '0 regiões' : `${inicio + 1}-${Math.min(inicio + REGIOES_POR_PAGINA, linhas.length)} de ${linhas.length}`}
         </span>
         <div className="flex items-center gap-1">
-          <button
+          <DashboardButton
             type="button"
             aria-label="Página anterior"
             disabled={paginaAtual === 0}
@@ -245,11 +247,11 @@ function MatrizRegiaoDestino({
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
           >
             <ChevronLeft size={14} />
-          </button>
+          </DashboardButton>
           <span className="min-w-10 text-center text-[11px] font-semibold" style={{ color: 'var(--color-text)' }}>
             {paginaAtual + 1}/{totalPaginas}
           </span>
-          <button
+          <DashboardButton
             type="button"
             aria-label="Próxima página"
             disabled={paginaAtual >= totalPaginas - 1}
@@ -258,10 +260,10 @@ function MatrizRegiaoDestino({
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
           >
             <ChevronRight size={14} />
-          </button>
+          </DashboardButton>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
 

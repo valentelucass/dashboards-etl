@@ -34,7 +34,9 @@ class DashboardTabelaPaginadaServiceTest {
         assertThat(jdbcTemplate.sqls().get(1))
                 .contains("ROW_NUMBER() OVER (PARTITION BY [ID]")
                 .contains("WHERE [__rn] = 1")
-                .contains("OFFSET :offsetTabela ROWS FETCH NEXT :tamanhoTabela ROWS ONLY");
+                .contains("ORDER BY [Solicitacao] DESC, [Coleta] DESC, [ID]")
+                .contains("OFFSET :offsetTabela ROWS FETCH NEXT :tamanhoTabela ROWS ONLY")
+                .containsOnlyOnce("[vw_coletas_powerbi]");
         assertThat(jdbcTemplate.params().get(1).getValue("offsetTabela")).isEqualTo(0L);
         assertThat(jdbcTemplate.params().get(1).getValue("tamanhoTabela")).isEqualTo(150);
     }

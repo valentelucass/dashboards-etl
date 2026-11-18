@@ -1,13 +1,13 @@
 import {
   isValidElement,
-  useId,
+  useRef,
   useState,
   type CSSProperties,
   type FocusEvent,
   type ReactNode,
 } from 'react';
 import { KpiDictionary, type KpiDefinition } from '../../constants/kpiDictionary';
-import { Popover, PopoverAnchor, PopoverContent } from '../ui/popover';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 import { getKpiFlexBasis } from './kpiCardLayout';
 
 interface TooltipKpiProps {
@@ -58,7 +58,7 @@ export default function TooltipKpi({
 }: TooltipKpiProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const tooltipId = useId();
+  const anchorRef = useRef<HTMLDivElement>(null);
   const open = isHovered || isFocused;
   const cardValue = isValidElement<{ valor?: unknown }>(children)
     ? children.props.valor
@@ -79,100 +79,83 @@ export default function TooltipKpi({
   }
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) {
-          setIsHovered(false);
-          setIsFocused(false);
-        }
-      }}
-    >
-      <PopoverAnchor asChild>
-        <div
-          aria-describedby={open ? tooltipId : undefined}
-          className={`flex min-w-0 rounded-[20px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] ${className}`}
-          onBlur={handleBlur}
-          onFocus={() => setIsFocused(true)}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              setIsHovered(false);
-              setIsFocused(false);
-            }
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          style={{
-            flexGrow: 1,
-            flexShrink: 1,
-            flexBasis: `${flexBasis}px`,
-            ...style,
-          }}
-          tabIndex={0}
-        >
-          {children}
-        </div>
-      </PopoverAnchor>
-
-      <PopoverContent
-        id={tooltipId}
-        role="tooltip"
-        side="top"
-        align="center"
-        sideOffset={8}
-        collisionPadding={12}
-        onOpenAutoFocus={(event) => event.preventDefault()}
-        className="pointer-events-none space-y-4 p-4"
-        style={{
-          width: 'min(24rem, calc(100vw - 1.5rem))',
-          color: 'var(--color-text)',
+    <>
+      <div
+          ref={anchorRef}
+        className={`flex min-w-0 rounded-[20px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] ${className}`}
+        onBlur={handleBlur}
+        onFocus={() => setIsFocused(true)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            setIsHovered(false);
+            setIsFocused(false);
+          }
         }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          flexGrow: 1,
+          flexShrink: 1,
+          flexBasis: `${flexBasis}px`,
+          ...style,
+        }}
+        tabIndex={0}
       >
-        <div>
-          <p className="text-base font-bold leading-snug">{resolvedDefinition.titulo}</p>
-          <p
-            className="mt-1.5 text-sm leading-relaxed"
-            style={{ color: 'var(--color-text-subtle)' }}
-          >
-            {resolvedDefinition.descricao}
-          </p>
-        </div>
+        {children}
+      </div>
+      {open && (
+        <Tooltip anchorRef={anchorRef} isOpen placement="above"
+          alignment="center" hasHoverIndication={false}
+          onOpenChange={next => { if (!next) { setIsHovered(false); setIsFocused(false); } }}
+          content={
+            <div className="dashboard-info-tooltip dashboard-info-tooltip-rich space-y-3">
+                <div>
+                  <p className="text-base font-bold leading-snug">{resolvedDefinition.titulo}</p>
+                  <p
+                    className="mt-1.5 text-sm leading-relaxed"
+                    style={{ color: 'var(--color-text-subtle)' }}
+                  >
+                    {resolvedDefinition.descricao}
+                  </p>
+                </div>
 
-        <div>
-          <p
-            className="text-xs font-bold uppercase tracking-wider"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            Cálculo
-          </p>
-          <p className="mt-1.5 text-sm font-semibold leading-relaxed">
-            {resolvedDefinition.calculo.replaceAll('÷', '/')}
-          </p>
-        </div>
+                <div>
+                  <p
+                    className="text-xs font-bold uppercase tracking-wider"
+                    style={{ color: 'var(--color-primary)' }}
+                  >
+                    Cálculo
+                  </p>
+                  <p className="mt-1.5 text-sm font-semibold leading-relaxed">
+                    {resolvedDefinition.calculo.replaceAll('÷', '/')}
+                  </p>
+                </div>
 
-        {resolvedDefinition.observacao && (
-          <div
-            className="rounded-xl border px-3 py-2.5"
-            style={{
-              borderColor: 'var(--color-border)',
-              backgroundColor: 'var(--color-bg)',
-            }}
-          >
-            <p
-              className="text-xs font-bold uppercase tracking-wider"
-              style={{ color: 'var(--color-text-subtle)' }}
-            >
-              Observação
-            </p>
-            <p
-              className="mt-1.5 text-[13px] leading-relaxed"
-              style={{ color: 'var(--color-text-subtle)' }}
-            >
-              {resolvedDefinition.observacao}
-            </p>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+                {resolvedDefinition.observacao && (
+                  <div
+                    className="rounded-xl border px-3 py-2.5"
+                    style={{
+                      borderColor: 'var(--color-border)',
+                      backgroundColor: 'var(--color-bg)',
+                    }}
+                  >
+                    <p
+                      className="text-xs font-bold uppercase tracking-wider"
+                      style={{ color: 'var(--color-text-subtle)' }}
+                    >
+                      Observação
+                    </p>
+                    <p
+                      className="mt-1.5 text-[13px] leading-relaxed"
+                      style={{ color: 'var(--color-text-subtle)' }}
+                    >
+                      {resolvedDefinition.observacao}
+                    </p>
+                  </div>
+                )}
+            </div>
+          } />
+      )}
+    </>
   );
 }

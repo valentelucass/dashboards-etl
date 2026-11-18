@@ -1,7 +1,16 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import { ClipboardList, Lightbulb, Paperclip, Send, X } from 'lucide-react';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Button } from '@astryxdesign/core/Button';
+import { Card } from '@astryxdesign/core/Card';
+import { FileInput } from '@astryxdesign/core/FileInput';
+import { Heading } from '@astryxdesign/core/Heading';
+import { Selector } from '@astryxdesign/core/Selector';
+import { Text } from '@astryxdesign/core/Text';
+import { TextArea } from '@astryxdesign/core/TextArea';
+import { ClipboardList, Send, X } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
 import type { HomeRequestFormState, HomeRequestType } from '../../types/home';
+import { FormTextField } from '../shared/FormTextField';
 
 const REQUEST_TYPES: Array<{ value: HomeRequestType; label: string }> = [
   { value: 'MELHORIA', label: 'Melhoria de processo' },
@@ -10,9 +19,10 @@ const REQUEST_TYPES: Array<{ value: HomeRequestType; label: string }> = [
   { value: 'CORRECAO', label: 'Correção' },
   { value: 'OUTRO', label: 'Outro' },
 ];
-
-const EMPTY_FORM: HomeRequestFormState = { type: 'MELHORIA', title: '', description: '', expectedResult: '', applicationLocation: '', attachments: [] };
-const focusRingClass = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg)]';
+const EMPTY_FORM: HomeRequestFormState = {
+  type: 'MELHORIA', title: '', description: '', expectedResult: '', applicationLocation: '', attachments: [],
+};
+const ATTACHMENT_TYPES = '.pdf,.png,.jpg,.jpeg,.xls,.xlsx,.csv,application/pdf,image/png,image/jpeg,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv';
 const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENTS_BYTES = 20 * 1024 * 1024;
@@ -38,26 +48,25 @@ export default function HomeRequestPanel({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitted(false);
     try {
       await onSubmit(form);
       setForm(EMPTY_FORM);
       setAttachmentError(null);
       setSubmitted(true);
     } catch {
-      // O erro é apresentado no próprio formulário.
+      // O erro é apresentado no formulário.
     }
   }
 
-  function selectAttachments(files: FileList | null) {
-    const selected = Array.from(files ?? []);
-    if (selected.length === 0) return;
-
-    const attachments = [...form.attachments, ...selected];
+  function selectAttachments(files: File[] | File | null) {
+    if (!files) return;
+    const attachments = [...form.attachments, ...[files].flat()];
     if (attachments.length > MAX_ATTACHMENTS) {
       setAttachmentError('Envie no máximo 5 anexos por solicitação.');
       return;
     }
-    if (attachments.some((attachment) => attachment.size > MAX_ATTACHMENT_BYTES)) {
+    if (attachments.some(attachment => attachment.size > MAX_ATTACHMENT_BYTES)) {
       setAttachmentError('Cada anexo pode ter no máximo 10 MB.');
       return;
     }
@@ -65,73 +74,66 @@ export default function HomeRequestPanel({
       setAttachmentError('Os anexos somados podem ter no máximo 20 MB.');
       return;
     }
-
     setForm({ ...form, attachments });
     setAttachmentError(null);
   }
 
   return (
-    <section className="overflow-hidden rounded-[24px] border shadow-[0_14px_30px_rgba(5,150,105,0.10)]" style={{ backgroundColor: 'var(--color-card)', borderColor: 'rgba(16, 185, 129, 0.38)' }} aria-label="Enviar solicitação de melhoria">
-      <div className="grid gap-5 p-5 2xl:grid-cols-[minmax(17rem,0.9fr)_minmax(0,1.55fr)] 2xl:items-stretch">
-        <div className="rounded-[20px] p-5 2xl:flex 2xl:h-full 2xl:flex-col 2xl:p-6" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.24), rgba(5, 150, 105, 0.08))', border: '1px solid rgba(16, 185, 129, 0.20)' }}>
-          <span className="home-request-idea-icon flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm 2xl:h-14 2xl:w-14" style={{ backgroundColor: '#059669', color: '#fff' }}>
-            <span className="home-request-idea-rays" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /><i /></span>
-            <Lightbulb size={22} />
-          </span>
-          <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: '#047857' }}>Melhoria contínua</p>
-          <h2 className="mt-1 text-xl font-extrabold leading-tight 2xl:text-2xl" style={{ color: 'var(--color-text)' }}>O que podemos facilitar na sua rotina?</h2>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed 2xl:text-[15px]" style={{ color: 'var(--color-text-subtle)' }}>Registre a ideia com o contexto. A equipe recebe informações suficientes para avaliar a melhor solução.</p>
-          {onOpenRequests && (
-            <button type="button" onClick={onOpenRequests} className={`mt-6 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition-colors hover:bg-white/40 2xl:mt-auto 2xl:h-11 2xl:w-full 2xl:justify-center 2xl:px-4 2xl:text-sm ${focusRingClass}`} style={{ borderColor: 'rgba(5, 150, 105, 0.30)', color: '#047857' }}>
-              <ClipboardList size={15} />
-              {requestsLabel}{requestCount != null ? ` (${requestCount})` : ''}
-            </button>
-          )}
+    <Card padding={5} aria-labelledby="home-request-title" className="home-request-body">
+      <div className="home-request-heading">
+        <div>
+          <Heading level={2} id="home-request-title">Solicitar melhoria</Heading>
+          <Text as="p" color="secondary">Descreva o que pode melhorar na sua rotina e como a equipe pode ajudar.</Text>
         </div>
-
-        <form onSubmit={(event) => void submit(event)} className="grid gap-3 rounded-[20px] border p-4 md:grid-cols-2" style={{ backgroundColor: 'rgba(33, 71, 138, 0.035)', borderColor: 'var(--color-border)' }}>
-          <label className="space-y-1">
-            <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>Tipo de melhoria</span>
-            <select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as HomeRequestType })} className={`h-10 w-full rounded-xl border px-3 text-sm ${focusRingClass}`} style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
-              {REQUEST_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
-            </select>
-          </label>
-          <label className="space-y-1">
-            <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>O que você precisa?</span>
-            <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={140} required className={`h-10 w-full rounded-xl border px-3 text-sm ${focusRingClass}`} style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="Ex.: automatizar conferência diária" />
-          </label>
-          <label className="space-y-1 md:row-span-2">
-            <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>Contexto e impacto</span>
-            <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} maxLength={2000} required className={`h-28 min-h-28 max-h-44 w-full resize-y rounded-xl border px-3 py-2 text-sm md:h-[8.5rem] ${focusRingClass}`} style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="Como é feito hoje e qual dificuldade isso resolve?" />
-          </label>
-          <label className="space-y-1 md:col-start-2">
-            <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>Resultado esperado <span className="normal-case font-medium">(opcional)</span></span>
-            <input value={form.expectedResult} onChange={(event) => setForm({ ...form, expectedResult: event.target.value })} maxLength={1000} className={`h-10 w-full rounded-xl border px-3 text-sm ${focusRingClass}`} style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="Como seria a solução ideal para você?" />
-          </label>
-          <label className="space-y-1 md:col-start-2">
-            <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>Onde será aplicado? <span className="normal-case font-medium">(opcional)</span></span>
-            <input value={form.applicationLocation} onChange={(event) => setForm({ ...form, applicationLocation: event.target.value })} maxLength={500} className={`h-10 w-full rounded-xl border px-3 text-sm ${focusRingClass}`} style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }} placeholder="Ex.: dashboard de Faturamento, tela de Coletas ou rotina de emissão de manifestos" />
-          </label>
-          <div className="flex flex-wrap items-end justify-between gap-3 pt-1 md:col-span-2">
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-muted)' }}>Anexos <span className="normal-case font-medium">(opcional)</span></span>
-                <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>PDF, PNG/JPG, XLS/XLSX ou CSV · até 5 arquivos</span>
-              </div>
-              <label className={`inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors hover:bg-white/40 ${focusRingClass}`} style={{ borderColor: 'rgba(5, 150, 105, 0.30)', color: '#047857' }}>
-                <Paperclip size={14} />
-                Adicionar anexos
-                <input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx,.csv,application/pdf,image/png,image/jpeg,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" className="sr-only" onChange={(event) => { selectAttachments(event.target.files); event.currentTarget.value = ''; }} />
-              </label>
-              {form.attachments.length > 0 && <div className="flex flex-wrap gap-2">{form.attachments.map((attachment, index) => <span key={`${attachment.name}-${attachment.size}-${index}`} className="inline-flex max-w-full items-center gap-1 rounded-lg border px-2 py-1 text-[11px]" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-subtle)' }}><Paperclip size={12} /><span className="max-w-52 truncate">{attachment.name}</span><button type="button" onClick={() => setForm({ ...form, attachments: form.attachments.filter((_, attachmentIndex) => attachmentIndex !== index) })} className={`rounded p-0.5 hover:bg-black/5 ${focusRingClass}`} aria-label={`Remover ${attachment.name}`}><X size={12} /></button></span>)}</div>}
-              {attachmentError && <p className="text-xs" style={{ color: '#dc2626' }}>{attachmentError}</p>}
-              {error && <p className="rounded-xl px-3 py-2 text-xs" style={{ backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#dc2626' }}>{error}</p>}
-              {submitted && !error && <p className="text-xs font-medium" style={{ color: '#059669' }}>Solicitação enviada. Obrigado por ajudar a melhorar o portal.</p>}
-            </div>
-            <button type="submit" disabled={saving} className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white disabled:opacity-60 ${focusRingClass}`} style={{ backgroundColor: '#059669' }}><Send size={14} />{saving ? 'Enviando...' : 'Enviar solicitação'}</button>
-          </div>
-        </form>
+        {onOpenRequests && (
+          <Button label={requestsLabel + (requestCount != null ? ' (' + requestCount + ')' : '')}
+            icon={<ClipboardList size={16} />} variant="secondary" onClick={onOpenRequests} />
+        )}
       </div>
-    </section>
+      <form className="home-fields home-request-form" onSubmit={event => void submit(event)}>
+        <div className="home-form-columns">
+          <Selector label="Tipo de melhoria" value={form.type} options={REQUEST_TYPES} width="100%"
+            onChange={type => setForm({ ...form, type: type as HomeRequestType })} />
+          <FormTextField label="O que você precisa?" value={form.title} onChange={title => setForm({ ...form, title })}
+            placeholder="Ex.: automatizar conferência diária" maxLength={140} required />
+        </div>
+        <TextArea label="Contexto e impacto" placeholder="Como é feito hoje e qual dificuldade a melhoria resolve?"
+          value={form.description} onChange={description => setForm({ ...form, description })} maxLength={2000}
+          containerClassName="home-request-context"
+          {...{ required: true }} isRequired width="100%" rows={4} />
+        <div className="home-form-columns">
+          <FormTextField label="Resultado esperado" value={form.expectedResult}
+            onChange={expectedResult => setForm({ ...form, expectedResult })} maxLength={1000} isOptional />
+          <FormTextField label="Onde será aplicado?" value={form.applicationLocation}
+            onChange={applicationLocation => setForm({ ...form, applicationLocation })} maxLength={500} isOptional />
+        </div>
+        <div className="home-request-actions">
+          <FileInput label="Anexos" isOptional isMultiple value={null} onChange={selectAttachments}
+            accept={ATTACHMENT_TYPES} width="100%" placeholder="Adicionar anexos"
+            containerClassName="home-request-upload"
+            description="PDF, PNG, JPG, XLS, XLSX ou CSV. Até 5 arquivos." />
+          <Button label={saving ? 'Enviando…' : 'Enviar solicitação'} type="submit" variant="primary"
+            isDisabled={saving} icon={<Send size={16} />} />
+        </div>
+        {form.attachments.length > 0 && (
+          <div className="home-actions" aria-label="Anexos selecionados">
+            {form.attachments.map((attachment, index) => (
+              <span className="home-attachment-chip" key={attachment.name + '-' + attachment.size + '-' + index}>
+                <Badge label={attachment.name} variant="neutral" className="home-file-badge" />
+                <Button isIconOnly icon={<X size={14} />} variant="ghost" size="sm"
+                  label={'Remover ' + attachment.name} tooltip="Remover anexo"
+                  onClick={() => {
+                    setForm({ ...form, attachments: form.attachments.filter((_, itemIndex) => itemIndex !== index) });
+                    setAttachmentError(null);
+                  }} />
+              </span>
+            ))}
+          </div>
+        )}
+        {attachmentError && <Banner status="error" title={attachmentError} />}
+        {error && <Banner status="error" title={error} />}
+        {submitted && !error && <Banner status="success" title="Solicitação enviada" />}
+      </form>
+    </Card>
   );
 }

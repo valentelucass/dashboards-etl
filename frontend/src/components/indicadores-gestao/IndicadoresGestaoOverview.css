@@ -29,8 +29,6 @@
 .gestao-scorecard-goal { font-size: 12px; font-weight: 600; white-space: nowrap; }
 .gestao-scorecard-detail { grid-area: detail; color: var(--color-text-muted); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
 .gestao-scorecard-coverage { grid-area: coverage; align-self: end; }
-.gestao-goal-track { position: relative; height: 8px; border-radius: 4px; overflow: hidden; }
-.gestao-goal-track::after { content: ""; position: absolute; inset: 0 0 0 auto; width: 2px; background: var(--color-text-subtle); opacity: 0.6; }
 
 .gestao-panorama { margin-bottom: 28px; padding: 18px; border: 1px solid var(--color-border); border-radius: 26px; background: var(--color-card); color: var(--color-text); }
 .gestao-panorama-heading { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
@@ -49,7 +47,6 @@
 .gestao-lane-heading h4 { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; font-weight: 600; min-width: 0; }
 .gestao-lane-heading h4 > span { flex-shrink: 0; }
 .gestao-lane-heading strong { font-size: 22px; line-height: 26px; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; white-space: nowrap; }
-.gestao-comparison-track { height: 10px; }
 .gestao-lane-detail { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; color: var(--color-text-muted); font-size: 11px; line-height: 16px; }
 .gestao-lane-status { font-weight: 600; white-space: nowrap; }
 .gestao-attention { display: flex; flex-direction: column; min-width: 0; padding-top: 18px; border-top: 1px solid var(--color-border); }

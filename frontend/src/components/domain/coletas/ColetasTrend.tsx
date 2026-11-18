@@ -1,114 +1,118 @@
-import { useMemo } from 'react';
-import type { EChartsOption } from 'echarts';
-import ChartWrapper from '../../charts/ChartWrapper';
-import { useEchartsTheme } from '../../charts/useEchartsTheme';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { Button } from '@astryxdesign/core/Button';
+import { Chart, ChartAxis, ChartGrid, ChartSwatch, line, referenceLine } from '@astryxdesign/charts';
+import ChartCard from '../../shared/ChartCard';
 import type { ColetasTrendPoint } from '../../../types/coletas';
-import { buildBaseLineOption, getEchartsThemeTokens } from '../../../utils/echartsBuilders';
-import { formatarDataCurta, formatarNumero } from '../../../utils/formatadores';
+import { formatarNumero } from '../../../utils/formatadores';
 
 interface ColetasTrendProps {
   dados: ColetasTrendPoint[];
   isLoading?: boolean;
 }
 
+const seriesConfig = [
+  { key: 'total', label: 'Total', color: 'var(--coletas-chart-volume)' },
+  { key: 'finalizadas', label: 'Finalizadas', color: 'var(--coletas-chart-finalizadas)' },
+  { key: 'canceladas', label: 'Canceladas', color: 'var(--coletas-chart-weight)' },
+  { key: 'emTratativa', label: 'Em Tratativa', color: 'var(--coletas-chart-tratativa)' },
+] as const;
+
+function formatarDia(value: unknown) {
+  const date = String(value);
+  const parts = /^\d{4}-(\d{2})-(\d{2})/.exec(date);
+  return parts ? `${parts[2]}/${parts[1]}` : date;
+}
+
 export default function ColetasTrend({ dados, isLoading }: ColetasTrendProps) {
-  const { isDark } = useEchartsTheme();
+  const plotRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(307);
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(() => new Set());
+  const visible = !isLoading && dados.length > 0;
 
-  const option: EChartsOption = useMemo(() => {
-    const tokens = getEchartsThemeTokens(isDark);
-    const totalColetas = dados.reduce((acc, item) => acc + item.total, 0);
-    const mediaTotal = dados.length > 0 ? totalColetas / dados.length : 0;
-    const mediaTotalFormatada = formatarNumero(mediaTotal, Number.isInteger(mediaTotal) ? 0 : 1);
+  useLayoutEffect(() => {
+    const plot = plotRef.current;
+    if (!visible || !plot) return;
+    const observer = new ResizeObserver(([entry]) => setHeight(Math.floor(entry.contentRect.height)));
+    observer.observe(plot);
+    return () => observer.disconnect();
+  }, [visible]);
+  const average = dados.length > 0
+    ? dados.reduce((sum, item) => sum + item.total, 0) / dados.length : 0;
+  const averageLabel = 'Média do período: ' + formatarNumero(average, Number.isInteger(average) ? 0 : 1);
+  const visibleSeries = seriesConfig.filter(item => !hidden.has(item.key));
+  const showAverage = !hidden.has('media') && !hidden.has('total');
+  const max = dados.reduce((previous, item) => Math.max(
+    previous, ...visibleSeries.map(({key}) => item[key]),
+  ), 0);
+  const step = 10 ** Math.floor(Math.log10(Math.max(1, max)));
+  const axisMax = Math.max(1, Math.ceil(max / (step / 2)) * (step / 2));
+  const marks = visibleSeries.map(({ key, label, color }) =>
+    line(key, { label, color, strokeWidth: 2, curve: 'linear' }));
+  if (showAverage) marks.push(referenceLine({
+    y: average,
+    color: 'var(--color-text-muted)',
+    strokeDasharray: '4 4',
+    label: 'Média: ' + formatarNumero(average, 1),
+  }));
 
-    return buildBaseLineOption(isDark, {
-      legend: {
-        formatter: (name: string) => (name === 'Média do período' ? `${name}: ${mediaTotalFormatada}` : name),
-      },
-      tooltip: {
-        trigger: 'axis',
-      },
-      grid: {
-        left: 26,
-        right: 26,
-      },
-      xAxis: {
-        type: 'category' as const,
-        data: dados.map((d) => formatarDataCurta(d.date)),
-      },
-      yAxis: {
-        type: 'value' as const,
-        name: 'Qtd',
-      },
-      series: [
-        {
-          name: 'Total',
-          type: 'line' as const,
-          data: dados.map((d) => d.total),
-          itemStyle: { color: tokens.palette[0] },
-          lineStyle: { width: 2 },
-          symbol: 'circle',
-          symbolSize: 5,
-          smooth: true,
-          markLine: {
-            silent: true,
-            symbol: 'none',
-            data: [{ type: 'average', name: 'Média do período' }],
-            lineStyle: { width: 2, type: 'dashed', color: tokens.mutedTextColor, opacity: 0.38 },
-            label: { show: false },
-          },
-        },
-        {
-          name: 'Finalizadas',
-          type: 'line' as const,
-          data: dados.map((d) => d.finalizadas),
-          itemStyle: { color: tokens.palette[2] },
-          lineStyle: { width: 2 },
-          symbol: 'circle',
-          symbolSize: 5,
-          smooth: true,
-        },
-        {
-          name: 'Canceladas',
-          type: 'line' as const,
-          data: dados.map((d) => d.canceladas),
-          itemStyle: { color: tokens.palette[3] },
-          lineStyle: { width: 2 },
-          symbol: 'circle',
-          symbolSize: 5,
-          smooth: true,
-        },
-        {
-          name: 'Em Tratativa',
-          type: 'line' as const,
-          data: dados.map((d) => d.emTratativa),
-          itemStyle: { color: tokens.palette[8] },
-          lineStyle: { width: 2 },
-          symbol: 'circle',
-          symbolSize: 5,
-          smooth: true,
-        },
-        {
-          name: 'Média do período',
-          type: 'line' as const,
-          data: [],
-          itemStyle: { color: tokens.mutedTextColor, opacity: 0.38 },
-          lineStyle: { width: 2, type: 'dashed', color: tokens.mutedTextColor, opacity: 0.38 },
-          symbol: 'none',
-          smooth: false,
-          silent: true,
-          z: 1,
-        },
-      ],
+  function toggleSeries(key: string) {
+    setHidden(current => {
+      const next = new Set(current);
+      if (!next.delete(key)) next.add(key);
+      return next;
     });
-  }, [dados, isDark]);
+  }
 
   return (
-    <ChartWrapper
-      titulo="Coletas por dia, mês e ano"
-      chartKey="coletasSerie"
-      option={option}
-      isLoading={isLoading}
-      isEmpty={dados.length === 0}
-    />
+    <ChartCard titulo="Coletas por dia, mês e ano" chartKey="coletasSerie" isLoading={isLoading} isEmpty={dados.length === 0}
+      contentClassName="dashboard-coletas-card-content">
+      <div className="dashboard-coletas-plot">
+        <div className="dashboard-coletas-trend-area" ref={plotRef}>
+        <Chart
+          aria-label="Evolução das coletas"
+          data={dados.map(item => ({ ...item }))}
+          xKey="date"
+          series={marks}
+          height={height}
+          margin={{ left: 52, right: 16, top: 18, bottom: 37 }}
+          yDomain={[0, axisMax]}
+          grid={<ChartGrid horizontal tickCount={5} />}
+          axes={<>
+            <ChartAxis position="left" tickFormat={(value) => formatarNumero(Number(value))} />
+            <ChartAxis position="bottom" maxTicks={9} tickFormat={formatarDia} />
+          </>}
+          tooltip={{
+            render: (date, values) => (
+              <div className="space-y-1 text-sm">
+                <strong>{formatarDia(date)}</strong>
+                {values.map(value => (
+                  <div className="flex items-center justify-between gap-4" key={value.key}>
+                    <span className="dashboard-code-button-content">
+                      <ChartSwatch color={value.color} variant="line" />{value.label}
+                    </span>
+                    <span>{formatarNumero(Number(value.value))}</span>
+                  </div>
+                ))}
+              </div>
+            ),
+          }}
+        />
+        </div>
+        <div className="dashboard-coletas-legend" role="group" aria-label="Séries do gráfico">
+          {seriesConfig.map(({ key, label, color }) => (
+            <Button key={key} label={label} size="sm" variant="ghost" aria-pressed={!hidden.has(key)} onClick={() => toggleSeries(key)}>
+              <span className="dashboard-code-button-content">
+                <ChartSwatch color={color} variant="line" />{label}
+              </span>
+            </Button>
+          ))}
+          <Button label={averageLabel} size="sm" variant="ghost" isDisabled={hidden.has('total')} aria-pressed={showAverage} onClick={() => toggleSeries('media')}>
+            <span className="dashboard-code-button-content">
+              <ChartSwatch color="var(--color-text-muted)" variant="line" />{averageLabel}
+            </span>
+          </Button>
+        </div>
+      </div>
+    </ChartCard>
   );
 }

@@ -1,5 +1,6 @@
 package com.dashboard.api.service;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.coletas.ColetaResumoDTO;
@@ -66,7 +67,7 @@ public class DashboardTabelaPaginadaService {
     private final EscopoFilialService escopoFilialService;
 
     public DashboardTabelaPaginadaService(
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder,
             ValidadorPeriodoService validadorPeriodo,
             EscopoFilialService escopoFilialService
@@ -207,19 +208,17 @@ public class DashboardTabelaPaginadaService {
         MapSqlParameterSource countParams = Objects.requireNonNull(countQuery.params(), "countParams");
         Long total = jdbcTemplate.queryForObject(countSql, countParams, Long.class);
 
-        DashboardExportSqlBuilder.ExportSql selectQuery = sqlBuilder.buildSelect(
+        DashboardExportSqlBuilder.ExportSql selectQuery = sqlBuilder.buildPage(
                 definition,
                 filtro,
                 escopo,
-                Set.of(),
                 orderBy
         );
         MapSqlParameterSource params = Objects.requireNonNull(selectQuery.params(), "selectParams");
         params.addValue("offsetTabela", offset);
         params.addValue("tamanhoTabela", tamanho);
 
-        String selectSql = Objects.requireNonNull(selectQuery.sql(), "selectSql");
-        String sql = selectSql + " OFFSET :offsetTabela ROWS FETCH NEXT :tamanhoTabela ROWS ONLY";
+        String sql = Objects.requireNonNull(selectQuery.sql(), "selectSql");
         List<Map<String, Object>> conteudo = jdbcTemplate.queryForList(sql, params);
         long totalSeguro = total != null ? total : 0L;
         int totalPaginas = totalSeguro == 0 ? 0 : (int) Math.ceil(totalSeguro / (double) tamanho);

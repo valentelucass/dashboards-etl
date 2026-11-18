@@ -1,3 +1,6 @@
+import { NumberInput } from '@astryxdesign/core/NumberInput';
+import DashboardSelector from "../../shared/DashboardSelector";
+import DashboardButton from "../../shared/DashboardButton";
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AxiosError } from 'axios';
@@ -190,37 +193,37 @@ export default function FretesGoalsManagerPanel({
       ) : null}
 
       <form onSubmit={handleSubmit} className="fretes-goals-form grid gap-4 rounded-2xl border p-4 lg:grid-cols-[1fr_1fr_minmax(15rem,auto)_1fr_1fr_auto]" style={{ borderColor: 'var(--color-border)' }}>
-        <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+        <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
           Ano
-          <select
+          <DashboardSelector label="Ano"
             value={ano}
-            onChange={(event) => {
+            onValueChange={selectedValue => {
               setMetaFaturamentoDraft(null);
-              onPeriodChange(Number(event.target.value), mes);
+              onPeriodChange(Number(selectedValue), mes);
             }}
             className={`h-11 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
             style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
           >
             {anos.map((year) => <option key={year} value={year}>{year}</option>)}
-          </select>
-        </label>
-        <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+          </DashboardSelector>
+        </div>
+        <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
           Mês
-          <select
+          <DashboardSelector label="Mês"
             value={mes}
-            onChange={(event) => {
+            onValueChange={selectedValue => {
               setMetaFaturamentoDraft(null);
-              onPeriodChange(ano, Number(event.target.value));
+              onPeriodChange(ano, Number(selectedValue));
             }}
             className={`h-11 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
             style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
           >
             {MONTHS.map((month) => <option key={month.value} value={month.value}>{month.label}</option>)}
-          </select>
-        </label>
+          </DashboardSelector>
+        </div>
         {onReplicatePreviousMonth ? (
           <div className="flex min-w-max flex-shrink-0 items-end lg:max-2xl:col-span-2">
-            <button
+            <DashboardButton
               type="button"
               onClick={() => void handleReplicarMetas()}
               disabled={!podeReplicarMetas || isReplicating}
@@ -234,15 +237,15 @@ export default function FretesGoalsManagerPanel({
             >
               <Copy size={15} />
               {isReplicating ? 'Copiando...' : 'Copiar Metas do Mês Anterior'}
-            </button>
+            </DashboardButton>
           </div>
         ) : null}
-        <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+        <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
           Filial
-          <select
+          <DashboardSelector label="Filial"
             value={branchId}
-            onChange={(event) => {
-              setBranchId(event.target.value);
+            onValueChange={selectedValue => {
+              setBranchId(selectedValue);
               setMetaFaturamentoDraft(null);
             }}
             className={`h-11 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
@@ -251,24 +254,14 @@ export default function FretesGoalsManagerPanel({
             {selectableBranches.map((option) => (
               <option key={option} value={option}>{option === GLOBAL_BRANCH_ID ? 'GLOBAL' : option}</option>
             ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
-          Meta Faturamento
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={metaFaturamentoValue}
-            onChange={(event) => setMetaFaturamentoDraft(event.target.value)}
-            className={`h-11 rounded-xl border px-3 text-sm tabular-nums ${FOCUS_RING_CLASS}`}
-            style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-          />
-        </label>
+          </DashboardSelector>
+        </div>
+        <NumberInput label="Meta Faturamento" value={metaFaturamentoValue === '' ? null : Number(metaFaturamentoValue)} min={0} step={0.01}
+          width="100%" hasClear onChange={value => setMetaFaturamentoDraft(value == null ? '' : String(value))} />
         <div className="flex items-end">
           <div className="flex gap-2">
             {onViewScope ? (
-              <button
+              <DashboardButton
                 type="button"
                 onClick={() => onViewScope(branchId)}
                 className={`inline-flex h-11 items-center gap-2 rounded-xl border px-3 text-sm font-semibold ${FOCUS_RING_CLASS}`}
@@ -276,9 +269,9 @@ export default function FretesGoalsManagerPanel({
               >
                 <Eye size={15} />
                 Ver dados
-              </button>
+              </DashboardButton>
             ) : null}
-            <button
+            <DashboardButton
               type="submit"
               disabled={isSaving}
               className={`inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
@@ -286,7 +279,7 @@ export default function FretesGoalsManagerPanel({
             >
               <Save size={15} />
               {isSaving ? 'Salvando...' : 'Salvar'}
-            </button>
+            </DashboardButton>
           </div>
         </div>
       </form>
@@ -316,7 +309,7 @@ export default function FretesGoalsManagerPanel({
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {onViewScope ? (
-                    <button
+                    <DashboardButton
                       type="button"
                       onClick={() => onViewScope(config.branchId)}
                       className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold ${FOCUS_RING_CLASS}`}
@@ -324,9 +317,9 @@ export default function FretesGoalsManagerPanel({
                     >
                       <Eye size={13} />
                       Ver dados
-                    </button>
+                    </DashboardButton>
                   ) : null}
-                  <button
+                  <DashboardButton
                     type="button"
                     disabled={isSaving}
                     onClick={() => void onRemove(config.branchId, config.ano, config.mes)}
@@ -335,7 +328,7 @@ export default function FretesGoalsManagerPanel({
                   >
                     <Trash2 size={13} />
                     Remover
-                  </button>
+                  </DashboardButton>
                 </div>
               </div>
             ))

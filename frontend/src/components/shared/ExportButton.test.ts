@@ -24,6 +24,6 @@ describe('ExportButton', () => {
       }),
     );
 
-    expect(html).toContain('disabled=""');
+    expect(html).toContain('aria-disabled="true"');
   });
 });

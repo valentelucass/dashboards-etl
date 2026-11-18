@@ -1,12 +1,15 @@
 package com.dashboard.api.service;
 
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
+import com.dashboard.api.dto.cotacoes.CotacoesAgrupamentoDTO;
+import com.dashboard.api.dto.cotacoes.CotacoesChartsDTO;
 import com.dashboard.api.dto.cotacoes.CotacoesOverviewDTO;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.repository.CotacoesDashboardSqlRepository;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import com.dashboard.api.util.PeriodoOffsetDateTimeHelper;
 import java.math.BigDecimal;
+import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +24,9 @@ import org.springframework.jdbc.core.RowMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -143,6 +148,50 @@ class CotacoesDashboardSqlRepositoryTest {
                 .contains("COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Usuario Key]))), N''), NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Usuário]))), N''), NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Solicitante]))), N''), N'Sem usuario') AS agrupador_id")
                 .contains("COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Usuário]))), N''), NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Solicitante]))), N''), NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Usuario Key]))), N''), N'Sem usuario') AS entidade")
                 .doesNotContain("SELECT TOP (40)");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void buscarGraficosUsaUmaConsultaEConservaFiltrosESeries() throws Exception {
+        ResultSet linha = mock(ResultSet.class);
+        when(linha.getString("grafico")).thenReturn("TRECHOS");
+        when(linha.getString("nome")).thenReturn("SP → RJ");
+        when(linha.getInt("total")).thenReturn(8);
+        when(linha.getBigDecimal("valor")).thenReturn(new BigDecimal("320.00"));
+        when(linha.getBigDecimal("valor_convertido")).thenReturn(new BigDecimal("150.00"));
+        when(linha.getInt("convertidas")).thenReturn(3);
+        when(linha.getInt("reprovadas")).thenReturn(2);
+        when(jdbcTemplate.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class)))
+                .thenAnswer(invocation -> {
+                    RowMapper<?> mapper = invocation.getArgument(2);
+                    return List.of(mapper.mapRow(linha, 0));
+                });
+
+        EscopoFilialService escopo = mock(EscopoFilialService.class);
+        when(escopo.escopoAtual()).thenReturn(new EscopoFilialService.EscopoFilial(false, List.of("SPO")));
+        CotacoesDashboardSqlRepository repository = new CotacoesDashboardSqlRepository(
+                jdbcTemplate, new DashboardExportSqlBuilder(PeriodoOffsetDateTimeHelper.padrao()), escopo
+        );
+        CotacoesChartsDTO graficos = repository.buscarGraficos(new FiltroConsultaDTO(
+                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), Map.of("clientes", List.of("ACME"))
+        ));
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<MapSqlParameterSource> paramsCaptor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbcTemplate).query(sqlCaptor.capture(), paramsCaptor.capture(), any(RowMapper.class));
+        verifyNoMoreInteractions(jdbcTemplate);
+        assertThat(sqlCaptor.getValue()).contains("GROUP BY GROUPING SETS", "[Filial]", "[Cliente Pagador] IN (:filtro_clientes)");
+        assertThat(sqlCaptor.getValue()).contains("DECLARE @linhasGraficos bigint = 9223372036854775807",
+                "TOP (@linhasGraficos)", "OPTIMIZE FOR (@linhasGraficos = 64)",
+                "MIN(motivo_perda COLLATE Latin1_General_100_BIN2)", "IF NOT EXISTS (SELECT 1 FROM",
+                "AS nome WHERE 1 = 0");
+        assertThat(paramsCaptor.getValue().getValues()).containsEntry("filtro_clientes", List.of("acme"));
+        assertThat(paramsCaptor.getValue().getValues().values()).contains(List.of("spo"));
+        assertThat(graficos.trechosMaisValiosos()).containsExactly(new CotacoesAgrupamentoDTO(
+                "SP → RJ", new BigDecimal("320.00"), new BigDecimal("150.00"), 8, 3, 2
+        ));
+        assertThat(graficos.funil()).isEmpty();
+        assertThat(graficos.perdasPorTrecho()).isEmpty();
     }
 
     private static EscopoFilialService escopoSemRestricao() {

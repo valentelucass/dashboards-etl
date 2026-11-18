@@ -1,7 +1,13 @@
+import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
+import { Dialog } from '@astryxdesign/core/Dialog';
+import { DashboardInput } from "./DashboardTextEntry";
+import DashboardSelector from "./DashboardSelector";
+import DashboardButton from "./DashboardButton";
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Card } from '@astryxdesign/core/Card';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
 import { Check, Funnel, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Popover, type PopoverTriggerRenderProps } from '@astryxdesign/core/Popover';
 import type { ColunaTabela } from './DataTable';
 import TableHeaderTooltip from './TableHeaderTooltip';
 import { calcularLarguraMinimaTabela, getColumnSizingStyle } from './tableLayout';
@@ -122,7 +128,7 @@ function TextFilter({
         style={{ color: 'var(--color-text-muted)' }}
         aria-hidden="true"
       />
-      <input
+      <DashboardInput
         type="search"
         value={draftValue}
         onChange={(event) => setDraftValue(event.target.value)}
@@ -173,28 +179,8 @@ function MultiSelectFilter({
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          id={labelId}
-          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2 text-left text-xs transition-colors hover:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
-            compact ? 'h-8 min-w-0' : 'h-9'
-          }`}
-          style={{
-            backgroundColor: 'var(--color-bg)',
-            borderColor: 'var(--color-border)',
-            color: selecionados.length > 0 ? 'var(--color-text)' : 'var(--color-text-muted)',
-          }}
-          aria-busy={isLoading}
-        >
-          <span className="flex min-w-0 flex-1 items-center gap-1.5">
-            <Funnel size={12} aria-hidden="true" />
-            <span className="truncate">{selecionados.length > 0 ? `${selecionados.length} selecionado(s)` : label}</span>
-          </span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent aria-labelledby={labelId} style={{ minWidth: 240 }}>
+    <Popover label={label} alignment="start" width="min(16rem, calc(100vw - 24px))" padding={3}
+      content={<div aria-labelledby={labelId}>
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>
             {label}
@@ -211,7 +197,7 @@ function MultiSelectFilter({
           )}
         </div>
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          <button
+          <DashboardButton
             type="button"
             onClick={selecionarTodos}
             disabled={!temOpcoesDisponiveis || todasOpcoesSelecionadas}
@@ -226,8 +212,8 @@ function MultiSelectFilter({
           >
             <Check size={13} aria-hidden="true" />
             <span>Selecionar todos</span>
-          </button>
-          <button
+          </DashboardButton>
+          <DashboardButton
             type="button"
             onClick={() => onChange([])}
             disabled={selecionados.length === 0}
@@ -238,26 +224,14 @@ function MultiSelectFilter({
           >
             <X size={13} aria-hidden="true" />
             <span>Desmarcar todos</span>
-          </button>
+          </DashboardButton>
         </div>
         <div className="max-h-56 space-y-0.5 overflow-y-auto">
           {opcoesEfetivas.map((opcao) => {
             const selecionado = selecionados.includes(opcao);
             return (
-              <label
-                key={opcao}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-[var(--color-bg)]"
-                style={{ color: selecionado ? 'var(--color-primary)' : 'var(--color-text)' }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selecionado}
-                  onChange={() => onChange(toggleValue(selecionados, opcao))}
-                  className="shrink-0 cursor-pointer rounded"
-                  style={{ accentColor: 'var(--color-primary)' }}
-                />
-                <span className="truncate">{opcao}</span>
-              </label>
+              <CheckboxInput key={opcao} label={opcao} value={selecionado}
+                onChange={() => onChange(toggleValue(selecionados, opcao))} />
             );
           })}
           {opcoesEfetivas.length === 0 && isLoading && (
@@ -271,7 +245,27 @@ function MultiSelectFilter({
             </p>
           )}
         </div>
-      </PopoverContent>
+        </div>}>
+      {trigger => (
+        <DashboardButton {...trigger}
+          type="button"
+          id={labelId}
+          className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2 text-left text-xs transition-colors hover:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
+            compact ? 'h-8 min-w-0' : 'h-9'
+          }`}
+          style={{
+            backgroundColor: 'var(--color-bg)',
+            borderColor: 'var(--color-border)',
+            color: selecionados.length > 0 ? 'var(--color-text)' : 'var(--color-text-muted)',
+          }}
+          aria-busy={isLoading}
+        >
+          <span className="flex min-w-0 flex-1 items-center gap-1.5">
+            <Funnel size={12} aria-hidden="true" />
+            <span className="truncate">{selecionados.length > 0 ? `${selecionados.length} selecionado(s)` : label}</span>
+          </span>
+        </DashboardButton>
+      )}
     </Popover>
   );
 }
@@ -434,10 +428,11 @@ function AdvancedFiltersButton<T>({
     />
   );
 
-  const renderButton = (withManualToggle: boolean) => (
-    <button
+  const renderButton = (withManualToggle: boolean, trigger?: PopoverTriggerRenderProps) => (
+    <DashboardButton
+      {...trigger}
       type="button"
-      onClick={withManualToggle ? () => setOpen((atual) => !atual) : undefined}
+      onClick={trigger?.onClick ?? (withManualToggle ? () => setOpen((atual) => !atual) : undefined)}
       className="relative inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors hover:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
       style={{
         backgroundColor: 'var(--color-bg)',
@@ -457,56 +452,33 @@ function AdvancedFiltersButton<T>({
           {hiddenActiveCount}
         </span>
       )}
-    </button>
+    </DashboardButton>
   );
 
   if (isMobile) {
     return (
       <>
         {renderButton(true)}
-        {typeof document !== 'undefined'
-          ? createPortal(
-              open ? (
-                <>
-                  <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setOpen(false)} aria-hidden="true" />
-                  <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Filtros da tabela"
-                    className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[24px] border-t p-5 shadow-2xl"
-                    style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-                  >
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                        Filtros da tabela
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setOpen(false)}
-                        className="rounded-full p-1.5 transition-colors hover:bg-[var(--color-bg)]"
-                        style={{ color: 'var(--color-text-muted)' }}
-                        aria-label="Fechar filtros"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                    <div className="max-h-[70vh] overflow-y-auto pb-2">{content}</div>
-                  </div>
-                </>
-              ) : null,
-              document.body,
-            )
-          : null}
+        {open && (
+          <Dialog isOpen purpose="info" aria-label="Filtros da tabela"
+            position={{ bottom: 0 }} width="100%" onOpenChange={next => { if (!next) setOpen(false); }}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold">Filtros da tabela</span>
+              <DashboardButton type="button" aria-label="Fechar filtros" onClick={() => setOpen(false)}><X size={16} /></DashboardButton>
+            </div>
+            {content}
+          </Dialog>
+        )}
       </>
     );
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{renderButton(false)}</PopoverTrigger>
-      <PopoverContent align="end" style={{ width: 340, minWidth: 340 }}>
+    <Popover label="Filtros da tabela" isOpen={open} onOpenChange={setOpen} alignment="end" width="min(21.25rem, calc(100vw - 24px))" padding={3}
+      content={<div>
         {content}
-      </PopoverContent>
+        </div>}>
+      {trigger => renderButton(false, trigger)}
     </Popover>
   );
 }
@@ -603,8 +575,8 @@ export default function AnalyticalDataTable<T>({
   }
 
   return (
-    <div
-      className="overflow-hidden rounded-[20px] border shadow-sm"
+    <Card padding={0}
+      className="dashboard-table-card overflow-hidden rounded-[20px] border shadow-sm"
       data-dashboard-table="true"
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
       aria-busy={isUpdating}
@@ -645,7 +617,7 @@ export default function AnalyticalDataTable<T>({
             onTextFilterChange={onTextFilterChange}
             onMultiFilterChange={onMultiFilterChange}
           />
-          <button
+          <DashboardButton
             type="button"
             onClick={onClearFilters}
             disabled={!hasAnyFilter}
@@ -657,13 +629,13 @@ export default function AnalyticalDataTable<T>({
             }}
           >
             Limpar
-          </button>
+          </DashboardButton>
           {acoesCabecalho}
-          <label className="flex shrink-0 items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+          <div className="flex shrink-0 items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
             Linhas
-            <select
+            <DashboardSelector label="Linhas"
               value={tamanhoPagina}
-              onChange={(event) => alterarTamanhoPagina(Number(event.target.value))}
+              onValueChange={selectedValue => alterarTamanhoPagina(Number(selectedValue))}
               disabled={isUpdating}
               className="h-9 rounded-lg border px-2 py-1 text-xs"
               style={{
@@ -677,19 +649,19 @@ export default function AnalyticalDataTable<T>({
                   {valor}
                 </option>
               ))}
-            </select>
-          </label>
+            </DashboardSelector>
+          </div>
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-max text-sm" style={{ minWidth: `max(100%, ${larguraMinimaTabela}px)` }}>
-          <thead>
-            <tr className="h-10 border-b" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+        <Table density="compact" className="w-max text-sm" style={{ minWidth: `max(100%, ${larguraMinimaTabela}px)` }}>
+          <TableHeader>
+            <TableRow isHeaderRow className="h-10 border-b" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
               {colunas.map((col) => {
                 const colunaOrdenavel = Boolean(onSortChange) && col.ordenavel !== false;
                 return (
-                  <th
+                  <TableHeaderCell
                     key={col.chave}
                     onClick={() => handleSort(col.chave, colunaOrdenavel)}
                     className={`h-10 px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap select-none ${
@@ -708,13 +680,13 @@ export default function AnalyticalDataTable<T>({
                         <span className="shrink-0">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </span>
-                  </th>
+                  </TableHeaderCell>
                 );
               })}
-            </tr>
-            <tr className="h-12 border-b" style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
+            </TableRow>
+            <TableRow isHeaderRow className="h-12 border-b" style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
               {colunas.map((col) => (
-                <th
+                <TableHeaderCell
                   key={`${col.chave}-filter`}
                   className={`h-12 px-3 py-2 align-top ${col.fixo ? 'sticky left-0 z-10' : ''}`}
                   style={{
@@ -735,30 +707,30 @@ export default function AnalyticalDataTable<T>({
                   ) : (
                     <span className="block h-8" aria-hidden="true" />
                   )}
-                </th>
+                </TableHeaderCell>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {hasError ? (
-              <tr>
-                <td colSpan={colunas.length} className="px-3 py-6">
+              <TableRow>
+                <TableCell colSpan={colunas.length} className="px-3 py-6">
                   <MensagemErro mensagem={getApiErrorMessage(error, errorFallbackMessage)} tipo={getTipoErro(error)} />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : dados.length === 0 ? (
-              <tr>
-                <td
+              <TableRow>
+                <TableCell
                   colSpan={colunas.length}
                   className="px-3 py-8 text-center"
                   style={{ color: 'var(--color-text-muted)' }}
                 >
                   Nenhum registro encontrado.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               dados.map((row, index) => (
-                <tr
+                <TableRow
                   key={`${String(row[chaveLinha])}-${index}`}
                   className="border-b transition-colors"
                   style={{ borderColor: 'var(--color-border)' }}
@@ -770,7 +742,7 @@ export default function AnalyticalDataTable<T>({
                     const conteudo = col.formato ? col.formato(valor, row) : String(valor ?? '—');
 
                     return (
-                      <td
+                      <TableCell
                         key={col.chave}
                         className={`px-3 py-2 align-middle whitespace-nowrap ${
                           col.fixo ? 'sticky left-0' : ''
@@ -783,14 +755,14 @@ export default function AnalyticalDataTable<T>({
                         }}
                       >
                         {conteudo}
-                      </td>
+                      </TableCell>
                     );
                   })}
-                </tr>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {!hasError && (
@@ -802,7 +774,7 @@ export default function AnalyticalDataTable<T>({
             Mostrando {formatarInteiro(dados.length === 0 ? 0 : inicio + 1)} a {formatarInteiro(fimExibido)} de {formatarInteiro(totalReal)}
           </span>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button
+            <DashboardButton
               type="button"
               onClick={() => onPaginaChange(Math.max(1, paginaSegura - 1))}
               disabled={isUpdating || paginaSegura === 1}
@@ -810,7 +782,7 @@ export default function AnalyticalDataTable<T>({
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
             >
               Anterior
-            </button>
+            </DashboardButton>
             <div className="flex flex-wrap items-center justify-center gap-1" aria-label="Paginas da tabela">
               {itensPaginacao.map((item) => {
                 if (typeof item !== 'number') {
@@ -828,7 +800,7 @@ export default function AnalyticalDataTable<T>({
 
                 const ativo = item === paginaSegura;
                 return (
-                  <button
+                  <DashboardButton
                     key={item}
                     type="button"
                     onClick={() => onPaginaChange(item)}
@@ -849,14 +821,14 @@ export default function AnalyticalDataTable<T>({
                     }
                   >
                     {item}
-                  </button>
+                  </DashboardButton>
                 );
               })}
             </div>
             <span className="min-w-[92px] text-center">
               Pagina {paginaSegura} de {totalPaginas}
             </span>
-            <button
+            <DashboardButton
               type="button"
               onClick={() => onPaginaChange(Math.min(totalPaginas, paginaSegura + 1))}
               disabled={isUpdating || paginaSegura === totalPaginas}
@@ -864,10 +836,10 @@ export default function AnalyticalDataTable<T>({
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
             >
               Proxima
-            </button>
+            </DashboardButton>
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

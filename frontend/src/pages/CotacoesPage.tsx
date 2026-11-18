@@ -1,7 +1,12 @@
+import { Tab, TabList } from '@astryxdesign/core/TabList';
+import DashboardSelector from "../components/shared/DashboardSelector";
+import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import ReactECharts from '../components/charts/DashboardEChart';
+import AstryxDashboardChart from '../components/charts/AstryxDashboardChart';
+import { Card } from '@astryxdesign/core/Card';
+import { ProgressBar } from '@astryxdesign/core/ProgressBar';
 import { Building2, ChevronDown, ChevronUp, Table2, UserRound, UsersRound } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
@@ -108,9 +113,9 @@ const TRECHO_METRIC_OPTIONS: Array<{ value: TrechoMetric; label: string }> = [
   { value: 'convertido', label: 'Convertido' },
 ];
 const FUNNEL_STAGES = [
-  { key: 'pendente', label: 'Pendentes', color: CORES.aviso },
-  { key: 'convertida', label: 'Convertidas', color: CORES.sucesso },
-  { key: 'reprovada', label: 'Reprovadas', color: CORES.perigo },
+  { key: 'pendente', label: 'Pendentes', color: CORES.aviso, variant: 'warning' },
+  { key: 'convertida', label: 'Convertidas', color: CORES.sucesso, variant: 'success' },
+  { key: 'reprovada', label: 'Reprovadas', color: CORES.perigo, variant: 'error' },
 ] as const;
 
 function parseDateLocal(value: string): Date {
@@ -160,93 +165,6 @@ function chartClickName(params: unknown): string | null {
   return typeof item.name === 'string' ? item.name : null;
 }
 
-function mergePlainObject(base: unknown, override: unknown) {
-  return { ...((base ?? {}) as object), ...((override ?? {}) as object) };
-}
-
-function mergeAxis(baseAxis: unknown, optionAxis: unknown) {
-  const mergeSingleAxis = (axis: unknown) => ({
-    ...((baseAxis ?? {}) as object),
-    ...((axis ?? {}) as object),
-    axisLabel: mergePlainObject((baseAxis as { axisLabel?: unknown })?.axisLabel, (axis as { axisLabel?: unknown })?.axisLabel),
-    axisLine: mergePlainObject((baseAxis as { axisLine?: unknown })?.axisLine, (axis as { axisLine?: unknown })?.axisLine),
-    axisTick: mergePlainObject((baseAxis as { axisTick?: unknown })?.axisTick, (axis as { axisTick?: unknown })?.axisTick),
-    splitLine: mergePlainObject((baseAxis as { splitLine?: unknown })?.splitLine, (axis as { splitLine?: unknown })?.splitLine),
-    nameTextStyle: mergePlainObject((baseAxis as { nameTextStyle?: unknown })?.nameTextStyle, (axis as { nameTextStyle?: unknown })?.nameTextStyle),
-  });
-
-  if (Array.isArray(optionAxis)) {
-    return optionAxis.map(mergeSingleAxis);
-  }
-
-  return mergeSingleAxis(optionAxis);
-}
-
-function ThemedEChart({
-  option,
-  altura = '100%',
-}: {
-  option: EChartsOption;
-  altura?: number | string;
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [measuredHeight, setMeasuredHeight] = useState(0);
-  const { baseOption } = useEchartsTheme();
-  const mergedOption: EChartsOption = {
-    ...baseOption,
-    ...option,
-    tooltip: { ...baseOption.tooltip, ...(option.tooltip as object) },
-    legend: { ...baseOption.legend, ...(option.legend as object) },
-    grid: { ...baseOption.grid, ...(option.grid as object) },
-    xAxis: mergeAxis(baseOption.xAxis, option.xAxis),
-    yAxis: mergeAxis(baseOption.yAxis, option.yAxis),
-  };
-  const chartHeight = typeof altura === 'number' ? altura : Math.max(1, measuredHeight);
-
-  useEffect(() => {
-    if (typeof altura === 'number') return undefined;
-
-    const element = containerRef.current;
-    if (!element) return undefined;
-
-    let frameId = 0;
-
-    const measure = () => {
-      frameId = 0;
-      const nextHeight = Math.floor(element.getBoundingClientRect().height);
-      setMeasuredHeight((current) => (current === nextHeight ? current : nextHeight));
-    };
-
-    const scheduleMeasure = () => {
-      if (frameId) window.cancelAnimationFrame(frameId);
-      frameId = window.requestAnimationFrame(measure);
-    };
-
-    scheduleMeasure();
-    const resizeObserver = new ResizeObserver(scheduleMeasure);
-    resizeObserver.observe(element);
-    window.addEventListener('resize', scheduleMeasure);
-
-    return () => {
-      if (frameId) window.cancelAnimationFrame(frameId);
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', scheduleMeasure);
-    };
-  }, [altura]);
-
-  return (
-    <div ref={containerRef} className="h-full max-h-full min-h-0 overflow-hidden">
-      <ReactECharts
-        option={mergedOption}
-        className="h-full max-h-full min-h-0 overflow-hidden"
-        style={{ height: chartHeight, maxHeight: '100%', width: '100%', overflow: 'hidden' }}
-        opts={{ renderer: 'canvas' }}
-        notMerge
-      />
-    </div>
-  );
-}
-
 function PeriodControls({
   level,
   levels = PERIOD_LEVELS,
@@ -262,7 +180,7 @@ function PeriodControls({
 
   return (
     <div className="flex flex-wrap items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-      <button
+      <DashboardButton
         type="button"
         title="Drill up"
         aria-label="Drill up"
@@ -272,8 +190,8 @@ function PeriodControls({
         style={{ borderColor: 'var(--color-border)' }}
       >
         <ChevronUp size={14} />
-      </button>
-      <button
+      </DashboardButton>
+      <DashboardButton
         type="button"
         title="Drill down"
         aria-label="Drill down"
@@ -283,10 +201,10 @@ function PeriodControls({
         style={{ borderColor: 'var(--color-border)' }}
       >
         <ChevronDown size={14} />
-      </button>
+      </DashboardButton>
       <span className="mx-1 hidden sm:inline">{levels.map((item) => item[0].toUpperCase() + item.slice(1)).join(' > ')}</span>
       {levels.map((item) => (
-        <button
+        <DashboardButton
           key={item}
           type="button"
           onClick={() => onChange(item as never)}
@@ -297,7 +215,7 @@ function PeriodControls({
           }}
         >
           {item}
-        </button>
+        </DashboardButton>
       ))}
     </div>
   );
@@ -313,7 +231,7 @@ function MetricToggle({
   return (
     <div className="flex rounded-lg border p-0.5" style={{ borderColor: 'var(--color-border)' }}>
       {(['quantidade', 'valor'] as FunnelMetric[]).map((item) => (
-        <button
+        <DashboardButton
           key={item}
           type="button"
           onClick={() => onChange(item)}
@@ -324,7 +242,7 @@ function MetricToggle({
           }}
         >
           {item === 'quantidade' ? 'Quantidade' : 'Valor'}
-        </button>
+        </DashboardButton>
       ))}
     </div>
   );
@@ -348,7 +266,7 @@ function SegmentedControl<T extends string>({
       {options.map((item) => {
         const active = item.value === value;
         return (
-          <button
+          <DashboardButton
             key={item.value}
             type="button"
             title={item.title ?? item.label}
@@ -360,7 +278,7 @@ function SegmentedControl<T extends string>({
             }}
           >
             {item.label}
-          </button>
+          </DashboardButton>
         );
       })}
     </div>
@@ -370,54 +288,20 @@ function SegmentedControl<T extends string>({
 function CotacoesViewTabs({
   activeView,
   onChange,
+  panelId,
 }: {
   activeView: CotacoesViewTab;
+  panelId: string;
   onChange: (view: CotacoesViewTab) => void;
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Visões de cotações"
-      className="grid w-full max-w-full min-w-0 grid-cols-4 gap-1.5 md:w-fit"
-      onKeyDown={event => {
-        const current = COTACOES_VIEW_TABS.findIndex(item => item.value === activeView);
-        const next = event.key === 'ArrowRight' ? (current + 1) % 4
-          : event.key === 'ArrowLeft' ? (current + 3) % 4
-          : event.key === 'Home' ? 0 : event.key === 'End' ? 3 : -1;
-        if (next < 0) return;
-        event.preventDefault();
-        onChange(COTACOES_VIEW_TABS[next].value);
-        event.currentTarget.querySelectorAll<HTMLButtonElement>('button')[next]?.focus();
-      }}
-    >
-      {COTACOES_VIEW_TABS.map((item) => {
-        const Icon = item.icon;
-        const active = item.value === activeView;
-
-        return (
-          <button
-            key={item.value}
-            type="button"
-            role="tab"
-            data-state={active ? 'active' : 'inactive'}
-            aria-selected={active}
-            aria-label={item.label}
-            tabIndex={active ? 0 : -1}
-            onClick={() => onChange(item.value)}
-            className="inline-flex h-9 min-w-0 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold shadow-sm transition-colors hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
-            style={{
-              backgroundColor: active ? 'var(--color-primary)' : 'var(--color-card)',
-              borderColor: active ? 'var(--color-primary)' : 'var(--color-border)',
-              color: active ? '#fff' : 'var(--color-text-subtle)',
-            }}
-          >
-            <Icon size={14} aria-hidden="true" />
-            <span className="truncate 2xl:hidden">{item.compactLabel}</span>
-            <span className="hidden truncate 2xl:inline">{item.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <TabList role="tablist" aria-label="Visões de cotações" value={activeView} size="sm" hasDivider
+      onChange={value => { const next = COTACOES_VIEW_TABS.find(item => item.value === value); if (next) onChange(next.value); }}>
+      {COTACOES_VIEW_TABS.map(({ value, label, icon: Icon }) => (
+        <Tab key={value} id={panelId + '-' + value} panelId={panelId}
+          value={value} label={label} icon={<Icon size={15} />} />
+      ))}
+    </TabList>
   );
 }
 
@@ -437,7 +321,7 @@ function DrillBreadcrumb<T extends string>({
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1 rounded-lg border px-1 py-0.5" style={{ borderColor: 'var(--color-border)' }}>
-      <button
+      <DashboardButton
         type="button"
         title="Drill up"
         aria-label="Drill up"
@@ -447,13 +331,13 @@ function DrillBreadcrumb<T extends string>({
         style={{ color: canGoBack ? color : 'var(--color-text-muted)' }}
       >
         <ChevronUp size={13} />
-      </button>
+      </DashboardButton>
       {levels.map((item, index) => {
         const active = item.value === level;
         return (
           <span key={item.value} className="inline-flex items-center gap-1">
             {index > 0 && <span style={{ color: 'var(--color-text-subtle)' }}>&gt;</span>}
-            <button
+            <DashboardButton
               type="button"
               onClick={() => onChange(item.value)}
               className="rounded-md px-1.5 py-1 text-[11px] font-semibold transition"
@@ -463,7 +347,7 @@ function DrillBreadcrumb<T extends string>({
               }}
             >
               {item.label}
-            </button>
+            </DashboardButton>
           </span>
         );
       })}
@@ -479,12 +363,12 @@ function ConversionPeriodoActions({
   onPeriodoChange: (periodoMeses: ConversionPeriodoMeses) => void;
 }) {
   return (
-    <label className="block">
+    <div className="block">
       <span className="sr-only">Período das taxas de conversão</span>
-      <select
+      <DashboardSelector
         aria-label="Período das taxas de conversão"
         value={periodoMeses}
-        onChange={(event) => onPeriodoChange(normalizeConversionPeriodoMeses(event.target.value))}
+        onValueChange={selectedValue => onPeriodoChange(normalizeConversionPeriodoMeses(selectedValue))}
         className="h-8 rounded-md border px-2 text-xs font-semibold outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]"
         style={{
           backgroundColor: 'var(--color-card)',
@@ -497,8 +381,8 @@ function ConversionPeriodoActions({
             {item.label}
           </option>
         ))}
-      </select>
-    </label>
+      </DashboardSelector>
+    </div>
   );
 }
 
@@ -877,8 +761,7 @@ function FunilComercialCard({
       className={KPI_CARD_HEIGHT_CLASS}
     >
       <div className="flex h-full min-h-0 flex-col justify-center gap-4 px-4">
-        {rows.map((row, index) => {
-          const width = 38 + (row.value / max) * 58;
+        {rows.map((row) => {
           const pct = percentual(row.value, total);
           return (
             <div
@@ -886,25 +769,14 @@ function FunilComercialCard({
               className="grid items-center gap-3 md:grid-cols-[1fr_190px]"
               title={`${row.label}: ${metric === 'valor' ? formatarMoeda(row.value) : formatarNumero(row.value)} (${formatarPorcentagem(pct, 1)})`}
             >
-              <div className="flex justify-center">
-                <div
-                  className="flex h-14 items-center justify-center rounded-xl px-4 text-sm font-bold text-white shadow-sm transition"
-                  style={{
-                    width: `${width}%`,
-                    backgroundColor: row.color,
-                    clipPath: index === 2 ? 'polygon(16% 0, 84% 0, 100% 100%, 0 100%)' : 'polygon(5% 0, 95% 0, 100% 100%, 0 100%)',
-                  }}
-                >
-                  {row.label}
-                </div>
-              </div>
-              <div className="rounded-lg border px-3 py-2" style={{ borderColor: 'var(--color-border)' }}>
+              <ProgressBar label={row.label} value={row.value} max={max} variant={row.variant} />
+              <Card padding={0} className="border px-3 py-2" style={{ borderColor: 'var(--color-border)' }}>
                 <div className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{row.label}</div>
                 <div className="text-lg font-bold" style={{ color: row.color }}>
                   {metric === 'valor' ? formatarMoeda(row.value) : formatarNumero(row.value)}
                 </div>
                 <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{formatarPorcentagem(pct, 1)} do funil</div>
-              </div>
+              </Card>
             </div>
           );
         })}
@@ -988,7 +860,7 @@ function TaxasConversaoCard({
             <div key={metric} className={`flex max-h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg px-2 ${isSingleMode ? 'py-2' : 'py-1.5'}`} style={{ backgroundColor: 'var(--color-bg)' }}>
               <div className="shrink-0 px-1 text-xs font-semibold leading-tight" style={{ color: 'var(--color-text)' }}>{chartTitles[metric]}</div>
               <div className="max-h-full min-h-[100px] flex-1 overflow-hidden pt-1">
-                <ThemedEChart option={conversionOptions[metric]} />
+                <AstryxDashboardChart option={conversionOptions[metric]} label={chartTitles[metric]} style={{ height: '100%', minHeight: 0 }} />
               </div>
             </div>
           ))}
@@ -1037,6 +909,7 @@ function TaxasConversaoCard({
 export default function CotacoesPage() {
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
+  const viewPanelId = useId();
   const [activeView, setActiveView] = useState<CotacoesViewTab>('analitica');
   const [serieDrillLevel, setSerieDrillLevel] = useState<PeriodDrillLevel>('dia');
   const [funilMetric, setFunilMetric] = useState<FunnelMetric>('quantidade');
@@ -1216,7 +1089,7 @@ export default function CotacoesPage() {
         activeFilters={activeFilters}
         dataInicio={dataInicio}
         dataFim={dataFim}
-        actions={<CotacoesViewTabs activeView={activeView} onChange={setActiveView} />}
+        actions={<CotacoesViewTabs activeView={activeView} onChange={setActiveView} panelId={viewPanelId} />}
         actionsOnMobileRow
       >
         <FiliaisParceirosFilter
@@ -1238,130 +1111,132 @@ export default function CotacoesPage() {
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de cotações.')} tipo={getTipoErro(overview.error)} />}
       {overview.data && <CotacoesKpiGrid overview={overview.data} />}
 
-      {activeView === 'analitica' ? (
-        <>
-          <div className="mb-6 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 2xl:grid-cols-12">
-            <div className="col-span-full min-h-0 2xl:col-span-6">
-              <ChartWrapper
-                titulo="Cotações por Dia, Mês e Ano"
-                chartKey="cotacoesSerie"
-                option={serieOption}
-                actions={<PeriodControls level={serieDrillLevel} onChange={setSerieDrillLevel as (level: never) => void} />}
-                isLoading={serie.isLoading}
-                isEmpty={(serie.data ?? []).length === 0}
-                className={KPI_CARD_HEIGHT_CLASS}
-                altura="100%"
-              />
+      <div role="tabpanel" id={viewPanelId} aria-labelledby={viewPanelId + '-' + activeView} className="min-w-0">
+        {activeView === 'analitica' ? (
+          <>
+            <div className="mb-6 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 2xl:grid-cols-12">
+              <div className="col-span-full min-h-0 2xl:col-span-6">
+                <ChartWrapper
+                  titulo="Cotações por Dia, Mês e Ano"
+                  chartKey="cotacoesSerie"
+                  option={serieOption}
+                  actions={<PeriodControls level={serieDrillLevel} onChange={setSerieDrillLevel as (level: never) => void} />}
+                  isLoading={serie.isLoading}
+                  isEmpty={(serie.data ?? []).length === 0}
+                  className={KPI_CARD_HEIGHT_CLASS}
+                  altura="100%"
+                />
+              </div>
+              <div className="min-h-0 2xl:col-span-6">
+                <FunilComercialCard
+                  funil={funil}
+                  metric={funilMetric}
+                  periodLevel={funilDrillLevel}
+                  isLoading={graficos.isLoading}
+                  onMetricChange={setFunilMetric}
+                  onPeriodChange={setFunilDrillLevel}
+                />
+              </div>
+              <div className="h-[28rem] min-h-0 2xl:col-span-5">
+                <TaxasConversaoCard
+                  buckets={conversionBuckets}
+                  tipos={graficos.data?.conversaoPorTipoOperacao ?? []}
+                  level={conversionLevel}
+                  viewMode={conversionViewMode}
+                  periodoMeses={conversionPeriodoMeses}
+                  isLoading={conversionSerie.isPending || graficos.isPending}
+                  erro={conversionSerie.isError ? getApiErrorMessage(conversionSerie.error, 'Erro ao carregar evolução das taxas de conversão.') : null}
+                  onLevelChange={setConversionLevel}
+                  onViewModeChange={setConversionViewMode}
+                  onPeriodoChange={setConversionPeriodoMeses}
+                />
+              </div>
+              <div className="min-h-0 2xl:col-span-4">
+                <ChartWrapper
+                  titulo="Trechos Mais Valiosos"
+                  chartKey="cotacoesTrechos"
+                  option={trechosOption}
+                  actions={(
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <SegmentedControl
+                        value={trechoMetric}
+                        options={TRECHO_METRIC_OPTIONS}
+                        onChange={setTrechoMetric}
+                        color={CORES.secundaria}
+                        ariaLabel="Métrica dos trechos mais valiosos"
+                      />
+                      <DrillBreadcrumb levels={TRECHO_LEVELS} level={trechoDrillLevel} color={CORES.secundaria} onChange={setTrechoDrillLevel} />
+                    </div>
+                  )}
+                  onEvents={{
+                    click: (params) => {
+                      setSelectedTrecho(chartClickName(params));
+                      if (trechoDrillLevel === 'trecho') setTrechoDrillLevel('origem');
+                      else if (trechoDrillLevel === 'origem') setTrechoDrillLevel('destino');
+                    },
+                  }}
+                  isLoading={graficos.isLoading}
+                  isEmpty={trechosEntries.length === 0}
+                  className={KPI_CARD_HEIGHT_CLASS}
+                  altura="100%"
+                />
+              </div>
+              <div className="min-h-0 2xl:col-span-3">
+                <ChartWrapper
+                  titulo="Motivos de Perda"
+                  chartKey="cotacoesMotivosPerda"
+                  option={motivosOption}
+                  actions={<DrillBreadcrumb levels={PERDA_LEVELS} level={perdaDrillLevel} color={CORES.aviso} onChange={setPerdaDrillLevel} />}
+                  onEvents={{
+                    click: (params) => {
+                      setSelectedPerda(chartClickName(params));
+                      if (perdaDrillLevel === 'motivo') setPerdaDrillLevel('cliente');
+                      else if (perdaDrillLevel === 'cliente') setPerdaDrillLevel('trecho');
+                    },
+                  }}
+                  isLoading={graficos.isLoading}
+                  isEmpty={perdasEntries.length === 0}
+                  emptyMessage="Sem perdas/reprovações no período selecionado."
+                  className={KPI_CARD_HEIGHT_CLASS}
+                  altura="100%"
+                />
+              </div>
             </div>
-            <div className="min-h-0 2xl:col-span-6">
-              <FunilComercialCard
-                funil={funil}
-                metric={funilMetric}
-                periodLevel={funilDrillLevel}
-                isLoading={graficos.isLoading}
-                onMetricChange={setFunilMetric}
-                onPeriodChange={setFunilDrillLevel}
-              />
-            </div>
-            <div className="h-[28rem] min-h-0 2xl:col-span-5">
-              <TaxasConversaoCard
-                buckets={conversionBuckets}
-                tipos={graficos.data?.conversaoPorTipoOperacao ?? []}
-                level={conversionLevel}
-                viewMode={conversionViewMode}
-                periodoMeses={conversionPeriodoMeses}
-                isLoading={conversionSerie.isPending || graficos.isPending}
-                erro={conversionSerie.isError ? getApiErrorMessage(conversionSerie.error, 'Erro ao carregar evolução das taxas de conversão.') : null}
-                onLevelChange={setConversionLevel}
-                onViewModeChange={setConversionViewMode}
-                onPeriodoChange={setConversionPeriodoMeses}
-              />
-            </div>
-            <div className="min-h-0 2xl:col-span-4">
-              <ChartWrapper
-                titulo="Trechos Mais Valiosos"
-                chartKey="cotacoesTrechos"
-                option={trechosOption}
-                actions={(
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <SegmentedControl
-                      value={trechoMetric}
-                      options={TRECHO_METRIC_OPTIONS}
-                      onChange={setTrechoMetric}
-                      color={CORES.secundaria}
-                      ariaLabel="Métrica dos trechos mais valiosos"
-                    />
-                    <DrillBreadcrumb levels={TRECHO_LEVELS} level={trechoDrillLevel} color={CORES.secundaria} onChange={setTrechoDrillLevel} />
-                  </div>
-                )}
-                onEvents={{
-                  click: (params) => {
-                    setSelectedTrecho(chartClickName(params));
-                    if (trechoDrillLevel === 'trecho') setTrechoDrillLevel('origem');
-                    else if (trechoDrillLevel === 'origem') setTrechoDrillLevel('destino');
-                  },
-                }}
-                isLoading={graficos.isLoading}
-                isEmpty={trechosEntries.length === 0}
-                className={KPI_CARD_HEIGHT_CLASS}
-                altura="100%"
-              />
-            </div>
-            <div className="min-h-0 2xl:col-span-3">
-              <ChartWrapper
-                titulo="Motivos de Perda"
-                chartKey="cotacoesMotivosPerda"
-                option={motivosOption}
-                actions={<DrillBreadcrumb levels={PERDA_LEVELS} level={perdaDrillLevel} color={CORES.aviso} onChange={setPerdaDrillLevel} />}
-                onEvents={{
-                  click: (params) => {
-                    setSelectedPerda(chartClickName(params));
-                    if (perdaDrillLevel === 'motivo') setPerdaDrillLevel('cliente');
-                    else if (perdaDrillLevel === 'cliente') setPerdaDrillLevel('trecho');
-                  },
-                }}
-                isLoading={graficos.isLoading}
-                isEmpty={perdasEntries.length === 0}
-                emptyMessage="Sem perdas/reprovações no período selecionado."
-                className={KPI_CARD_HEIGHT_CLASS}
-                altura="100%"
-              />
-            </div>
-          </div>
 
-          <AnalyticalDataTable
-            titulo="Cotações Analíticas"
-            acoesCabecalho={<ExportButton nomeArquivo="cotacoes" onExport={() => exportarCotacoesCsv(filtro, filtrosTabela.apiFilters)} />}
-            dados={tabela.data?.conteudo ?? []}
-            colunas={colunas}
-            chaveLinha="numeroCotacao"
-            filtros={filtrosTabela.filters}
-            hiddenActiveCount={filtrosTabela.hiddenActiveCount}
-            hasAnyFilter={filtrosTabela.hasAnyFilter}
-            onTextFilterChange={filtrosTabela.setTextFilter}
-            onMultiFilterChange={filtrosTabela.setMultiFilter}
-            onColumnFilterChange={filtrosTabela.setColumnFilter}
-            onClearFilters={filtrosTabela.clearTableFilters}
-            statusOptions={statusTabelaOptions}
-            statusOptionsLoading={graficos.isLoading}
-            isLoading={tabela.isLoading}
-            error={tabela.error}
-            errorFallbackMessage="Erro ao carregar cotações analíticas."
-            totalRegistros={tabela.data?.totalElementos}
-            paginaAtual={paginacaoTabela.pagina}
-            tamanhoPagina={paginacaoTabela.tamanhoPagina}
-            onPaginaChange={paginacaoTabela.setPagina}
-            onTamanhoPaginaChange={paginacaoTabela.setTamanhoPagina}
+            <AnalyticalDataTable
+              titulo="Cotações Analíticas"
+              acoesCabecalho={<ExportButton nomeArquivo="cotacoes" onExport={() => exportarCotacoesCsv(filtro, filtrosTabela.apiFilters)} />}
+              dados={tabela.data?.conteudo ?? []}
+              colunas={colunas}
+              chaveLinha="numeroCotacao"
+              filtros={filtrosTabela.filters}
+              hiddenActiveCount={filtrosTabela.hiddenActiveCount}
+              hasAnyFilter={filtrosTabela.hasAnyFilter}
+              onTextFilterChange={filtrosTabela.setTextFilter}
+              onMultiFilterChange={filtrosTabela.setMultiFilter}
+              onColumnFilterChange={filtrosTabela.setColumnFilter}
+              onClearFilters={filtrosTabela.clearTableFilters}
+              statusOptions={statusTabelaOptions}
+              statusOptionsLoading={graficos.isLoading}
+              isLoading={tabela.isLoading}
+              error={tabela.error}
+              errorFallbackMessage="Erro ao carregar cotações analíticas."
+              totalRegistros={tabela.data?.totalElementos}
+              paginaAtual={paginacaoTabela.pagina}
+              tamanhoPagina={paginacaoTabela.tamanhoPagina}
+              onPaginaChange={paginacaoTabela.setPagina}
+              onTamanhoPaginaChange={paginacaoTabela.setTamanhoPagina}
+            />
+          </>
+        ) : (
+          <CotacoesResumoVisualTable
+            view={activeView}
+            rows={resumoVisual.data ?? []}
+            isLoading={resumoVisual.isLoading || resumoVisual.isFetching}
+            errorMessage={resumoVisualErrorMessage}
           />
-        </>
-      ) : (
-        <CotacoesResumoVisualTable
-          view={activeView}
-          rows={resumoVisual.data ?? []}
-          isLoading={resumoVisual.isLoading || resumoVisual.isFetching}
-          errorMessage={resumoVisualErrorMessage}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 }

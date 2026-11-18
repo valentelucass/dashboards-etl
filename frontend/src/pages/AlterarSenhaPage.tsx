@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { Button } from '@astryxdesign/core/Button';
+import { Banner } from '@astryxdesign/core/Banner';
+import DashboardAuthLayout from '../components/layout/DashboardAuthLayout';
+import { FormPasswordField } from '../components/shared/FormTextField';
 import { useNavigate } from 'react-router-dom';
 import { useAutenticacao } from '../contexts/AutenticacaoContext';
 import { firstAccessibleRoute } from '../utils/accessControl';
@@ -13,6 +17,7 @@ export default function AlterarSenhaPage() {
   const [senhaAtual, setSenhaAtual] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmacaoSenha, setConfirmacaoSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
@@ -53,72 +58,20 @@ export default function AlterarSenhaPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
-      <form onSubmit={handleSubmit} className="flex w-full max-w-md flex-col gap-4 rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold text-[#21478A]">Alterar senha</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {usuario?.exigeTrocaSenha
-              ? 'Você precisa definir uma nova senha antes de continuar.'
-              : 'Atualize sua senha para continuar usando a plataforma.'}
-          </p>
-        </div>
-
-        {erro && <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{erro}</p>}
-
-        <label className="space-y-1">
-          <span className="text-sm font-medium text-gray-700">Senha atual</span>
-          <input
-            type="password"
-            value={senhaAtual}
-            onChange={(event) => setSenhaAtual(event.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-2.5"
-            required
-          />
-        </label>
-
-        <label className="space-y-1">
-          <span className="text-sm font-medium text-gray-700">Nova senha</span>
-          <input
-            type="password"
-            value={novaSenha}
-            onChange={(event) => setNovaSenha(event.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-2.5"
-            minLength={12}
-            required
-          />
-          <span className="block text-xs text-gray-500">{PASSWORD_POLICY_HINT}</span>
-        </label>
-
-        <label className="space-y-1">
-          <span className="text-sm font-medium text-gray-700">Confirmar nova senha</span>
-          <input
-            type="password"
-            value={confirmacaoSenha}
-            onChange={(event) => setConfirmacaoSenha(event.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-2.5"
-            minLength={12}
-            required
-          />
-        </label>
-
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="submit"
-            disabled={carregando}
-            className="rounded-xl bg-[#21478A] px-4 py-2.5 font-medium text-white disabled:opacity-50"
-          >
-            {carregando ? 'Salvando...' : 'Salvar nova senha'}
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="rounded-xl border border-gray-300 px-4 py-2.5 font-medium text-gray-700"
-          >
-            Sair
-          </button>
-        </div>
+    <DashboardAuthLayout title="Alterar senha" description={usuario?.exigeTrocaSenha
+      ? 'Defina uma nova senha antes de continuar.' : 'Atualize a senha da sua conta.'}>
+      <form onSubmit={handleSubmit} className="dashboard-auth-form">
+        {erro && <Banner status="error" title={erro} role="alert" />}
+        <FormPasswordField label="Senha atual" htmlName="current-password" autoComplete="current-password"
+          value={senhaAtual} onChange={setSenhaAtual} visible={mostrarSenha}
+          onToggle={() => setMostrarSenha(value => !value)} required />
+        <FormPasswordField label="Nova senha" htmlName="new-password" autoComplete="new-password"
+          value={novaSenha} onChange={setNovaSenha} visible={mostrarSenha} hint={PASSWORD_POLICY_HINT} minLength={12} required />
+        <FormPasswordField label="Confirmar nova senha" htmlName="confirm-new-password" autoComplete="new-password"
+          value={confirmacaoSenha} onChange={setConfirmacaoSenha} visible={mostrarSenha} minLength={12} required />
+        <Button type="submit" label="Salvar nova senha" variant="primary" width="100%" className="dashboard-form-submit" isLoading={carregando} />
+        <Button label="Sair" variant="ghost" className="dashboard-form-secondary" onClick={handleLogout} />
       </form>
-    </div>
+    </DashboardAuthLayout>
   );
 }

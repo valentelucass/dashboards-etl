@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CommunicationsBell from './CommunicationsBell';
@@ -63,7 +63,7 @@ describe('Comunicações na navegação', () => {
     mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Comunicações: 1 não lida' }));
     fireEvent.click(await screen.findByRole('button', { name: /Atualização do portal/ }));
-    expect((await screen.findByRole('alert')).textContent).toContain('Não foi possível registrar');
+    expect((await within(await screen.findByRole('dialog', { name: 'Comunicados' })).findByRole('alert')).textContent).toContain('Não foi possível registrar');
     expect(screen.getByRole('button', { name: 'Comunicações: 1 não lida' })).toBeTruthy();
   });
 
@@ -71,7 +71,7 @@ describe('Comunicações na navegação', () => {
     vi.mocked(buscarHomeComunicados).mockRejectedValue(new Error('offline'));
     mount();
     fireEvent.click(screen.getByRole('button', { name: 'Comunicações' }));
-    expect((await screen.findByRole('alert')).textContent).toContain('Não foi possível atualizar');
+    expect((await within(await screen.findByRole('dialog', { name: 'Comunicados' })).findByRole('alert')).textContent).toContain('Não foi possível atualizar');
     expect(screen.queryByText('Atualização do portal')).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.manifestos.ManifestosCustosEvolucaoDTO.CustoDiarioDTO;
 import com.dashboard.api.dto.manifestos.ManifestosPerformanceDTO;
@@ -44,7 +45,7 @@ public class ManifestosPerformanceSqlRepository implements ManifestosCostDataRep
     private volatile ManifestosViewColumns manifestosViewColumns;
 
     public ManifestosPerformanceSqlRepository(
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             ValidadorPeriodoService validadorPeriodo,
             EscopoFilialService escopoFilialService,
             PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper

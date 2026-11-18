@@ -1,3 +1,6 @@
+import { Link } from '@astryxdesign/core/Link';
+import DashboardRouteLoading from './DashboardRouteLoading';
+import DashboardSideNav from './DashboardSideNav';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { CalendarClock } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
@@ -107,48 +110,41 @@ function BuildInfoFooter() {
 export default function LayoutPainel() {
   usePresencaNavegacao();
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
-      <TopNav />
-      <main className="flex-1 w-full overflow-auto px-3 py-3 sm:px-5 sm:py-4">
-        <Suspense fallback={<div role="status" className="flex min-h-80 items-center justify-center text-sm" style={{ color: 'var(--color-text-muted)' }}>Carregando página…</div>}>
-          <Outlet />
-        </Suspense>
-      </main>
-      <footer className="mt-auto border-t px-4 py-4 sm:px-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
-        <div className="flex w-full flex-wrap items-center justify-between gap-x-8 gap-y-4">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3">
-          <div className="min-w-0 space-y-1">
-            <p className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
-              Rodogarcia <span aria-hidden="true" className="mx-1 opacity-40">·</span> Dashboards
-            </p>
-            <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-              © {new Date().getFullYear()} Rodogarcia. Todos os direitos reservados.
-            </p>
+    <div className="dashboard-shell dashboard-shell-with-sidebar flex min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <DashboardSideNav />
+      <div className="dashboard-main-column flex min-w-0 flex-1 flex-col">
+        <TopNav />
+        <main className="flex-1 w-full overflow-auto px-3 py-3 sm:px-5 sm:py-4">
+          <Suspense fallback={<DashboardRouteLoading />}>
+            <Outlet />
+          </Suspense>
+        </main>
+        <footer className="mt-auto border-t px-4 py-4 sm:px-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
+          <div className="flex w-full flex-wrap items-center justify-between gap-x-8 gap-y-4">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3">
+            <div className="min-w-0 space-y-1">
+              <p className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+                Rodogarcia <span aria-hidden="true" className="mx-1 opacity-40">·</span> Dashboards
+              </p>
+              <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
+                © {new Date().getFullYear()} Rodogarcia. Todos os direitos reservados.
+              </p>
+            </div>
+            <BuildInfoFooter />
+            </div>
+            <div className="flex flex-col gap-1 text-left sm:items-end sm:text-right">
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                Desenvolvido por{' '}
+                <Link href="https://www.linkedin.com/in/dev-lucasandrade/" target="_blank" rel="noopener noreferrer">Lucas Andrade</Link>
+              </p>
+              <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
+                Suporte:{' '}
+                <Link href="mailto:lucasmac.dev@gmail.com">lucasmac.dev@gmail.com</Link>
+              </p>
+            </div>
           </div>
-          <BuildInfoFooter />
-          </div>
-          <div className="flex flex-col gap-1 text-left sm:items-end sm:text-right">
-            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-              Desenvolvido por{' '}
-              <a
-                href="https://www.linkedin.com/in/dev-lucasandrade/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium transition-opacity hover:opacity-70"
-                style={{ color: 'var(--color-primary)' }}
-              >
-                Lucas Andrade
-              </a>
-            </p>
-            <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-              Suporte:{' '}
-              <a href="mailto:lucasmac.dev@gmail.com" className="transition-opacity hover:opacity-70 focus-visible:underline">
-                lucasmac.dev@gmail.com
-              </a>
-            </p>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }

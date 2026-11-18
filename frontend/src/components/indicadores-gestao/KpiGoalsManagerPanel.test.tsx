@@ -17,7 +17,12 @@ function props(overrides: Partial<Props> = {}): Props {
   };
 }
 const branchForm = () => screen.getByRole('form', { name: 'Meta Específica por Filial' });
-const branchInput = () => within(branchForm()).getByRole('spinbutton', { name: 'Utilização dos Coletores' }) as HTMLInputElement;
+const branchInput = () => within(branchForm()).getByRole('spinbutton', { name: 'Utilização dos Coletores (%)' }) as HTMLInputElement;
+function editNumber(input: HTMLElement, value: string) {
+  fireEvent.focus(input);
+  fireEvent.change(input, { target: { value } });
+  fireEvent.blur(input);
+}
 afterEach(cleanup);
 
 describe('Gerenciamento de metas', () => {
@@ -26,14 +31,14 @@ describe('Gerenciamento de metas', () => {
     expect(branchInput().value).toBe('80');
     expect(within(branchForm()).getAllByText('Valor herdado: 80%')).toHaveLength(2);
     expect(within(branchForm()).getByText('Valor herdado: 0,2%')).toBeTruthy();
-    fireEvent.change(branchInput(), { target: { value: '81' } });
+    editNumber(branchInput(), '81');
     expect(within(branchForm()).getByText('Meta global: 80%')).toBeTruthy();
   });
 
   it('descarta o rascunho da filial anterior mesmo quando ambas herdam o mesmo objeto global', () => {
     const input = props();
     const view = render(<KpiGoalsManagerPanel {...input} />);
-    fireEvent.change(branchInput(), { target: { value: '81' } });
+    editNumber(branchInput(), '81');
     view.rerender(<KpiGoalsManagerPanel {...input} branchId="SPO" />);
     expect(branchInput().value).toBe('80');
     fireEvent.submit(branchForm());
@@ -43,18 +48,19 @@ describe('Gerenciamento de metas', () => {
   it('não transporta rascunhos de uma competência para outra', () => {
     const input = props();
     const view = render(<KpiGoalsManagerPanel {...input} />);
-    fireEvent.change(branchInput(), { target: { value: '81' } });
+    editNumber(branchInput(), '81');
     const globalForm = screen.getByRole('form', { name: 'Meta Global' });
-    fireEvent.change(within(globalForm).getByRole('spinbutton', { name: 'Performance de Entrega' }), { target: { value: '97' } });
+    editNumber(within(globalForm).getByRole('spinbutton', { name: 'Performance de Entrega (%)' }), '97');
     view.rerender(<KpiGoalsManagerPanel {...input} competencia="2026-10-01" data={{ ...input.data!, competencia: '2026-10-01' }} />);
     expect(branchInput().value).toBe('80');
-    expect((within(globalForm).getByRole('spinbutton', { name: 'Performance de Entrega' }) as HTMLInputElement).value).toBe('95');
+    expect((within(globalForm).getByRole('spinbutton', { name: 'Performance de Entrega (%)' }) as HTMLInputElement).value).toBe('95');
   });
 
   it('bloqueia escritas quando não foi possível carregar as metas, inclusive submissão programática', () => {
     const input = props({ data: undefined, error: new Error('indisponível') });
     render(<KpiGoalsManagerPanel {...input} />);
-    expect(branchInput().disabled).toBe(true);
+    expect(branchInput().getAttribute('aria-disabled')).toBe('true');
+    expect(branchInput().readOnly).toBe(true);
     fireEvent.submit(branchForm());
     fireEvent.submit(screen.getByRole('form', { name: 'Meta Global' }));
     expect(input.onSaveBranch).not.toHaveBeenCalled();
@@ -79,10 +85,11 @@ describe('Gerenciamento de metas', () => {
     const input = props();
     render(<KpiGoalsManagerPanel {...input} />);
     const globalForm = screen.getByRole('form', { name: 'Meta Global' });
-    fireEvent.change(within(globalForm).getByRole('spinbutton', { name: 'Indenização de Mercadorias' }), { target: { value: '0.15' } });
+    editNumber(within(globalForm).getByRole('spinbutton', { name: 'Indenização de Mercadorias (%)' }), '0.15');
     fireEvent.submit(globalForm);
     expect(input.onApplyGlobal).toHaveBeenCalledWith({ ...globalGoals, cargo_indemnity: 0.15 });
-    fireEvent.change(screen.getByLabelText('Competência das metas'), { target: { value: '2026-10' } });
+    fireEvent.click(screen.getByRole('combobox', { name: 'Mês' }));
+    fireEvent.click(screen.getByRole('option', { name: 'outubro' }));
     expect(input.onCompetenciaChange).toHaveBeenCalledWith('2026-10-01');
   });
 });

@@ -1,3 +1,6 @@
+import { AlertDialog } from '@astryxdesign/core/AlertDialog';
+import { Card } from '@astryxdesign/core/Card';
+import DashboardButton from "../shared/DashboardButton";
 import { useMemo, useState } from 'react';
 import { AlertCircle, ChevronDown, ChevronUp, RefreshCw, Trash2, UploadCloud } from 'lucide-react';
 import DataTable, { type ColunaTabela } from '../shared/DataTable';
@@ -47,6 +50,7 @@ function compararDataAtualizacao(left: ClienteExcecaoCubagem, right: ClienteExce
 export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemClientesExcecaoPanelProps) {
   const clientes = useClientesExcecaoCubagem();
   const exclusao = useExcluirClienteExcecaoCubagem();
+  const [clienteParaRemover, setClienteParaRemover] = useState<ClienteExcecaoCubagemRow | null>(null);
   const [cnpjExcluindo, setCnpjExcluindo] = useState<string | null>(null);
   const [erroExclusao, setErroExclusao] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -75,11 +79,6 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
   }, [rows]);
 
   async function handleExcluir(row: ClienteExcecaoCubagemRow) {
-    const confirmacao = window.confirm(`Remover ${row.clienteCnpjLabel} da whitelist de cubagem?`);
-    if (!confirmacao) {
-      return;
-    }
-
     setErroExclusao('');
     setCnpjExcluindo(row.clienteCnpj);
     try {
@@ -104,9 +103,9 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
       formato: (_valor, row) => {
         const isDeleting = exclusao.isPending && cnpjExcluindo === row.clienteCnpj;
         return (
-          <button
+          <DashboardButton
             type="button"
-            onClick={() => void handleExcluir(row)}
+            onClick={() => setClienteParaRemover(row)}
             disabled={exclusao.isPending}
             className={`inline-flex items-center justify-center rounded-lg border p-2 transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
             style={{ borderColor: '#dc2626', color: '#dc2626', backgroundColor: 'var(--color-card)' }}
@@ -118,14 +117,14 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
             ) : (
               <Trash2 size={15} aria-hidden="true" />
             )}
-          </button>
+          </DashboardButton>
         );
       },
     },
   ];
 
   return (
-    <section
+    <Card padding={0}
       className="mb-5 rounded-[20px] border p-4"
       style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
       aria-label="Clientes sem cubagem cadastrados"
@@ -141,7 +140,7 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
+          <DashboardButton
             type="button"
             onClick={() => void clientes.refetch()}
             disabled={clientes.isFetching}
@@ -150,8 +149,8 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
           >
             <RefreshCw size={14} aria-hidden="true" className={clientes.isFetching ? 'animate-spin' : ''} />
             Atualizar
-          </button>
-          <button
+          </DashboardButton>
+          <DashboardButton
             type="button"
             onClick={onImportClick}
             className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 ${FOCUS_RING_CLASS}`}
@@ -159,8 +158,8 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
           >
             <UploadCloud size={14} aria-hidden="true" />
             Importar clientes sem cubagem
-          </button>
-          <button
+          </DashboardButton>
+          <DashboardButton
             type="button"
             onClick={() => setIsExpanded((current) => !current)}
             className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-opacity hover:opacity-80 ${FOCUS_RING_CLASS}`}
@@ -169,7 +168,7 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
           >
             {isExpanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
             {isExpanded ? 'Minimizar' : 'Mostrar tabela'}
-          </button>
+          </DashboardButton>
         </div>
       </div>
 
@@ -224,6 +223,12 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
           tamanhoPaginaInicial={10}
         />
       ) : null}
-    </section>
+      {clienteParaRemover && (
+        <AlertDialog isOpen title="Remover cliente da whitelist?"
+          description={'O CNPJ ' + clienteParaRemover.clienteCnpjLabel + ' deixará de constar nas exceções de cubagem.'}
+          actionLabel="Remover" onOpenChange={open => { if (!open) setClienteParaRemover(null); }}
+          onAction={() => { setClienteParaRemover(null); void handleExcluir(clienteParaRemover); }} />
+      )}
+    </Card>
   );
 }

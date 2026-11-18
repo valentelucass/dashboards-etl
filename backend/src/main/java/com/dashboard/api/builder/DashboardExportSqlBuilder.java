@@ -67,6 +67,38 @@ public class DashboardExportSqlBuilder {
         return new ExportSql(Objects.requireNonNull(sql, "sql"), parts.params());
     }
 
+    public ExportSql buildPage(
+            DashboardExportDefinition definition,
+            FiltroConsultaDTO filtro,
+            EscopoFilialService.EscopoFilial escopo,
+            List<String> orderBy
+    ) {
+        String pagina = " OFFSET :offsetTabela ROWS FETCH NEXT :tamanhoTabela ROWS ONLY";
+        if (definition != DashboardExportDefinition.COLETAS) {
+            ExportSql select = buildSelect(definition, filtro, escopo, Set.of(), orderBy);
+            return new ExportSql(select.sql() + pagina, select.params());
+        }
+
+        ExportSql fonte = buildFilteredSource(definition, filtro, escopo, Set.of());
+        String versao = String.join(", ", definition.dedupConfig().orderBy()) + ", [Coleta] DESC";
+        String ordemPagina = String.join(", ", orderBy) + ", [ID]";
+        String sql = """
+                WITH versoes AS (
+                    SELECT [ID], [Coleta], [Solicitacao], [Agendamento], [Finalizacao],
+                           [Dias em Aberto], [Status], [Volumes], [Peso Taxado], [Valor NF],
+                           [Numero Manifesto], [Cliente], [Cidade], [UF], [Região da Coleta],
+                           [Região Logística], [Filial], [Usuario], [Motivo Cancel.], [Nº Tentativas],
+                           ROW_NUMBER() OVER (PARTITION BY [ID] ORDER BY %s) AS [__rn]
+                    %s
+                )
+                SELECT * FROM versoes
+                WHERE [__rn] = 1 ORDER BY %s
+                OFFSET :offsetTabela ROWS FETCH NEXT :tamanhoTabela ROWS ONLY
+                OPTION (MAXDOP 1, MAX_GRANT_PERCENT = 0.15)
+                """.formatted(versao, fonte.sql(), ordemPagina);
+        return new ExportSql(sql, fonte.params());
+    }
+
     public ExportSql buildCount(
             DashboardExportDefinition definition,
             FiltroConsultaDTO filtro,

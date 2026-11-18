@@ -17,19 +17,18 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.async.CallableProcessingInterceptor;
 import org.springframework.web.context.request.async.WebAsyncUtils;
 
-/** Limita trabalho analítico por instância, antes de adquirir conexões do pool compartilhado. */
+/** Limita trabalho analítico por instância, antes de adquirir conexões do pool analítico. */
 public final class LimiteConsultasAnaliticasInterceptor implements HandlerInterceptor {
 
     private static final String PERMISSAO = LimiteConsultasAnaliticasInterceptor.class.getName();
-    private static final int CONEXOES_RESERVADAS = 2;
     private final Semaphore vagas;
     private final ObjectMapper objectMapper;
 
     public LimiteConsultasAnaliticasInterceptor(int maxConcorrentes, int tamanhoPool, ObjectMapper objectMapper) {
-        if (maxConcorrentes < 1 || tamanhoPool <= CONEXOES_RESERVADAS) {
-            throw new IllegalArgumentException("Consultas analíticas exigem limite positivo e pool com pelo menos 3 conexões.");
+        if (maxConcorrentes < 1 || tamanhoPool < 1) {
+            throw new IllegalArgumentException("Consultas analíticas exigem limite e tamanho de pool positivos.");
         }
-        this.vagas = new Semaphore(Math.min(maxConcorrentes, tamanhoPool - CONEXOES_RESERVADAS));
+        this.vagas = new Semaphore(Math.min(maxConcorrentes, tamanhoPool));
         this.objectMapper = objectMapper;
     }
 

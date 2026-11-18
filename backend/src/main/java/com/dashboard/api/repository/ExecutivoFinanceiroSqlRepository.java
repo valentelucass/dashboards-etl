@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.executivo.ExecutivoResumoFinanceiroDTO;
 import com.dashboard.api.service.acesso.EscopoFilialService;
@@ -22,7 +23,7 @@ public class ExecutivoFinanceiroSqlRepository {
     private volatile FretesFactColumns fretesFactColumns;
 
     public ExecutivoFinanceiroSqlRepository(
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             EscopoFilialService escopoFilialService
     ) {
         this.jdbcTemplate = jdbcTemplate;

@@ -1,3 +1,7 @@
+## 18/11/2026 — Coletas no DEV com a V2 compartilhada
+
+O painel DEV na porta 5174 e o painel de produção apontam as 27 consultas para ETL_SISTEMA_V2. As dez consultas antigas de produção autorizadas para cancelamento foram encerradas e o monitor confirmou zero restantes. A tabela paginada de Coletas no DEV passou a ler uma vez os campos exibidos, preservando os filtros antes da escolha de uma linha por ID e a ordenação da página. Os 41 testes focados passaram. Duas chamadas autenticadas para 16/08 a 13/11 com Cotações e Faturas simultâneas devolveram 200 nas três rotas, também no login e perfil. Conferiram os IDs e sua ordem na primeira página de 10 e segunda de 100. Os nove gráficos de Cotações devolveram 77 pontos e Faturas devolveu 76 itens. Os três gráficos de Coletas também responderam no teste da V2. A alteração do código foi iniciada e validada somente no DEV. O aceite global, a publicação dos dias novos e a ativação do ETL automático continuam pendentes.
+
 ## Login / saturação de conexões e VM 64 GiB — 17/11/2026
 
 ### Validação com a carga real e recarga da página
@@ -20,6 +24,28 @@ A pedido do responsável após ampliar a VM de 32 para 64 GiB: teto SQL 8→16 G
 
 - Instalação humana da proteção e aceite de autenticação/navegação concorrente no runtime atualizado. JAR operacional e PID 22120 preservados; nenhum restart, encerramento de sessão, cancelamento SQL ou troca de fonte. Não declarar login resolvido em produção antes desse aceite.
 - Analisar e otimizar planos/cardinalidades das publicações V2 no repositório proprietário do ETL, com paridade medida. Não ampliar concorrência ou alterar fonte para mascarar consultas demoradas.
+
+## Java de segurança com consultas Rust — teste ampliado em 17/11/2026
+
+O piloto foi ampliado com um iniciador temporário em `work/security-slice`, reutilizando os componentes existentes de autenticação, JWT, sessões, permissões, escopo por filial, auditoria, administração de acesso, retenção e inicialização de usuário supremo/catálogo de permissões. O recorte carrega nove repositórios JPA e nove entidades, frente aos 39 repositórios do backend completo. A série de Saúde do ETL é atendida pelo processo Rust local, com uma chamada do Java por requisição autorizada. O novo iniciador deriva de `iniciar-dev.bat` e usa `-Dstart-class=prototype.SecuritySliceApplication`, necessário porque o POM pai configura explicitamente o ponto de entrada por `start-class`.
+
+Comparação com as mesmas sete rotas de segurança/série, duas rodadas de leitura, 20 medições da série, nove requisições em lotes de três chamadas simultâneas e três intervalos equivalentes. Cada par usou a mesma configuração G1, heap inicial de 64 MiB e teto Java de 384 ou 128 MiB. Com teto de 384 MiB, o backend completo mediu 377,51 MiB nas leituras e 397,56 MiB depois dos controles reais de segurança. O Java de segurança somado ao Rust mediu 311,23 e 334,42 MiB, respectivamente. Com teto de 128 MiB, os números foram 337,00/341,59 MiB no backend completo e 314,39/340,61 MiB no recorte com Rust. Uma rodada exploratória anterior do recorte, ainda com menos inicializadores, havia registrado 397,90/413,00 MiB. A variação mostra dependência da configuração e do estado do heap. Há sinal de economia ao retirar componentes da JVM, enquanto a redução grande e sustentada do dashboard inteiro permanece por demonstrar.
+
+Os dois desenhos passaram em testes reais de token ausente, falsificado e expirado, senha incorreta, troca obrigatória de senha, negação de página, negação de administração, escopo de uma filial, renovação de sessão, logout, refresh após logout, auditoria e rejeição de token após inativação do usuário. Contas exclusivas do experimento foram criadas e inativadas pela API normal. A série, período invertido e acesso sem login mantiveram seus resultados e status. O recorte com Rust completou 28 consultas, retornou 503 durante a parada do Rust, manteve `/api/auth/me` disponível e recuperou a série em 200 após reiniciar o Rust.
+
+Escopo comprovado: rotas de segurança enumeradas e uma consulta de dados em Rust. As demais rotas analíticas exigem implementação e paridade próprias antes de dimensionar a solução completa. O controle de filial foi exercitado na sessão Java. A filtragem de dados por filial em rotas Rust de negócio continua por implementar e verificar. O piloto usa a conta SQL DEV existente. A comparação ampliada está em `ampliacaoSeguranca` no JSON de resultados do chat.
+
+## Comparação Java/Rust em DEV — 17/11/2026
+
+`DASHBOARDS_DEV` recriado com as 55 migrations até V070, 31 tabelas e 27 synonyms. A conta existente da aplicação leu os 26 contratos analíticos pelo JDBC 13.4.0 com certificado privado validado. A recriação encontrou duplicações da V001 nas V062 e V067. Somente as tabelas vazias correspondentes do DEV recém-criado foram removidas, com verificações de dados, referências e versão, para as migrations seguintes recriarem seus próprios objetos. A cadeia canônica ainda exige essa recuperação ao recriar do zero. O runtime DEV recebeu permissões locais de dados e `VIEW DEFINITION` somente em `acesso.fretes_goals`, necessário para conferir os índices filtrados.
+
+Experimento temporário no `work` do chat de 17/11. Backend completo em 5011, interface DEV em 5174 e processo Rust experimental em 15011. Java preservou autenticação, autorização da página e período da consulta. Uma chamada HTTP local autenticada encaminhou exclusivamente a série de Saúde do ETL ao Rust, que consultou o SQL Server diretamente com parâmetros e TLS validado. A conta SQL usada pelo protótipo foi a conta DEV existente da aplicação.
+
+Rodada completa de 03–09/11 com 37/37 rotas HTTP 200 nos dois cenários, nove chamadas em três lotes simultâneos por cenário e três recortes da série equivalentes. Sem login a resposta foi 401 e período invertido recebeu 400. Foram contadas 28 consultas no Rust. Com o processo Rust encerrado, a rota experimental respondeu 503 e Cotações permaneceu HTTP 200. Reiniciar somente o Rust recuperou a série em HTTP 200 com os mesmos dados. Suíte isolada completa com 758 testes, 95 classes, zero falhas, erros ou ignorados. Para executá-la, o Byte Buddy foi carregado no início do processo de testes, pois a instalação dinâmica do Mockito falhou neste ambiente.
+
+Na rodada completa, a mediana de RAM física durante a navegação foi 396,42 MiB em Java e 388,13 MiB somando Java/Rust. Duas rodadas exploratórias anteriores mediram 359,27/409,97 MiB e 365,03/379,21 MiB. Nessas rodadas, Localização recebeu 400 por ausência do prefixo `f.` no filtro de filial do medidor, corrigido na rodada completa. A variação entre processos impede atribuir economia sustentada à extração de uma rota. Os números do piloto isolado de consulta também devem ser interpretados dentro desse escopo.
+
+Direção confirmada pelo responsável durante o teste: Java conserva login, sessões, permissões, escopo e auditoria. Rust é candidato para blocos autônomos de consultas. Priorizar Saúde do ETL e Cotações na avaliação estrutural. O custo do recorte Java de segurança e uma consulta Rust foi posteriormente medido na seção ampliada acima. A economia da implementação de todas as consultas em Rust permanece por medir. O perfil experimental de memória do próprio Java foi avaliado somente no DEV e ficou fora da proposta Java/Rust por orientação do responsável. Resultado detalhado em `C:\Users\suporte\Documents\Codex\2026-11-17\carregando-mensagens-mais-antigas-comunicar-a\outputs\comparacao-backend-java-rust.json`.
 
 ## Integração 0778 — Cadastro de Usuários validado na V2
 
@@ -67,7 +93,150 @@ O V2 já recebeu 89.703 linhas atuais de 11 entidades, 508 campos de origem e 10
 
 Pendências: publicar os contratos de negócio e as referências no V2, validar valores e dependências do V1 em SQL, ensaiar API/tela/exportação e permissões em `DASHBOARDS_DEV`, e comprovar troca e retorno antes de aposentar a origem V1. `DASHBOARDS` continua dono dos dados internos do portal. Sem migration, alteração de conexão, reinício ou carga de 90 dias nesta revisão. A nota 0758 abaixo descreve o marco histórico, anterior ao recebimento real.
 
+## Integração0758 — próximo build preparado; rota atual V1 preservada
+
+Ler [implantação0758](../etl-extracao-dados-v2/docs/catalogos/integracao-etl-v2-dashboard/IMPLANTACAO-0758.md) e checkpoint/ADR0078. ETL_SISTEMA_V2 foi criado e recebeu fundação V001–V009/77tabelas/acessos aprovados, sem dados reais de negócio. A resposta humana autorizou a exceção de acesso; não repetir a pergunta. O usuário estará ausente e exige preservar comunicação atual.
+
+Fonte alterado: ContasAPagarSqlRepository usa igualdade positiva normalizada para Conciliado, excluindo Não conciliado; kpiDictionary acompanha a regra e a regressão do repository cobre a consulta. POM fixa JDBC13.4.0.jre11 para o próximo build, após testeJava17/TLS falhar com12.4.2 e passar com13.4.0. Não houve alteração de SQL Server/driver C78 do ETL, .env, rota/synonyms, porta, Flyway produtivo ou deploy/restart da aplicação.
+
+Validação:9casos SQL atuais; backend44casos após driver novo; TypeScript/lint/encoding;63suítes/401testes frontend. JDBC real com credencial própria e TLS validado confirmou26objetos e958nomes de colunas,26rotas atuais ETL_SISTEMA e leitura da view operacional de instalação do V2. Isso comprova esta camada de comunicação/metadata; não comprova paridade de valores ou fluxo SQL/API/tela do V2. Dashboard segue consumindo V1.
+
+### Tarefas Pendentes — integração produtiva
+
+- Contratos de domínio/referências e recebimento/reconciliação/publicação reais no V2; recuperação física, automação60min e progresso contínuo por escopo. Não simular dados/publicação para qualificar consumidor.
+- Paridade SQL/API/tela/exportação, ACL/filtros e publicação coerente não vazia; ensaio físico de corte/retorno. Preparação0758 contém26rotas/958contratos em templates com recusa incondicional, sem execução. A futura migration executável pertence ao Flyway do dashboard e exige baseline correspondente e aprovação de troca.
+- Implantação do próximo build somente pelo fluxo operacional humano; não executar iniciar-prod.bat ou gerenciar5010/5173. As quatro etapas solicitadas não estão integralmente concluídas.
+
+Recibos em outputs do chat2026-11-08/etl-v2-sql-server-dashboard; falhas anteriores preservadas. Histórico abaixo permanece íntegro.
+
+## Complemento 0676 — extração na origem e período da tela são contratos distintos
+
+Usuário confirmou: preservar o período padrão atual do dashboard, que mostra o último mês. ETL deve extrair na origem a cada 60 minutos com janela retroativa e recuperar pendências de paradas; atualização visível em uma hora é a meta.
+
+Conferência [V1 × V2](../etl-extracao-dados-v2/docs/catalogos/integracao-etl-v2-dashboard/REGRAS-EXTRACAO-V1-V2.md): no V1 a janela é D-7..D0 inclusivo (oito datas), e há espera de 60 minutos após terminar o ciclo. Reconciliação diária/fila não comprovam recuperação automática de toda parada longa. 21 testes unitários V1 passaram, sem fonte/SQL/runtime produtivo. O V2 precisa de integração produtiva dessas regras e da recuperação completa. A janela padrão da tela não define retenção nem elimina dados anteriores necessários a cálculos.
+
+Plano completo e pendências P0–P6 no [roteiro](../etl-extracao-dados-v2/docs/catalogos/integracao-etl-v2-dashboard/PLANO-PRODUCAO.md). Nada foi alterado no código, configuração, filtros, banco ou runtime do dashboard. Os registros de perguntas ainda pendentes abaixo são históricos e substituídos por este esclarecimento.
+
+## Atualização 0676 — implementação e produção por marcos; pacote ainda pendente
+
+Consultar sempre o [plano até produção 0756](../etl-extracao-dados-v2/docs/catalogos/integracao-etl-v2-dashboard/PLANO-PRODUCAO.md) e a qualificação 0755. A pergunta de prontidão não alterou código, banco, synonyms, configuração ou runtime.
+
+Pacote de instalação do V2 ainda precisa de fechamento, inclusive conflito entre segurança antiga e proibição vigente de alterar contas/permissões. Primeira implementação combinada permanece criação de `ETL_SISTEMA_V2`, seguida de instalação, recebimento/publicação e adaptação do consumidor, em ações distinguíveis. A solução dos 134 campos e o patch de conciliação ainda não foram implantados. Metas de atualização/histórico foram perguntadas e não são presumidas.
+
+Próximos marcos do consumidor: publicação não vazia e coerente; adaptações SQL/API/frontend e KPI; regressões e ACL/filtros/tabelas/exportações; teste de recorrência/falha e ensaio de corte/retorno. O runbook atual exige unidade DATABASE_WIDE até prova de isolamento granular. Preservar estado próprio em DASHBOARDS e não mudar a rota por este documento. Operação, alertas, recuperação e acompanhamento têm critérios no plano.
+
+Somente documentação atualizada; testes anteriores não foram repetidos nem aceites promovidos. [Checkpoint 0756](../etl-extracao-dados-v2/docs/continuidade/checkpoints/0756-prontidao-e-caminho-ate-producao.md). Histórico abaixo preservado.
+
+## Atualização 0675 — preparação dos contratos V2 testada; consumo integrado ainda pendente
+
+**Consultar sempre** a [qualificação 0755](../etl-extracao-dados-v2/docs/catalogos/integracao-etl-v2-dashboard/QUALIFICACAO-0755.md), o [índice central](../etl-extracao-dados-v2/docs/catalogos/integracao-etl-v2-dashboard/README.md) e os três relatórios indicados no 0674 antes de retomar esta integração.
+
+134 campos receberam soluções explícitas e descrição de tipos no SQL Server; 76 verificações passaram no escopo registrado, com 46 casos sintéticos no engine. Perfil atual: 887 campos sobre objetos inteiros e 71 em amostras TOP(200), após limite de leitura integral. Isso não qualifica semântica ou fluxo HTTP. 24 candidatos de tamanho/tipo precisam de transformação/revisão; NF contém três valores acima de 1024, máximo 2254 unidades UTF-16.
+
+Conciliação CAP: correção e explicação do KPI preparadas em `Correcao_Conciliacao_Dashboard_0755.patch`, no diretório de outputs do chat `2026-11-08/etl-v2-sql-server-dashboard`. Testes de nove estados no engine e reprodução sobre 17.131 linhas; `git apply --check` aprovado sem aplicar. Código e comportamento em execução continuam atuais; testes Java/frontend/HTTP ainda pendentes. O patch remove a correspondência parcial que inclui “Não conciliado”.
+
+### Tarefas Pendentes — integração
+
+1. Implementar a publicação produtiva e referências no novo banco, preservando os contratos e as 30 restrições sintéticas encontradas no laboratório. Primeira implementação combinada: criação de `ETL_SISTEMA_V2`, ainda não realizada.
+2. Aplicar os adaptadores e a correção CAP na fase de implementação, sincronizando KPI e regressões; confirmar granularidade, tipos/precisão, datas, exclusão, documentos, filtros, ACL, tabelas e exportações.
+3. Qualificar SQL→API→telas com publicação não vazia e testar recorrência/falha; concluir a avaliação integral dos 71 campos por partições/plano revisado. As publicações V2 consultadas estão vazias: nenhum consumo integrado foi aprovado.
+
+Somente documentação foi alterada no dashboard. Código, `.env`, migrations, synonyms, banco e portas permanecem sem alteração nesta unidade. Checkpoint [0755 V2](../etl-extracao-dados-v2/docs/continuidade/checkpoints/0755-preparacao-e-qualificacao-contratos-dashboard.md), evidências e limites na qualificação. Histórico abaixo preservado.
+
+## Atualização 0674 — integração com ETL_SISTEMA_V2 mapeada; preparação antes da implementação
+
+**LEITURA OBRIGATÓRIA EM TODA RETOMADA DESTA INTEGRAÇÃO:** pedido do usuário em 08/11/2026. Consultar sempre o [índice central no ETL V2](../etl-extracao-dados-v2/docs/catalogos/integracao-etl-v2-dashboard/README.md) e os três documentos abaixo antes de alterar o consumo:
+
+1. [Mapeamento_ETL_SISTEMA_V2.txt](C:/Users/suporte/Documents/Codex/2026-11-08/etl-v2-sql-server-dashboard/outputs/Mapeamento_ETL_SISTEMA_V2.txt).
+2. [Consumo_Dashboard_e_Fontes_V1_V2.txt](C:/Users/suporte/Documents/Codex/2026-11-08/etl-v2-sql-server-dashboard/outputs/Consumo_Dashboard_e_Fontes_V1_V2.txt).
+3. [Dicionario_Campos_Dashboard.txt](C:/Users/suporte/Documents/Codex/2026-11-08/etl-v2-sql-server-dashboard/outputs/Dicionario_Campos_Dashboard.txt), com as linhas dos contratos/campos afetados.
+
+### Estado comprovado
+
+O dashboard continua configurado para `DASHBOARDS`; seus 26 synonyms apontam para views/fatos/dimensões de `ETL_SISTEMA`. `ETL_SISTEMA_V2` não foi criado. `ETL_SISTEMA_V2_SHADOW` permanece ambiente de validação. Usuários, ACL, sessões, metas, justificativas e configurações do portal continuam em `DASHBOARDS`.
+
+Inventário estático: 958 pares objeto/campo SQL; 431 classes, 216 rotas, 211 blocos SQL, 188 tipos de DTO e 209 interfaces TypeScript. Há 707 candidatos por nome, 34 por rótulo, 83 por alias e 134 que pedem adaptação/desenho. **Compatibilidade semântica e consumo real do V2 continuam sem aprovação.** Nome semelhante, conteúdo offline aprovado ou view criada não qualifica uma tela. Nenhum endpoint foi executado nesta revisão.
+
+O consumo inclui Coletas, Fretes financeiro/Performance, Faturas, Manifestos, Cotações, Contas a Pagar, Tracking, Gestão à Vista, calendário, referências, saúde/auditoria e Raster. O plano precisa cobrir também filtros, ACL/filial, paginação, ordenação, exclusões, tabela/exportação, snapshots e cálculos; trocar o alvo dos synonyms sozinho não resolve os contratos.
+
+Inconsistência comprovada no overview de Contas a Pagar: `LIKE '%conciliado%'` também conta “Não conciliado”. Consulta da view completa, sem filtros de endpoint: 17.131 linhas, LIKE 15.273, igualdade “Conciliado” zero. Prova em `sql-dashboard-rule-probes.json` no diretório dos relatórios. Correção ainda não implementada e não aprovada como regra de migração. Coletas também tem `tentativas_medias` fixado em zero na consulta atual: a futura regra precisa ser definida explicitamente.
+
+### Tarefas Pendentes — integração SQL V2
+
+1. Na próxima etapa, preparar a matriz por campo/rota e as adaptações propostas de SQL, API/DTO e frontend: tipo, precisão/unidade, identidade/granularidade, nulos/status, datas/fuso, deduplicação, exclusão, publicação e testes de aceite.
+2. Alinhar publicação estável do V2 e dependências dos contratos atuais; propor mudanças de consumidor quando necessárias. Mudança de KPI/gráfico deve sincronizar `kpiDictionary.ts`/`chartDictionary.ts`, regras e validação conforme AGENTS, quando implementada.
+3. Depois da preparação, seguir as implementações por dependência: primeiro criar `ETL_SISTEMA_V2`; depois instalar/qualificar recebimento e publicação e validar o fluxo SQL→API→tela/exportação antes do corte. Não iniciar runtime, carga, agendamento ou redirecionamento por causa desta nota.
+
+Atualização somente documental. Código, `.env`, synonyms, dados, serviços e portas não foram alterados. Preservar o ETL V2 e suas proteções. Checkpoint [0754 do V2](../etl-extracao-dados-v2/docs/continuidade/checkpoints/0754-mapeamento-sql-v2-e-contrato-dashboard.md); evidência e limites no índice central. Entradas abaixo permanecem históricas.
+
+## Atualização0673 — auditoria Coletas3/3 concluída; consumo real pendente
+
+As três semanas12–18/10,19–25/10e26/10–01/11/2026 passaram o conteúdo completo das31colunas, com associação dos valores por coleta, totais, multiplicidades e ausências: zero diferenças ou pendências nos pares aprovados. Foram4277linhas por lado/265174decisões de células, sem descartar informação adicional daAPI. Terceiro par Source0672-01/Excel1760924,1439linhas/1144coletas, gerados próximos em03/11às22:47–22:48BRT. Evidências e falhas anteriores estão preservadas no Checkpoint0673 do ETL e no aceiteRootfinal.
+
+O consumo real do V2 pelo dashboard continua sem aprovação: manter as pendências de semântica/catálogo de status, exclusão/região/horário de publicação, tipo deVolumes, ponte/publicaçãoSQL e roundtrip/endpoints. Os52testes locais e o aceite dos18campos diretos são evidências anteriores, não foram repetidos nesta etapa. Não houve cargaSQL ou mudança de produção. V1 permanece pausado.
+
+### Registros anteriores — histórico, sujeitos à atualização acima
+## Coletas0670 — duas semanas conferidas; terceira extraída
+
+2/3períodos passaram conteúdo/associação/totais/multiplicidade das31colunas. TerceiraSource1439registros,Excelantigo1431; novoExcelaguardaloginESL. Contrato21/52testeslocaisPASS; publicação/consumoSQLreal continuam pendentes. V1eproduçãopreservados.
+
+## Coletas V2: situação consolidada em 03/11/2026, 18:45 BRT
+
+- **1 de 3 períodos completos:** 19–25/10/2026 passou na associação conjunta das 31 colunas, 1.561 ocorrências e 1.155 coletas, zero diferenças ou pendências, 131 verificações. Aceite Root B323905B. Colunas extras da API são permitidas e preservadas.
+- **Limitação da extração encontrada:** Source12–18 parou antes de qualquer HTTP porque o produto5481 fixa19–25/10 em ColetasWeeklyCurrentGate.java:90. Falha preservada, processos próprios fechados, estado856F/B4/slot0 restaurado. Sucessor do produto em preparação no chat de correções; não é captura aprovada nem429.
+- **Duas referências novas baixadas:** ESL1760627 (12–18/10, 1.277 × 31, 18:36) e ESL1760628 (26/10–01/11, 1.431 × 31, 18:37), sem cache; cópias exatas preservadas sob Original. Capturas Source e comparações novas ainda não aprovadas.
+- **Contrato do consumidor:** 21 nomes e famílias de tipos SQL agora conferidos, com todas as incompatibilidades informadas. Extra é permitido. 52 testes passaram, incluindo tipos incompatíveis por campo e recusa de cache após falha; aceite Root 17ED59D9. Isso não prova precisão/escala reais nem conteúdo publicado. Volumes deve chegar em tipo compatível com Integer; BIGINT na publicação é uma pendência concreta.
+- **Mapa atualizado:** execução serial AST, sem LLM, SHA 64B68B93, 109.384 ms, pico 1.005.481.984 bytes, dentro de 1 GiB, encerramento e restauração confirmados. A cópia do mapa anterior permanece no diretório de execução.
+- **Consumo real ainda pendente:** catálogo de status canônico/compatibilidade SQL, semântica de Cliente/Filial/região/manifesto, região logística, exclusão e horário de extração; publicação V2/ponte, granularidade, roundtrip e endpoints reais. Nenhuma Source/SQL/produção foi executada pelos testes ou pelo mapa. V1 permanece pausado.
+
+Detalhes: [aceite de consumo de Coletas](docs/coletas-aceite-consumo-v2-2026-11-03.md). Os registros abaixo são históricos; números e pendências antigos não substituem esta situação consolidada.
+
+## Histórico das rodadas anteriores
+### Coletas: primeira semana aprovada inteira — 03/11/2026
+
+ComparaçãoV2/Excel19–25out fechou31colunas conjuntas/1561linhas/1155coletas comzero diferenças oupendências,131verificações. AceiteRootB323905B,1/3períodos; próximasduassemanas em preparo. Isso aprova aextração nocapturaescopada, nãoapublicação/consumoSQL. Pendênciasdocontrato21 permanecem; produção preservada. Registro noCheckpoint0667doETLV2 e[aceites do consumidor](docs/coletas-aceite-consumo-v2-2026-11-03.md).
+
+### Coletas V2: 18 campos reais conferidos, consumo ainda pendente — 03/11/2026
+
+Auditoria offline de todas as1.561ocorrências/1.155coletas daSource03:18campos diretos conferidos nos tipos/limites do consumidor, zero inválidos e nenhuma variação desses18dentro da mesma coleta. Inteiros32/64bits, datas, texto1024UTF16 e decimais exatos28,8, nulos preservados; não equivale a roundtripSQL. AceiteRoot39242919, Original0/3126ms/pico64249856B, estado restaurado, semAPI/SQL/produção. Três campos de contexto ainda pendentes:Excluída naOrigem,RegiãoLogística,Data deextração. A análise encontrou V091/publicação de laboratório sem ponte V2 comprovada para dbo.vw_coletas_powerbi, Cliente lateral, Filial por referência, manifesto relacional e Região daColeta sintetizada. Catálogo canônico ainda usa statusv1/finished→Finalizada; correção privada não incorporada.31colunas Excel passaram individualmente, associação conjunta ainda em qualificação,0/3períodos completos; outroperíodo/hoje não testado. Detalhes e mapa21 em[aceites de consumo](docs/coletas-aceite-consumo-v2-2026-11-03.md).30testes do contrato e atualizaçãoAST já concluídos; não indicam consumo real aprovado.
+### Mapa atualizado e novo par de Coletas disponível — 03/11/2026
+
+Mapa estrutural atualizado sob Original:8930nós/28430arestas/361comunidades, saída19391815B/SHA831E6A24. Rodada02serial passou em90938ms/pico1002364928B, limite1GiB, todos os processos encerrados e estadoRoot856F/ACL/slot0restaurados. Falha anterior por paralelismo/memória preservada; limites de produção não alterados. Junto do trabalho foi preservado o Excel novo deColetas gerado16:05,289885B/SHAEDD65AF4. SourceDataExport terminou16:04:37,14HTTP200/1561registros/EOFvazio no mesmo19–25out; captura aceita, comparação nova pendente. Os30testes aprovados validam o contrato das21colunas, sem provar os valores do par novo e sem cargaSQL/runtime. Tarefa de mapa concluída; tarefas abertas: auditar31colunas e adaptar/publicar o consumo real doETLV2 no domínio apropriado após validação.
+### Validação do contrato de Coletas concluída — 03/11/2026
+
+30testes aprovados (26do contrato e4do serviço), zero falhas/erros/ignorados. Incluem cada uma das21colunas consumidas pela entidade, faltas simultâneas, aceitação de campo adicional, tipos anteriores e recusa de cache após contrato incompleto. Compilação432fontes/98testes. Rodada04usou JDK17/Mavenoffline com provider original3.1.2 eJVMs192m dentro do mesmo Job1GiB; recibo de teste e restauraçãoRoot disponíveis emArmazenamento-Projetos/dashboards-etl/coletas-v2-contract0664-04. As falhas01/02de dependências e03de quota permanecem preservadas;03reconciliada após Original comprovar todos os processos encerrados. Nenhuma cargaSQL, SourceESL ou produção foi executada. Falta atualizar mapa e validar integração/dados reais; não confundir contrato estrutural com auditoria de conteúdo.
+## Coletas / integração ETL V2 — 03/11/2026 (em andamento)
+
+O usuário definiu este monorepo como consumidor dos dados do ETL V2. `ColetasViewContractValidator` foi ampliado para verificar as21colunas consumidas por `VisaoColetasEntity`, listando todas as ausentes. Colunas adicionais são permitidas e não invalidam o contrato. As verificações anteriores de tipo nativo deSolicitacao, RegiãoLogística eflagbit deexclusão permanecem. Overview e série temporal passam pelo mesmo validador antes da consulta, assim como os caminhos já existentes. A consulta nova é somente metadados de `dbo.vw_coletas_powerbi`, sem buscar linhas de negócio. Nenhuma fórmula/KPI, deduplicação, filtro, synonym, migration ou configuração de produção foi alterada.
+
+Compilação de432fontes e98testes passou emOriginal protegido1GiB, mas a primeira execução de testes parou antes dos testes por falta do providerSurefire3.1.2 no cacheMaven. Resultado/falha preservados. Rodada02 usa o provider oficial3.3.1 já instalado, via propriedade somente da execução, Mavenoffline, JDK17 eperfilquality (JDBC/dotenv excluídos), com as classes da compilação encerrada e verificação incremental doMaven. Testes ainda não aprovados nesta atualização. Todas as tarefas pesadas sãoRoot, serializadas com o ETL. Nenhuma consulta SQL, carga de dados, login administrativo, início/restart ou publicação da aplicação foi executado.
+
+Contrato estrutural aprovado não prova conteúdo nem extração integral: ETL compara cada coluna/valor/multiplicidade/totais com o Excel do mesmo período. APIextra é preservada. O par histórico tem13/31colunas conferidas e0/3semanas100%; não declarar sucesso geral. Integração de dados efetiva e aceite real no painel permanecem pendentes. `CONTEXTO_GLOBAL.md` referenciado noAGENTS não foi encontrado nas buscas locais; regras canônicas existentes e runtime preservados.
 # Estado Atual do Sistema
+
+## Publicação SELIA confirmada — 05/10/2026, 14:52 BRT
+
+O operador executou `ativar-dashboard-selia.bat`. A atualização aconteceu, mas o ativador retornou incorretamente `DASHBOARD_PREFLIGHT_FAILED`: `pm2-axon.connect()` devolve o próprio socket Axon, sem método `destroy()`. A chamada incorreta no `finally` lançou TypeError depois da ativação/verificação HTTP e impediu a gravação do recibo normal. Corrigido para usar somente `socket.close()`, que já encerra as conexões subjacentes; falha ao salvar recibo também não será rotulada como falha da publicação. Três regressões exercitaram a função principal com as bibliotecas PM2 instaladas em named pipe de teste: ativação, repetição sem novo restart e erro RPC preservado. Nenhuma chamada ao daemon real nesses testes.
+
+Verificação somente leitura em `http://127.0.0.1:5173` e `https://analytics.rodogarcia.com.br`: HTTP 200, build-info/HTML/cabeçalho identificam `20261005-selia-integracao`, e o chunk real de Integrações coincide com SHA-256 `e8a51daddf782935c35d27245a6f6e497f5e8d831ff63c297326aade692b4643` do candidato validado. API readiness 200/UP. Evidência em `../.runtime/pm2/dashboard-selia/ativacao-verificada.json`. Não foi necessário novo restart pelo agente nem repetir o comando. Conferência visual em navegador segue indisponível nesta sessão; comportamento do filtro coberto pelos 401 testes anteriores. Persistência de boot permanece separada, sem `pm2 save`.
+
+## Build de produção isolado — correção de 05/10/2026
+
+- O operador executou `iniciar-prod.bat` às 14:37 e o Maven `clean` falhou ao remover o JAR operacional bloqueado pelo Java da API. O processo PID 2024 permaneceu ativo e readiness 200/UP. JAR preservado com SHA-256 `48aa583fea75fad0959aca34dbb6a9fe0da94c4e9dbd5c485e940de07b446919`. Naquela conferência a UI ainda servia `migration-20261001T234132-b9c52f1c`; esse build malsucedido não publicou a correção SELIA, aplicada depois pelo ativador dedicado conforme registro acima.
+- `iniciar-prod.bat` agora delega a `scripts/build-prod.ps1`: `.env` lido literalmente, sem expansão CMD; validação Git com erro explícito e recusa de worktree alterada; saída única `.tmp/production/<build-id>/backend` e `frontend`, manifesto com hashes e nenhum controle de runtime. Novo perfil Maven `prod-build` direciona todos os outputs; removida a limpeza de `backend/target`, `dist-prod` e caches compartilhados. Removida a orientação obsoleta de executar um `ecosystem.config.js` inexistente neste checkout. Ativação permanece pelo procedimento do runtime compartilhado.
+- Validação: parser PowerShell, leitura das 43 variáveis reais sem exibir valores, dry-run do preparador e testes de parser/caracteres especiais/erro sanitizado, checkout Git limpo e alterado, exit code nativo, orquestração simulada com caminho contendo espaços/JAR bloqueado, restauração de ambiente e interrupção após falha. Build Maven REAL via perfil isolado aprovado em 49,5 s, JAR candidato em `.tmp/production-validation-20261005/backend/dashboard-api-1.0.0.jar`; tests Java omitidos porque não houve alteração de lógica da aplicação. O JAR operacional manteve o mesmo hash. `iniciar-prod.bat` não foi executado pelo agente; nenhum serviço ou porta operacional foi alterado.
+- A correção solicitada de Integrações/SELIA foi publicada depois pelo operador com `../.runtime/pm2/dashboard-selia/ativar-dashboard-selia.bat`, sem publicar/recompilar backend. Aceite HTTP local/público no registro acima.
+
+## Integrações — filtro SELIA corrigido em 05/10/2026
+
+- O filtro do topo agora governa também os cartões e o histórico de ciclos; removido o seletor independente de cliente. O histórico envia `cliente=SELIA`, reinicia a paginação e oculta respostas de outros clientes integralmente, incluindo totais. A tabela de auditoria reinicia a página ao trocar integração, não reaproveita a resposta anterior durante o carregamento e verifica o destino das linhas mesmo quando não existem métricas consolidadas.
+- SELIA usa AddEvents e POD nos cards, gráficos, descrição e data da etapa. A atividade mantém avaliações e retenções do destino; transmissões e consultas ainda instrumentadas somente para Vedacit são identificadas como “Não medido” quando esse escopo não está selecionado. Dicionário de KPIs atualizado; cálculos de confirmação e classes de pendência preservados. A consulta local ao Satélite confirmou zero ciclos SELIA nessa auditoria SFTP: ausência de histórico não significa processo parado ou sucesso.
+- Validação: 401 testes frontend em 63 arquivos, incluindo sete regressões novas de filtro/rótulos/transição/paginação; TypeScript, ESLint completo, encoding e build de produção aprovados. Cinco cenários simulados do ativador, incluindo retorno ao pacote anterior, e smoke HTTP do servidor real em porta isolada 5186 aprovados. Nenhuma chamada de teste a ESL/Intelipost. Navegador indisponível nesta sessão; não foi realizada conferência visual real.
+- Candidato `frontend/.tmp/selia-integracao-20261005/dist`, build `20261005-selia-integracao`, 111 arquivos conferidos por SHA-256, incluindo assets anteriores para abas já abertas. Preparação e recibos em `../.runtime/pm2/dashboard-selia/`; `ativar-dashboard-selia.bat` atualiza somente `FRONTEND_DIST_DIR` de `Dashboard-UI-5173` no daemon existente e verifica o build por HTTP. `reverter-dashboard-selia.bat` restaura o diretório anterior. Não executado pelo agente; às 14:34 BRT a UI ainda servia `migration-20261001T234132-b9c52f1c`. A ativação humana foi solicitada com o pacote pronto. Nenhum `pm2 save` ou alteração do manifesto compartilhado; persistência de boot permanece pendente separada.
+
+## Hostname da VM — alinhamento em 2026-10-02
+
+VM atual: `ROD-SRVW-001`; conta Windows local `ROD-SRVW-001\suporte`. Scripts e configurações examinados não contêm dependência ativa de `WIN-00NEDIJ1R5P`. O boot compartilhado em `../.runtime/pm2/boot.ps1` já valida a identidade permanente da VM; `validate-boot.cjs` aprovou o snapshot de cinco aplicações e os artefatos. Diretórios privados `preparado-WIN-00NEDIJ1R5P` continuam existentes e os registros de migração abaixo são históricos. Nenhum processo, banco ou build deste repositório foi alterado por este alinhamento. Reboot e saúde atual não foram validados; RPC PM2 recusou acesso nesta sessão.
 
 ## Stack Tecnológica
 - Monorepo de portal web com backend Java 17/Spring Boot 3.2.5 e frontend React 19/TypeScript/Vite.
@@ -77,7 +246,27 @@ Pendências: publicar os contratos de negócio e as referências no V2, validar 
 - Fonte analítica externa: SQL Server `ETL_SISTEMA`/`esl_cloud`, consumido em leitura por views, fatos e synonyms publicados pelo ETL.
 - Operação Windows por `iniciar-dev.bat`, `iniciar-prod.bat`, Maven Wrapper, scripts em `scripts/` e migrations em `database/`.
 
+## Visual Astryx em DEV — 17/11/2026
+
+- Interface usa tema Neutral do Astryx. `ChartWrapper` e consumidores de gráficos isolados usam `AstryxDashboardChart`. Barras, linhas, áreas, eixos, legendas e tooltips usam as primitivas Astryx. Roscas e semicírculos usam marcas SVG na superfície Astryx porque o pacote instalado não oferece essas marcas prontas. O formato das opções analíticas permanece compatível com os dados e as interações anteriores. A tipagem ECharts segue disponível em compilação. O renderizador Canvas antigo foi removido.
+- A grade e as alturas dos gráficos mantêm a composição de cada página. Os cliques para detalhamento usam a categoria e o índice originais. A escala secundária exibe as unidades originais. A lista longa de tabelas em Saúde do ETL usa paginação no gráfico. O funil de Cotações e a cobertura das metas usam barras de progresso do Astryx.
+- A marca completa aparece no menu expandido e o G aparece no modo recolhido. O topo mostra a página e ações da conta com espaçamento. As setas da navegação ficam alinhadas e a barra do menu é oculta. Status das tabelas têm espaçamento interno. O filtro de período mostra DD/MM/AAAA.
+- O frontend DEV oficial está na porta 5174. A prévia isolada em `/.tmp/astryx-review/` usa dados de exemplo nas páginas Coletas, Performance, Localização, Cotações, Contas a Pagar, Faturas por Cliente, Executivo e Integrações. A validação autenticada com dados reais continua pendente.
+
+### Continuidade da revisão visual em DEV
+
+- Coletas segue os tipos de visualização da prévia local. Status usa barras de progresso do Astryx. Volume e peso taxado ficam em subgráficos lado a lado quando há largura para os dois, com o detalhamento existente. Os botões de região quebram linha e a série temporal aproveita a altura disponível no card. O eixo inferior abrevia nomes longos de acordo com a largura útil do gráfico.
+- Login, solicitação de redefinição, telas obrigatórias de senha, acesso negado e carregamento usam o tema e os componentes do Astryx. O layout de autenticação usa uma coluna central com a Rodogarcia acima do cartão, em tema claro e escuro. A redefinição acontece no cadastro administrativo. O atalho de senha não aparece na navegação.
+- Menu usa a marca ampliada, com recorte visual do subtítulo, e mantém o G no modo recolhido. A navegação compacta usa seleção circular. Cada seta aparece quando o menu pode se mover naquela direção.
+- Cadastros de usuário e setor, permissões, filtros, seletores, botões, campos de texto e tabelas usam componentes Astryx. Importadores usam o FileInput do Astryx. Campos numéricos usam NumberInput e o seletor de competência usa mês e ano com o mesmo valor de referência da API.
+
 ## Arquitetura e Padrões
+
+- Revisão Astryx em DEV em 18/11/2026. O Início usa cards, abas, botões, campos de formulário, anexos, confirmações e diálogos do Astryx. Comunicações acompanha a largura disponível, com títulos e ações em linhas próprias e sem rolagem horizontal. O cartão abre e recolhe o texto completo, com curtidas e comentários como ações independentes. O Início abre com saudação, solicitação de melhoria e comunicações. A saudação usa o mesmo recuo lateral do cartão de solicitação e mantém a altura compacta. O menu lateral é a entrada para os dashboards conforme as permissões. Curtir, Comentar, Editar e Arquivar animam apenas os próprios ícones ao passar o cursor ou navegar por teclado. O coração pulsa em vermelho, Comentar anima três pontos dentro do balão azul, Editar traça uma linha com o lápis âmbar e Arquivar movimenta a tampa violeta. O contador de comunicados fica no canto superior direito do botão do sino. A seta superior do menu ocupa espaço apenas enquanto pode ser usada. As 15 rotas do menu foram verificadas em desktop e celular com dados de exemplo. Popovers, menus administrativos, filtros móveis, tooltips, estados de espera e importadores foram migrados nas superfícies compartilhadas. A ordem das camadas do CSS aplica o reset antes do Astryx para manter os espaçamentos e as variantes originais dos componentes.
+- Campos de texto multilinha usam limite de altura de 15 rem ou 45% da altura visível, o que for menor, com rolagem interna. Campos de texto, campos numéricos e áreas de texto do Astryx exibem o foco no contêiner do controle.
+- Avisos flutuantes de API, importação, metas e administração usam o centro do topo, com largura limitada à área visível.
+- A ajuda de gráficos usa a superfície do tema ativo. Passar o cursor sobre o título exibe uma descrição curta. O botão de informação fixa os detalhes técnicos e de negócio.
+- No Início, Solicitar melhoria e Comunicações se alinham no desktop. O campo de contexto aproveita a altura disponível até o limite global e mantém os campos seguintes em sequência. Anexos e envio dividem a mesma linha quando há espaço. Os comunicados são empilhados. Título e etiquetas dividem a linha quando cabem, os controles internos têm mais altura e Comentar fica junto da curtida. O coração se alinha visualmente com o rótulo ou a contagem. Editar e Arquivar ficam visíveis em cada comunicado persistido para quem tem permissão de gerenciamento.
 
 - Queda do frontend DEV por `EBUSY` corrigida em 21/09/2026: o watcher do Vite agora ignora diretórios `.tmp`, `dist`, `dist-prod`, `dist-ssr`, `coverage` e `logs`, incluindo seus descendentes, antes de tentar monitorar arquivos. Perfis de navegador usados nas validações visuais dentro de `.tmp` contêm cookies bloqueados pelo Windows; não devem participar do HMR. Código, CSS, HTML e arquivos públicos continuam monitorados. Regressão com configuração real em `frontend/config/devFileWatcher.test.ts`; 24 testes de watcher/proxy, TypeScript e lint aprovados. Probe no frontend real reproduziu `EBUSY` com arquivo aberto em `FileShare.None`; a configuração corrigida monitorou 41 diretórios de código, zero diretórios excluídos e transformou `src/main.tsx` sem erro. Evidência em `frontend/.tmp/dev-watcher-validation.json`. Validação em middleware isolado, sem iniciar/parar serviços ou alterar portas operacionais; a próxima execução humana de `iniciar-dev.bat` carrega a correção.
 
@@ -222,7 +411,7 @@ Pendências: publicar os contratos de negócio e as referências no V2, validar 
 - Dados de negócio, justificativas e auditoria usam exclusão lógica obrigatória; hard delete/`DELETE FROM` físico é proibido. Entidades JPA podem delegar o soft delete ao Hibernate com `@SQLDelete`/`@SQLRestriction`, e queries JDBC nativas devem filtrar registros inativos explicitamente.
 - A série gráfica de Performance de Entrega em Gestão à Vista usa o enum backend `NivelVisaoPerformance` (`RESPONSAVEL`, `REGIAO`, `CIDADE`) como contrato estrito de visão. O DTO expõe `label`, `filtro`, `visao`, totais físicos e percentual; o SQL seleciona e agrupa apenas colunas mapeadas pelo enum.
 - Componentes de seção de Gestão à Vista podem repassar `chartActions` e `chartEvents` ao `ChartWrapper`, permitindo breadcrumbs e drill-down em Apache ECharts sem duplicar wrappers visuais.
-- `ChartWrapper` tipa e encaminha `onEvents` diretamente ao `echarts-for-react`; dashboards com drill-down devem passar handlers de clique pelo wrapper, usar a seta do breadcrumb para retornar à raiz e deixar níveis indisponíveis com `disabled`/`cursor-not-allowed`.
+- `ChartWrapper` encaminha cliques e outros eventos do Astryx com a categoria, o índice original e o valor do ponto. Dashboards com drill-down passam os handlers pelo wrapper, usam a seta do breadcrumb para retornar à raiz e mantêm níveis indisponíveis desabilitados.
 - O painel de Coletas consome a coluna `[Região Logística]` publicada por `dbo.vw_coletas_powerbi` para o gráfico e filtros de origem. A região bruta `[Região da Coleta]` permanece no contrato como dado de compatibilidade, enquanto `ColetasRegiaoOrigemDTO.regiaoLogistica` e `ColetaResumoDTO.regiaoLogistica` expõem a macro-região governada.
 - A tabela analítica de Horário de Corte em Gestão à Vista usa `AnalyticalDataTable` com filtros de coluna para Filial, Linha/Operação e Status. Esses filtros são serializados por `useAnalyticalTableFilters`/`TableApiFilters` como `f.tabelaBusca` e `f.tabelaColuna.*`, sem filtragem client-side sobre páginas parciais.
 - `HorariosCorteRasterSqlRepository` aplica escopo de filiais, filtro global da tabela e filtros de coluna em `WHERE` parametrizado antes de `COUNT_BIG`, `ORDER BY` e `OFFSET/FETCH`, mantendo paginação, totalização e exportação CSV alinhadas.
@@ -348,11 +537,22 @@ Pendências: publicar os contratos de negócio e as referências no V2, validar 
 - A análise deve respeitar a stack, a arquitetura, as fronteiras de banco e os contratos de dados descritos neste arquivo.
 - A resposta de planejamento deve retornar somente o bloco `## Tarefas Pendentes
 
+- [ ] [Coletas / ETL V2 / 03-11] Resolver publicação/semântica e os três campos de contexto, conferir o roundtripSQL e o consumo real do painel. Contrato21colunas/30testes/AST e auditoria real dos18campos diretos concluídos; consumo ainda não aprovado. CamposAPIextras aceitos; sucesso geral depende de todas as colunas/valores/multiplicidades e totais conferidos comExcel, três períodos100% naETL.
+
 - [ ] Adequar as exclusões legadas de metas/histórico à regra de exclusão lógica: `KpiGoalService` ainda usa remoção física para overrides e descarte acima de 200 registros por escopo. Preparar migration/baseline, leituras e testes de retenção em entrega própria, preservando a herança e as restrições de unicidade. A revisão visual de Gerenciar Metas não alterou a persistência.`, formatado em Markdown.
 - O bloco deve decompor a requisição em tarefas sequenciais, lógicas e granulares, especificando arquivos exatos, variáveis, tipagens e validações que deverão ser alterados ou criados.
 - É proibido incluir saudações, conclusões, explicações fora dos bullets ou reescrever outras seções durante a resposta de planejamento.
 
 ## Tarefas Pendentes
+
+- [ ] [Capacidade do Dashboard] Qualificar o preparo incremental de Coletas com os lotes reais, conectar a fila ao ciclo contínuo e estender aos demais contratos das 11 fontes. Medir os painéis e filtros com ingestão concorrente e volume maior antes de trocar a leitura.
+
+- [ ] [Incidente Dashboard / 18-11] Recuperar o SQL compartilhado com o operador e reconciliar a ingestão contínua da V2. Depois, repetir as 57 rotas, filtros principais, navegação concorrente e sessões em volume real. O aceite exige fontes atualizadas, respostas completas dentro do prazo e fórmula, filial e permissões conferidas.
+
+- [ ] [Coletas / ETL V2 / 03-11] Resolver publicação/semântica e os três campos de contexto, conferir o roundtripSQL e o consumo real do painel. Contrato21colunas/30testes/AST e auditoria real dos18campos diretos concluídos; consumo ainda não aprovado. CamposAPIextras aceitos; sucesso geral depende de todas as colunas/valores/multiplicidades e totais conferidos comExcel, três períodos100% naETL.
+
+- [x] [Integrações / SELIA / 05-10] Publicação humana do pacote `20261005-selia-integracao` confirmada por HTTP local/público e SHA-256 do chunk às 14:52 BRT. 401 testes aprovados, sem alteração de API/banco. Falso erro de finalização do ativador corrigido e coberto por três regressões RPC reais em fixture. Não repetir a ativação.
+- [ ] [Integrações / SELIA / aceite visual] Conferir o filtro SELIA no navegador após recarregar a página. Navegador indisponível nesta sessão; comportamento validado pelos testes e bundle publicado conferido. Persistência de boot exige reconciliação separada do manifesto compartilhado já divergente.
 
 - [ ] [Integrações / Ativação] Publicar os candidatos de 21/09 após coordenação operacional: Satélite B4389CC8..., API Dashboard F3D0A523... e UI em frontend/.tmp/quality-build/20260921-221425-f79263/dist. V28 já aplicada; validar leitura v3 e primeiro evento/ciclo natural após início humano. Implementação e testes concluídos; [evidências e ordem](docs/integracoes-resultados-2026-09-21.md).
 
@@ -387,8 +587,97 @@ Pendências: publicar os contratos de negócio e as referências no V2, validar 
 - Às 14:13:42Z, os três processos Dashboard UI/API e Satélite API foram persistidos no dump PM2 e no manifesto de boot, mantendo backups e validação por hashes. A tarefa de boot já habilitada foi preservada; não houve reboot de teste. Os dois processos da Avaliação iniciados por outro agente foram preservados em runtime e não incorporados por esta operação ao dump, pois sua persistência pertence à ativação coordenada pelo outro agente.
 - Esta recuperação não alterou código Java, versão/binários/configuração do SQL Server nem o backfill ETL em execução. Os testes efetuados foram de integridade da restauração, contrato Flyway e HTTP; não representam nova execução da suíte Maven completa. O registro anterior de ausência de DDL/DML descreve somente a fase inicial de ativação do frontend.
 
+## Recuperacao apos reboot e padrao compartilhado .runtime — 2026-10-02
+
+- Usuario reiniciou a VM e constatou PM2 vazio. A tarefa PM2-Projetos executou as 15:46 BRT, mas recusou o boot porque o nome mudou de WIN-00NEDIJ1R5P para ROD-SRVW-001. MachineGuid e SID de suporte permanecem os aprovados. Snapshot de tres processos e seus 119 artefatos estavam integros; Avaliacao API/front ativos anteriormente nao constavam desse snapshot.
+- A pedido do usuario, padrao operacional centralizado em `C:\Users\suporte\Documents\projetos\.runtime\pm2` e `.runtime\cloudflare`, com README e consulta somente leitura em `.runtime\status.ps1`. Tarefa e credencial Windows existentes preservadas. Wrapper anterior encaminha ao novo boot; lista salva agora contem exclusivamente Dashboard UI/API, Satelite API e Avaliacao API/front. Tres definicoes anteriores preservadas semanticamente e backups exatos registrados em `.runtime\pm2\installation.json`.
+- Guards do boot e das pontes foram corrigidos para o identificador permanente da mesma VM, preservando bloqueio da origem antiga. Foram alterados exclusivamente os guards pertinentes em `scripts/prepare-cloudflare-windows-service.ps1` e `scripts/formulario-https-loopback-bridges.cjs`; historicos, demais diffs, modulo TCP original e rotas Cloudflare preservados. Validacao de scope rejeita workers, nomes extras, outros identificadores, mudanca de artefato e binds externos.
+- Daemon elevado criado manualmente apos reboot, PID848, foi encerrado somente depois de confirmar identidade, SID, RPC vazio e portas livres. Nenhuma aplicacao foi parada nessa operacao. Primeiro start REAL da tarefa restaurou os cinco processos; quatro responderam HTTP200, mas a API Avaliacao falhou em TLS porque o certificado fallback do SQL mudou no reboot. Novo certificado SHA256dfab92cc... difere do anterior65a5bdb7..., com a mesma identidade local verificada.
+- Confianca SQL privada da Avaliacao renovada apos validar servico MSSQLSERVER/porta/PID7440/executavel Microsoft assinado e colher apenas certificado publico com handshake recusado antes de credenciais. Candidato testado REAL com login dedicado/TLS valido, zero consultas no probe. Somente propriedade JDBC foi modificada na configuracao externa, preservando credenciais e demais propriedades; backups em ProgramData/production/boot-tls-b4a2b52c602a48688f444e5647bbb232. Helper do novo boot repete esta verificacao se o certificado mudar. Nao houve alteracao da confianca global, DDL, reparo de identidade, instalacao/versao ou reinicio do SQL pelo agente.
+- Reiniciado somente avaliacao-api-28081 apos promover confianca; demais quatro PIDs preservados. PM2 atual: DashboardUI7244, DashboardAPI4660, SateliteAPI12400, AvaliacaoAPI9640, AvaliacaoFront8228, todos online. Pontes HTTPS novas PID12512, exclusivos127.0.0.1:18080/18081, com recibo privado canonico; artefatos anteriores preservados.
+- Cloudflare foi iniciado de `.runtime\cloudflare\cloudflared.exe`, PID12596, /readyHTTP200. Mesmo tunelda4be1b8-b8dd-425b-b059-4702bf603471, token conferido igual ao backup informado em Downloads/migracao-cloudflare-pm2-completo-2026-10-01; token nao exibido. Sete rotas cadastradas conservadas, sem edicao de DNS/rotas/servico/firewall. Cloudflare inicia antes de aguardar prontidao das APIs. Erro publico1033 cessou; frontend e endpoint publico CSRF da Avaliacao responderam200.
+- Evidencias: `.runtime\pm2\boot-runtime-current.json`, `tls-current.json`, `scheduled-test.json` e `.runtime\cloudflare\status.json`. Testes: 29 cenarios ficticios de ponteHTTPS, 9 cenarios de guardboot, fixtures de identidadeCloudflare e comparacao de listas, parsePS/CJS, compilacao dos helpersTLS, probes reaisHTTP/JDBC e tarefaWindows com resultado0. Nao foi enviado POST de avaliacao/login ficticio. Nenhum loopETL, worker ou Site/CMS/Builder foi ativado por esta correcao.
+- Inicializacao automatica configurada e tarefa do Windows ensaiada apos a correcao. Segunda reinicializacao completa da VM nao foi executada; confirmacao de novo cold boot permanece para a proxima reinicializacao humana. Nenhum commit ou envio remoto nesta operacao.
+
+## Novo reboot e runtime compartilhado ampliado — 2026-10-02
+
+- O reboot humano de 17:40:49 BRT restaurou automaticamente os sete processos então salvos; Dashboard UI/API estão online em 127.0.0.1:5173/5010 e os endpoints responderam 200. A tarefa iniciou às 17:41:41; o recibo READY de 17:43:48 confirma o cold boot, sem reboot ou alteração de SQL pelo agente.
+- O pedido de subir todos os processos PROD ampliou o snapshot compartilhado para 14. Durante essa ampliação, Dashboard UI/API conservaram PIDs 760/2024. A configuração e artefatos continuam validados por SHA-256 em ../.runtime/pm2. ETL v1 está cadastrado, aguardando a extração manual terminar; não iniciou outro writer. Site/CMS/Builder foram iniciados como instalação nova expressamente autorizada, separadamente dos dados do ETL.
+- Supervisão Windows concluída: wrapper da tarefa PM2-Projetos aponta para .runtime/pm2/supervisor.ps1, preservando conta/credencial; PM2-Projetos-Guard roda como SYSTEM/Highest no boot e a cada minuto. Teste real encerrou exclusivamente o supervisor 12752; a tarefa recuperou o supervisor 19104 sem confirmação UAC, preservando o gerenciador 7856 e os 11 PIDs dos serviços HTTP. Worker/reconciliação continuam supervisionados (waiting restart após ciclo é normal) e ETL aguarda a extração manual. Recibos privados supervisor-installation.json, supervisor-recovery-test.json e runtime-completion.json; nenhum cold boot adicional da lista de 14 foi executado pelo agente.
+
+<!-- mcp-setup-evidence:start -->
+## Integração de ferramentas MCP — 05/10/2026
+
+- ai-memory acessível pelo MCP no escopo exclusivo workspace=default, project=dashboards-etl; declaração em .ai-memory.toml. Históricos existentes preservados e espaços novos registrados vazios pelo mecanismo nativo, sem sessões ou páginas artificiais.
+- Graphify consultável pelo MCP com project_path deste repositório: 8915 nós e 28384 relações na conferência. JSON, relatório e HTML presentes; verificação do grafo exportado encontrou zero relações com endpoint ausente. Consultas reais de saúde e conteúdo executadas pelos dois MCPs.
+- Instruções oficiais e sete skills locais preparados, com escopo explícito em AGENTS.md; hooks Git de commit e troca de branch instalados. A captura de sessões usa os hooks globais já instalados no Codex.
+- Preparador comum e guia em ../.runtime/mcp-tools/README.md; integração automática para novos repositórios Git diretamente em projetos, com processo próprio no login do usuário. Recibos e logs ficam na pasta da ferramenta. Não modifica runtime das aplicações, banco ou equipe Maestri.
+- Limites: Mapa estrutural de código local; extração semântica de documentos é uma operação separada pelo skill Graphify.
+
+Este registro trata somente das ferramentas dos agentes. Critérios e pendências de implementação deste projeto permanecem nas seções próprias acima.
+<!-- mcp-setup-evidence:end -->
+
+
+## GIT-DUPLO-HTTPS-20261102 — sincronização do Git em 02/11/2026
+
+Concluída a pedido expresso do responsável: main no commit 45c37739584065b97790ce8cfb748b177b18ade8 conferido por HTTPS em valentelucass/dashboards-etl e Dev-Rodogarcia/dashboards-etl, com hashes idênticos. Nenhum commit novo criado nesta operação; alterações locais preexistentes preservadas.
+
+Cada commit futuro nesta máquina é enviado automaticamente para as duas contas por ../.runtime/git-sync, com regra permanente no AGENTS.md da pasta projetos e inclusão condicional do Git. Hooks originais preservados; 12 verificações isoladas aprovaram envio para ambos os destinos, branches novas, falhas independentes/recuperação e rejeição de commit por verificação existente. Novos repositórios ausentes são criados privados; visibilidade dos existentes preservada. Sem push forçado, implantação ou intervenção na aplicação/banco. Em erro de conexão/autenticação/divergência, o commit permanece local e o envio pendente deve ser refeito sem forçar histórico. Guia: ../.runtime/git-sync/LEIA-ME.txt.
+
 ## DEV 17/11/2026 — iniciar apenas a API
 - `iniciar-dev.bat --back-only` inicia a API local na porta 5011 pelo modo dev e conserva o frontend em execução na 5174.
 - Os modos front-only e back-only são exclusivos. A simulação valida as portas de cada modo e não inicia serviços.
 - A inicialização completa do DEV tentou a V071, que falhou ao trocar o sinônimo dim_calendario. A configuração local ignorada pelo Git manteve o alvo 070 para a API servir o banco DEV existente durante a validação da V2.
 - A API ficou disponível, o frontend continuou com o mesmo processo e o login pelo endereço local do frontend retornou HTTP 200. A publicação da V2 na cópia de auditoria segue independente.
+
+## Auditoria de Cotações em 17/11/2026
+- A consulta dos gráficos agrupa as sete dimensões em uma leitura SQL e mantém os nove blocos da resposta, os filtros e o escopo de filial.
+- Na cópia de 17.058 registros, os nove blocos ficaram iguais nos dois períodos confrontados. A consulta do código caiu de 66,5 para 16,4 segundos em 90 dias e de 55,4 para 10,4 segundos no recorte do incidente.
+- Os 719 testes do backend passaram em checkout isolado com as duas alterações de Cotações. A API da cópia respondeu os gráficos nos dois períodos e manteve login, presença, renovação, saída e bloqueio de acesso anônimo.
+- A rodada integral seguinte confirmou as quatro rotas de Cotações com 90 dias de dados no banco de auditoria. A liberação segue pendente pelas falhas em outros painéis.
+
+## Auditoria de volume real em 18/11/2026
+
+- A rodada de 90 dias percorreu 57 rotas na cópia de auditoria com o limite SQL de produção. 27 responderam com sucesso, 23 excederam o limite SQL, cinco retornaram indisponibilidade e duas excederam o limite HTTP. Login, presença, renovação, encerramento e proteção do acesso anônimo passaram.
+- Coletas, Cotações e Contas a Pagar responderam às rotas verificadas com dados reais preparados na cópia. Coletas conferiu os 14.461 registros publicados e seus 41 campos. Contas a Pagar conferiu todos os campos em 588 registros com histórico de versões.
+- As consultas de Performance e Coletas iniciadas na produção continuavam aguardando no SQL compartilhado por horas. A fonte V2 tinha 11 conjuntos com cobertura até 13/11, inclusive Coletas, Cotações e Fretes. A preparação de dados de auditoria usa os lotes disponíveis nessas fontes.
+- A agregação de Faturamento leu 54.821 linhas do período. A consulta de dias úteis bloqueou a primeira resposta HTTP. Os 4.780 dias do calendário preparado conferiram com a fonte e as cinco rotas de Faturamento responderam nos dois períodos após o ajuste na cópia.
+- A consulta agrupada de Faturamento reúne os sete gráficos e preserva os filtros. A API com a consulta agrupada respondeu em 30,7 segundos no período de 90 dias e 7,3 segundos no recorte do incidente, contra 73,7 e 74,4 segundos. Os corpos das respostas ficaram idênticos nos dois testes. A compilação isolada passou 720 testes.
+- Faturas por Cliente preparou 54.970 registros vigentes a partir de 60.210 ocorrências reais. Todos os campos conferiram com o cálculo original em 45 registros. Com a projeção na cópia de auditoria, só o resumo de 90 dias respondeu entre as 11 chamadas, incluindo a lista de clientes. Os controles de sessão passaram após as falhas de consulta.
+- Performance respondeu às cinco rotas em ambos os períodos com a projeção preparada de 54.821 registros. A tabela levou 42,5 segundos no período de 90 dias e 29,3 segundos no recorte do incidente. O vínculo compartilhado de Fretes voltou ao destino original na cópia após o ensaio.
+- A rodada ficou em DEV. A comprovação da atualização contínua da fonte V2 segue pendente.
+
+## Verificação independente do incidente em 18/11/2026
+
+- Cinco consultas de produção ainda aguardavam memória de execução e cinco estavam em sincronização paralela havia mais de cinco horas. Uma consulta da cópia também foi vista aguardando memória durante a rodada serial. O teto do SQL estava em 16.384 MiB. As esperas do SQL e a ocupação do pool explicam os 503 de sessão observados no runtime anterior.
+- A cobertura confirmou 11 fontes em 13/11, com zero partições posteriores tentadas ou gravadas para essas 11. Consolidação Detalhada e Ocorrências chegaram a 17/11. Na VM, a tarefa ETL-V2-History-Refresh-0766 e o processo contínuo não foram encontrados. O supervisor registrou o último lote concluído às 20:03 e a próxima execução elegível às 21:03 de 17/11. O manifesto 0809, usado pelo lançador atual, passou na verificação local de arquivos. A retomada depende de o operador iniciar a atualização contínua com o perfil operacional e reconciliar as partições faltantes desde 14/11. A V1 medida tinha vários painéis ainda mais atrasados.
+- Na rodada de diagnóstico em série na cópia, 33 chamadas com 90 dias e limite SQL de 7 s produziram 11 HTTP 200, 21 HTTP 504 e um HTTP 503. Dos 200, Filiais usou a lista de contingência e CNPJs retornou vazio após falha SQL. O resumo de Coletas por filial retornou 2.034 registros. A consulta ao Satélite real com destino SELIA retornou 200 em 10,5 s. Sessão, presença, renovação, saída e bloqueio de acesso anônimo passaram após as consultas.
+- O candidato limita a confirmação do cancelamento JDBC a 5 s. Faturas por Cliente consulta pagadores ativos na própria fonte e respeita o escopo de filial. Pagadores e CNPJs carregam ao abrir os filtros. A evolução do status é consultada ao selecionar essa visão. Os gráficos e filtros mostram erros de consulta, inclusive o prazo excedido de CNPJs.
+- O build isolado da API passou 768 testes. A rodada final do frontend passou 399 testes, TypeScript, lint dos arquivos alterados e verificação de encoding. A liberação depende da recuperação do SQL, da cobertura atualizada e da rodada de aceite com os contratos analíticos definitivos. Permanecem pendentes em especial Manifestos, Rastreamento, Gestão à Vista, Executivo, Faturas por Cliente e o conjunto completo de filtros e rotas do Satélite.
+- A navegação autenticada abriu as 15 telas na cópia. Várias rotas de dados retornaram 503 durante a navegação. O seletor de Faturas abriu, mas o ensaio no navegador não comprovou a lista de pagadores sob carga.
+- No SQL Server da cópia, o driver confirmou o cancelamento em 1,02 s para uma consulta com prazo de 1 s. A mesma conexão voltou a responder. A configuração da API usa prazo padrão de 30 s e 5 s para confirmação, verificados no driver.
+- No reteste final com 90 dias e limite SQL de 30 s, pagadores, CNPJs, status de Faturas e Horários de Corte retornaram 504. CNPJs agora expõe a falha que antes parecia uma lista vazia. Login, sessão, presença, renovação, saída e acesso anônimo responderam como esperado. O build isolado do frontend concluiu.
+
+## Capacidade e publicação incremental em 18/11/2026
+
+- A API tem conjuntos de conexões independentes para a operação do portal e para leituras analíticas. JDBC e JPA seguem a mesma separação. O limite de três leituras simultâneas acompanha o conjunto analítico inclusive durante exportações. Login, permissões, sessões e dados do portal continuam no conjunto operacional.
+- O candidato passou 769 testes. O teste com ambos os conjuntos ocupou toda a capacidade analítica, executou consulta operacional e confirmou que a consulta JPA da dimensão obedece ao limite analítico. Login, sessão, presença, renovação, saída e proteção de acesso anônimo passaram também no SQL Server da cópia.
+- O ETL V2 recebeu um candidato de Coletas com fila baseada nos lotes confirmados, preparo por chaves alteradas, tabela indexada e gravação atômica por partição. A prova SQL com dados de teste confirmou as 41 colunas, reexecução, substituição vazia e exclusão. Os objetos de teste foram revertidos na cópia.
+- O trabalho restante está em [arquitetura de publicação incremental](docs/operacao/arquitetura-dashboard-etl-incremental.md). A qualificação depende de histórico real e atual, acionamento contínuo da fila e cobertura de todos os contratos e filtros. Alterações locais aguardam aceite de produção.
+
+## Revisão independente e inventário em 18/11/2026
+
+- O cálculo de custo de Manifestos consultava o ETL dentro de uma transação do portal. A regressão com apenas uma conexão operacional falhou antes com uma conexão ocupada e passou após retirar as duas transações de leitura que abrangiam o relatório. As transações de edição de metas permanecem no serviço. Com o conjunto analítico ocupado, a consulta JPA da conta respondeu e a saúde de cada conjunto registrou operacional UP e analítico DOWN. A execução focada passou 24 testes.
+- O [inventário para manutenção](docs/catalogos/inventario-dashboard.md) cobre 23 caminhos de navegação, 18 componentes de página, 28 controladores, 221 operações HTTP, ciclo de sessão, tarefas internas, Satélite, fontes, permissões, filtros e provas. A matriz distingue 175 pares método/caminho alcançados pela interface ou infraestrutura comum, 38 clientes declarados sem página alcançada e oito operações sem cliente identificado.
+- O ETL proprietário passou a ter candidatos de preparo por partição para Coletas e seleção da ocorrência vigente de Fretes. Em DEV, 236 ocorrências de Coletas e exclusões produziram 209 linhas com paridade nos 41 campos; 197 ocorrências de Fretes produziram os mesmos 159 vencedores da etapa inicial da 036. Atualização concorrente e os três ciclos de fila passaram. A prova adicional de 90 dias comparou contagem e primeira página de três combinações de filtros na projeção histórica de Coletas. [Recibo e hashes](docs/catalogos/revisao-incremental-2026-11-18.json).
+- Pendências de aceite: recebimento atualizado das 13 fontes e auxiliares, preparo do detalhe completo e dependentes de Fretes/Performance, demais publicações, permissões existentes do trabalhador e matriz completa de 90 dias com ingestão, usuários globais/restritos, filtros, exportação e latência de login. As alterações desta revisão estão locais e a leitura de produção segue no contrato anterior.
+ 
+### 18/11/2026 — Normalização em andamento, cobertura e login na cópia
+O painel DEV respondeu na porta 5174. DASHBOARDS_DEV conserva leituras do ETL anterior; os ensaios V2 usam DASHBOARDS_DEV_AUDIT_20261117. O painel de Saúde agora informa há quantos dias termina a cobertura de cada fonte e consulta novamente enquanto a seção está aberta. Os dois testes do componente passaram, inclusive na virada de dia em Brasília e na distinção entre zero, erro e origem ambígua.
+O pacote local atual abriu na porta 5012. Com três consultas solicitadas, o segundo login respondeu 200 em 2.260 ms, perfil 200, presença 204, renovação 200 e saída 204. Coletas retornou 503, Cotações e Faturas retornaram 504. O ensaio de acesso sob carga não valida os relatórios. A seleção das versões de Faturas foi conferida em 60.210 ocorrências e 54.970 resultados, oito campos iguais em todas as linhas. Checklist e recibos em Documents/Codex/2026-11-18/dashboard-revisao-astra. Liberação pendente.
+
+### 18/11/2026 — Faturas por Cliente na cópia de 90 dias
+
+Quatro consultas de evolução mensal deram HTTP 504 antes da correção. O agrupamento esperou por memória no SQL durante quase todos os 24 segundos medidos em três formas de execução. O leitor de evolução agora recebe período e situação e acumula dois contadores por período. O mesmo filtro de datas, filiais e clientes continua na consulta ao banco. Na API da cópia, mês a mês, pagador deu 6.187 registros em 5,49 s, CNPJ deu 805 em 9,70 s, os filtros juntos deram 805 em 5,08 s e o período completo deu 53.561 em 1,19 s. Os quatro resultados coincidiram com a referência independente. O teste de login com três leituras e três recebimentos simultâneos também completou login, perfil, presença, renovação e saída. A matriz completa de relatórios permanece aberta.
+
+Na repetição sob carga com o pacote corrigido houve 22 recebimentos confirmados entre o login e a saída. Login, perfil, presença, renovação e saída responderam, com login em 4,55 s e renovação em 7,06 s. A evolução mensal de Faturas retornou 200. A paginação de Coletas e os gráficos de Cotações deram 504. Passaram 53 testes focados do backend, os dois da tela de cobertura e a compilação TypeScript. Nos 90 dias, o resultado de Coletas bateu nos 41 campos dos 14.461 registros finais. Cotações conferiu 17.058 linhas em 54 campos e Contas a Pagar, 15.020 linhas em 31 campos. A confirmação independente por minuta resultou em 52.558 vencedoras para 90 dias, 19.187 para 30 dias e 3.761 para sete dias. A fila e as quatro rotinas de publicação permaneciam indisponíveis para a identidade de consulta nos dois bancos DEV. Checklist com 12 de 21 itens confirmados. A evidência está em docs/catalogos/revisao-incremental-2026-11-18.json.

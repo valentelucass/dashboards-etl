@@ -1,5 +1,7 @@
 # Catalogo de Dashboards e Endpoints
 
+O [inventário operacional de 18/11/2026](inventario-dashboard.md) cruza as páginas atuais com métodos HTTP, permissões, fontes e ensaios. As descrições abaixo preservam o histórico deste catálogo.
+
 Este catalogo descreve rotas e contratos do Dashboard. As views `dbo.vw_*_powerbi` e `dbo.vw_dim_*` usadas por esses contratos pertencem estruturalmente ao ETL; o Dashboard apenas consome em leitura e nao executa DDL cross-database.
 
 ## Dashboards principais

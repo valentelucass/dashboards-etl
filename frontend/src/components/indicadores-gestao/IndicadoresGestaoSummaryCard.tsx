@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
+import { ProgressBar } from '@astryxdesign/core/ProgressBar';
+import { Badge } from '@astryxdesign/core/Badge';
 import type { KpiDefinition } from '../../constants/kpiDictionary';
-import { getGoalToneStyle, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
+import { getGoalToneStyle, goalProgressVariant, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
 import TooltipKpi from '../shared/TooltipKpi';
 import './IndicadoresGestaoOverview.css';
 
@@ -51,12 +53,7 @@ export default function IndicadoresGestaoSummaryCard({
         <strong className="gestao-scorecard-value">{value}</strong>
 
         <div className="gestao-scorecard-state">
-          <span
-            className="gestao-goal-badge"
-            style={{ backgroundColor: style.badgeBg, color: style.badgeText }}
-          >
-            {statusLabel}
-          </span>
+          <Badge className="dashboard-status-badge" label={statusLabel} variant={goalProgressVariant[tone]} />
           <span className="gestao-scorecard-goal">{goalLabel}</span>
         </div>
         <div className="gestao-scorecard-detail">
@@ -68,9 +65,7 @@ export default function IndicadoresGestaoSummaryCard({
               <span>Cobertura da meta</span>
               <span>{widthPct.toLocaleString('pt-BR', { maximumFractionDigits: widthPct % 1 === 0 ? 0 : 1 })}%</span>
             </div>
-            <div className="gestao-goal-track" role="progressbar" aria-label={`${title}: cobertura da meta`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={widthPct} style={{ backgroundColor: style.track }}>
-              <div className="h-full rounded-full transition-all duration-300" style={{ width: `${widthPct}%`, backgroundColor: style.fill }} />
-            </div>
+            <ProgressBar label={`${title}: cobertura da meta`} value={widthPct} variant={goalProgressVariant[tone]} isLabelHidden />
           </div>
         ) : null}
       </article>

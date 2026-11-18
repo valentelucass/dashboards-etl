@@ -1,3 +1,5 @@
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import DashboardButton from "../../shared/DashboardButton";
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ACOES_ETAPA, buscarPendenciasEtapas, type AcaoEtapa, type EtapaOperacional } from '../../../api/endpoints/integracoesOperacionais';
@@ -36,41 +38,41 @@ export default function PendenciasEtapasPanel({ etapas, estado }: { etapas: Etap
         : <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
           {grupos.map(g => <div key={g.nome} className="min-w-0 rounded-xl border border-[var(--color-border)] p-3">
             <h3 className="mb-2 text-sm font-semibold">{g.nome}</h3>
-            <table className="w-full text-xs"><caption className="sr-only">Pendências de {g.nome}</caption>
-              <thead><tr className="border-b border-[var(--color-border)]"><th scope="col" className="py-2 text-left">Próxima ação</th>
-                {g.itens.map(e => <th key={e.etapa} scope="col" className="px-1 text-center">{rotuloEtapa(e)}</th>)}
-              </tr></thead>
-              <tbody>{(Object.keys(ACOES_ETAPA) as AcaoEtapa[]).map(acao => <tr key={acao} className="border-b border-[var(--color-border)] last:border-0">
-                <th scope="row" className="py-2 text-left font-normal">{ACOES_ETAPA[acao]}</th>
-                {g.itens.map(e => <td key={e.etapa} className="px-1 text-center"><button type="button" disabled={e[campos[acao]] === 0}
+            <Table className="w-full text-xs"><caption className="sr-only">Pendências de {g.nome}</caption>
+              <TableHeader><TableRow isHeaderRow className="border-b border-[var(--color-border)]"><TableHeaderCell scope="col" className="py-2 text-left">Próxima ação</TableHeaderCell>
+                {g.itens.map(e => <TableHeaderCell key={e.etapa} scope="col" className="px-1 text-center">{rotuloEtapa(e)}</TableHeaderCell>)}
+              </TableRow></TableHeader>
+              <TableBody>{(Object.keys(ACOES_ETAPA) as AcaoEtapa[]).map(acao => <TableRow key={acao} className="border-b border-[var(--color-border)] last:border-0">
+                <TableHeaderCell scope="row" className="py-2 text-left font-normal">{ACOES_ETAPA[acao]}</TableHeaderCell>
+                {g.itens.map(e => <TableCell key={e.etapa} className="px-1 text-center"><DashboardButton type="button" disabled={e[campos[acao]] === 0}
                   aria-label={`Ver ${ACOES_ETAPA[acao]} de ${g.nome} · ${rotuloEtapa(e)}`}
                   onClick={() => setSelecao({ destino: g.nome, etapa: e.etapa, acao, pagina: 0 })}
                   className={`min-w-9 rounded-md px-2 py-1 tabular-nums disabled:text-[var(--color-text-muted)] enabled:font-semibold enabled:underline enabled:decoration-dotted enabled:underline-offset-4 ${
                     e[campos[acao]] === 0 ? '' : acao === 'INTERVENCAO' ? 'text-negative bg-[var(--color-negative-badge-bg)]' : acao === 'AGUARDANDO_ORIGEM' || acao === 'AGUARDANDO_CONFIRMACAO' ? 'text-[var(--color-warning-badge-text)] bg-[var(--color-warning-badge-bg)]' : 'text-blue-700 dark:text-blue-300 bg-blue-500/10'}`}>
                   {formatarNumero(e[campos[acao]])}
-                </button></td>)}
-              </tr>)}</tbody>
-            </table>
+                </DashboardButton></TableCell>)}
+              </TableRow>)}</TableBody>
+            </Table>
           </div>)}
         </div>}
     <p className="mt-3 text-xs text-[var(--color-text-muted)]">Uma nota pode aparecer nas duas etapas. A conferir inclui histórico sem confirmação datada ou sem classificação. Timeout exige conferência antes de novo envio.</p>
     {selecaoVisivel && <div className="mt-4 border-t border-[var(--color-border)] pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">{selecaoVisivel.destino} · {ACOES_ETAPA[selecaoVisivel.acao]}</h3>
-        <button type="button" onClick={() => setSelecao(null)} className="text-xs underline">Fechar documentos</button></div>
+        <DashboardButton type="button" onClick={() => setSelecao(null)} className="text-xs underline">Fechar documentos</DashboardButton></div>
       {detalhes.isError ? <p role="alert" className="mt-3 text-sm text-negative">Não foi possível carregar os documentos desta seleção.</p>
         : detalhes.isPending ? <p role="status" className="mt-3 text-sm">Carregando documentos…</p>
-          : <><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[650px] text-left text-xs"><caption className="sr-only">Documentos da pendência selecionada</caption>
-            <thead><tr>{['Documento', 'Motivo', 'Acompanhada desde', 'Última avaliação', 'Nova avaliação a partir de'].map(h => <th key={h} scope="col" className="p-2">{h}</th>)}</tr></thead>
-            <tbody>{detalhes.data.itens.map(i => <tr key={`${i.id}:${i.etapa}`} className="border-t border-[var(--color-border)]">
-              <td className="p-2">{i.documento}</td><td className="p-2">{motivos[i.motivo] ?? ACOES_ETAPA[i.acao]}</td>
-              <td className="p-2">{dataHora(i.pendenteDesde)}</td><td className="p-2">{dataHora(i.ultimaAvaliacao)}</td>
-              <td className="p-2">{i.proximaAvaliacao ? dataHora(i.proximaAvaliacao) : 'Sem programação registrada'}</td>
-            </tr>)}</tbody>
-          </table></div>{detalhes.data.itens.length === 0 && <p className="text-sm">Nenhum documento nesta seleção.</p>}
+          : <><div className="mt-3 overflow-x-auto"><Table className="w-full min-w-[650px] text-left text-xs"><caption className="sr-only">Documentos da pendência selecionada</caption>
+            <TableHeader><TableRow isHeaderRow>{['Documento', 'Motivo', 'Acompanhada desde', 'Última avaliação', 'Nova avaliação a partir de'].map(h => <TableHeaderCell key={h} scope="col" className="p-2">{h}</TableHeaderCell>)}</TableRow></TableHeader>
+            <TableBody>{detalhes.data.itens.map(i => <TableRow key={`${i.id}:${i.etapa}`} className="border-t border-[var(--color-border)]">
+              <TableCell className="p-2">{i.documento}</TableCell><TableCell className="p-2">{motivos[i.motivo] ?? ACOES_ETAPA[i.acao]}</TableCell>
+              <TableCell className="p-2">{dataHora(i.pendenteDesde)}</TableCell><TableCell className="p-2">{dataHora(i.ultimaAvaliacao)}</TableCell>
+              <TableCell className="p-2">{i.proximaAvaliacao ? dataHora(i.proximaAvaliacao) : 'Sem programação registrada'}</TableCell>
+            </TableRow>)}</TableBody>
+          </Table></div>{detalhes.data.itens.length === 0 && <p className="text-sm">Nenhum documento nesta seleção.</p>}
           <div className="mt-3 flex flex-wrap items-center justify-end gap-3 text-xs">
             <span>{formatarNumero(detalhes.data.totalElementos)} documentos · página {selecaoVisivel.pagina + 1}</span>
-            <button type="button" disabled={selecaoVisivel.pagina === 0} onClick={() => setSelecao({ ...selecaoVisivel, pagina: selecaoVisivel.pagina - 1 })} className="disabled:opacity-40">Anterior</button>
-            <button type="button" disabled={(selecaoVisivel.pagina + 1) * 25 >= detalhes.data.totalElementos} onClick={() => setSelecao({ ...selecaoVisivel, pagina: selecaoVisivel.pagina + 1 })} className="disabled:opacity-40">Próxima</button>
+            <DashboardButton type="button" disabled={selecaoVisivel.pagina === 0} onClick={() => setSelecao({ ...selecaoVisivel, pagina: selecaoVisivel.pagina - 1 })} className="disabled:opacity-40">Anterior</DashboardButton>
+            <DashboardButton type="button" disabled={(selecaoVisivel.pagina + 1) * 25 >= detalhes.data.totalElementos} onClick={() => setSelecao({ ...selecaoVisivel, pagina: selecaoVisivel.pagina + 1 })} className="disabled:opacity-40">Próxima</DashboardButton>
           </div><p className="mt-2 text-xs text-[var(--color-text-muted)]">Horários de Brasília. A programação indica quando a reavaliação pode ocorrer; não garante envio. A idade anterior ao início do acompanhamento não é inferida.</p></>}
     </div>}
   </section>;

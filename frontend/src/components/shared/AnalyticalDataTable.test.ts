@@ -51,8 +51,9 @@ describe('AnalyticalDataTable', () => {
   it('renderiza segunda linha no thead para filtros por coluna', () => {
     const html = renderTabela();
 
-    expect((html.match(/<thead>/g) ?? []).length).toBe(1);
-    expect((html.match(/<tr/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    const header = html.match(/<thead\b[^>]*>([\s\S]*?)<\/thead>/)?.[1];
+    expect(header).toBeDefined();
+    expect((header?.match(/<tr\b/g) ?? []).length).toBe(2);
     expect(html).toContain('placeholder="ID"');
     expect(html).toContain('placeholder="Cliente"');
     expect(html).toContain('placeholder="Valor"');
@@ -116,7 +117,7 @@ describe('AnalyticalDataTable', () => {
 
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('Atualizando...');
-    expect(html).toContain('<select disabled=""');
+    expect(html).toMatch(/role="combobox"[^>]*aria-disabled="true"/);
     expect(html).toContain('role="status"');
   });
 

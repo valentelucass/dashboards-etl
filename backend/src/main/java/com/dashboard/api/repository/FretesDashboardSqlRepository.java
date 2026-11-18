@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.model.VisaoFretesEntity;
 import com.dashboard.api.service.acesso.EscopoFilialService;
@@ -28,7 +29,7 @@ public class FretesDashboardSqlRepository {
     private final EscopoFilialService escopoFilialService;
 
     public FretesDashboardSqlRepository(
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             EscopoFilialService escopoFilialService
     ) {
         this.jdbcTemplate = jdbcTemplate;

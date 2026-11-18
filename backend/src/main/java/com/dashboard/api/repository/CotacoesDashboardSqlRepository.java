@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.cotacoes.CotacaoResumoDTO;
@@ -23,7 +24,10 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.stereotype.Repository;
@@ -45,7 +49,7 @@ public class CotacoesDashboardSqlRepository {
     private final EscopoFilialService escopoFilialService;
 
     public CotacoesDashboardSqlRepository(
-            NamedParameterJdbcOperations jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcOperations jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder,
             EscopoFilialService escopoFilialService
     ) {
@@ -192,16 +196,92 @@ public class CotacoesDashboardSqlRepository {
                 Set.of()
         );
 
+        String sql = baseMetricasSql(source) + """
+                , grupos AS (
+                    SELECT CASE WHEN GROUPING(status_exibicao) = 0 THEN 0
+                                WHEN GROUPING(trecho) = 0 THEN 1
+                                WHEN GROUPING(motivo_perda) = 0 THEN 2
+                                WHEN GROUPING(cliente_pagador) = 0 THEN 3
+                                WHEN GROUPING(uf_origem) = 0 THEN 4
+                                WHEN GROUPING(uf_destino) = 0 THEN 5
+                                ELSE 6 END AS grupo,
+                           status_exibicao, trecho, motivo_perda, cliente_pagador,
+                           uf_origem, uf_destino, tipo_operacao_normalizado,
+                           -- O mesmo motivo pode chegar com grafias que só diferem em maiúsculas.
+                           CASE WHEN GROUPING(motivo_perda) = 0
+                                THEN MIN(motivo_perda COLLATE Latin1_General_100_BIN2) END AS motivo_exibicao,
+                           COUNT(1) AS total,
+                           SUM(valor_frete) AS valor,
+                           SUM(CASE WHEN %1$s THEN valor_frete ELSE 0 END) AS valor_convertido,
+                           SUM(CASE WHEN %1$s THEN 1 ELSE 0 END) AS convertidas,
+                           SUM(CASE WHEN %2$s THEN 1 ELSE 0 END) AS reprovadas
+                    FROM base_metricas
+                    GROUP BY GROUPING SETS (
+                        (status_exibicao), (trecho), (motivo_perda), (cliente_pagador),
+                        (uf_origem), (uf_destino), (tipo_operacao_normalizado)
+                    )
+                ), series AS (
+                    SELECT mapa.grafico, mapa.ordenar_por_total, g.motivo_exibicao,
+                           g.status_exibicao, g.trecho, g.motivo_perda, g.cliente_pagador,
+                           g.uf_origem, g.uf_destino, g.tipo_operacao_normalizado,
+                           CASE WHEN mapa.perdas = 1 THEN g.reprovadas ELSE g.total END AS total,
+                           CAST(CASE WHEN mapa.perdas = 1 THEN 0 ELSE g.valor END AS decimal(19,2)) AS valor,
+                           CAST(CASE WHEN mapa.agrupado = 1 THEN g.valor_convertido ELSE 0 END AS decimal(19,2)) AS valor_convertido,
+                           g.convertidas, g.reprovadas
+                    FROM grupos g
+                    JOIN (VALUES
+                        ('FUNIL', 0, 0, 0, 1),
+                        ('CORREDORES', 1, 0, 0, 0),
+                        ('MOTIVOS_PERDA', 2, 1, 0, 1),
+                        ('TRECHOS', 1, 0, 1, 0),
+                        ('UF_ORIGEM', 4, 0, 1, 0),
+                        ('UF_DESTINO', 5, 0, 1, 0),
+                        ('TIPOS_OPERACAO', 6, 0, 1, 0),
+                        ('PERDAS_CLIENTE', 3, 1, 0, 1),
+                        ('PERDAS_TRECHO', 1, 1, 0, 1)
+                    ) mapa(grafico, grupo, perdas, agrupado, ordenar_por_total) ON mapa.grupo = g.grupo
+                    WHERE mapa.perdas = 0 OR g.reprovadas > 0
+                ), ordenado AS (
+                    SELECT *, ROW_NUMBER() OVER (
+                        PARTITION BY grafico
+                        ORDER BY CASE WHEN ordenar_por_total = 1 THEN CAST(total AS decimal(19,2)) ELSE valor END DESC,
+                                 status_exibicao, trecho, motivo_perda, cliente_pagador,
+                                 uf_origem, uf_destino, tipo_operacao_normalizado
+                    ) AS ordem
+                    FROM series
+                )
+                SELECT grafico, total, valor, valor_convertido, convertidas, reprovadas,
+                       COALESCE(status_exibicao COLLATE DATABASE_DEFAULT, trecho COLLATE DATABASE_DEFAULT,
+                                motivo_exibicao COLLATE DATABASE_DEFAULT, cliente_pagador COLLATE DATABASE_DEFAULT,
+                                uf_origem COLLATE DATABASE_DEFAULT, uf_destino COLLATE DATABASE_DEFAULT,
+                                tipo_operacao_normalizado COLLATE DATABASE_DEFAULT) AS nome
+                FROM ordenado
+                WHERE grafico = 'FUNIL' OR ordem <= 10
+                ORDER BY grafico, ordem
+                OPTION (MAXDOP 1, MAX_GRANT_PERCENT = 0.02, OPTIMIZE FOR (@linhasGraficos = 64))
+                END
+                """.formatted(STATUS_CONVERTIDA_SQL, STATUS_REPROVADA_SQL);
+
+        Map<Grafico, List<MedidaGrafico>> graficos = jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new MedidaGrafico(
+                Grafico.valueOf(rs.getString("grafico")),
+                rs.getString("nome"),
+                rs.getInt("total"),
+                decimal(rs.getBigDecimal("valor")),
+                decimal(rs.getBigDecimal("valor_convertido")),
+                rs.getInt("convertidas"),
+                rs.getInt("reprovadas")
+        )).stream().collect(Collectors.groupingBy(MedidaGrafico::grafico));
+
         return new CotacoesChartsDTO(
-              buscarFunil(source),
-              buscarCorredoresMaisValiosos(source),
-              buscarPerdas(source, "motivo_perda", "motivo"),
-              buscarAgrupamentos(source, "trecho", "nome"),
-              buscarAgrupamentos(source, "uf_origem", "nome"),
-              buscarAgrupamentos(source, "uf_destino", "nome"),
-              buscarAgrupamentos(source, "tipo_operacao_normalizado", "nome"),
-              buscarPerdas(source, "cliente_pagador", "motivo"),
-              buscarPerdas(source, "trecho", "motivo")
+                mapearGrafico(graficos, Grafico.FUNIL, linha -> new CotacoesFunilDTO(linha.nome(), linha.total(), linha.valor())),
+                mapearGrafico(graficos, Grafico.CORREDORES, linha -> new CotacoesCorredorValiosoDTO(linha.nome(), linha.valor(), linha.total())),
+                mapearGrafico(graficos, Grafico.MOTIVOS_PERDA, MedidaGrafico::perda),
+                mapearGrafico(graficos, Grafico.TRECHOS, MedidaGrafico::agrupamento),
+                mapearGrafico(graficos, Grafico.UF_ORIGEM, MedidaGrafico::agrupamento),
+                mapearGrafico(graficos, Grafico.UF_DESTINO, MedidaGrafico::agrupamento),
+                mapearGrafico(graficos, Grafico.TIPOS_OPERACAO, MedidaGrafico::agrupamento),
+                mapearGrafico(graficos, Grafico.PERDAS_CLIENTE, MedidaGrafico::perda),
+                mapearGrafico(graficos, Grafico.PERDAS_TRECHO, MedidaGrafico::perda)
         );
     }
 
@@ -448,108 +528,63 @@ public class CotacoesDashboardSqlRepository {
         ));
     }
 
-    private List<CotacoesFunilDTO> buscarFunil(DashboardExportSqlBuilder.ExportSql source) {
-        String sql = baseMetricasSql(source) + """
-                SELECT
-                    status_exibicao AS etapa,
-                    COUNT(1) AS total,
-                    CAST(COALESCE(SUM(valor_frete), 0) AS DECIMAL(19,2)) AS valor
-                FROM base_metricas
-                GROUP BY status_exibicao
-                ORDER BY total DESC, etapa
-                """;
-
-        return jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new CotacoesFunilDTO(
-                rs.getString("etapa"),
-                rs.getInt("total"),
-                decimal(rs.getBigDecimal("valor"))
-        ));
-    }
-
-    private List<CotacoesCorredorValiosoDTO> buscarCorredoresMaisValiosos(DashboardExportSqlBuilder.ExportSql source) {
-        String sql = baseMetricasSql(source) + """
-                SELECT TOP (10)
-                    trecho,
-                    CAST(COALESCE(SUM(valor_frete), 0) AS DECIMAL(19,2)) AS valor_frete,
-                    COUNT(1) AS cotacoes
-                FROM base_metricas
-                GROUP BY trecho
-                ORDER BY valor_frete DESC, trecho
-                """;
-
-        return jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new CotacoesCorredorValiosoDTO(
-                rs.getString("trecho"),
-                decimal(rs.getBigDecimal("valor_frete")),
-                rs.getInt("cotacoes")
-        ));
-    }
-
-    private List<CotacoesMotivoPerdaDTO> buscarPerdas(
-            DashboardExportSqlBuilder.ExportSql source,
-            String campo,
-            String alias
+    private static <T> List<T> mapearGrafico(
+            Map<Grafico, List<MedidaGrafico>> graficos,
+            Grafico grafico,
+            Function<MedidaGrafico, T> mapper
     ) {
-        String sql = baseMetricasSql(source) + """
-                SELECT TOP (10)
-                    %1$s AS %2$s,
-                    COUNT(1) AS total
-                FROM base_metricas
-                WHERE %3$s
-                GROUP BY %1$s
-                ORDER BY total DESC, %1$s
-                """.formatted(campo, alias, STATUS_REPROVADA_SQL);
-
-        return jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new CotacoesMotivoPerdaDTO(
-                rs.getString(alias),
-                rs.getInt("total")
-        ));
+        return graficos.getOrDefault(grafico, List.of()).stream().map(mapper).toList();
     }
 
-    private List<CotacoesAgrupamentoDTO> buscarAgrupamentos(
-            DashboardExportSqlBuilder.ExportSql source,
-            String campo,
-            String alias
-    ) {
-        String sql = baseMetricasSql(source) + """
-                SELECT TOP (10)
-                    %1$s AS %2$s,
-                    CAST(COALESCE(SUM(valor_frete), 0) AS DECIMAL(19,2)) AS valor_potencial,
-                    CAST(COALESCE(SUM(CASE WHEN %3$s THEN valor_frete ELSE 0 END), 0) AS DECIMAL(19,2)) AS valor_convertido,
-                    COUNT(1) AS cotacoes,
-                    SUM(CASE WHEN %3$s THEN 1 ELSE 0 END) AS convertidas,
-                    SUM(CASE WHEN %4$s THEN 1 ELSE 0 END) AS reprovadas
-                FROM base_metricas
-                GROUP BY %1$s
-                ORDER BY valor_potencial DESC, %1$s
-                """.formatted(campo, alias, STATUS_CONVERTIDA_SQL, STATUS_REPROVADA_SQL);
+    private enum Grafico {
+        FUNIL, CORREDORES, MOTIVOS_PERDA, TRECHOS, UF_ORIGEM, UF_DESTINO, TIPOS_OPERACAO, PERDAS_CLIENTE, PERDAS_TRECHO
+    }
 
-        return jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new CotacoesAgrupamentoDTO(
-                rs.getString(alias),
-                decimal(rs.getBigDecimal("valor_potencial")),
-                decimal(rs.getBigDecimal("valor_convertido")),
-                rs.getInt("cotacoes"),
-                rs.getInt("convertidas"),
-                rs.getInt("reprovadas")
-        ));
+    private record MedidaGrafico(
+            Grafico grafico,
+            String nome,
+            int total,
+            BigDecimal valor,
+            BigDecimal valorConvertido,
+            int convertidas,
+            int reprovadas
+    ) {
+        CotacoesMotivoPerdaDTO perda() {
+            return new CotacoesMotivoPerdaDTO(nome, total);
+        }
+
+        CotacoesAgrupamentoDTO agrupamento() {
+            return new CotacoesAgrupamentoDTO(nome, valor, valorConvertido, total, convertidas, reprovadas);
+        }
     }
 
     private String baseMetricasSql(DashboardExportSqlBuilder.ExportSql source) {
+        // O limite efetivo é o máximo de BIGINT. A estimativa no OPTIMIZE FOR reduz a
+        // reserva inicial de memória para que os gráficos possam concorrer com as tabelas.
         return """
+                IF NOT EXISTS (SELECT 1 %1$s)
+                    SELECT CAST(NULL AS varchar(20)) AS grafico, CAST(NULL AS int) AS total,
+                           CAST(NULL AS decimal(19,2)) AS valor, CAST(NULL AS decimal(19,2)) AS valor_convertido,
+                           CAST(NULL AS int) AS convertidas, CAST(NULL AS int) AS reprovadas,
+                           CAST(NULL AS nvarchar(255)) AS nome WHERE 1 = 0;
+                ELSE
+                BEGIN
+                DECLARE @linhasGraficos bigint = 9223372036854775807;
                 WITH base_filtrada AS (
-                    SELECT *
-                    %s
+                    SELECT TOP (@linhasGraficos) *
+                    %1$s
                 ),
                 base_metricas AS (
                     SELECT
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Status Conversão]))), N''), N'Sem status') AS status_exibicao,
-                        %s AS status_normalizado,
-                        %s AS valor_frete,
+                        %2$s AS status_normalizado,
+                        %3$s AS valor_frete,
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Trecho]))), N''), N'Sem trecho') AS trecho,
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Motivo Perda]))), N''), N'Sem motivo') AS motivo_perda,
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Cliente Pagador]))), N''), N'Sem cliente') AS cliente_pagador,
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(50), [UF Origem]))), N''), N'Sem UF origem') AS uf_origem,
                         COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(50), [UF Destino]))), N''), N'Sem UF destino') AS uf_destino,
-                        %s AS tipo_operacao_normalizado
+                        %4$s AS tipo_operacao_normalizado
                     FROM base_filtrada
                 )
                 """.formatted(

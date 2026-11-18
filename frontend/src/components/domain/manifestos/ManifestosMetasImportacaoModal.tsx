@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { ChangeEvent, DragEvent } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, FileSpreadsheet, UploadCloud, X } from 'lucide-react';
+import { Dialog } from '@astryxdesign/core/Dialog';
+import { FileInput } from '@astryxdesign/core/FileInput';
+import { Text } from '@astryxdesign/core/Text';
+import DashboardButton from "../../shared/DashboardButton";
+import { useMemo, useState } from 'react';
+import { AlertCircle, FileSpreadsheet, X } from 'lucide-react';
 import DataTable, { type ColunaTabela } from '../../shared/DataTable';
 import {
   useBaixarTemplateManifestosMetas,
@@ -111,23 +112,6 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
   const [resultado, setResultado] = useState<ManifestosMetasImportacaoResultado | null>(null);
   const [erroLocal, setErroLocal] = useState('');
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    }
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onClose]);
-
   async function processarArquivo(arquivo: File) {
     const nome = arquivo.name.toLowerCase();
     if (!nome.endsWith('.xlsx') && !nome.endsWith('.xls') && !nome.endsWith('.csv')) {
@@ -146,24 +130,6 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
       setPreview(null);
       setErroLocal(getApiErrorMessage(error, 'Não foi possível pré-validar a planilha de metas.'));
     }
-  }
-
-  async function handleFileInput(event: ChangeEvent<HTMLInputElement>) {
-    const arquivo = event.target.files?.[0];
-    if (!arquivo) {
-      return;
-    }
-    await processarArquivo(arquivo);
-    event.target.value = '';
-  }
-
-  async function handleDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    const arquivo = event.dataTransfer.files?.[0];
-    if (!arquivo) {
-      return;
-    }
-    await processarArquivo(arquivo);
   }
 
   async function handleBaixarTemplate() {
@@ -253,38 +219,16 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
     },
   ];
 
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
-  return createPortal(
-    <AnimatePresence>
-      <motion.div
-        key="manifestos-metas-importacao-backdrop"
-        className="fixed inset-0 z-[80] bg-slate-950/45 backdrop-blur-[2px]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-      />
-
-      <motion.div
-        key="manifestos-metas-importacao-dialog"
-        role="dialog"
-        aria-modal="true"
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 18 }}
-        className="fixed inset-x-4 bottom-4 top-4 z-[81] mx-auto flex max-w-7xl flex-col overflow-hidden rounded-[28px] border shadow-2xl"
-        style={SURFACE_STYLE}
-      >
+  return (
+    <Dialog isOpen purpose="info" aria-labelledby="manifestos-import-title" width="min(80rem, calc(100vw - 1.5rem))" maxHeight="calc(100dvh - 1.5rem)" padding={0}
+      onOpenChange={open => { if (!open) onClose(); }}>
         <div className="flex items-start justify-between gap-4 border-b px-6 py-5" style={{ borderColor: 'var(--color-border)' }}>
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>
               <FileSpreadsheet size={18} />
               Importação de metas de manifestos
             </div>
-            <h2 className="mt-1 text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
+            <h2 id="manifestos-import-title" className="mt-1 text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
               Planilha com preview por filial, contrato e classificação
             </h2>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
@@ -292,7 +236,7 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
             </p>
           </div>
 
-          <button
+          <DashboardButton
             type="button"
             onClick={onClose}
             className="rounded-xl border p-2 transition-opacity hover:opacity-80"
@@ -300,7 +244,7 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
             aria-label="Fechar importação"
           >
             <X size={18} />
-          </button>
+          </DashboardButton>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
@@ -316,7 +260,7 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <button
+                  <DashboardButton
                     type="button"
                     onClick={() => void handleBaixarTemplate()}
                     disabled={baixarTemplate.isPending}
@@ -324,36 +268,15 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
                     style={SECONDARY_BUTTON_STYLE}
                   >
                     {baixarTemplate.isPending ? 'Baixando...' : 'Baixar planilha modelo'}
-                  </button>
-                  <label
-                    className="inline-flex cursor-pointer items-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
-                    style={PRIMARY_BUTTON_STYLE}
-                  >
-                    Selecionar arquivo
-                    <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(event) => void handleFileInput(event)} />
-                  </label>
+                  </DashboardButton>
                 </div>
               </div>
 
-              <div
-                className="mt-4 rounded-3xl border border-dashed p-6 text-center"
-                style={{
-                  borderColor: 'var(--color-primary)',
-                  backgroundColor: 'var(--color-bg)',
-                }}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => void handleDrop(event)}
-              >
-                <UploadCloud className="mx-auto mb-3" size={24} style={{ color: 'var(--color-primary)' }} />
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                  Arraste o Excel ou CSV aqui
-                </p>
-                <p className="mt-1 text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-                  Filial em branco ou GLOBAL vira meta global. Classificação em branco, GERAL ou GLOBAL vira meta geral.
-                </p>
-                <p className="mt-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  {arquivoSelecionado ? `Arquivo atual: ${arquivoSelecionado.name}` : 'Nenhum arquivo selecionado ainda.'}
-                </p>
+              <div className="mt-4 space-y-2 min-w-0">
+                <FileInput mode="dropzone" label="Selecionar planilha" accept=".xlsx,.xls,.csv" value={null}
+                  width="100%" placeholder="Selecione ou arraste a planilha" description="Filial em branco ou GLOBAL vira meta global. Classificação em branco, GERAL ou GLOBAL vira meta geral."
+                  onChange={file => { if (file instanceof File) void processarArquivo(file); }} />
+                {arquivoSelecionado && <Text as="p" size="sm" color="secondary" className="break-all">Arquivo atual: {arquivoSelecionado.name}</Text>}
               </div>
 
               {erroLocal && (
@@ -381,7 +304,7 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
                 />
 
                 <div className="flex flex-wrap gap-3">
-                  <button
+                  <DashboardButton
                     type="button"
                     onClick={() => void handleImportar()}
                     disabled={!preview.podeImportar || importacao.isPending || !arquivoSelecionado}
@@ -389,15 +312,15 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
                     style={PRIMARY_BUTTON_STYLE}
                   >
                     {importacao.isPending ? 'Importando agora...' : 'Importar agora'}
-                  </button>
-                  <button
+                  </DashboardButton>
+                  <DashboardButton
                     type="button"
                     onClick={() => void handleBaixarTemplate()}
                     className="rounded-xl border px-4 py-2.5 text-sm font-medium"
                     style={SECONDARY_BUTTON_STYLE}
                   >
                     Baixar modelo novamente
-                  </button>
+                  </DashboardButton>
                 </div>
               </>
             )}
@@ -430,8 +353,6 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
             )}
           </div>
         </div>
-      </motion.div>
-    </AnimatePresence>,
-    document.body,
+    </Dialog>
   );
 }

@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.FiltroConsultaDTO;
@@ -38,7 +39,7 @@ public class EtlSaudeSqlRepository {
     private final DashboardExportSqlBuilder sqlBuilder;
 
     public EtlSaudeSqlRepository(
-            NamedParameterJdbcOperations jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcOperations jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder
     ) {
         this.jdbcTemplate = jdbcTemplate;

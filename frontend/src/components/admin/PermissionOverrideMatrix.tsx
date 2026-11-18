@@ -1,3 +1,6 @@
+import { Badge } from '@astryxdesign/core/Badge';
+import { Card } from '@astryxdesign/core/Card';
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import type {
   PermissionCatalogItem,
   PermissionMap,
@@ -42,27 +45,6 @@ function getToneSurfaceStyle(color: string) {
   };
 }
 
-function getToneBadgeStyle(color: string) {
-  if (color === '#ef4444') {
-    return {
-      backgroundColor: 'rgba(220, 38, 38, 0.14)',
-      color: '#dc2626',
-    };
-  }
-
-  if (color === '#10b981') {
-    return {
-      backgroundColor: 'rgba(22, 163, 74, 0.14)',
-      color: '#15803d',
-    };
-  }
-
-  return {
-    backgroundColor: 'rgba(33, 71, 138, 0.14)',
-    color,
-  };
-}
-
 export default function PermissionOverrideMatrix({
   catalogo,
   baseline,
@@ -88,7 +70,7 @@ export default function PermissionOverrideMatrix({
               };
 
         return (
-          <div
+          <Card padding={0}
             key={item.chave}
             className={`flex h-[156px] min-w-0 flex-[1_1_17rem] flex-col rounded-xl border p-3.5 ${disabled ? 'opacity-60' : ''}`}
             style={cardStyle}
@@ -99,65 +81,19 @@ export default function PermissionOverrideMatrix({
               {item.rota && <div className="mt-1 truncate text-xs leading-4" title={item.rota} style={{ color: 'var(--color-text-muted)' }}>{item.rota}</div>}
             </div>
 
-            <div className="mt-auto flex gap-1.5 whitespace-nowrap text-xs">
-              <span
-                className="min-w-0 truncate rounded-full px-2 py-1 font-medium"
-                title={`Herdado: ${herdado ? 'permitido' : 'negado'}`}
-                style={
-                  herdado
-                    ? getToneBadgeStyle('var(--color-primary)')
-                    : {
-                        backgroundColor: 'rgba(71, 85, 105, 0.12)',
-                        color: 'var(--color-text-subtle)',
-                      }
-                }
-              >
-                Herdado: {herdado ? 'permitido' : 'negado'}
-              </span>
-              <span
-                className="min-w-0 truncate rounded-full px-2 py-1 font-medium"
-                title={`Final: ${acessoFinal ? 'permitido' : 'negado'}`}
-                style={acessoFinal ? getToneBadgeStyle('#10b981') : getToneBadgeStyle('#ef4444')}
-              >
-                Final: {acessoFinal ? 'permitido' : 'negado'}
-              </span>
+            <div className="mt-auto flex flex-wrap gap-1.5">
+              <Badge label={`Herdado: ${herdado ? 'permitido' : 'negado'}`} variant={herdado ? 'info' : 'neutral'} />
+              <Badge label={`Final: ${acessoFinal ? 'permitido' : 'negado'}`} variant={acessoFinal ? 'success' : 'error'} />
             </div>
 
-            <div className="mt-2.5 flex items-center gap-1.5">
-              {OPCOES.map((opcao) => {
-                const ativo = valor[item.chave] === opcao.valor;
-                return (
-                  <button
-                    key={opcao.valor}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() =>
-                      onChange({
-                        ...valor,
-                        [item.chave]: opcao.valor,
-                      })
-                    }
-                    className="rounded-full border px-[clamp(0.25rem,1.5vw,0.75rem)] py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed"
-                    style={
-                      ativo
-                        ? {
-                            backgroundColor: 'var(--color-primary)',
-                            borderColor: 'var(--color-primary)',
-                            color: '#ffffff',
-                          }
-                        : {
-                            backgroundColor: 'var(--color-card)',
-                            borderColor: 'var(--color-border)',
-                            color: 'var(--color-text)',
-                          }
-                    }
-                  >
-                    {opcao.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            <SegmentedControl label={item.nome} value={valor[item.chave] ?? 'inherit'} size="sm" layout="fill"
+              isDisabled={disabled} onChange={value => {
+                const opcao = OPCOES.find(item => item.valor === value);
+                if (opcao) onChange({ ...valor, [item.chave]: opcao.valor });
+              }} className="mt-2.5">
+              {OPCOES.map(opcao => <SegmentedControlItem key={opcao.valor} value={opcao.valor} label={opcao.label} />)}
+            </SegmentedControl>
+          </Card>
         );
       })}
     </div>

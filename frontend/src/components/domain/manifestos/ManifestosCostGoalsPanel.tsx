@@ -1,3 +1,7 @@
+import { DashboardInput } from "../../shared/DashboardTextEntry";
+import DashboardSelector from "../../shared/DashboardSelector";
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import DashboardButton from "../../shared/DashboardButton";
 import { useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AxiosError } from 'axios';
@@ -392,7 +396,7 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <div className="flex min-w-max flex-shrink-0 items-end">
-            <button
+            <DashboardButton
               type="button"
               onClick={() => void handleReplicarMetas()}
               disabled={!podeReplicarMetas || replicarMetas.isPending}
@@ -406,9 +410,9 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
             >
               <Copy size={15} />
               {replicarMetas.isPending ? 'Copiando...' : 'Copiar Metas do Mês Anterior'}
-            </button>
+            </DashboardButton>
           </div>
-          <button
+          <DashboardButton
             type="button"
             onClick={() => setIsImportModalOpen(true)}
             className={`inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-sm font-semibold ${FOCUS_RING_CLASS}`}
@@ -416,8 +420,8 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
           >
             <FileSpreadsheet size={15} />
             Importar Planilha de Metas
-          </button>
-          <button
+          </DashboardButton>
+          <DashboardButton
             type="button"
             onClick={() => void handleBaixarTemplate()}
             disabled={baixarTemplate.isPending}
@@ -426,7 +430,7 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
           >
             <Download size={15} />
             {baixarTemplate.isPending ? 'Baixando...' : 'Baixar Planilha Modelo'}
-          </button>
+          </DashboardButton>
           {isLoading ? (
             <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: 'rgba(37, 99, 235, 0.12)', color: '#1d4ed8' }}>
               Carregando metas
@@ -454,40 +458,40 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
           ) : null}
 
           <div className="grid gap-4 rounded-2xl border p-4 md:grid-cols-[1fr_0.8fr_1.6fr]" style={{ borderColor: 'var(--color-border)' }}>
-            <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+            <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
               Mês
-              <select
+              <DashboardSelector label="Mês"
                 value={mes}
-                onChange={(event) => {
+                onValueChange={selectedValue => {
                   setCostGoalDraft(null);
-                  setMes(Number(event.target.value));
+                  setMes(Number(selectedValue));
                 }}
                 className={`h-11 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
                 style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
               >
                 {MONTHS.map((month) => <option key={month.value} value={month.value}>{month.label}</option>)}
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+              </DashboardSelector>
+            </div>
+            <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
               Ano
-              <select
+              <DashboardSelector label="Ano"
                 value={ano}
-                onChange={(event) => {
+                onValueChange={selectedValue => {
                   setCostGoalDraft(null);
-                  setAno(Number(event.target.value));
+                  setAno(Number(selectedValue));
                 }}
                 className={`h-11 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
                 style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
               >
                 {anos.map((year) => <option key={year} value={year}>{year}</option>)}
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+              </DashboardSelector>
+            </div>
+            <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
               Filial
-              <select
+              <DashboardSelector label="Filial"
                 value={selectedBranchId}
-                onChange={(event) => {
-                  setBranchId(event.target.value);
+                onValueChange={selectedValue => {
+                  setBranchId(selectedValue);
                   setCostGoalDraft(null);
                 }}
                 className={`h-11 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
@@ -506,17 +510,17 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
                 {branchOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
-              </select>
-            </label>
+              </DashboardSelector>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="mt-4 grid gap-4 rounded-2xl border p-4 lg:grid-cols-[1.2fr_1.2fr_1fr_auto]" style={{ borderColor: 'var(--color-border)' }}>
-            <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+            <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
               Tipo de Contrato
-              <select
+              <DashboardSelector label="Tipo de Contrato"
                 value={contractTypeKey}
-                onChange={(event) => {
-                  setContractTypeKey(event.target.value);
+                onValueChange={selectedValue => {
+                  setContractTypeKey(selectedValue);
                   setCostGoalDraft(null);
                 }}
                 className={`h-11 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
@@ -525,14 +529,14 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
                 {contractTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+              </DashboardSelector>
+            </div>
+            <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
               Classificação
-              <select
+              <DashboardSelector label="Classificação"
                 value={classificationKey}
-                onChange={(event) => {
-                  setClassificationKey(event.target.value);
+                onValueChange={selectedValue => {
+                  setClassificationKey(selectedValue);
                   setCostGoalDraft(null);
                 }}
                 className={`h-11 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
@@ -541,11 +545,11 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
                 {classificationOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
+              </DashboardSelector>
+            </div>
+            <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
               Meta Mensal
-              <input
+              <DashboardInput
                 type="text"
                 inputMode="decimal"
                 value={costGoalValue}
@@ -555,9 +559,9 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
                 className={`h-11 rounded-xl border px-3 text-sm tabular-nums ${FOCUS_RING_CLASS}`}
                 style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
               />
-            </label>
+            </div>
             <div className="flex items-end">
-              <button
+              <DashboardButton
                 type="submit"
                 disabled={isSaving || !selectedBranchId}
                 className={`inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
@@ -565,7 +569,7 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
               >
                 <Save size={15} />
                 {isSaving ? 'Salvando...' : 'Salvar'}
-              </button>
+              </DashboardButton>
             </div>
           </form>
 
@@ -579,30 +583,30 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
                   {statusMensagem ?? 'Nenhuma meta cadastrada para a filial selecionada neste mês.'}
                 </p>
               ) : (
-                <table className="min-w-[720px] w-full border-collapse text-sm">
-                  <thead>
-                    <tr style={{ color: 'var(--color-text-subtle)', borderBottom: '1px solid var(--color-border)' }}>
-                      <th className="px-3 py-2 text-left font-semibold">Tipo de Contrato</th>
-                      <th className="px-3 py-2 text-left font-semibold">Classificação</th>
-                      <th className="px-3 py-2 text-right font-semibold">Meta Mensal Cadastrada</th>
-                      <th className="px-3 py-2 text-left font-semibold">Última Atualização</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table className="min-w-[720px] w-full border-collapse text-sm">
+                  <TableHeader>
+                    <TableRow isHeaderRow style={{ color: 'var(--color-text-subtle)', borderBottom: '1px solid var(--color-border)' }}>
+                      <TableHeaderCell className="px-3 py-2 text-left font-semibold">Tipo de Contrato</TableHeaderCell>
+                      <TableHeaderCell className="px-3 py-2 text-left font-semibold">Classificação</TableHeaderCell>
+                      <TableHeaderCell className="px-3 py-2 text-right font-semibold">Meta Mensal Cadastrada</TableHeaderCell>
+                      <TableHeaderCell className="px-3 py-2 text-left font-semibold">Última Atualização</TableHeaderCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {configsDaFilialSelecionada.map((config) => (
-                      <tr
+                      <TableRow
                         key={getConfigRowKey(config)}
                         style={{ borderBottom: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                       >
-                        <td className="px-3 py-3 font-medium">{getConfigContractTypeLabel(config)}</td>
-                        <td className="px-3 py-3">{getConfigClassificationLabel(config)}</td>
-                        <td className="px-3 py-3 text-right font-semibold tabular-nums">{formatGoalCurrency(config.costGoal)}</td>
-                        <td className="px-3 py-3">
+                        <TableCell className="px-3 py-3 font-medium">{getConfigContractTypeLabel(config)}</TableCell>
+                        <TableCell className="px-3 py-3">{getConfigClassificationLabel(config)}</TableCell>
+                        <TableCell className="px-3 py-3 text-right font-semibold tabular-nums">{formatGoalCurrency(config.costGoal)}</TableCell>
+                        <TableCell className="px-3 py-3">
                           <div className="flex items-center justify-between gap-3">
                             <span className="min-w-0 truncate" title={config.updatedByName ?? undefined}>
                               {config.updatedAt ? formatarDataHora(config.updatedAt) : '—'} · {config.updatedByName ?? 'Usuário não identificado'}
                             </span>
-                            <button
+                            <DashboardButton
                               type="button"
                               disabled={isSaving}
                               onClick={() => void handleRemove(config)}
@@ -612,13 +616,13 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
                               style={{ borderColor: '#dc2626', color: '#dc2626' }}
                             >
                               <Trash2 size={14} />
-                            </button>
+                            </DashboardButton>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               )}
             </div>
           </div>

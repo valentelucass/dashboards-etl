@@ -1,3 +1,4 @@
+import type { ProgressBarVariant } from '@astryxdesign/core/ProgressBar';
 import type {
   CubagemMercadoriasSeriePoint,
   HorariosCorteSeriePoint,
@@ -8,6 +9,16 @@ import type {
 
 export type GoalMode = 'atLeast' | 'atMost';
 export type GoalTone = 'positive' | 'warning' | 'negative' | 'neutral' | 'loading' | 'error' | 'empty';
+
+export const goalProgressVariant = {
+  positive: 'success',
+  warning: 'warning',
+  negative: 'error',
+  error: 'error',
+  neutral: 'neutral',
+  loading: 'neutral',
+  empty: 'neutral',
+} satisfies Record<GoalTone, ProgressBarVariant>;
 
 export const GOAL_WARNING_PROGRESS_PCT = 50;
 

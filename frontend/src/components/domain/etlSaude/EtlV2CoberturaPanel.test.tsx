@@ -19,9 +19,12 @@ function abrir() {
 afterEach(() => {
   cleanup();
   vi.resetAllMocks();
+  vi.useRealTimers();
 });
 
 it('exibe a cobertura confirmada e distingue ausência de dado de uma carga vazia', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-18T01:30:00Z'));
   vi.mocked(clienteAxios.get).mockResolvedValue({ data: [
     { entidade: 'COLETAS', template: 6908, campos: 31, diasRecebidos: 1, linhasAtuais: 0,
       primeiraData: '2026-11-02', ultimaData: '2026-11-02', ultimaCaptura: '2026-11-10T01:00:00Z',
@@ -32,6 +35,7 @@ it('exibe a cobertura confirmada e distingue ausência de dado de uma carga vazi
   abrir();
   const coleta = await screen.findByRole('row', { name: /Coletas/ });
   expect(within(coleta).getByText('0')).toBeTruthy();
+  expect(within(coleta).getByText('Último dia coberto há 15 dias')).toBeTruthy();
   expect(within(coleta).getByText(/09\/11\/2026/)).toBeTruthy();
   const ocorrencias = screen.getByRole('row', { name: /Ocorrências/ });
   expect(within(ocorrencias).queryByText('0')).toBeNull();

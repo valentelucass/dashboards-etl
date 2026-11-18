@@ -1,6 +1,10 @@
+import { DateInput } from '@astryxdesign/core/DateInput';
+import { Button } from '@astryxdesign/core/Button';
+import type { ISODateString } from '@astryxdesign/core/Calendar';
 import { useMemo, useState } from 'react';
 import { Info } from 'lucide-react';
 import { normalizarPeriodo } from '../../utils/dateUtils';
+import { formatarData } from '../../utils/formatadores';
 import { DATE_RANGE_PRESETS, resolverPresetAtivo, type DatePreset } from './dateRangePresets';
 
 interface DateRangePickerProps {
@@ -13,10 +17,7 @@ interface DateRangePickerProps {
   helpText?: string;
 }
 
-const inputClass =
-  'cursor-pointer rounded-lg border px-3 py-2 text-sm shadow-sm transition-all duration-150 ' +
-  'hover:border-[var(--color-primary)] focus:border-[var(--color-primary)] ' +
-  'focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]';
+const formatarDataDoFiltro = (value: ISODateString) => formatarData(`${value}T00:00:00`);
 
 export default function DateRangePicker({
   dataInicio,
@@ -88,42 +89,19 @@ export default function DateRangePicker({
       ) : null}
       <div className="date-range-controls flex flex-wrap items-end gap-4">
       {/* Bloco: campos De / Até */}
-      <div className="date-range-inputs flex items-end gap-2">
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="date-inicio"
-            className="text-xs font-medium leading-4"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            De
-          </label>
-          <input
-            id="date-inicio"
-            type="date"
-            value={dataInicio}
-            onChange={(e) => atualizarInicio(e.target.value)}
-            className={inputClass}
-            style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="date-fim"
-            className="text-xs font-medium leading-4"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            Até
-          </label>
-          <input
-            id="date-fim"
-            type="date"
-            value={dataFim}
-            onChange={(e) => atualizarFim(e.target.value)}
-            className={inputClass}
-            style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-          />
-        </div>
+      <div className="date-range-inputs flex flex-wrap items-end gap-2">
+        <DateInput
+          label="De"
+          format={formatarDataDoFiltro}
+          value={dataInicio ? dataInicio as ISODateString : undefined}
+          onChange={(value) => atualizarInicio(value ?? '')}
+        />
+        <DateInput
+          label="Até"
+          format={formatarDataDoFiltro}
+          value={dataFim ? dataFim as ISODateString : undefined}
+          onChange={(value) => atualizarFim(value ?? '')}
+        />
       </div>
 
       {/* Separador visual */}
@@ -146,42 +124,14 @@ export default function DateRangePicker({
             const { label } = preset;
             const ativo = presetAtivo === label;
             return (
-              <button
+              <Button
                 key={label}
-                type="button"
+                label={label}
+                size="sm"
+                variant={ativo ? 'primary' : 'secondary'}
                 onClick={() => aplicarPreset(preset)}
                 aria-pressed={ativo}
-                className="cursor-pointer rounded-lg border px-2.5 py-2 text-xs font-semibold
-                           transition-all duration-150 active:scale-[0.97]
-                           focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                style={
-                  ativo
-                    ? {
-                        backgroundColor: 'var(--color-primary)',
-                        borderColor: 'var(--color-primary)',
-                        color: 'white',
-                      }
-                    : {
-                        backgroundColor: 'var(--color-bg)',
-                        borderColor: 'var(--color-border)',
-                        color: 'var(--color-text-muted)',
-                      }
-                }
-                onMouseEnter={(e) => {
-                  if (!ativo) {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)';
-                    (e.currentTarget as HTMLElement).style.color = 'var(--color-text)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!ativo) {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
-                    (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)';
-                  }
-                }}
-              >
-                {label}
-              </button>
+              />
             );
           })}
         </div>

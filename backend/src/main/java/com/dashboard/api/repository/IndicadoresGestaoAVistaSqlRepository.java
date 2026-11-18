@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.indicadoresgestao.CubagemMercadoriasRowDTO;
 import com.dashboard.api.dto.indicadoresgestao.CubagemMercadoriasSeriePointDTO;
@@ -60,7 +61,7 @@ public class IndicadoresGestaoAVistaSqlRepository {
     private final PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper;
 
     public IndicadoresGestaoAVistaSqlRepository(
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper
     ) {
         this.jdbcTemplate = jdbcTemplate;

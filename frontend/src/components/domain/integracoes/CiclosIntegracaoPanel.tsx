@@ -1,3 +1,7 @@
+import { Collapsible } from '@astryxdesign/core/Collapsible';
+import DashboardSelector from "../../shared/DashboardSelector";
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import DashboardButton from "../../shared/DashboardButton";
 import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Info } from 'lucide-react';
@@ -111,7 +115,7 @@ function Resultado({ ciclo, compacto = false, verificadoEm = 0 }: { ciclo: WorkS
   return <div className={compacto ? 'flex flex-wrap items-center gap-x-2 gap-y-1' : 'space-y-1'}>
     <StatusBadge status={sinalAntigo ? 'SEM_ATUALIZACAO' : statusExibido} tone={impedimentoXml || comPendencias ? 'warning' : undefined} /><p className="text-xs" style={muted}>Conexão {ciclo.conexao} · {duration}</p>
     {sinalAntigo && <p className="w-full text-xs" style={muted}>Sem atualização há mais de 10 minutos. Confira o processo; o término não foi confirmado.</p>}
-    {ciclo.motivoFalha && <details className="w-full max-w-lg text-xs"><summary className="cursor-pointer" style={muted}>Ver ocorrências do ciclo</summary><p className={`mt-1 break-words ${impedimentoXml || comPendencias ? '' : 'text-negative'}`} style={impedimentoXml || comPendencias ? { color: 'var(--color-warning-badge-text)' } : undefined}>{motivoFalhaLegivel(ciclo.motivoFalha)}</p></details>}
+    {ciclo.motivoFalha && <Collapsible className="w-full max-w-lg text-xs" trigger="Ver ocorrências do ciclo"><p className={`mt-1 break-words ${impedimentoXml || comPendencias ? '' : 'text-negative'}`} style={impedimentoXml || comPendencias ? { color: 'var(--color-warning-badge-text)' } : undefined}>{motivoFalhaLegivel(ciclo.motivoFalha)}</p></Collapsible>}
     {ciclo.statusCiclo === 'FALHA' && !ciclo.motivoFalha && <p className="text-xs" style={muted}>Motivo não registrado neste ciclo.</p>}
   </div>;
 }
@@ -162,8 +166,7 @@ function ResultadoXml({ ciclo }: { ciclo: WorkSftpClienteStatus }) {
   </div>;
 }
 
-export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataInicio: string; dataFim: string }) {
-  const [cliente, setCliente] = useState('');
+export default function CiclosIntegracaoPanel({ dataInicio, dataFim, cliente = '' }: { dataInicio: string; dataFim: string; cliente?: string }) {
   const [status, setStatus] = useState('');
   const [origem, setOrigem] = useState('');
   const paginacao = useTabelaPaginadaState(`ciclos:${dataInicio}:${dataFim}:${cliente}:${status}:${origem}`);
@@ -184,7 +187,9 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
   const ciclos = historico.data?.itens ?? empty;
   // Não apresentar uma página filtrada artificialmente quando uma API antiga ignorar o filtro.
   const origemNaoAplicada = Boolean(origem && ciclos.some((item) => item.origemComprovantes !== origem));
+  const clienteNaoAplicado = Boolean(cliente && ciclos.some((item) => item.cliente !== cliente));
   const erroHistorico = historico.isError ? getApiErrorMessage(historico.error, 'Não foi possível carregar o histórico.')
+    : clienteNaoAplicado ? 'O histórico retornado não corresponde à integração selecionada. Os ciclos de outros clientes foram ocultados.'
     : origemNaoAplicada ? origem === 'API_ESL'
       ? 'O servidor não disponibilizou o histórico da API ESL nesta consulta. As linhas de outra origem foram ocultadas; isso não significa ausência de consumo da API.'
       : 'A origem não está disponível neste histórico. Não foi possível aplicar o filtro.' : null;
@@ -193,21 +198,16 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
     <section className="mb-4 min-w-0 space-y-3" aria-labelledby="ciclos-comprovantes-titulo">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="ciclos-comprovantes-titulo" className="text-base font-bold">Ciclos de XML e comprovantes</h2>
+          <h2 id="ciclos-comprovantes-titulo" className="text-base font-bold">{cliente === 'SELIA' ? 'Ciclos de integração · SELIA' : 'Ciclos de XML e comprovantes'}</h2>
           <p className="mt-1 text-xs" style={muted}>Consulta automática a cada minuto com a tela aberta. O progresso depende da última informação registrada pelo processo.</p>
           {!recentes.isError && recentes.dataUpdatedAt > 0 && <p className="mt-1 text-xs" style={muted}>Consulta realizada em {formatarDataHora(new Date(recentes.dataUpdatedAt).toISOString())}.</p>}
         </div>
         <div className="flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold" style={muted}>Cliente
-            <select aria-label="Cliente dos ciclos" className="h-9 min-w-32 rounded-lg border px-2 text-sm" value={cliente} onChange={(event) => setCliente(event.target.value)} style={selectStyle}>
-              <option value="">Todos</option>{todosRecentes.map((item) => <option key={item.cliente} value={item.cliente}>{item.cliente}</option>)}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold" style={muted}>Origem dos comprovantes
-            <select className="h-9 min-w-36 rounded-lg border px-2 text-sm" value={origem} onChange={(event) => setOrigem(event.target.value)} style={selectStyle}>
+          <div className="flex flex-col gap-1 text-xs font-semibold" style={muted}>Origem dos comprovantes
+            <DashboardSelector label="Origem dos comprovantes" className="h-9 min-w-36 rounded-lg border px-2 text-sm" value={origem} onValueChange={selectedValue => setOrigem(selectedValue)} style={selectStyle}>
               <option value="">Todas</option><option value="SFTP">SFTP</option><option value="API_ESL">API ESL</option>
-            </select>
-          </label>
+            </DashboardSelector>
+          </div>
         </div>
       </div>
       {recentes.isError && <p role="alert" className="text-sm text-negative">{getApiErrorMessage(recentes.error, 'Não foi possível carregar a última execução.')}</p>}
@@ -239,38 +239,40 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim }: { dataIni
           </div>
         </article>
       ))}
-      {!recentes.isLoading && !recentes.isError && cards.length === 0 && <p className="text-sm" style={muted}>Nenhum último ciclo disponível para o cliente e a origem selecionados.</p>}
+      {!recentes.isLoading && !recentes.isError && cards.length === 0 && <p className="text-sm" style={muted}>{cliente
+        ? `Nenhum ciclo de ${cliente} disponível neste painel para os filtros selecionados. Consulte também as confirmações e pendências por etapa acima.`
+        : 'Nenhum último ciclo disponível para o cliente e a origem selecionados.'}</p>}
       <div className="overflow-hidden rounded-xl border" style={surface}>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2" style={{ borderColor: 'var(--color-border)' }}>
           <div><h3 className="text-sm font-bold">Histórico de execuções</h3><p className="mt-1 text-xs" style={muted}>Cada linha é um ciclo. Em andamento, os valores são parciais e o período usa o início; nos finalizados, usa o término.</p></div>
-          <label className="flex flex-wrap items-center gap-2 text-xs font-semibold" style={muted}>Resultado da execução
-            <select className="h-9 min-w-32 rounded-lg border px-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)} style={selectStyle}>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold" style={muted}>Resultado da execução
+            <DashboardSelector label="Resultado da execução" className="h-9 min-w-32 rounded-lg border px-2 text-sm" value={status} onValueChange={selectedValue => setStatus(selectedValue)} style={selectStyle}>
               <option value="">Todos</option><option value="EM_EXECUCAO">Em andamento</option><option value="SEM_PENDENCIAS">Finalizado sem pendências no ciclo</option><option value="COM_PENDENCIAS">Finalizado com pendências</option><option value="FALHA_TECNICA">Falha técnica</option><option value="INTERROMPIDO">Interrompido</option><option value="FALHA">Falhas e impedimentos — classificação original</option>
-            </select>
-          </label>
+            </DashboardSelector>
+          </div>
         </div>
         {erroHistorico ? <p role="alert" className="px-4 py-3 text-sm text-negative">{erroHistorico}</p>
           : historico.isLoading ? <p role="status" className="px-4 py-3 text-sm" style={muted}>Carregando histórico…</p>
             : ciclos.length === 0 ? <p className="px-4 py-4 text-center text-sm" style={muted}>{origem === 'API_ESL' ? 'Nenhum ciclo da API ESL disponível para estes filtros. Este histórico atualmente audita o processo SFTP; isso não significa ausência de consumo da API em outros processos.' : 'Nenhuma execução encontrada para o período e filtros selecionados.'}</p>
               : <>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1120px] text-left text-sm">
-                    <thead className="border-b text-xs" style={{ ...muted, borderColor: 'var(--color-border)' }}><tr>
-                      <th scope="col" className="px-4 py-3">Cliente</th><th scope="col" className="px-3 py-3">Finalização / atualização</th><th scope="col" className="px-3 py-3">Execução</th>
-                      <th scope="col" className="px-3 py-3"><Explicacao definition={definitions.origemComprovantesCiclo}><TituloMetrica>Origem dos comprovantes</TituloMetrica></Explicacao></th>
-                      <th scope="col" className="px-3 py-3"><Explicacao definition={definitions.arquivosOrigemCiclo}><TituloMetrica>Arquivos na origem</TituloMetrica></Explicacao></th>
-                      <th scope="col" className="px-3 py-3"><Explicacao definition={definitions.processamentoComprovantesCiclo}><TituloMetrica>Neste ciclo</TituloMetrica></Explicacao></th>
-                      <th scope="col" className="px-4 py-3"><Explicacao definition={definitions.filaComprovantesCiclo}><TituloMetrica>Pendências apuradas</TituloMetrica></Explicacao></th>
-                    </tr></thead>
-                    <tbody>{ciclos.map((ciclo) => <tr key={`${ciclo.cliente}:${ciclo.inicioUltimoCiclo}:${ciclo.fimUltimoCiclo}`} className="border-b align-top last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
-                      <td className="px-4 py-3 font-semibold">{ciclo.cliente}</td><td className="whitespace-nowrap px-3 py-3">{ciclo.statusCiclo === 'EM_EXECUCAO' ? <><p>Em andamento · parcial</p><p className="text-xs" style={muted}>{dataHora(ciclo.atualizadoEm ?? null)}</p></> : dataHora(ciclo.fimUltimoCiclo)}</td><td className="px-3 py-3"><Resultado ciclo={ciclo} verificadoEm={historico.dataUpdatedAt} /></td>
-                      <td className="px-3 py-3"><Origem ciclo={ciclo} /></td><td className="px-3 py-3"><Metricas ciclo={ciclo} grupo="arquivos" /></td><td className="px-3 py-3"><Metricas ciclo={ciclo} grupo="processamento" /></td><td className="px-4 py-3"><Metricas ciclo={ciclo} grupo="fila" /></td>
-                    </tr>)}</tbody>
-                  </table>
+                  <Table className="w-full min-w-[1120px] text-left text-sm">
+                    <TableHeader className="border-b text-xs" style={{ ...muted, borderColor: 'var(--color-border)' }}><TableRow isHeaderRow>
+                      <TableHeaderCell scope="col" className="px-4 py-3">Cliente</TableHeaderCell><TableHeaderCell scope="col" className="px-3 py-3">Finalização / atualização</TableHeaderCell><TableHeaderCell scope="col" className="px-3 py-3">Execução</TableHeaderCell>
+                      <TableHeaderCell scope="col" className="px-3 py-3"><Explicacao definition={definitions.origemComprovantesCiclo}><TituloMetrica>Origem dos comprovantes</TituloMetrica></Explicacao></TableHeaderCell>
+                      <TableHeaderCell scope="col" className="px-3 py-3"><Explicacao definition={definitions.arquivosOrigemCiclo}><TituloMetrica>Arquivos na origem</TituloMetrica></Explicacao></TableHeaderCell>
+                      <TableHeaderCell scope="col" className="px-3 py-3"><Explicacao definition={definitions.processamentoComprovantesCiclo}><TituloMetrica>Neste ciclo</TituloMetrica></Explicacao></TableHeaderCell>
+                      <TableHeaderCell scope="col" className="px-4 py-3"><Explicacao definition={definitions.filaComprovantesCiclo}><TituloMetrica>Pendências apuradas</TituloMetrica></Explicacao></TableHeaderCell>
+                    </TableRow></TableHeader>
+                    <TableBody>{ciclos.map((ciclo) => <TableRow key={`${ciclo.cliente}:${ciclo.inicioUltimoCiclo}:${ciclo.fimUltimoCiclo}`} className="border-b align-top last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
+                      <TableCell className="px-4 py-3 font-semibold">{ciclo.cliente}</TableCell><TableCell className="whitespace-nowrap px-3 py-3">{ciclo.statusCiclo === 'EM_EXECUCAO' ? <><p>Em andamento · parcial</p><p className="text-xs" style={muted}>{dataHora(ciclo.atualizadoEm ?? null)}</p></> : dataHora(ciclo.fimUltimoCiclo)}</TableCell><TableCell className="px-3 py-3"><Resultado ciclo={ciclo} verificadoEm={historico.dataUpdatedAt} /></TableCell>
+                      <TableCell className="px-3 py-3"><Origem ciclo={ciclo} /></TableCell><TableCell className="px-3 py-3"><Metricas ciclo={ciclo} grupo="arquivos" /></TableCell><TableCell className="px-3 py-3"><Metricas ciclo={ciclo} grupo="processamento" /></TableCell><TableCell className="px-4 py-3"><Metricas ciclo={ciclo} grupo="fila" /></TableCell>
+                    </TableRow>)}</TableBody>
+                  </Table>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm" style={{ borderColor: 'var(--color-border)' }}>
                   <span style={muted}>{formatarNumero(historico.data?.paginacao.totalElementos ?? 0)} execuções · {paginacao.tamanhoPagina} por página</span>
-                  <div className="flex items-center gap-3"><button type="button" className="rounded-lg border px-3 py-1.5 disabled:opacity-50" style={surface} disabled={paginacao.pagina <= 1} onClick={() => paginacao.setPagina(paginacao.pagina - 1)}>Anterior</button><span style={muted}>Página {paginacao.pagina} de {historico.data?.paginacao.totalPaginas}</span><button type="button" className="rounded-lg border px-3 py-1.5 disabled:opacity-50" style={surface} disabled={historico.data?.paginacao.ultimaPagina ?? true} onClick={() => paginacao.setPagina(paginacao.pagina + 1)}>Próxima</button></div>
+                  <div className="flex items-center gap-3"><DashboardButton type="button" className="rounded-lg border px-3 py-1.5 disabled:opacity-50" style={surface} disabled={paginacao.pagina <= 1} onClick={() => paginacao.setPagina(paginacao.pagina - 1)}>Anterior</DashboardButton><span style={muted}>Página {paginacao.pagina} de {historico.data?.paginacao.totalPaginas}</span><DashboardButton type="button" className="rounded-lg border px-3 py-1.5 disabled:opacity-50" style={surface} disabled={historico.data?.paginacao.ultimaPagina ?? true} onClick={() => paginacao.setPagina(paginacao.pagina + 1)}>Próxima</DashboardButton></div>
                 </div>
               </>}
       </div>

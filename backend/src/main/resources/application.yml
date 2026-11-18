@@ -28,6 +28,10 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       connection-init-sql: SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON
+      data-source-properties:
+        # O driver só aplica cancelQueryTimeout com queryTimeout definido na conexão.
+        queryTimeout: 30
+        cancelQueryTimeout: 5
 
   # O timeout JPA não alcança JdbcTemplate/NamedParameterJdbcTemplate.
   jdbc:
@@ -90,6 +94,8 @@ auth:
 
 dashboard:
   consultas-analiticas:
+    conexoes: 3
+    espera-conexao-ms: 2000
     max-concorrentes: 3
   periodo:
     zone-id: ${DASHBOARD_PERIODO_ZONE_ID:America/Sao_Paulo}

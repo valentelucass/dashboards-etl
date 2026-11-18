@@ -1,60 +1,83 @@
+import './home.css';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Badge } from '@astryxdesign/core/Badge';
+import { Button } from '@astryxdesign/core/Button';
+import { ClickableCard } from '@astryxdesign/core/ClickableCard';
+import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { Heading } from '@astryxdesign/core/Heading';
+import { Popover } from '@astryxdesign/core/Popover';
+import { Spinner } from '@astryxdesign/core/Spinner';
+import { Text } from '@astryxdesign/core/Text';
 import { useState } from 'react';
 import { Bell, ChevronDown, X } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useHomeComunicados, useLerHomeComunicado } from '../../hooks/queries/useHomeComunicados';
 
-export default function CommunicationsBell({ className = '' }: { className?: string }) {
+export default function CommunicationsBell({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const query = useHomeComunicados();
   const leitura = useLerHomeComunicado();
   const notices = query.data ?? [];
-  const unreadCount = notices.filter((notice) => notice.unread).length;
-  const unreadLabel = unreadCount === 1 ? '1 não lida' : `${unreadCount} não lidas`;
-  const label = unreadCount > 0 ? `Comunicações: ${unreadLabel}` : 'Comunicações';
+  const unreadCount = notices.filter(notice => notice.unread).length;
+  const unreadLabel = unreadCount === 1 ? '1 não lida' : unreadCount + ' não lidas';
+  const label = unreadCount ? 'Comunicações: ' + unreadLabel : 'Comunicações';
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button type="button" aria-label={label} title={label}
-          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl outline-none hover:bg-[var(--color-bg)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${className}`}
-          style={{ color: unreadCount ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>
-          <Bell size={18} aria-hidden="true" />
-          {unreadCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{unreadCount > 99 ? '99+' : unreadCount}</span>}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={10} collisionPadding={12} className="z-[120] flex flex-col"
-        aria-label="Comunicados do Command Center"
-        style={{ width: 'min(400px, calc(100vw - 24px))', minWidth: 0, padding: 0, maxHeight: 'min(480px, calc(100dvh - 24px), var(--radix-popover-content-available-height, 480px))' }}>
-        <div className="flex shrink-0 items-center justify-between border-b p-4" style={{ borderColor: 'var(--color-border)' }}>
-          <div><h2 className="text-sm font-bold">Comunicações</h2><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{query.isError ? 'Lista indisponível' : query.isPending ? 'Consultando novidades…' : unreadCount ? unreadLabel : 'Você está em dia'}</p></div>
-          <button type="button" onClick={() => setOpen(false)} aria-label="Fechar comunicações" className="rounded-lg p-2 focus-visible:ring-2"><X size={16} /></button>
+    <Popover isOpen={open} onOpenChange={setOpen} label="Comunicados" alignment="end" width="min(25rem, calc(100vw - 24px))"
+      content={
+        <div className="home-fields min-w-0">
+          <div className="home-communications-heading">
+            <div className="min-w-0">
+              <Heading level={2}>Comunicações</Heading>
+              <Text as="p" color="secondary" size="sm">{query.isError ? 'Lista indisponível' : query.isPending ? 'Consultando novidades…' : unreadCount ? unreadLabel : 'Você está em dia'}</Text>
+            </div>
+            <Button label="Fechar comunicações" isIconOnly variant="ghost" size="sm"
+              icon={<X size={16} />} onClick={() => setOpen(false)} />
+          </div>
+          <div aria-label="Lista de comunicações" className="home-fields max-h-[min(24rem,60dvh)] overflow-y-auto">
+            {query.isPending && <Spinner size="sm" label="Carregando comunicações" />}
+            {query.isError && (
+              <Banner role="alert" status="error" title="Não foi possível atualizar as comunicações."
+                endContent={<Button label="Tentar novamente" variant="ghost" size="sm" onClick={() => void query.refetch()} />} />
+            )}
+            {leitura.isError && <Banner role="alert" status="error" title="Não foi possível registrar a leitura. Abra o comunicado novamente para tentar." />}
+            {query.isSuccess && notices.length === 0 && <EmptyState title="Nenhum comunicado publicado" isCompact />}
+            {notices.map(notice => {
+              const expanded = expandedId === notice.id;
+              return (
+                <ClickableCard key={notice.id} padding={2} className="home-fields home-notice-card" data-expanded={expanded}
+                  label={(expanded ? 'Recolher ' : 'Expandir ') + notice.title}
+                  onClick={() => {
+                    setExpandedId(expanded ? null : notice.id);
+                    if (!expanded && notice.unread) leitura.mutate(notice);
+                  }}>
+                  <div className="home-notice-card-top">
+                    <Heading level={3} className="home-notice-title">{notice.title}</Heading>
+                    <ChevronDown size={16} aria-hidden="true" className="home-notice-chevron" />
+                  </div>
+                  <div className="home-notice-meta">
+                    {notice.unread && <Badge label="Não lido" variant="info" />}
+                    <Text size="xsm" color="secondary">{notice.date}</Text>
+                    <Text size="xsm" color="secondary">{notice.audience}</Text>
+                  </div>
+                  {expanded && <Text as="p" size="sm" className="home-notice-copy">{notice.body}</Text>}
+                </ClickableCard>
+              );
+            })}
+          </div>
         </div>
-        <div aria-label="Lista de comunicações" className="min-h-0 max-h-[390px] space-y-2 overflow-y-auto overscroll-contain p-3" style={{ scrollbarGutter: 'stable' }}>
-          {query.isPending && <p role="status" className="p-2 text-sm">Carregando comunicações…</p>}
-          {query.isError && <div role="alert" className="p-2 text-sm">Não foi possível atualizar as comunicações. <button type="button" className="underline" onClick={() => void query.refetch()}>Tentar novamente</button></div>}
-          {leitura.isError && <p role="alert" className="p-2 text-xs text-negative">Não foi possível registrar a leitura. Abra o comunicado novamente para tentar.</p>}
-          {query.isSuccess && notices.length === 0 && <p className="p-2 text-sm">Nenhum comunicado publicado.</p>}
-          {notices.map((notice) => {
-            const expanded = expandedId === notice.id;
-            return <article key={notice.id} className="rounded-xl border" style={{ borderColor: 'var(--color-border)' }}>
-              <button type="button" aria-expanded={expanded} className="w-full rounded-xl p-3 text-left focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-                onClick={() => {
-                  setExpandedId(expanded ? null : notice.id);
-                  if (!expanded && notice.unread) leitura.mutate(notice);
-                }}>
-                <span className="flex items-start gap-2">
-                  {notice.unread && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500" aria-label="Não lido" />}
-                  <strong className="min-w-0 flex-1 break-words text-sm">{notice.title}</strong>
-                  <ChevronDown size={15} className={`shrink-0 ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
-                </span>
-                <span className="mt-1 block text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{notice.date} · {notice.tag === 'ATENCAO' ? 'Pendência' : notice.tag === 'NOVO' ? 'Atualização' : 'Aviso'} · {notice.audience}</span>
-              </button>
-              {expanded && <p className="whitespace-pre-wrap break-words px-3 pb-3 text-sm leading-relaxed">{notice.body}</p>}
-            </article>;
-          })}
-        </div>
-      </PopoverContent>
+      }>
+      {trigger => (
+        <Button {...trigger} label={label} tooltip={label} variant="ghost" isIconOnly
+          className={'home-communications-bell ' + (className ?? '')}
+          icon={<>
+            <Bell size={18} aria-hidden="true" />
+            {unreadCount > 0 && (
+              <Badge label={unreadCount > 99 ? '99+' : unreadCount} variant="error"
+                className="home-unread-count" aria-hidden="true" />
+            )}
+          </>} />
+      )}
     </Popover>
   );
 }

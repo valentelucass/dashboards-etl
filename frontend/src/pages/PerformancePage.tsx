@@ -1,3 +1,7 @@
+import { Skeleton } from '@astryxdesign/core/Skeleton';
+import { Card } from '@astryxdesign/core/Card';
+import DashboardSelector from "../components/shared/DashboardSelector";
+import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -468,15 +472,12 @@ function PerformanceKpiSkeleton() {
       aria-hidden="true"
     >
       {Array.from({ length: 9 }).map((_, index) => (
-        <div
-          key={index}
-          className={`${index === 8 ? 'sm:col-span-2 lg:col-span-2' : index >= 6 ? 'lg:col-span-2' : 'lg:col-span-1'} h-[102px] animate-pulse rounded-lg border p-3`}
-          style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-        >
-          <div className="mb-4 h-3 w-2/3 rounded bg-slate-200" />
-          <div className="h-8 w-1/2 rounded bg-slate-200" />
-          <div className="mt-3 h-2 w-3/4 rounded bg-slate-100" />
-        </div>
+        <Card key={index} padding={3}
+          className={`${index === 8 ? 'sm:col-span-2 lg:col-span-2' : index >= 6 ? 'lg:col-span-2' : 'lg:col-span-1'} h-[102px] grid gap-2`}>
+          <Skeleton height={12} width="66%" />
+          <Skeleton height={28} width="50%" />
+          <Skeleton height={8} width="75%" />
+        </Card>
       ))}
     </div>
   );
@@ -542,7 +543,7 @@ function DrillUpButton({
 
   return (
     <div className="mb-2 flex min-w-0 justify-start">
-      <button
+      <DashboardButton
         type="button"
         onClick={onBack}
         className="inline-flex h-8 max-w-full items-center gap-1.5 rounded-md border px-3 text-xs font-semibold transition hover:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -554,7 +555,7 @@ function DrillUpButton({
       >
         <ArrowLeft size={14} className="shrink-0" aria-hidden="true" />
         <span className="truncate">{label}</span>
-      </button>
+      </DashboardButton>
     </div>
   );
 }
@@ -585,7 +586,7 @@ function DrilldownActions({
 
   return (
     <div className="flex min-w-0 flex-wrap items-center justify-end gap-1 text-[11px] font-semibold">
-      <button
+      <DashboardButton
         type="button"
         title="Drill up"
         aria-label="Drill up"
@@ -602,17 +603,17 @@ function DrilldownActions({
         style={{ borderColor: 'var(--color-border)', color: resolveButtonColor(true, drillUpDesabilitado) }}
       >
         <ChevronUp size={14} />
-      </button>
-      <button
+      </DashboardButton>
+      <DashboardButton
         type="button"
         onClick={() => onNivelClick('responsavel')}
         className={levelButtonClassName}
         style={{ color: nivel === 'responsavel' ? CORES.primaria : 'var(--color-text-muted)' }}
       >
         Responsável
-      </button>
+      </DashboardButton>
       <ChevronRight size={12} style={{ color: 'var(--color-text-subtle)' }} />
-      <button
+      <DashboardButton
         type="button"
         disabled={regiaoDesabilitada}
         aria-disabled={regiaoDesabilitada}
@@ -626,9 +627,9 @@ function DrilldownActions({
         style={{ color: resolveButtonColor(nivel === 'regiao', regiaoDesabilitada) }}
       >
         Região
-      </button>
+      </DashboardButton>
       <ChevronRight size={12} style={{ color: 'var(--color-text-subtle)' }} />
-      <button
+      <DashboardButton
         type="button"
         disabled={cidadeDesabilitada}
         aria-disabled={cidadeDesabilitada}
@@ -642,7 +643,7 @@ function DrilldownActions({
         style={{ color: resolveButtonColor(nivel === 'cidade', cidadeDesabilitada) }}
       >
         Cidade
-      </button>
+      </DashboardButton>
     </div>
   );
 }
@@ -701,7 +702,7 @@ function TemporalActions({
   return (
     <div className="flex rounded-md border p-0.5" style={{ borderColor: 'var(--color-border)' }}>
       {NIVEIS_TEMPORAIS.map((item) => (
-        <button
+        <DashboardButton
           key={item.valor}
           type="button"
           className="rounded px-2 py-1 text-xs font-semibold transition"
@@ -712,7 +713,7 @@ function TemporalActions({
           onClick={() => onNivelChange(item.valor)}
         >
           {item.label}
-        </button>
+        </DashboardButton>
       ))}
     </div>
   );
@@ -726,12 +727,12 @@ function HistoricoPeriodoActions({
   onPeriodoChange: (periodoMeses: HistoricoPeriodoMeses) => void;
 }) {
   return (
-    <label className="block">
+    <div className="block">
       <span className="sr-only">Período do histórico</span>
-      <select
+      <DashboardSelector
         aria-label="Período do histórico"
         value={periodoMeses}
-        onChange={(event) => onPeriodoChange(normalizeHistoricoPeriodoMeses(event.target.value))}
+        onValueChange={selectedValue => onPeriodoChange(normalizeHistoricoPeriodoMeses(selectedValue))}
         className="h-8 rounded-md border px-2 text-xs font-semibold outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]"
         style={{
           backgroundColor: 'var(--color-card)',
@@ -744,8 +745,8 @@ function HistoricoPeriodoActions({
             {item.label}
           </option>
         ))}
-      </select>
-    </label>
+      </DashboardSelector>
+    </div>
   );
 }
 

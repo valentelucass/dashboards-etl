@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.FiltroConsultaDTO;
@@ -41,7 +42,7 @@ public class TrackingSqlRepository {
     private volatile TrackingViewColumns trackingViewColumns;
 
     public TrackingSqlRepository(
-            NamedParameterJdbcOperations jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcOperations jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder,
             EscopoFilialService escopoFilialService,
             PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper

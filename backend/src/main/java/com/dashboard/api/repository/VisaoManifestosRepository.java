@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.model.VisaoManifestosEntity;
 import com.dashboard.api.model.VisaoManifestosId;
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@ConsultaAnalitica
 public interface VisaoManifestosRepository extends JpaRepository<VisaoManifestosEntity, VisaoManifestosId>,
         JpaSpecificationExecutor<VisaoManifestosEntity> {
 

@@ -142,6 +142,8 @@ Ai-Agent-Skills-main/
 **/*.bak.sql
 **/*.sql.bak
 **/*.csv
+!docs/catalogos/rotas-e-dependencias.csv
+!docs/catalogos/ensaios-por-rota.csv
 **/*.tsv
 **/*.psv
 **/*.xls
@@ -211,3 +213,10 @@ database/config.bat
 *.pdf
 *.xlsx
 *.docx
+
+# Saídas e configuração local das ferramentas MCP.
+graphify-out/
+.graphify/
+.codex/
+AGENTS.md.bak-*
+*.mcp-tools.tmp

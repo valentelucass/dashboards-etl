@@ -1,9 +1,13 @@
 package com.dashboard.api.service;
 
 import com.dashboard.api.dto.FiltroConsultaDTO;
+import com.dashboard.api.dto.fretes.FretesChartsDTO;
 import com.dashboard.api.dto.fretes.FretesClienteRankingDTO;
+import com.dashboard.api.dto.fretes.FretesFaturamentoGrupoDTO;
 import com.dashboard.api.dto.fretes.FretesGoalSummaryDTO;
+import com.dashboard.api.dto.fretes.FretesOrigemDestinoDTO;
 import com.dashboard.api.dto.fretes.FretesOverviewDTO;
+import com.dashboard.api.dto.fretes.FretesPrevisaoPorStatusDTO;
 import com.dashboard.api.dto.fretes.FretesTrendPointDTO;
 import com.dashboard.api.repository.VisaoFretesRepository;
 import com.dashboard.api.service.acesso.EscopoFilialService;
@@ -30,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mockingDetails;
@@ -56,6 +62,47 @@ class FretesServiceTest {
                 fretesGoalService,
                 Clock.fixed(Instant.parse("2026-06-08T12:00:00Z"), ZONE_ID_BRASILIA)
         );
+    }
+
+    @Test
+    void graficosMantemFiltrosEBlocosEmUmaConsulta() {
+        LocalDate inicio = LocalDate.of(2026, 5, 1);
+        LocalDate fim = LocalDate.of(2026, 5, 19);
+        FiltroConsultaDTO filtro = new FiltroConsultaDTO(inicio, fim, Map.of("filiais", List.of("SPO")));
+        var status = mock(VisaoFretesRepository.FretesGraficoProjection.class);
+        when(status.getTipo()).thenReturn("STATUS");
+        when(status.getNome()).thenReturn("Entregue");
+        when(status.getNoPrazo()).thenReturn(9);
+        var rota = mock(VisaoFretesRepository.FretesGraficoProjection.class);
+        when(rota.getTipo()).thenReturn("ROTAS");
+        when(rota.getNome()).thenReturn("SP");
+        when(rota.getDestino()).thenReturn("PR");
+        when(rota.getReceita()).thenReturn(new BigDecimal("82.4500"));
+        when(rota.getFretes()).thenReturn(3);
+        var classificacao = mock(VisaoFretesRepository.FretesGraficoProjection.class);
+        when(classificacao.getTipo()).thenReturn("CLASSIFICACAO");
+        when(classificacao.getNome()).thenReturn("LTL");
+        when(classificacao.getReceita()).thenReturn(new BigDecimal("34.5"));
+        when(classificacao.getFretes()).thenReturn(2);
+        when(repository.buscarGraficosAgregados(
+                eq(inicio), eq(fim.plusDays(1)), anyList(), eq(1),
+                eq(List.of("spo")), eq(0), anyList(), anyInt(), anyList(), anyInt(),
+                anyList(), anyInt(), anyList(), anyInt(), anyList(), anyInt(),
+                anyList(), anyInt(), anyList(), anyInt()
+        )).thenReturn(List.of(status, rota, classificacao));
+
+        FretesChartsDTO graficos = service.buscarGraficos(filtro);
+
+        assertThat(graficos.previsaoPorStatus()).containsExactly(new FretesPrevisaoPorStatusDTO("Entregue", 0, 9));
+        assertThat(graficos.topRotasPorReceita())
+                .containsExactly(new FretesOrigemDestinoDTO("SP", "PR", new BigDecimal("82.45"), 3));
+        assertThat(graficos.faturamentoPorClassificacao())
+                .containsExactly(new FretesFaturamentoGrupoDTO("LTL", new BigDecimal("34.50"), 2));
+        assertThat(graficos.faturamentoPorResponsavelDestino()).isEmpty();
+        assertThat(graficos.faturamentoPorUfOrigem()).isEmpty();
+        assertThat(graficos.faturamentoPorUfDestino()).isEmpty();
+        assertThat(graficos.faturamentoPorCidadeDestino()).isEmpty();
+        assertThat(mockingDetails(repository).getInvocations()).hasSize(1);
     }
 
     @Test

@@ -277,25 +277,27 @@ public class FretesService {
 
     public FretesChartsDTO buscarGraficos(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
-        FretesConsulta consulta = consulta(filtro);
+        List<VisaoFretesRepository.FretesGraficoProjection> rows = buscarGraficosAgregados(consulta(filtro));
 
         return new FretesChartsDTO(
-                buscarPrevisaoPorStatusAgregada(consulta).stream()
-                        .map(row -> new FretesPrevisaoPorStatusDTO(row.getStatus(), row.getVencidos(), row.getNoPrazo()))
+                rows.stream()
+                        .filter(row -> "STATUS".equals(row.getTipo()))
+                        .map(row -> new FretesPrevisaoPorStatusDTO(row.getNome(), row.getVencidos(), row.getNoPrazo()))
                         .toList(),
-                buscarTopRotasPorReceita(consulta).stream()
+                rows.stream()
+                        .filter(row -> "ROTAS".equals(row.getTipo()))
                         .map(row -> new FretesOrigemDestinoDTO(
-                                row.getOrigemUf(),
-                                row.getDestinoUf(),
+                                row.getNome(),
+                                row.getDestino(),
                                 zero(row.getReceita()).setScale(2, RoundingMode.HALF_UP),
                                 row.getFretes()
                         ))
                         .toList(),
-                mapearGrupos(buscarFaturamentoPorClassificacao(consulta)),
-                mapearGrupos(buscarFaturamentoPorResponsavelDestino(consulta)),
-                mapearGrupos(buscarFaturamentoPorUfOrigem(consulta)),
-                mapearGrupos(buscarFaturamentoPorUfDestino(consulta)),
-                mapearGrupos(buscarFaturamentoPorCidadeDestino(consulta))
+                mapearGrupos(rows, "CLASSIFICACAO"),
+                mapearGrupos(rows, "RESPONSAVEL"),
+                mapearGrupos(rows, "UF_ORIGEM"),
+                mapearGrupos(rows, "UF_DESTINO"),
+                mapearGrupos(rows, "CIDADE")
         );
     }
 
@@ -499,9 +501,10 @@ public class FretesService {
     }
 
     private List<FretesFaturamentoGrupoDTO> mapearGrupos(
-            List<VisaoFretesRepository.FretesFaturamentoGrupoProjection> rows
+            List<VisaoFretesRepository.FretesGraficoProjection> rows, String tipo
     ) {
         return rows.stream()
+                .filter(row -> tipo.equals(row.getTipo()))
                 .map(row -> new FretesFaturamentoGrupoDTO(
                         row.getNome(),
                         zero(row.getReceita()).setScale(2, RoundingMode.HALF_UP),
@@ -615,98 +618,8 @@ public class FretesService {
         );
     }
 
-    private List<VisaoFretesRepository.FretesPrevisaoStatusProjection> buscarPrevisaoPorStatusAgregada(FretesConsulta consulta) {
-        return repository.buscarPrevisaoPorStatusAgregada(
-                consulta.dataInicio(), consulta.dataFimExclusivo(),
-                consulta.escopo().valores(), consulta.escopo().vazio(),
-                consulta.filiais().valores(), consulta.filiais().vazio(),
-                consulta.status().valores(), consulta.status().vazio(),
-                consulta.pagadores().valores(), consulta.pagadores().vazio(),
-                consulta.responsaveis().valores(), consulta.responsaveis().vazio(),
-                consulta.ufOrigem().valores(), consulta.ufOrigem().vazio(),
-                consulta.ufDestino().valores(), consulta.ufDestino().vazio(),
-                consulta.tiposFrete().valores(), consulta.tiposFrete().vazio(),
-                consulta.modais().valores(), consulta.modais().vazio()
-        );
-    }
-
-    private List<VisaoFretesRepository.FretesRotaProjection> buscarTopRotasPorReceita(FretesConsulta consulta) {
-        return repository.buscarTopRotasPorReceita(
-                consulta.dataInicio(), consulta.dataFimExclusivo(),
-                consulta.escopo().valores(), consulta.escopo().vazio(),
-                consulta.filiais().valores(), consulta.filiais().vazio(),
-                consulta.status().valores(), consulta.status().vazio(),
-                consulta.pagadores().valores(), consulta.pagadores().vazio(),
-                consulta.responsaveis().valores(), consulta.responsaveis().vazio(),
-                consulta.ufOrigem().valores(), consulta.ufOrigem().vazio(),
-                consulta.ufDestino().valores(), consulta.ufDestino().vazio(),
-                consulta.tiposFrete().valores(), consulta.tiposFrete().vazio(),
-                consulta.modais().valores(), consulta.modais().vazio()
-        );
-    }
-
-    private List<VisaoFretesRepository.FretesFaturamentoGrupoProjection> buscarFaturamentoPorClassificacao(FretesConsulta consulta) {
-        return repository.buscarFaturamentoPorClassificacao(
-                consulta.dataInicio(), consulta.dataFimExclusivo(),
-                consulta.escopo().valores(), consulta.escopo().vazio(),
-                consulta.filiais().valores(), consulta.filiais().vazio(),
-                consulta.status().valores(), consulta.status().vazio(),
-                consulta.pagadores().valores(), consulta.pagadores().vazio(),
-                consulta.responsaveis().valores(), consulta.responsaveis().vazio(),
-                consulta.ufOrigem().valores(), consulta.ufOrigem().vazio(),
-                consulta.ufDestino().valores(), consulta.ufDestino().vazio(),
-                consulta.tiposFrete().valores(), consulta.tiposFrete().vazio(),
-                consulta.modais().valores(), consulta.modais().vazio()
-        );
-    }
-
-    private List<VisaoFretesRepository.FretesFaturamentoGrupoProjection> buscarFaturamentoPorResponsavelDestino(FretesConsulta consulta) {
-        return repository.buscarFaturamentoPorResponsavelDestino(
-                consulta.dataInicio(), consulta.dataFimExclusivo(),
-                consulta.escopo().valores(), consulta.escopo().vazio(),
-                consulta.filiais().valores(), consulta.filiais().vazio(),
-                consulta.status().valores(), consulta.status().vazio(),
-                consulta.pagadores().valores(), consulta.pagadores().vazio(),
-                consulta.responsaveis().valores(), consulta.responsaveis().vazio(),
-                consulta.ufOrigem().valores(), consulta.ufOrigem().vazio(),
-                consulta.ufDestino().valores(), consulta.ufDestino().vazio(),
-                consulta.tiposFrete().valores(), consulta.tiposFrete().vazio(),
-                consulta.modais().valores(), consulta.modais().vazio()
-        );
-    }
-
-    private List<VisaoFretesRepository.FretesFaturamentoGrupoProjection> buscarFaturamentoPorUfOrigem(FretesConsulta consulta) {
-        return repository.buscarFaturamentoPorUfOrigem(
-                consulta.dataInicio(), consulta.dataFimExclusivo(),
-                consulta.escopo().valores(), consulta.escopo().vazio(),
-                consulta.filiais().valores(), consulta.filiais().vazio(),
-                consulta.status().valores(), consulta.status().vazio(),
-                consulta.pagadores().valores(), consulta.pagadores().vazio(),
-                consulta.responsaveis().valores(), consulta.responsaveis().vazio(),
-                consulta.ufOrigem().valores(), consulta.ufOrigem().vazio(),
-                consulta.ufDestino().valores(), consulta.ufDestino().vazio(),
-                consulta.tiposFrete().valores(), consulta.tiposFrete().vazio(),
-                consulta.modais().valores(), consulta.modais().vazio()
-        );
-    }
-
-    private List<VisaoFretesRepository.FretesFaturamentoGrupoProjection> buscarFaturamentoPorUfDestino(FretesConsulta consulta) {
-        return repository.buscarFaturamentoPorUfDestino(
-                consulta.dataInicio(), consulta.dataFimExclusivo(),
-                consulta.escopo().valores(), consulta.escopo().vazio(),
-                consulta.filiais().valores(), consulta.filiais().vazio(),
-                consulta.status().valores(), consulta.status().vazio(),
-                consulta.pagadores().valores(), consulta.pagadores().vazio(),
-                consulta.responsaveis().valores(), consulta.responsaveis().vazio(),
-                consulta.ufOrigem().valores(), consulta.ufOrigem().vazio(),
-                consulta.ufDestino().valores(), consulta.ufDestino().vazio(),
-                consulta.tiposFrete().valores(), consulta.tiposFrete().vazio(),
-                consulta.modais().valores(), consulta.modais().vazio()
-        );
-    }
-
-    private List<VisaoFretesRepository.FretesFaturamentoGrupoProjection> buscarFaturamentoPorCidadeDestino(FretesConsulta consulta) {
-        return repository.buscarFaturamentoPorCidadeDestino(
+    private List<VisaoFretesRepository.FretesGraficoProjection> buscarGraficosAgregados(FretesConsulta consulta) {
+        return repository.buscarGraficosAgregados(
                 consulta.dataInicio(), consulta.dataFimExclusivo(),
                 consulta.escopo().valores(), consulta.escopo().vazio(),
                 consulta.filiais().valores(), consulta.filiais().vazio(),

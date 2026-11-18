@@ -22,14 +22,50 @@ function ultimoParametro(chave: string) {
   expect(params).toBeInstanceOf(URLSearchParams);
   return (params as URLSearchParams).get(chave);
 }
-function abrir() {
+function abrir(cliente = '') {
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  return render(<QueryClientProvider client={queryClient}><CiclosIntegracaoPanel dataInicio="2026-09-01" dataFim="2026-09-09" /></QueryClientProvider>);
+  return render(<QueryClientProvider client={queryClient}><CiclosIntegracaoPanel dataInicio="2026-09-01" dataFim="2026-09-09" cliente={cliente} /></QueryClientProvider>);
 }
 beforeEach(() => {
   responderCom(ciclo);
 });
 afterEach(() => { cleanup(); queryClient?.clear(); vi.useRealTimers(); vi.resetAllMocks(); });
+
+it('aplica SELIA ao histórico e não apresenta ciclos Vedacit retornados fora do filtro', async () => {
+  abrir('SELIA');
+  await screen.findByText(/O histórico retornado não corresponde/);
+  expect(ultimoParametro('cliente')).toBe('SELIA');
+  expect(screen.queryByText('VEDACIT')).toBeNull();
+  expect(screen.queryByRole('table')).toBeNull();
+  expect(screen.queryByLabelText('Último ciclo de VEDACIT')).toBeNull();
+  expect(screen.queryByLabelText('Cliente dos ciclos')).toBeNull();
+});
+
+it('troca Vedacit por SELIA sem reutilizar ciclos nem a página do cliente anterior', async () => {
+  vi.mocked(clienteAxios.get).mockImplementation(async url => ({ data: url.endsWith('/clientes') ? [ciclo] : {
+    ...pagina([ciclo]), paginacao: { ...pagina([ciclo]).paginacao, totalPaginas: 2, ultimaPagina: false },
+  } }));
+  const view = abrir('VEDACIT');
+  await screen.findByRole('table');
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  await waitFor(() => expect(ultimoParametro('pagina')).toBe('1'));
+  vi.mocked(clienteAxios.get).mockImplementation(() => new Promise(() => {}));
+  view.rerender(<QueryClientProvider client={queryClient}><CiclosIntegracaoPanel
+    dataInicio="2026-09-01" dataFim="2026-09-09" cliente="SELIA" /></QueryClientProvider>);
+  await waitFor(() => expect(ultimoParametro('cliente')).toBe('SELIA'));
+  expect(ultimoParametro('pagina')).toBe('0');
+  expect(screen.queryByText('VEDACIT')).toBeNull();
+  expect(screen.queryByRole('table')).toBeNull();
+  expect(screen.getByText('Carregando histórico…')).toBeTruthy();
+});
+
+it('explica ausência de histórico SELIA sem tratar como parada ou sucesso', async () => {
+  vi.mocked(clienteAxios.get).mockImplementation(async url => ({ data: url.endsWith('/clientes') ? [ciclo] : pagina([]) }));
+  abrir('SELIA');
+  await screen.findByText(/Nenhum ciclo de SELIA disponível/);
+  expect(screen.queryByText('VEDACIT')).toBeNull();
+  expect(screen.queryByText('0 comprovantes enviados')).toBeNull();
+});
 
 it('atualiza o ciclo aberto em um minuto sem inventar finalizacao ou proximo ciclo', async () => {
   vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
@@ -78,7 +114,8 @@ describe('CiclosIntegracaoPanel', () => {
     expect((await screen.findAllByText('XML sem acesso à origem')).length).toBe(2);
     expect(screen.getAllByText('10 avaliações sem conclusão por bloqueio de acesso').length).toBe(2);
     expect(screen.getAllByText('A origem recusou o acesso aos XMLs. É necessário liberar o acesso ou disponibilizar os arquivos no SFTP.').length).toBe(2);
-    fireEvent.change(screen.getByLabelText('Resultado da execução'), { target: { value: 'FALHA' } });
+    fireEvent.click(screen.getByRole('combobox', { name: /Resultado da execução/ }));
+    fireEvent.click(screen.getByRole('option', { name: /^Falhas e impedimentos/ }));
     await waitFor(() => expect(ultimoParametro('status')).toBe('FALHA'));
     expect(screen.queryByText('Concluído', { selector: 'span' })).toBeNull();
   });
@@ -108,7 +145,8 @@ describe('CiclosIntegracaoPanel', () => {
       xmlEnviados: 0, xmlErros: 8, xmlJaProcessados: 1, xmlPendentes: 2,
       errosComprovante: 0, motivoFalha: 'XML_ACESSO_ORIGEM: acesso recusado' });
     abrir();
-    expect((await screen.findAllByText('Em andamento', { selector: 'span' })).length).toBe(2);
+    await waitFor(() => expect(screen.queryAllByText('Em andamento', { selector: 'span' })
+      .filter(item => item.closest('article, tbody'))).toHaveLength(2));
     expect(screen.getAllByText('2 avaliações aguardando documento na origem').length).toBe(2);
     expect(screen.queryByText('XML sem acesso à origem')).toBeNull();
   });
@@ -136,7 +174,8 @@ describe('CiclosIntegracaoPanel', () => {
     abrir();
     fireEvent.click(await screen.findByRole('button', { name: 'Próxima' }));
     await waitFor(() => expect(ultimoParametro('pagina')).toBe('1'));
-    fireEvent.change(screen.getByLabelText('Origem dos comprovantes'), { target: { value: 'SFTP' } });
+    fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'SFTP' }));
     await waitFor(() => expect(ultimoParametro('origem')).toBe('SFTP'));
     expect(ultimoParametro('pagina')).toBe('0');
   });
@@ -149,7 +188,8 @@ describe('CiclosIntegracaoPanel', () => {
     expect(screen.getByRole('article').textContent).toContain('Origem:SFTP');
     expect(screen.getByRole('table').textContent).toContain('SFTP');
     expect(screen.queryByText('Não informada')).toBeNull();
-    fireEvent.change(screen.getByLabelText('Origem dos comprovantes'), { target: { value: 'SFTP' } });
+    fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'SFTP' }));
     await waitFor(() => expect(ultimoParametro('origem')).toBe('SFTP'));
     await screen.findByRole('table');
     expect(screen.queryByRole('alert')).toBeNull();
@@ -161,7 +201,8 @@ describe('CiclosIntegracaoPanel', () => {
     abrir();
     await screen.findByRole('table');
     vi.mocked(clienteAxios.get).mockClear();
-    fireEvent.change(screen.getByLabelText('Origem dos comprovantes'), { target: { value: 'API_ESL' } });
+    fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'API ESL' }));
     expect((await screen.findByRole('alert')).textContent).toContain('não disponibilizou o histórico da API ESL');
     expect(ultimoParametro('origem')).toBe('API_ESL');
     expect(screen.queryByRole('table')).toBeNull();
@@ -176,7 +217,8 @@ describe('CiclosIntegracaoPanel', () => {
     expect(screen.getByRole('article').textContent).toContain('Origem:API ESL');
     expect(screen.getByRole('table').textContent).toContain('API ESL');
     expect(screen.queryByText('Não informada')).toBeNull();
-    fireEvent.change(screen.getByLabelText('Origem dos comprovantes'), { target: { value: 'API_ESL' } });
+    fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'API ESL' }));
     await waitFor(() => expect(ultimoParametro('origem')).toBe('API_ESL'));
     await screen.findByRole('table');
     expect(screen.getByRole('table').textContent).toContain('API ESL');
@@ -188,7 +230,8 @@ describe('CiclosIntegracaoPanel', () => {
     vi.mocked(clienteAxios.get).mockImplementation(async (url) => ({ data: url.endsWith('/clientes') ? [ciclo] : pagina([ciclo, { ...ciclo, origemComprovantes: 'API_ESL', inicioUltimoCiclo: '2026-09-09T21:00:00' }]) }));
     abrir();
     await screen.findByRole('table');
-    fireEvent.change(screen.getByLabelText('Origem dos comprovantes'), { target: { value: 'SFTP' } });
+    fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'SFTP' }));
     expect((await screen.findByRole('alert')).textContent).toContain('Não foi possível aplicar o filtro');
     expect(screen.queryByRole('table')).toBeNull();
   });
@@ -197,7 +240,8 @@ describe('CiclosIntegracaoPanel', () => {
     responderCom({ ...ciclo, origemComprovantes: null });
     abrir();
     expect((await screen.findAllByText('Não informada')).length).toBe(2);
-    fireEvent.change(screen.getByLabelText('Origem dos comprovantes'), { target: { value: 'SFTP' } });
+    fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'SFTP' }));
     expect((await screen.findByRole('alert')).textContent).toContain('Não foi possível aplicar o filtro');
     expect(screen.queryByRole('table')).toBeNull();
   });
@@ -238,11 +282,13 @@ it('ciclo com sete envios e retenções destaca as confirmações e usa o result
     xmlHabilitado: true, xmlAvaliados: 30, xmlEnviados: 7, xmlJaProcessados: 18, xmlPendentes: 0, xmlErros: 5,
     errosComprovante: 0, motivoFalha: 'XML_FALHAS_MISTAS: detalhes' });
   abrir();
-  await waitFor(() => expect(screen.getAllByText('Finalizado com pendências', { selector: 'span' }).length).toBe(2));
+  await waitFor(() => expect(screen.queryAllByText('Finalizado com pendências', { selector: 'span' })
+    .filter(item => item.closest('article, tbody'))).toHaveLength(2));
   expect(screen.getAllByText('7 comprovantes enviados').length).toBe(2);
   expect(screen.queryByText('Falha', { selector: 'span' })).toBeNull();
   expect(screen.getAllByText('Ver ocorrências do ciclo').length).toBe(2);
-  fireEvent.change(screen.getByLabelText('Resultado da execução'), { target: { value: 'COM_PENDENCIAS' } });
+  fireEvent.click(screen.getByRole('combobox', { name: /Resultado da execução/ }));
+  fireEvent.click(screen.getByRole('option', { name: 'Finalizado com pendências' }));
   await waitFor(() => expect(ultimoParametro('status')).toBe('COM_PENDENCIAS'));
 });
 
@@ -250,7 +296,8 @@ it('falha técnica real preserva os envios confirmados do mesmo ciclo', async ()
   responderCom({ ...ciclo, statusCiclo: 'FALHA', resultadoExecucao: 'FALHA_TECNICA', enviados: 7,
     motivoFalha: 'BANCO_FILA_PROCESSAMENTO: indisponível' });
   abrir();
-  await waitFor(() => expect(screen.getAllByText('Falha técnica', { selector: 'span' }).length).toBe(2));
+  await waitFor(() => expect(screen.getAllByText('Falha técnica', { selector: 'span' }).filter(item => item.closest('article, tbody')).length).toBe(2));
   expect(screen.getAllByText('7 comprovantes enviados').length).toBe(2);
-  expect(screen.queryByText('Finalizado com pendências', { selector: 'span' })).toBeNull();
+  expect(screen.queryAllByText('Finalizado com pendências', { selector: 'span' })
+    .filter(item => item.closest('article, tbody'))).toHaveLength(0);
 });

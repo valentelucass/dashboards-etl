@@ -224,12 +224,10 @@ public class ManifestosCostGoalService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
     public ManifestosCustosEvolucaoDTO calcular(FiltroConsultaDTO filtro, BigDecimal custoRealPeriodo) {
         return calcular(filtro, filtro, custoRealPeriodo);
     }
 
-    @Transactional(readOnly = true)
     public ManifestosCustosEvolucaoDTO calcular(
             FiltroConsultaDTO filtro,
             FiltroConsultaDTO filtroOrcamento,

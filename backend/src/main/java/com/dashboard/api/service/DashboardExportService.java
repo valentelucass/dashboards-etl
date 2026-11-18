@@ -1,5 +1,6 @@
 package com.dashboard.api.service;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.dimensoes.DimensaoOpcaoDTO;
@@ -38,7 +39,7 @@ public class DashboardExportService {
     private final EscopoFilialService escopoFilialService;
 
     public DashboardExportService(
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder,
             CsvExportWriter csvExportWriter,
             ValidadorPeriodoService validadorPeriodoService,

@@ -1,7 +1,12 @@
-import { useId, useState, type ReactNode } from 'react';
+import { Banner } from '@astryxdesign/core/Banner';
+import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { Skeleton } from '@astryxdesign/core/Skeleton';
+import DashboardButton from "./DashboardButton";
+import { Card } from '@astryxdesign/core/Card';
+import { useRef, useState, type ReactNode } from 'react';
 import { Info } from 'lucide-react';
 import { chartDictionary, type ChartDictionaryKey } from '../../constants/chartDictionary';
-import { Popover, PopoverAnchor, PopoverContent } from '../ui/popover';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 
 interface ChartCardProps {
   titulo: string;
@@ -21,14 +26,14 @@ function ChartSkeleton() {
     <div className="flex h-full min-h-[350px] flex-col justify-end gap-3" aria-hidden="true">
       <div className="flex h-44 items-end gap-3">
         {[52, 88, 64, 112, 76, 132, 96].map((height, index) => (
-          <div key={index} className="flex-1 rounded-t-md bg-slate-200/80" style={{ height }} />
+          <Skeleton key={index} className="flex-1" height={height} />
         ))}
       </div>
-      <div className="h-3 w-full rounded bg-slate-100" />
+      <Skeleton height={12} width="100%" />
       <div className="flex gap-2">
-        <div className="h-2 w-24 rounded bg-slate-200/80" />
-        <div className="h-2 w-20 rounded bg-slate-100" />
-        <div className="h-2 w-28 rounded bg-slate-100" />
+        <Skeleton height={8} width={96} />
+        <Skeleton height={8} width={80} />
+        <Skeleton height={8} width={112} />
       </div>
     </div>
   );
@@ -44,7 +49,7 @@ function ChartTitle({
   const [isHovered, setIsHovered] = useState(false);
   const [isIconFocused, setIsIconFocused] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const tooltipId = useId();
+  const anchorRef = useRef<HTMLDivElement>(null);
   const definition = chartKey ? chartDictionary[chartKey] : undefined;
   const open = Boolean(definition) && (isHovered || isIconFocused || isPinned);
 
@@ -57,99 +62,77 @@ function ChartTitle({
   }
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) {
-          setIsHovered(false);
-          setIsIconFocused(false);
-          setIsPinned(false);
-        }
-      }}
-    >
-      <PopoverAnchor asChild>
-        <div
-          className="flex min-w-0 flex-1 cursor-help items-center gap-1.5 rounded-md"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <h3 className="min-w-0 flex-1 truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-            {titulo}
-          </h3>
-          <button
-            type="button"
-            aria-describedby={open ? tooltipId : undefined}
-            aria-expanded={isPinned}
-            aria-label={`Fixar detalhes do gráfico ${titulo}`}
-            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
-            onBlur={() => setIsIconFocused(false)}
-            onClick={(event) => {
-              event.stopPropagation();
-
-              if (isPinned) {
-                setIsPinned(false);
-                setIsHovered(false);
-                setIsIconFocused(false);
-                event.currentTarget.blur();
-                return;
-              }
-
-              setIsPinned(true);
-            }}
-            onFocus={() => setIsIconFocused(true)}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') {
-                setIsHovered(false);
-                setIsIconFocused(false);
-                setIsPinned(false);
-                event.currentTarget.blur();
-              }
-            }}
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            <Info size={14} aria-hidden="true" />
-          </button>
-        </div>
-      </PopoverAnchor>
-
-      <PopoverContent
-        id={tooltipId}
-        role="tooltip"
-        side="bottom"
-        align="start"
-        sideOffset={8}
-        avoidCollisions={false}
-        collisionPadding={12}
-        onOpenAutoFocus={(event) => event.preventDefault()}
-        className="pointer-events-none w-[550px] max-w-2xl p-4"
-        style={{
-          width: 'min(550px, calc(100vw - 1.5rem))',
-          color: 'var(--color-text)',
-        }}
+    <>
+      <div
+        ref={anchorRef}
+        className="flex min-w-0 flex-1 cursor-help items-center gap-1.5 rounded-md"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <p className="text-base font-bold leading-snug">{titulo}</p>
+        <h3 className="min-w-0 flex-1 truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+          {titulo}
+        </h3>
+        <DashboardButton
+          type="button"
+          aria-expanded={isPinned}
+          aria-label={`Fixar detalhes do gráfico ${titulo}`}
+          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+          onBlur={() => setIsIconFocused(false)}
+          onClick={(event) => {
+            event.stopPropagation();
 
-        <div className="mt-4 grid grid-cols-[132px_minmax(0,1fr)] gap-x-4 gap-y-3 text-sm leading-relaxed">
-          <span className="font-bold" style={{ color: 'var(--color-primary)' }}>O que mede:</span>
-          <span className="min-w-0 break-words" style={{ color: 'var(--color-text-subtle)' }}>{definition.descricao}</span>
+            if (isPinned) {
+              setIsPinned(false);
+              setIsHovered(false);
+              setIsIconFocused(false);
+              event.currentTarget.blur();
+              return;
+            }
 
-          <span className="font-bold" style={{ color: 'var(--color-primary)' }}>Origem:</span>
-          <span className="min-w-0 break-words font-mono text-xs" style={{ color: 'var(--color-text)' }}>{definition.tabelasOrigem}</span>
-
-          <span className="font-bold" style={{ color: 'var(--color-primary)' }}>Cruzamentos:</span>
-          <span className="min-w-0 break-words" style={{ color: 'var(--color-text-subtle)' }}>{definition.cruzamentos}</span>
-
-          <span className="font-bold" style={{ color: 'var(--color-primary)' }}>Regra SQL:</span>
-          <span className="min-w-0 break-words font-mono text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{definition.calculoTecnico}</span>
-
-          <span className="font-bold" style={{ color: 'var(--color-primary)' }}>Como é calculado:</span>
-          <span className="min-w-0 break-words" style={{ color: 'var(--color-text-subtle)' }}>{definition.calculoNegocio}</span>
-
-          <span className="font-bold" style={{ color: 'var(--color-primary)' }}>Agrupado por:</span>
-          <span className="min-w-0 break-words font-mono text-xs" style={{ color: 'var(--color-text)' }}>{definition.agrupamento}</span>
-        </div>
-      </PopoverContent>
-    </Popover>
+            setIsPinned(true);
+          }}
+          onFocus={() => setIsIconFocused(true)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              setIsHovered(false);
+              setIsIconFocused(false);
+              setIsPinned(false);
+              event.currentTarget.blur();
+            }
+          }}
+          style={{ color: 'var(--color-text-muted)' }}
+        >
+          <Info size={14} aria-hidden="true" />
+        </DashboardButton>
+      </div>
+      {open && (
+        <Tooltip anchorRef={anchorRef} isOpen placement="below"
+          alignment="start" hasHoverIndication={false}
+          onOpenChange={next => { if (!next) { setIsHovered(false); setIsIconFocused(false); setIsPinned(false); } }}
+          content={
+            <div className={isPinned
+              ? 'dashboard-info-tooltip dashboard-info-tooltip-rich dashboard-chart-tooltip-pinned'
+              : 'dashboard-info-tooltip'}>
+              <p className="font-bold leading-snug">{titulo}</p>
+              <p className="mt-1" style={{ color: 'var(--color-text-muted)' }}>{definition.descricao}</p>
+              {isPinned && (
+                <dl className="dashboard-chart-tooltip-details">
+                  <dt>Como é calculado</dt>
+                  <dd>{definition.calculoNegocio}</dd>
+                  <dt>Origem</dt>
+                  <dd className="font-mono text-xs">{definition.tabelasOrigem}</dd>
+                  <dt>Cruzamentos</dt>
+                  <dd>{definition.cruzamentos}</dd>
+                  <dt>Regra SQL</dt>
+                  <dd className="font-mono text-xs">{definition.calculoTecnico}</dd>
+                  <dt>Agrupado por</dt>
+                  <dd className="font-mono text-xs">{definition.agrupamento}</dd>
+                </dl>
+              )}
+            </div>
+          } />
+      )}
+    </>
   );
 }
 
@@ -166,9 +149,9 @@ export default function ChartCard({
   chartKey,
 }: ChartCardProps) {
   return (
-    <div
+    <Card padding={0}
       data-dashboard-chart={chartKey}
-      className={`flex h-full min-h-0 flex-col rounded-[20px] border p-4 shadow-sm ${className}`}
+      className={`dashboard-chart-card flex h-full min-h-0 flex-col border p-4 ${className}`}
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
     >
       <div className="mb-3 flex shrink-0 items-center justify-between gap-3 border-b pb-3" style={{ borderColor: 'var(--color-border)' }}>
@@ -178,21 +161,19 @@ export default function ChartCard({
 
       <div className={`min-h-0 flex-1 overflow-hidden ${contentClassName}`}>
         {isLoading ? (
-          <div className="h-full animate-pulse">
-            <ChartSkeleton />
-          </div>
+          <ChartSkeleton />
         ) : erro ? (
-          <div className="flex h-full min-h-[350px] items-center justify-center rounded-xl border border-dashed px-6 text-center text-sm" style={{ borderColor: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.08)', color: '#dc2626' }}>
-            {erro}
+          <div className="flex h-full min-h-[350px] items-center justify-center">
+            <Banner status="error" title={erro} />
           </div>
         ) : (!isLoading && isEmpty) ? (
-          <div className="flex h-full min-h-[350px] items-center justify-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
-            {emptyMessage ?? 'Nenhum dado disponivel para o periodo selecionado.'}
+          <div className="flex h-full min-h-[350px] items-center justify-center">
+            <EmptyState title={emptyMessage ?? 'Nenhum dado disponível para o período selecionado.'} isCompact />
           </div>
         ) : (
           children
         )}
       </div>
-    </div>
+    </Card>
   );
 }

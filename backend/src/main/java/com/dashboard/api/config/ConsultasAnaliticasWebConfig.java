@@ -15,7 +15,7 @@ public class ConsultasAnaliticasWebConfig implements WebMvcConfigurer {
 
     public ConsultasAnaliticasWebConfig(ObjectMapper objectMapper,
             @Value("${dashboard.consultas-analiticas.max-concorrentes:3}") int maxConcorrentes,
-            @Value("${spring.datasource.hikari.maximum-pool-size:10}") int tamanhoPool) {
+            @Value("${dashboard.consultas-analiticas.conexoes:3}") int tamanhoPool) {
         limite = new LimiteConsultasAnaliticasInterceptor(maxConcorrentes, tamanhoPool, objectMapper);
     }
 

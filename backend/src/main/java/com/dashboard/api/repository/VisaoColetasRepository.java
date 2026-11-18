@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.model.VisaoColetasEntity;
 import java.time.LocalDate;
 import java.util.List;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@ConsultaAnalitica
 public interface VisaoColetasRepository extends JpaRepository<VisaoColetasEntity, String>,
         JpaSpecificationExecutor<VisaoColetasEntity> {
 

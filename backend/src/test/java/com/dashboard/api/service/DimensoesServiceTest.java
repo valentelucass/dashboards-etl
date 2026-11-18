@@ -13,12 +13,45 @@ import com.dashboard.api.service.acesso.EscopoFilialService;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.QueryTimeoutException;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class DimensoesServiceTest {
+
+    @Test
+    void listarPagadoresDeFaturasAplicaEscopoSemConsultarOutrosPaineis() {
+        var faturasRepository = mock(VisaoFaturasClienteRepository.class);
+        var escopoService = mock(EscopoFilialService.class);
+        var service = new DimensoesService(null, null, null, null, null, null, null,
+                faturasRepository, null, escopoService);
+        when(escopoService.escopoAtual()).thenReturn(
+                new EscopoFilialService.EscopoFilial(false, List.of(" FILIAL A ")),
+                EscopoFilialService.EscopoFilial.semAcesso(),
+                EscopoFilialService.EscopoFilial.comAcessoTotal());
+        when(faturasRepository.findDistinctPagadoresByFilialIn(List.of("filial a")))
+                .thenReturn(List.of("Cliente A"));
+        when(faturasRepository.findDistinctPagadores()).thenReturn(List.of("Cliente A", "Cliente B"));
+
+        assertEquals(List.of("Cliente A"), service.listarPagadoresFaturasPorCliente());
+        assertEquals(List.of(), service.listarPagadoresFaturasPorCliente());
+        assertEquals(List.of("Cliente A", "Cliente B"), service.listarPagadoresFaturasPorCliente());
+    }
+
+    @Test
+    void listarCnpjsDeFaturasPropagaFalhaDaConsulta() {
+        var faturasRepository = mock(VisaoFaturasClienteRepository.class);
+        var escopoService = mock(EscopoFilialService.class);
+        var service = new DimensoesService(null, null, null, null, null, null, null,
+                faturasRepository, null, escopoService);
+        when(escopoService.escopoAtual()).thenReturn(EscopoFilialService.EscopoFilial.comAcessoTotal());
+        when(faturasRepository.findDistinctClienteCnpj()).thenThrow(new QueryTimeoutException("prazo excedido"));
+
+        assertThrows(QueryTimeoutException.class, service::listarClientesCnpjFaturasPorCliente);
+    }
 
     @Test
     void listarClientesDeveIgnorarCamposNulosSemGerarErro() throws Exception {

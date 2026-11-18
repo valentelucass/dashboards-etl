@@ -15,7 +15,7 @@ Data Fetching & Caching: TanStack Query v5 (Obrigatório para o modelo não-bloc
 
 Comunicação HTTP: Axios (Permite criar interceptadores para injetar o token JWT e tratar erros globais como 401 e 503).
 
-Visualização de Dados: Apache ECharts encapsulado com echarts-for-react (Suporta alto volume de dados sem perda de frames).
+A visualização de dados usa Astryx Charts em `AstryxDashboardChart`. Os painéis compartilham barras, linhas, áreas, eixos e legendas. Roscas e semicírculos são marcas SVG desenhadas na superfície do Astryx.
 
 Estilização: Tailwind CSS (Permite criar o layout via classes utilitárias, evitando arquivos CSS gigantescos e difíceis de manter).
 

@@ -1,5 +1,6 @@
 package com.dashboard.api.service;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.tracking.TrackingChartsDTO;
@@ -57,7 +58,7 @@ public class TrackingService {
             VisaoLocalizacaoCargasRepository repository,
             EscopoFilialService escopoFilialService,
             PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper,
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder,
             TrackingSqlRepository trackingSqlRepository,
             DashboardTabelaPaginadaService tabelaPaginadaService
@@ -73,7 +74,7 @@ public class TrackingService {
             VisaoLocalizacaoCargasRepository repository,
             EscopoFilialService escopoFilialService,
             PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper,
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder
     ) {
         this(
@@ -95,7 +96,7 @@ public class TrackingService {
             VisaoLocalizacaoCargasRepository repository,
             EscopoFilialService escopoFilialService,
             PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper,
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder,
             TrackingSqlRepository trackingSqlRepository
     ) {

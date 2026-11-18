@@ -1,3 +1,4 @@
+import DashboardButton from "../shared/DashboardButton";
 import { useId, type ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -141,12 +142,12 @@ export default function IndicadoresGestaoSection<T>({
   const tableActions = (
     <>
       <ExportButton nomeArquivo={exportName} onExport={onExport} />
-      <button type="button" onClick={onToggleTable} aria-expanded={isExpanded} aria-controls={tableRegionId}
+      <DashboardButton type="button" onClick={onToggleTable} aria-expanded={isExpanded} aria-controls={tableRegionId}
         className="inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
         style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
         {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         {isExpanded ? 'Ocultar tabela' : 'Mostrar tabela'}
-      </button>
+      </DashboardButton>
     </>
   );
 

@@ -1,3 +1,5 @@
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
+import DashboardButton from "../components/shared/DashboardButton";
 import IndicadoresIntegracoesPanel from '../components/domain/integracoes/IndicadoresIntegracoesPanel';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -66,7 +68,7 @@ function numeroSeguro(valor: unknown) {
   return Number.isFinite(numero) ? numero : 0;
 }
 
-function criarColunas(): ColunaTabelaAnalitica<IntegracaoPendencia>[] {
+function criarColunas(selia: boolean): ColunaTabelaAnalitica<IntegracaoPendencia>[] {
   return [
     { chave: 'sistemaDestino', label: 'Sistema Destino', fixo: true, largura: '160px' },
     { chave: 'numeroNf', label: 'NF', largura: '120px', formato: formatarInteiro, filtroTabela: 'codigo' },
@@ -83,7 +85,7 @@ function criarColunas(): ColunaTabelaAnalitica<IntegracaoPendencia>[] {
     },
     { chave: 'statusDados', label: 'Status Dados/Evento', largura: '160px', filtroTabela: 'status', formato: renderStatus },
     { chave: 'statusCanhoto', label: 'Status Comprovante/POD', largura: '190px', filtroTabela: 'status', formato: renderStatus },
-    { chave: 'dataProcessamentoDados', label: 'Data XML / dados', largura: '190px', formato: formatarData },
+    { chave: 'dataProcessamentoDados', label: selia ? 'Data AddEvents' : 'Data XML / dados', largura: '190px', formato: formatarData },
     { chave: 'dataProcessamentoCanhoto', label: 'Último retorno comprovante', largura: '230px', formato: formatarData },
     { chave: 'dataProcessamento', label: 'Última atualização', largura: '210px', formato: formatarData },
   ];
@@ -103,33 +105,10 @@ function SegmentedTabs<TValor extends string>({
   onChange,
 }: SegmentedTabsProps<TValor>) {
   return (
-    <div
-      role="tablist"
-      aria-label={ariaLabel}
-      className="flex min-w-0 max-w-full items-center gap-1 overflow-x-auto rounded-lg border p-0.5"
-      style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
-    >
-      {options.map((aba) => {
-        const ativa = selected === aba.valor;
-        return (
-          <button
-            key={aba.valor}
-            type="button"
-            role="tab"
-            data-state={ativa ? 'active' : 'inactive'}
-            aria-selected={ativa}
-            onClick={() => onChange(aba.valor)}
-            className="inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 text-xs font-semibold transition-colors hover:bg-[var(--color-card)] data-[state=active]:shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            style={{
-              backgroundColor: ativa ? 'var(--color-card)' : 'transparent',
-              color: ativa ? 'var(--color-text)' : 'var(--color-text-muted)',
-            }}
-          >
-            {aba.label}
-          </button>
-        );
-      })}
-    </div>
+    <SegmentedControl label={ariaLabel} size="sm" value={selected}
+      onChange={value => { const next = options.find(option => option.valor === value); if (next) onChange(next.valor); }}>
+      {options.map(option => <SegmentedControlItem key={option.valor} value={option.valor} label={option.label} />)}
+    </SegmentedControl>
   );
 }
 
@@ -144,7 +123,7 @@ export default function IntegracoesPage() {
   );
   const filtrosTabela = useAnalyticalTableFilters();
   const escopoTabelaSelecionado = abaSelecionada;
-  const paginacaoTabela = useTabelaPaginadaState(`${filtrosTabela.resetKey}:${escopoTabelaSelecionado}:${dataInicio}:${dataFim}`);
+  const paginacaoTabela = useTabelaPaginadaState(`${filtrosTabela.resetKey}:${escopoTabelaSelecionado}:${dataInicio}:${dataFim}:${destinoSelecionado}`);
 
   const integracoes = useQuery({
     ...INTEGRATION_QUERY_POLLING_OPTIONS,
@@ -171,17 +150,18 @@ export default function IntegracoesPage() {
       destinosSelecionados,
       signal,
     ),
-    placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000,
     retry: 1,
   });
 
 
-  const colunas = useMemo(() => criarColunas(), []);
+  const colunas = useMemo(() => criarColunas(destinoSelecionado === 'SELIA'), [destinoSelecionado]);
 
   usePageHeader({
     title: 'Integrações',
-    description: 'Auditoria operacional de XML e comprovantes enviados para clientes.',
+    description: destinoSelecionado === 'SELIA'
+      ? 'Auditoria operacional de eventos AddEvents e comprovantes POD da SELIA.'
+      : 'Auditoria operacional de dados, eventos e comprovantes enviados para clientes.',
     updatedAt: integracoes.data?.geradoEm ?? null,
   });
 
@@ -190,8 +170,11 @@ export default function IntegracoesPage() {
       integracoes.data?.metricasConsolidadas ?? EMPTY_METRICAS,
       destinosSelecionados,
       (metrica) => numeroSeguro(metrica.totalRegistros) > 0,
+    ) || respostaContemDestinoForaDaSelecao(
+      integracoes.data?.pendencias.itens ?? EMPTY_PENDENCIAS,
+      destinosSelecionados,
     ),
-    [destinosSelecionados, integracoes.data?.metricasConsolidadas],
+    [destinosSelecionados, integracoes.data],
   );
   const pendencias = sateliteIgnorouFiltroDestino
     ? EMPTY_PENDENCIAS
@@ -242,7 +225,7 @@ export default function IntegracoesPage() {
             }))].map((opcao) => {
               const ativo = destinoSelecionado === opcao.valor;
               return (
-                <button
+                <DashboardButton
                   key={opcao.label}
                   type="button"
                   aria-pressed={ativo}
@@ -254,7 +237,7 @@ export default function IntegracoesPage() {
                   }}
                 >
                   {opcao.label}
-                </button>
+                </DashboardButton>
               );
             })}
           </div>
@@ -287,7 +270,7 @@ export default function IntegracoesPage() {
       <IndicadoresIntegracoesPanel inicio={dataInicio} fim={dataFim} destinos={destinosSelecionados} />
 
       <div className="contents">
-          <CiclosIntegracaoPanel dataInicio={dataInicio} dataFim={dataFim} />
+          <CiclosIntegracaoPanel key={destinoSelecionado} dataInicio={dataInicio} dataFim={dataFim} cliente={destinoSelecionado} />
 
           <AnalyticalDataTable
             titulo={tituloTabela}

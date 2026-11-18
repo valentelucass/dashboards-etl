@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.model.VisaoFretesEntity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@ConsultaAnalitica
 public interface VisaoFretesRepository extends JpaRepository<VisaoFretesEntity, Long>,
         JpaSpecificationExecutor<VisaoFretesEntity> {
 
@@ -368,244 +370,67 @@ public interface VisaoFretesRepository extends JpaRepository<VisaoFretesEntity, 
     );
 
     @Query(value = FRETES_FILTRADOS_SQL + """
-            SELECT
-                COALESCE(status, N'Sem status') AS status,
-                CAST(SUM(CASE
-                    WHEN previsao_entrega IS NOT NULL
-                     AND previsao_entrega < CAST(SYSDATETIME() AS date)
-                     AND COALESCE(status_normalizado, '') <> N'finalizado'
-                    THEN 1 ELSE 0 END) AS INT) AS vencidos,
-                CAST(SUM(CASE
-                    WHEN previsao_entrega IS NULL
-                      OR previsao_entrega >= CAST(SYSDATETIME() AS date)
-                      OR COALESCE(status_normalizado, '') = N'finalizado'
-                    THEN 1 ELSE 0 END) AS INT) AS noPrazo
-            FROM filtrados
-            GROUP BY COALESCE(status, N'Sem status')
-            ORDER BY status
+            , categorias AS (
+                SELECT COALESCE(status, N'Sem status') AS nome_status,
+                    COALESCE(origem_uf, N'N/A') AS rota_origem,
+                    COALESCE(destino_uf, N'N/A') AS rota_destino,
+                    CASE
+                        WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%FTL%' THEN N'FTL'
+                        WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%LTL%' THEN N'LTL'
+                        WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%PTL%' THEN N'PTL'
+                        ELSE COALESCE(classificacao_nome, N'Sem classificação')
+                    END AS classe,
+                    COALESCE(responsavel_regiao_destino, N'Responsável não informado') AS responsavel,
+                    COALESCE(origem_uf, N'UF não informada') AS uf_origem,
+                    COALESCE(destino_uf, N'UF não informada') AS uf_destino,
+                    COALESCE(destino_cidade, N'Cidade não informada') AS cidade,
+                    valor_total, subtotal, elegivel_faturamento, previsao_entrega, status_normalizado
+                FROM filtrados
+            ), agrupados AS (
+                SELECT CASE
+                        WHEN GROUPING(nome_status) = 0 THEN N'STATUS'
+                        WHEN GROUPING(rota_origem) = 0 THEN N'ROTAS'
+                        WHEN GROUPING(classe) = 0 THEN N'CLASSIFICACAO'
+                        WHEN GROUPING(responsavel) = 0 THEN N'RESPONSAVEL'
+                        WHEN GROUPING(uf_origem) = 0 THEN N'UF_ORIGEM'
+                        WHEN GROUPING(uf_destino) = 0 THEN N'UF_DESTINO'
+                        ELSE N'CIDADE'
+                    END AS tipo,
+                    COALESCE(nome_status, rota_origem, classe, responsavel, uf_origem, uf_destino, cidade) AS nome,
+                    rota_destino AS destino,
+                    COALESCE(SUM(valor_total), 0) AS receita,
+                    CAST(COALESCE(SUM(elegivel_faturamento), 0) AS int) AS fretes,
+                    SUM(CASE
+                        WHEN previsao_entrega IS NOT NULL
+                         AND previsao_entrega < CAST(SYSDATETIME() AS date)
+                         AND COALESCE(status_normalizado, '') <> N'finalizado'
+                        THEN 1 ELSE 0 END) AS vencidos,
+                    SUM(CASE
+                        WHEN previsao_entrega IS NULL
+                          OR previsao_entrega >= CAST(SYSDATETIME() AS date)
+                          OR COALESCE(status_normalizado, '') = N'finalizado'
+                        THEN 1 ELSE 0 END) AS noPrazo
+                FROM categorias
+                GROUP BY GROUPING SETS (
+                    (nome_status), (rota_origem, rota_destino), (classe), (responsavel),
+                    (uf_origem), (uf_destino), (cidade)
+                )
+                HAVING GROUPING(nome_status) = 0
+                    OR COALESCE(SUM(valor_total), 0) <> 0 OR COALESCE(SUM(subtotal), 0) <> 0
+            ), ordenados AS (
+                SELECT *, ROW_NUMBER() OVER (
+                    PARTITION BY tipo
+                    ORDER BY CASE WHEN tipo <> N'STATUS' THEN receita END DESC, nome, destino
+                ) AS posicao
+                FROM agrupados
+            )
+            SELECT tipo, nome, destino, receita, fretes, vencidos, noPrazo
+            FROM ordenados
+            WHERE tipo = N'STATUS' OR posicao <= CASE WHEN tipo = N'CLASSIFICACAO' THEN 8 ELSE 10 END
+            ORDER BY tipo, posicao
+            OPTION (RECOMPILE)
             """, nativeQuery = true)
-    List<FretesPrevisaoStatusProjection> buscarPrevisaoPorStatusAgregada(
-            @Param("dataInicio") LocalDate dataInicio,
-            @Param("dataFimExclusivo") LocalDate dataFimExclusivo,
-            @Param("escopoFiliais") List<String> escopoFiliais,
-            @Param("escopoFiliaisVazio") int escopoFiliaisVazio,
-            @Param("filiais") List<String> filiais,
-            @Param("filiaisVazio") int filiaisVazio,
-            @Param("status") List<String> status,
-            @Param("statusVazio") int statusVazio,
-            @Param("pagadores") List<String> pagadores,
-            @Param("pagadoresVazio") int pagadoresVazio,
-            @Param("responsaveis") List<String> responsaveis,
-            @Param("responsaveisVazio") int responsaveisVazio,
-            @Param("ufOrigem") List<String> ufOrigem,
-            @Param("ufOrigemVazio") int ufOrigemVazio,
-            @Param("ufDestino") List<String> ufDestino,
-            @Param("ufDestinoVazio") int ufDestinoVazio,
-            @Param("tiposFrete") List<String> tiposFrete,
-            @Param("tiposFreteVazio") int tiposFreteVazio,
-            @Param("modais") List<String> modais,
-            @Param("modaisVazio") int modaisVazio
-    );
-
-    @Query(value = FRETES_FILTRADOS_SQL + """
-            SELECT
-                COALESCE(origem_uf, N'N/A') AS origemUf,
-                COALESCE(destino_uf, N'N/A') AS destinoUf,
-                COALESCE(SUM(valor_total), 0) AS receita,
-                CAST(COALESCE(SUM(elegivel_faturamento), 0) AS INT) AS fretes
-            FROM filtrados
-            GROUP BY COALESCE(origem_uf, N'N/A'), COALESCE(destino_uf, N'N/A')
-            HAVING COALESCE(SUM(valor_total), 0) <> 0
-                OR COALESCE(SUM(subtotal), 0) <> 0
-            ORDER BY receita DESC, origemUf, destinoUf
-            OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
-            """, nativeQuery = true)
-    List<FretesRotaProjection> buscarTopRotasPorReceita(
-            @Param("dataInicio") LocalDate dataInicio,
-            @Param("dataFimExclusivo") LocalDate dataFimExclusivo,
-            @Param("escopoFiliais") List<String> escopoFiliais,
-            @Param("escopoFiliaisVazio") int escopoFiliaisVazio,
-            @Param("filiais") List<String> filiais,
-            @Param("filiaisVazio") int filiaisVazio,
-            @Param("status") List<String> status,
-            @Param("statusVazio") int statusVazio,
-            @Param("pagadores") List<String> pagadores,
-            @Param("pagadoresVazio") int pagadoresVazio,
-            @Param("responsaveis") List<String> responsaveis,
-            @Param("responsaveisVazio") int responsaveisVazio,
-            @Param("ufOrigem") List<String> ufOrigem,
-            @Param("ufOrigemVazio") int ufOrigemVazio,
-            @Param("ufDestino") List<String> ufDestino,
-            @Param("ufDestinoVazio") int ufDestinoVazio,
-            @Param("tiposFrete") List<String> tiposFrete,
-            @Param("tiposFreteVazio") int tiposFreteVazio,
-            @Param("modais") List<String> modais,
-            @Param("modaisVazio") int modaisVazio
-    );
-
-    @Query(value = FRETES_FILTRADOS_SQL + """
-            SELECT
-                CASE
-                    WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%FTL%' THEN N'FTL'
-                    WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%LTL%' THEN N'LTL'
-                    WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%PTL%' THEN N'PTL'
-                    ELSE COALESCE(classificacao_nome, N'Sem classificação')
-                END AS nome,
-                COALESCE(SUM(valor_total), 0) AS receita,
-                CAST(COALESCE(SUM(elegivel_faturamento), 0) AS INT) AS fretes
-            FROM filtrados
-            GROUP BY CASE
-                    WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%FTL%' THEN N'FTL'
-                    WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%LTL%' THEN N'LTL'
-                    WHEN UPPER(COALESCE(classificacao_nome, N'')) LIKE N'%PTL%' THEN N'PTL'
-                    ELSE COALESCE(classificacao_nome, N'Sem classificação')
-                END
-            HAVING COALESCE(SUM(valor_total), 0) <> 0
-                OR COALESCE(SUM(subtotal), 0) <> 0
-            ORDER BY receita DESC, nome
-            OFFSET 0 ROWS FETCH NEXT 8 ROWS ONLY
-            """, nativeQuery = true)
-    List<FretesFaturamentoGrupoProjection> buscarFaturamentoPorClassificacao(
-            @Param("dataInicio") LocalDate dataInicio,
-            @Param("dataFimExclusivo") LocalDate dataFimExclusivo,
-            @Param("escopoFiliais") List<String> escopoFiliais,
-            @Param("escopoFiliaisVazio") int escopoFiliaisVazio,
-            @Param("filiais") List<String> filiais,
-            @Param("filiaisVazio") int filiaisVazio,
-            @Param("status") List<String> status,
-            @Param("statusVazio") int statusVazio,
-            @Param("pagadores") List<String> pagadores,
-            @Param("pagadoresVazio") int pagadoresVazio,
-            @Param("responsaveis") List<String> responsaveis,
-            @Param("responsaveisVazio") int responsaveisVazio,
-            @Param("ufOrigem") List<String> ufOrigem,
-            @Param("ufOrigemVazio") int ufOrigemVazio,
-            @Param("ufDestino") List<String> ufDestino,
-            @Param("ufDestinoVazio") int ufDestinoVazio,
-            @Param("tiposFrete") List<String> tiposFrete,
-            @Param("tiposFreteVazio") int tiposFreteVazio,
-            @Param("modais") List<String> modais,
-            @Param("modaisVazio") int modaisVazio
-    );
-
-    @Query(value = FRETES_FILTRADOS_SQL + """
-            SELECT
-                COALESCE(responsavel_regiao_destino, N'Responsável não informado') AS nome,
-                COALESCE(SUM(valor_total), 0) AS receita,
-                CAST(COALESCE(SUM(elegivel_faturamento), 0) AS INT) AS fretes
-            FROM filtrados
-            GROUP BY COALESCE(responsavel_regiao_destino, N'Responsável não informado')
-            HAVING COALESCE(SUM(valor_total), 0) <> 0
-                OR COALESCE(SUM(subtotal), 0) <> 0
-            ORDER BY receita DESC, nome
-            OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
-            """, nativeQuery = true)
-    List<FretesFaturamentoGrupoProjection> buscarFaturamentoPorResponsavelDestino(
-            @Param("dataInicio") LocalDate dataInicio,
-            @Param("dataFimExclusivo") LocalDate dataFimExclusivo,
-            @Param("escopoFiliais") List<String> escopoFiliais,
-            @Param("escopoFiliaisVazio") int escopoFiliaisVazio,
-            @Param("filiais") List<String> filiais,
-            @Param("filiaisVazio") int filiaisVazio,
-            @Param("status") List<String> status,
-            @Param("statusVazio") int statusVazio,
-            @Param("pagadores") List<String> pagadores,
-            @Param("pagadoresVazio") int pagadoresVazio,
-            @Param("responsaveis") List<String> responsaveis,
-            @Param("responsaveisVazio") int responsaveisVazio,
-            @Param("ufOrigem") List<String> ufOrigem,
-            @Param("ufOrigemVazio") int ufOrigemVazio,
-            @Param("ufDestino") List<String> ufDestino,
-            @Param("ufDestinoVazio") int ufDestinoVazio,
-            @Param("tiposFrete") List<String> tiposFrete,
-            @Param("tiposFreteVazio") int tiposFreteVazio,
-            @Param("modais") List<String> modais,
-            @Param("modaisVazio") int modaisVazio
-    );
-
-    @Query(value = FRETES_FILTRADOS_SQL + """
-            SELECT
-                COALESCE(origem_uf, N'UF não informada') AS nome,
-                COALESCE(SUM(valor_total), 0) AS receita,
-                CAST(COALESCE(SUM(elegivel_faturamento), 0) AS INT) AS fretes
-            FROM filtrados
-            GROUP BY COALESCE(origem_uf, N'UF não informada')
-            HAVING COALESCE(SUM(valor_total), 0) <> 0
-                OR COALESCE(SUM(subtotal), 0) <> 0
-            ORDER BY receita DESC, nome
-            OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
-            """, nativeQuery = true)
-    List<FretesFaturamentoGrupoProjection> buscarFaturamentoPorUfOrigem(
-            @Param("dataInicio") LocalDate dataInicio,
-            @Param("dataFimExclusivo") LocalDate dataFimExclusivo,
-            @Param("escopoFiliais") List<String> escopoFiliais,
-            @Param("escopoFiliaisVazio") int escopoFiliaisVazio,
-            @Param("filiais") List<String> filiais,
-            @Param("filiaisVazio") int filiaisVazio,
-            @Param("status") List<String> status,
-            @Param("statusVazio") int statusVazio,
-            @Param("pagadores") List<String> pagadores,
-            @Param("pagadoresVazio") int pagadoresVazio,
-            @Param("responsaveis") List<String> responsaveis,
-            @Param("responsaveisVazio") int responsaveisVazio,
-            @Param("ufOrigem") List<String> ufOrigem,
-            @Param("ufOrigemVazio") int ufOrigemVazio,
-            @Param("ufDestino") List<String> ufDestino,
-            @Param("ufDestinoVazio") int ufDestinoVazio,
-            @Param("tiposFrete") List<String> tiposFrete,
-            @Param("tiposFreteVazio") int tiposFreteVazio,
-            @Param("modais") List<String> modais,
-            @Param("modaisVazio") int modaisVazio
-    );
-
-    @Query(value = FRETES_FILTRADOS_SQL + """
-            SELECT
-                COALESCE(destino_uf, N'UF não informada') AS nome,
-                COALESCE(SUM(valor_total), 0) AS receita,
-                CAST(COALESCE(SUM(elegivel_faturamento), 0) AS INT) AS fretes
-            FROM filtrados
-            GROUP BY COALESCE(destino_uf, N'UF não informada')
-            HAVING COALESCE(SUM(valor_total), 0) <> 0
-                OR COALESCE(SUM(subtotal), 0) <> 0
-            ORDER BY receita DESC, nome
-            OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
-            """, nativeQuery = true)
-    List<FretesFaturamentoGrupoProjection> buscarFaturamentoPorUfDestino(
-            @Param("dataInicio") LocalDate dataInicio,
-            @Param("dataFimExclusivo") LocalDate dataFimExclusivo,
-            @Param("escopoFiliais") List<String> escopoFiliais,
-            @Param("escopoFiliaisVazio") int escopoFiliaisVazio,
-            @Param("filiais") List<String> filiais,
-            @Param("filiaisVazio") int filiaisVazio,
-            @Param("status") List<String> status,
-            @Param("statusVazio") int statusVazio,
-            @Param("pagadores") List<String> pagadores,
-            @Param("pagadoresVazio") int pagadoresVazio,
-            @Param("responsaveis") List<String> responsaveis,
-            @Param("responsaveisVazio") int responsaveisVazio,
-            @Param("ufOrigem") List<String> ufOrigem,
-            @Param("ufOrigemVazio") int ufOrigemVazio,
-            @Param("ufDestino") List<String> ufDestino,
-            @Param("ufDestinoVazio") int ufDestinoVazio,
-            @Param("tiposFrete") List<String> tiposFrete,
-            @Param("tiposFreteVazio") int tiposFreteVazio,
-            @Param("modais") List<String> modais,
-            @Param("modaisVazio") int modaisVazio
-    );
-
-    @Query(value = FRETES_FILTRADOS_SQL + """
-            SELECT
-                COALESCE(destino_cidade, N'Cidade não informada') AS nome,
-                COALESCE(SUM(valor_total), 0) AS receita,
-                CAST(COALESCE(SUM(elegivel_faturamento), 0) AS INT) AS fretes
-            FROM filtrados
-            GROUP BY COALESCE(destino_cidade, N'Cidade não informada')
-            HAVING COALESCE(SUM(valor_total), 0) <> 0
-                OR COALESCE(SUM(subtotal), 0) <> 0
-            ORDER BY receita DESC, nome
-            OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
-            """, nativeQuery = true)
-    List<FretesFaturamentoGrupoProjection> buscarFaturamentoPorCidadeDestino(
+    List<FretesGraficoProjection> buscarGraficosAgregados(
             @Param("dataInicio") LocalDate dataInicio,
             @Param("dataFimExclusivo") LocalDate dataFimExclusivo,
             @Param("escopoFiliais") List<String> escopoFiliais,
@@ -838,30 +663,20 @@ public interface VisaoFretesRepository extends JpaRepository<VisaoFretesEntity, 
         BigDecimal getValorCofins();
     }
 
-    interface FretesPrevisaoStatusProjection {
-        String getStatus();
+    interface FretesGraficoProjection {
+        String getTipo();
+
+        String getNome();
+
+        String getDestino();
+
+        BigDecimal getReceita();
+
+        int getFretes();
 
         int getVencidos();
 
         int getNoPrazo();
-    }
-
-    interface FretesRotaProjection {
-        String getOrigemUf();
-
-        String getDestinoUf();
-
-        BigDecimal getReceita();
-
-        int getFretes();
-    }
-
-    interface FretesFaturamentoGrupoProjection {
-        String getNome();
-
-        BigDecimal getReceita();
-
-        int getFretes();
     }
 
     interface FretesRealizadoFilialProjection {

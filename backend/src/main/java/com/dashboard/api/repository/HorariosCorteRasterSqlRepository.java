@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.indicadoresgestao.HorariosCorteSeriePointDTO;
 import com.dashboard.api.dto.PaginaDTO;
@@ -347,7 +348,7 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    public HorariosCorteRasterSqlRepository(JdbcTemplate jdbcTemplate) {
+    public HorariosCorteRasterSqlRepository(@ConsultaAnalitica JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
     }
 

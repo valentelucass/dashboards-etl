@@ -1,3 +1,7 @@
+import DashboardSelector from "./DashboardSelector";
+import DashboardButton from "./DashboardButton";
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Card } from '@astryxdesign/core/Card';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import TableHeaderTooltip from './TableHeaderTooltip';
@@ -198,8 +202,8 @@ export default function DataTable<T>({
   }
 
   return (
-    <div
-      className="overflow-hidden rounded-[20px] border shadow-sm"
+    <Card padding={0}
+      className="dashboard-table-card overflow-hidden rounded-[20px] border shadow-sm"
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
     >
       {mostrarCabecalho && (
@@ -219,11 +223,11 @@ export default function DataTable<T>({
             <div role="group" aria-label={`Controles de ${titulo ?? 'tabela'}`} className="flex max-w-full flex-wrap items-center justify-end gap-2">
               {acoesCabecalho}
               {paginacaoAtiva && (
-                <label className="flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                <div className="flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                   Linhas
-                  <select
+                  <DashboardSelector label="Linhas"
                     value={tamanhoPagina}
-                    onChange={(event) => alterarTamanhoPagina(Number(event.target.value))}
+                    onValueChange={selectedValue => alterarTamanhoPagina(Number(selectedValue))}
                     className="rounded-lg border px-2 py-1 text-xs"
                     style={{
                       backgroundColor: 'var(--color-bg)',
@@ -236,8 +240,8 @@ export default function DataTable<T>({
                         {valor}
                       </option>
                     ))}
-                  </select>
-                </label>
+                  </DashboardSelector>
+                </div>
               )}
             </div>
           )}
@@ -245,11 +249,11 @@ export default function DataTable<T>({
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-max text-sm" style={{ minWidth: `max(100%, ${larguraMinimaTabela}px)` }}>
-          <thead>
-            <tr className="border-b" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+        <Table density="compact" className="w-max text-sm" style={{ minWidth: `max(100%, ${larguraMinimaTabela}px)` }}>
+          <TableHeader>
+            <TableRow isHeaderRow className="border-b" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
               {colunas.map((col) => (
-                <th
+                <TableHeaderCell
                   key={col.chave}
                   onClick={() => handleSort(col.chave, col.ordenavel !== false)}
                   className={`px-3 py-2.5 ${getTextAlignClass(col.alinhamento)} text-xs font-medium uppercase tracking-wider whitespace-nowrap select-none ${
@@ -270,30 +274,30 @@ export default function DataTable<T>({
                       <span className="shrink-0">{direcao === 'asc' ? '↑' : '↓'}</span>
                     )}
                   </span>
-                </th>
+                </TableHeaderCell>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {hasError ? (
-              <tr>
-                <td colSpan={colunas.length} className="px-3 py-6">
+              <TableRow>
+                <TableCell colSpan={colunas.length} className="px-3 py-6">
                   <MensagemErro mensagem={getApiErrorMessage(error, errorFallbackMessage)} tipo={getTipoErro(error)} />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : dadosPaginados.length === 0 ? (
-              <tr>
-                <td
+              <TableRow>
+                <TableCell
                   colSpan={colunas.length}
                   className="px-3 py-8 text-center"
                   style={{ color: 'var(--color-text-muted)' }}
                 >
                   Nenhum registro encontrado.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               dadosPaginados.map((row) => (
-                <tr
+                <TableRow
                   key={String(row[chaveLinha])}
                   className="border-b transition-colors"
                   style={{ borderColor: 'var(--color-border)' }}
@@ -305,7 +309,7 @@ export default function DataTable<T>({
                     const conteudo = col.formato ? col.formato(valor, row) : String(valor ?? '—');
 
                     return (
-                      <td
+                      <TableCell
                         key={col.chave}
                         className={`px-3 py-2 ${getTextAlignClass(col.alinhamento)} align-middle whitespace-nowrap ${
                           col.fixo ? 'sticky left-0' : ''
@@ -318,14 +322,14 @@ export default function DataTable<T>({
                         }}
                       >
                         {conteudo}
-                      </td>
+                      </TableCell>
                     );
                   })}
-                </tr>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {!hasError && paginacaoAtiva && (
@@ -338,7 +342,7 @@ export default function DataTable<T>({
             {formatarInteiro(fimExibido)} de {formatarInteiro(paginacaoRemota ? totalReal : dados.length)}
           </span>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button
+            <DashboardButton
               type="button"
               onClick={() => alterarPagina(Math.max(1, paginaSegura - 1))}
               disabled={paginaSegura === 1}
@@ -346,7 +350,7 @@ export default function DataTable<T>({
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
             >
               Anterior
-            </button>
+            </DashboardButton>
             <div className="flex flex-wrap items-center justify-center gap-1" aria-label="Páginas da tabela">
               {itensPaginacao.map((item) => {
                 if (typeof item !== 'number') {
@@ -364,7 +368,7 @@ export default function DataTable<T>({
 
                 const ativo = item === paginaSegura;
                 return (
-                  <button
+                  <DashboardButton
                     key={item}
                     type="button"
                     onClick={() => alterarPagina(item)}
@@ -384,14 +388,14 @@ export default function DataTable<T>({
                     }
                   >
                     {item}
-                  </button>
+                  </DashboardButton>
                 );
               })}
             </div>
             <span className="min-w-[92px] text-center">
               Pagina {paginaSegura} de {totalPaginas}
             </span>
-            <button
+            <DashboardButton
               type="button"
               onClick={() => alterarPagina(Math.min(totalPaginas, paginaSegura + 1))}
               disabled={paginaSegura === totalPaginas}
@@ -399,10 +403,10 @@ export default function DataTable<T>({
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
             >
               Proxima
-            </button>
+            </DashboardButton>
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

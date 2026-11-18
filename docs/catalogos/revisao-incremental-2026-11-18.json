@@ -1,0 +1,354 @@
+{
+  "dataLocal": "2026-11-18",
+  "ambiente": "H2 e DASHBOARDS_DEV_AUDIT_20261117 com perfil DEV, objetos temporarios",
+  "evidencias": "Documents/Codex/2026-11-18/dashboard-revisao-astra/work",
+  "arquivosETL": {
+    "database/production/publication/037_dashboard_coletas_preparacao_incremental.sql": "47EC7487A832A4D7B99854DFEE5ABE1FBD69A916F28AC78D3BC1F5D290E90EC9",
+    "database/production/publication/038_dashboard_fretes_vigencia_incremental.sql": "8D933487BE0F475E4822B75D3AF409A2C7C85EAE045EA8E3ECBEB7D761953328",
+    "scripts/operations/DashboardProjectionBatch.ps1": "2BBA1DC776C29E24F16F1CE08C2825C694F16045C0F57D5A044747F9444B116F",
+    "scripts/operations/Invoke-DashboardProjectionRefresh.ps1": "6FB7999BC11424AA12A518DBBAB10E5529557573FF1F703226A5C11A8A1DF1B8",
+    "scripts/validation/dashboard-fretes-vigentes-fixture.sql": "EDE64DBA05FADD0D6EA446F0ABC8E08024B81E69121076D67F78F62CA803D2B6"
+  },
+  "controleMemoria": [
+    {
+      "arquivo": "backend-red-receipt.json",
+      "fim": "2026-11-18T10:11:34.0292928-03:00",
+      "codigo": 1,
+      "prazoExcedido": false,
+      "sha256": "48FC85559D6FF5763A2EFD57E70CB357843B66E52FAA4A43593F7A4697E46EC1"
+    },
+    {
+      "arquivo": "backend-green-receipt.json",
+      "fim": "2026-11-18T10:46:19.6091688-03:00",
+      "codigo": 0,
+      "prazoExcedido": false,
+      "sha256": "782DB409EA0F19DC7AED4631F2A761F3B5DB150E34F5D2BED11633DFD1A28877"
+    },
+    {
+      "arquivo": "validar-duas-receipt.json",
+      "fim": "2026-11-18T10:40:27.0681165-03:00",
+      "codigo": 0,
+      "prazoExcedido": false,
+      "sha256": "FE9B06F4A696D1056671C128D4330E363127C8552618BFDEA59C8A6E9B86C3BE"
+    },
+    {
+      "arquivo": "corrida-receipt.json",
+      "fim": "2026-11-18T10:47:22.2629982-03:00",
+      "codigo": 0,
+      "prazoExcedido": false,
+      "sha256": "E938607C856A58150FAC5B0458259DB347F41D406C5E823B1AA6FE765849FFDC"
+    },
+    {
+      "arquivo": "continuo-receipt.json",
+      "fim": "2026-11-18T10:55:35.2642314-03:00",
+      "codigo": 0,
+      "prazoExcedido": false,
+      "sha256": "91C428475248C8FDBEDBFF5CA36F83D490375ACCE19EC3D7CCD408BA04FB7FEF"
+    },
+    {
+      "arquivo": "filtros-local-receipt.json",
+      "fim": "2026-11-18T10:52:50.4917513-03:00",
+      "codigo": 0,
+      "prazoExcedido": false,
+      "sha256": "31B05AA01D0B834B2B5B1BF677F0C8F1E87BA14CB46D1A4D85B1E72BB6D62AF4"
+    }
+  ],
+  "manifestos": {
+    "conexoesOperacionaisDuranteConsultaAntes": 1,
+    "depois": 0,
+    "testesAprovados": 24
+  },
+  "coletas": {
+    "conjuntosIguais": true,
+    "ativasRecebidas": 218,
+    "preparoDuasParticoesMs": 19991,
+    "colunas": 41,
+    "exclusoesRecebidas": 18,
+    "loteUltrapassado": 52036,
+    "falhaIsolada": 52035,
+    "linhasVigentes": 209
+  },
+  "fretes": {
+    "preparoDuasParticoesMs": 2579,
+    "vencedores": 159,
+    "ocorrenciasRecebidas": [
+      106,
+      91
+    ],
+    "comparacao": "ID + lote + ordinal da primeira CTE da 036"
+  },
+  "trabalhador": {
+    "particoesPorCiclo": [
+      0,
+      2,
+      0
+    ],
+    "modo": "Continuous no ensaio com objetos temporarios, sem registro de tarefa"
+  },
+  "filtrosColetas": {
+    "fontes": [
+      "audit_coletas_candidate",
+      "audit_coletas_reference_complete"
+    ],
+    "inicio": "2026-08-16",
+    "contagens": [
+      5776,
+      198,
+      182
+    ],
+    "paginaConferida": 40,
+    "fimInclusivo": "2026-11-13"
+  },
+  "inventario": {
+    "padroesUI": 23,
+    "paresAlcancados": 175,
+    "componentesPagina": 18,
+    "controladores": 28,
+    "apiSemCliente": 8,
+    "clienteSemPagina": 38,
+    "paresHTTPCliente": 213,
+    "operacoesHTTP": 221
+  },
+  "producaoLiberada": false,
+  "qualificacaoPosteriorDev": {
+    "escopo": "Ensaios posteriores na cópia DEV. Os registros anteriores descrevem a primeira revisão.",
+    "periodoFixado": [
+      "2026-08-16",
+      "2026-11-13"
+    ],
+    "arquivosDaVersaoTestada": {
+      "dashboards-etl/backend/src/main/java/com/dashboard/api/repository/FaturasPorClienteSqlRepository.java": "e2ac1e710c3003c90b4a8db2b8d1a8a7d0065c941a87491a5b5ae9edeaedf7f5",
+      "dashboards-etl/frontend/src/components/domain/etlSaude/EtlV2CoberturaPanel.tsx": "bfbd5e70918f5b4d80e508a77f762a240da11c72af7952dde454c76787d76e04",
+      "etl-extracao-dados-v2/database/production/publication/037_dashboard_coletas_preparacao_incremental.sql": "97132c06728417f9155733e61131a7da2a87dd76b4cefed0f80be98d85aeb6f1",
+      "etl-extracao-dados-v2/database/production/publication/038_dashboard_fretes_vigencia_incremental.sql": "027cd56c11059b85a3117f144fcaf8dac41f5c9f226ff8505e50f3169bb049bb",
+      "etl-extracao-dados-v2/database/production/publication/039_dashboard_cotacoes_incremental.sql": "b2b50d5b7d479753d0b93b204d83e37d8c7cede4b50a4a1d1a77b83babc2468c",
+      "etl-extracao-dados-v2/database/production/publication/040_dashboard_fretes_vinculos_incrementais.sql": "872ff7db1007ee4c86f292c141b84ae787e51a117fc8321870b126cb9ac196a9",
+      "etl-extracao-dados-v2/scripts/operations/DashboardProjectionBatch.ps1": "8eda97962dd0ebb95fd12b1d83a15d9dce9727068122f41289c3b467df27906d",
+      "etl-extracao-dados-v2/scripts/operations/Invoke-DashboardProjectionRefresh.ps1": "6fb7999bc11424aa12a518dbbab10e5529557573ff1f703226a5c11a8a1df1b8",
+      "etl-extracao-dados-v2/src/main/java/br/com/esl/etl/v2/plataforma/producao/ProductionRefreshCycle.java": "96850aac808c614f8b67eb81f1a65ce7ae4f51300dd606d4dc988c9ec942fe29",
+      "etl-extracao-dados-v2/src/main/java/br/com/esl/etl/v2/plataforma/producao/RefreshCheckpoint.java": "5a3821a0010f9d0815519cb72adc9b245a628e2b85c1090e377e1de4b993a201"
+    },
+    "recibos": [
+      {
+        "arquivo": "coletas90-completa-recibo.json",
+        "fim": "2026-11-18T13:36:31.7019359-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "6812691b88f74b3923553ee65e18930b69a7e6047eaaa112ff1abd7656344be8"
+      },
+      {
+        "arquivo": "cotacoes-incr-recibo.json",
+        "fim": "2026-11-18T13:05:00.0187846-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "5be1c1a7b9a8e1325aa3c7277ef3589585e372d8c6776d39cd99597e212228db"
+      },
+      {
+        "arquivo": "contas90-direta-recibo.json",
+        "fim": "2026-11-18T12:47:44.5521393-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "112e1f94c98b46dbf9233859be797c9091614d18d0cf654790bb7fe70424f1a5"
+      },
+      {
+        "arquivo": "regressoes-2-recibo.json",
+        "fim": "2026-11-18T12:40:29.1336484-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "2047f2f658be99c621a52fab7ca6c027429eca53a9ce69732b1ec7ab6e7720ba"
+      },
+      {
+        "arquivo": "fretes-vinculos-2-recibo.json",
+        "fim": "2026-11-18T12:31:37.9508052-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "3222cce905a56ab13783ba209f6e9c5afff4c2c12a9d7a6d9cd95ebf8d608b6b"
+      },
+      {
+        "arquivo": "fretes-vinculos-real-2-recibo.json",
+        "fim": "2026-11-18T12:42:03.7439519-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "ef12464bf4bcf47cdd6e5a1fe4dd7cb92cb2b3987a9bb55437859186a82a2719"
+      },
+      {
+        "arquivo": "fretes90-metadados-recibo.json",
+        "fim": "2026-11-18T13:23:15.6790800-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "4947599a3faa06b37381eea1fc157880bea298f4ee582e5c1e73f6fa3f4246de"
+      },
+      {
+        "arquivo": "minutas-periodos-recibo.json",
+        "fim": "2026-11-18T13:16:49.6215173-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "ad7022dd17b32f76a82058e6d85625cdbaa7ef54ae5f87509574710562645b86"
+      },
+      {
+        "arquivo": "faturas-por-filtro-recibo.json",
+        "fim": "2026-11-18T12:42:56.6299160-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "95962aae480edecf58c4b1680079ac243421be33365f3f1a73ec0ce31ccd0d35"
+      },
+      {
+        "arquivo": "testes-com-faturas-recibo.json",
+        "fim": "2026-11-18T13:05:42.5988072-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "2f6167227a99d6617db8b4715a9e3227ae9f9429b30dbe8f58f89460b2a27cec"
+      },
+      {
+        "arquivo": "frontend-final-recibo.json",
+        "fim": "2026-11-18T12:32:10.4402567-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "817e9158904fc71dc29619e88c16a90929ed38198e134b1981d6b8dd96e88f4c"
+      },
+      {
+        "arquivo": "carga-com-faturas-final-recibo.json",
+        "fim": "2026-11-18T13:10:34.9437161-03:00",
+        "codigo": 1,
+        "prazoExcedido": false,
+        "sha256": "b0292f280546d8db1e57f673332b3693989f7193be64620a8f412f7ea7580d57"
+      },
+      {
+        "arquivo": "mapa-etl-final-recibo.json",
+        "fim": "2026-11-18T13:15:52.5321726-03:00",
+        "codigo": 0,
+        "prazoExcedido": false,
+        "sha256": "0bddc38bfb44e9928f04c76c96f8fb025af33b69f0b64620af96af4322858554"
+      }
+    ],
+    "filtrosFaturas": [
+      {
+        "filtro": "pagador",
+        "http": 200,
+        "ms": 5490,
+        "igual": true,
+        "registros": 6187,
+        "esperados": 6187
+      },
+      {
+        "filtro": "cnpj",
+        "http": 200,
+        "ms": 9698,
+        "igual": true,
+        "registros": 805,
+        "esperados": 805
+      },
+      {
+        "filtro": "juntos",
+        "http": 200,
+        "ms": 5079,
+        "igual": true,
+        "registros": 805,
+        "esperados": 805
+      },
+      {
+        "filtro": "todos",
+        "http": 200,
+        "ms": 1193,
+        "igual": true,
+        "registros": 53561,
+        "esperados": 53561
+      }
+    ],
+    "sessaoEConsultasSobCarga": {
+      "at": "2026-11-18T13:10:34.6840349-03:00",
+      "ingestoesDuranteSessao": 22,
+      "sessaoPassou": true,
+      "sessions": [
+        {
+          "route": "/api/auth/login",
+          "http": 200,
+          "ms": 1067,
+          "pendingReads": 0,
+          "utc": "2026-11-18T16:09:43.7605507Z"
+        },
+        {
+          "route": "/api/auth/login",
+          "http": 200,
+          "ms": 4552,
+          "pendingReads": 3,
+          "utc": "2026-11-18T16:09:53.4533112Z"
+        },
+        {
+          "route": "/api/auth/me",
+          "http": 200,
+          "ms": 1015,
+          "pendingReads": 3,
+          "utc": "2026-11-18T16:09:54.4726164Z"
+        },
+        {
+          "route": "/api/sessao/presenca",
+          "http": 204,
+          "ms": 1830,
+          "pendingReads": 3,
+          "utc": "2026-11-18T16:09:56.3053018Z"
+        },
+        {
+          "route": "/api/auth/refresh",
+          "http": 200,
+          "ms": 7061,
+          "pendingReads": 2,
+          "utc": "2026-11-18T16:10:03.3683942Z"
+        },
+        {
+          "route": "/api/auth/logout",
+          "http": 204,
+          "ms": 90,
+          "pendingReads": 2,
+          "utc": "2026-11-18T16:10:03.4597952Z"
+        },
+        {
+          "route": "/api/auth/logout",
+          "http": 204,
+          "ms": 611,
+          "pendingReads": 0,
+          "utc": "2026-11-18T16:10:34.1144057Z"
+        }
+      ],
+      "pages": [
+        {
+          "route": "/api/painel/coletas/tabela/paginada",
+          "http": 504,
+          "upperBoundMs": 44625,
+          "hasBody": true
+        },
+        {
+          "route": "/api/painel/cotacoes/graficos",
+          "http": 504,
+          "upperBoundMs": 44623,
+          "hasBody": true
+        },
+        {
+          "route": "/api/painel/faturas-por-cliente/status-processo/evolucao",
+          "http": 200,
+          "upperBoundMs": 44622,
+          "hasBody": true
+        }
+      ]
+    },
+    "coletas90": {
+      "camposIguais": 41,
+      "registros": 14461,
+      "ocorrencias": 19713,
+      "particoes": 180
+    },
+    "resultadoCotacoes": "COTACOES 90 dias, 17058 ocorrencias, 17058 linhas publicadas e 54 campos iguais com multiplicidades.",
+    "resultadoContas": "CONTAS_A_PAGAR 90 dias, 15970 ocorrencias, 15020 linhas publicadas e 31 campos iguais com multiplicidades.",
+    "resultadosFretes": [
+      "Metadados de 62074 ocorrencias de fretes confirmadas em 90 datas.",
+      "Faturamento 54821 fretes e 83 campos iguais.",
+      "Performance 54821 fretes e 20 campos iguais."
+    ],
+    "resultadosMinutas": [
+      "90 dias: 52558 minutas identicas",
+      "30 dias: 19187 minutas identicas",
+      "7 dias: 3761 minutas identicas"
+    ],
+    "liberacao": "Pendente"
+  }
+}

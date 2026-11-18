@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.dto.etl.EtlV2CoberturaDTO;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -13,7 +14,7 @@ public class EtlV2CoberturaRepository {
 
     private final JdbcOperations jdbc;
 
-    public EtlV2CoberturaRepository(JdbcOperations jdbc) {
+    public EtlV2CoberturaRepository(@ConsultaAnalitica JdbcOperations jdbc) {
         this.jdbc = jdbc;
     }
 

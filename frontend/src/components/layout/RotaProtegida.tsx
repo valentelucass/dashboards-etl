@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAutenticacao } from '../../contexts/AutenticacaoContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import type { PermissionKey } from '../../types/access';
+import DashboardRouteLoading from './DashboardRouteLoading';
 
 interface RotaProtegidaProps {
   permissao?: PermissionKey;
@@ -15,11 +16,7 @@ export default function RotaProtegida({ permissao, adminOnly, role, allowPasswor
   const { canAccess, hasRole, isAdminAcesso } = usePermissions();
 
   if (carregandoSessao) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#21478A] border-t-transparent" />
-      </div>
-    );
+    return <DashboardRouteLoading />;
   }
 
   if (!usuario) {

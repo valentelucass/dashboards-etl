@@ -1,4 +1,6 @@
 import type { PermissionCatalogItem, PermissionMap } from '../../types/access';
+import { Card } from '@astryxdesign/core/Card';
+import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
 
 interface PermissionMatrixProps {
   catalogo: PermissionCatalogItem[];
@@ -14,7 +16,7 @@ export default function PermissionMatrix({ catalogo, valor, onChange, disabled }
         const ativo = Boolean(valor[item.chave]);
 
         return (
-          <label
+          <Card padding={0}
             key={item.chave}
             className={`flex min-h-[122px] min-w-0 items-start gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${disabled ? 'opacity-60' : ''}`}
             style={
@@ -29,25 +31,20 @@ export default function PermissionMatrix({ catalogo, valor, onChange, disabled }
                   }
             }
           >
-            <input
-              type="checkbox"
-              checked={ativo}
-              disabled={disabled}
-              onChange={(event) =>
+            <CheckboxInput
+              label={item.nome}
+              description={item.descricao}
+              value={ativo}
+              isDisabled={disabled}
+              onChange={(checked) =>
                 onChange({
                   ...valor,
-                  [item.chave]: event.target.checked,
+                  [item.chave]: checked,
                 })
               }
-              className="mt-1 h-4 w-4 rounded border-[var(--color-border)]"
-              style={{ accentColor: 'var(--color-primary)' }}
             />
-            <div className="min-w-0">
-              <div className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{item.nome}</div>
-              <div className="mt-0.5 line-clamp-2 text-xs leading-4" title={item.descricao} style={{ color: 'var(--color-text-subtle)' }}>{item.descricao}</div>
-              {item.rota && <div className="mt-1 truncate text-xs" title={item.rota} style={{ color: 'var(--color-text-muted)' }}>{item.rota}</div>}
-            </div>
-          </label>
+            {item.rota && <div className="mt-1 truncate text-xs" title={item.rota} style={{ color: 'var(--color-text-muted)' }}>{item.rota}</div>}
+          </Card>
         );
       })}
     </div>

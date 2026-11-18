@@ -1,7 +1,9 @@
+import { Card } from '@astryxdesign/core/Card';
+import { ProgressBar } from '@astryxdesign/core/ProgressBar';
 import { createElement, type CSSProperties, type ReactNode } from 'react';
 import { resolveKpiIcon } from './kpiIconResolver';
 import { getKpiFlexBasis } from './kpiCardLayout';
-import { getGoalToneStyle, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
+import { getGoalToneStyle, goalProgressVariant, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
 
 interface KpiCardProps {
   label: string;
@@ -45,12 +47,12 @@ export default function KpiCard({
   const secondaryColor = tone === 'neutral' ? 'var(--color-text-subtle)' : style.text;
   const iconNode = icone ?? createElement(resolveKpiIcon(label), { size: 16, 'aria-hidden': 'true' });
   const widthPct = Math.max(0, Math.min(progressPct ?? 0, 100));
-  const cardClassName = `flex min-w-0 flex-col rounded-[20px] border transition-all duration-150 hover:shadow-lg hover:-translate-y-[2px] cursor-default ${compact ? 'gap-0 p-2' : 'gap-1 p-3'} ${className}`;
-  const labelClassName = 'text-[11px] font-medium uppercase tracking-wide truncate';
-  const defaultValueClassName = 'text-2xl font-bold truncate';
+  const cardClassName = `dashboard-kpi-card flex min-w-0 flex-col border cursor-default ${compact ? 'gap-0 p-2' : 'gap-1 p-3'} ${className}`;
+  const labelClassName = 'text-xs font-medium truncate';
+  const defaultValueClassName = 'dashboard-kpi-value font-bold';
 
   return (
-    <div
+    <Card padding={0}
       className={cardClassName}
       style={{
         backgroundColor: 'var(--color-card)',
@@ -63,6 +65,7 @@ export default function KpiCard({
       <div className="flex items-center justify-between gap-1">
         <span
           className={labelClassName}
+          title={label}
           style={{ color: secondaryColor }}
         >
           {label}
@@ -75,6 +78,7 @@ export default function KpiCard({
       <span
         className={valorClassName ?? defaultValueClassName}
         style={valorStyle ?? (valorClassName ? undefined : { color: 'var(--color-text)' })}
+        data-long-value={valor.length > 13 || undefined}
       >
         {valor}
       </span>
@@ -94,9 +98,7 @@ export default function KpiCard({
           )}
           {progressPct != null && (
             <div className="min-w-10 flex-1">
-              <div className="h-1 overflow-hidden rounded-full" style={{ backgroundColor: style.track }}>
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${widthPct}%`, backgroundColor: style.fill }} />
-              </div>
+              <ProgressBar label={`${label}: cobertura da meta`} value={widthPct} variant={goalProgressVariant[tone]} isLabelHidden />
             </div>
           )}
         </div>
@@ -110,9 +112,7 @@ export default function KpiCard({
 
           {progressPct != null && (
             <div className="mt-1">
-              <div className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: style.track }}>
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${widthPct}%`, backgroundColor: style.fill }} />
-              </div>
+              <ProgressBar label={`${label}: cobertura da meta`} value={widthPct} variant={goalProgressVariant[tone]} isLabelHidden />
             </div>
           )}
         </>
@@ -134,6 +134,6 @@ export default function KpiCard({
           {Math.abs(trend.valor).toFixed(1)}%
         </span>
       )}
-    </div>
+    </Card>
   );
 }

@@ -50,6 +50,7 @@ public class ColetasService {
 
     public ColetasOverviewDTO buscarOverview(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
+        contractValidator.validarSolicitacaoNativa();
         return agregadosSqlRepository.buscarOverview(filtro);
     }
 
@@ -59,6 +60,7 @@ public class ColetasService {
 
     public List<ColetasTrendPointDTO> buscarSerieTemporal(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
+        contractValidator.validarSolicitacaoNativa();
         return agregadosSqlRepository.buscarSerieTemporal(filtro);
     }
 

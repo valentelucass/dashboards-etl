@@ -1,3 +1,4 @@
+import DashboardButton from "../../shared/DashboardButton";
 import { useCallback, useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
 import ChartWrapper from '../../charts/ChartWrapper';
@@ -101,7 +102,7 @@ export default function ManifestosTrend({ dados, nivel, onNivelChange, onPointCl
   const nivelActions = useMemo(() => (
     <div className="flex rounded-md border p-0.5" style={{ borderColor: 'var(--color-border)' }}>
       {niveis.map((item) => (
-        <button
+        <DashboardButton
           key={item.valor}
           type="button"
           className="rounded px-2 py-1 text-xs font-semibold transition"
@@ -112,7 +113,7 @@ export default function ManifestosTrend({ dados, nivel, onNivelChange, onPointCl
           onClick={() => onNivelChange(item.valor)}
         >
           {item.label}
-        </button>
+        </DashboardButton>
       ))}
     </div>
   ), [nivel, onNivelChange]);

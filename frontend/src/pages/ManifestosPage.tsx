@@ -1,3 +1,5 @@
+import { DashboardInput } from "../components/shared/DashboardTextEntry";
+import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -425,7 +427,7 @@ export default function ManifestosPage() {
           </span>
         ) : null}
         actions={canManageManifestosGoals ? (
-          <button
+          <DashboardButton
             type="button"
             onClick={() => setIsMetasPanelOpen((current) => !current)}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-[var(--color-bg)] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -433,7 +435,7 @@ export default function ManifestosPage() {
           >
             <Settings size={14} aria-hidden="true" />
             Gerenciar Metas
-          </button>
+          </DashboardButton>
         ) : null}
       >
         <div className="flex w-full min-w-[148px] flex-col gap-1 self-end justify-self-start md:w-auto">
@@ -444,7 +446,7 @@ export default function ManifestosPage() {
           >
             Manifesto
           </label>
-          <input
+          <DashboardInput
             id="manifestos-numero"
             type="text"
             inputMode="numeric"

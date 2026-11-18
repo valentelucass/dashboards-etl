@@ -64,6 +64,12 @@ public class DimensoesController {
         return dimensoesService.buscarPagadores(busca, limite);
     }
 
+    @GetMapping("/faturas-por-cliente/pagadores")
+    @PreAuthorize("@acessoSeguranca.podeAcessar('faturasPorCliente')")
+    public List<String> faturasPorClientePagadores() {
+        return dimensoesService.listarPagadoresFaturasPorCliente();
+    }
+
     @GetMapping("/faturas-por-cliente/clientes-cnpj")
     @PreAuthorize("@acessoSeguranca.podeAcessar('faturasPorCliente')")
     public List<String> faturasPorClienteClientesCnpj() {

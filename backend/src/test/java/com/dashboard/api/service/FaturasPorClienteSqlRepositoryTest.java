@@ -3,6 +3,8 @@ package com.dashboard.api.service;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteMensalDTO;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteOverviewDTO;
+import com.dashboard.api.dto.faturascliente.FaturasPorClienteGranularidade;
+import com.dashboard.api.dto.faturascliente.FaturasPorClienteStatusEvolucaoDTO;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.repository.FaturasPorClienteSqlRepository;
 import com.dashboard.api.service.acesso.EscopoFilialService;
@@ -22,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
@@ -36,6 +39,39 @@ class FaturasPorClienteSqlRepositoryTest {
 
     @Mock
     private NamedParameterJdbcOperations jdbcTemplate;
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void evolucaoMantemOrdemDosMesesEContaCadaRegistroUmaVez() throws Exception {
+        RowSetMetaDataImpl metadata = new RowSetMetaDataImpl();
+        metadata.setColumnCount(2);
+        configurarColuna(metadata, 1, "periodo", Types.VARCHAR);
+        configurarColuna(metadata, 2, "situacao", Types.INTEGER);
+        try (CachedRowSet rows = RowSetProvider.newFactory().createCachedRowSet()) {
+            rows.setMetaData(metadata);
+            String[] meses = {"2026-09", "2026-10", "2026-09", "2026-09", "2026-11"};
+            int[] situacoes = {1, 2, 1, 2, 0};
+            for (int i = 0; i < meses.length; i++) {
+                rows.moveToInsertRow();
+                rows.updateString("periodo", meses[i]);
+                rows.updateInt("situacao", situacoes[i]);
+                rows.insertRow();
+                rows.moveToCurrentRow();
+            }
+            rows.beforeFirst();
+            when(jdbcTemplate.query(anyString(), any(MapSqlParameterSource.class), any(ResultSetExtractor.class)))
+                    .thenAnswer(invocation -> {
+                        ResultSetExtractor<?> extrator = invocation.getArgument(2);
+                        return extrator.extractData(rows);
+                    });
+            var repository = new FaturasPorClienteSqlRepository(jdbcTemplate,
+                    new DashboardExportSqlBuilder(PeriodoOffsetDateTimeHelper.padrao()), escopoSemRestricao());
+            assertThat(repository.buscarEvolucaoStatus(filtroPadrao(), FaturasPorClienteGranularidade.MES))
+                    .containsExactly(new FaturasPorClienteStatusEvolucaoDTO("2026-09", 2, 1),
+                            new FaturasPorClienteStatusEvolucaoDTO("2026-10", 0, 1),
+                            new FaturasPorClienteStatusEvolucaoDTO("2026-11", 0, 0));
+        }
+    }
 
     @Test
     @SuppressWarnings("unchecked")

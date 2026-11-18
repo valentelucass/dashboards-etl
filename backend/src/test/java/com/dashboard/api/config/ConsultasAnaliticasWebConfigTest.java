@@ -29,14 +29,18 @@ class ConsultasAnaliticasWebConfigTest {
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
-    void saturacaoAnaliticaRecusaExcessoEPreservaConexaoParaAutenticacao() throws Exception {
+    void saturacaoAnaliticaRecusaExcessoEPreservaPoolOperacional() throws Exception {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:h2:mem:limite-consultas");
-        config.setMaximumPoolSize(5);
+        config.setMaximumPoolSize(3);
         config.setConnectionTimeout(1000);
-        try (HikariDataSource pool = new HikariDataSource(config)) {
-            var controller = new RotasLentas(pool, 3);
-            MockMvc mvc = mvc(controller, new LimiteConsultasAnaliticasInterceptor(3, 5, mapper));
+        HikariConfig operacional = new HikariConfig();
+        operacional.setJdbcUrl("jdbc:h2:mem:limite-operacional");
+        operacional.setMaximumPoolSize(1);
+        try (HikariDataSource pool = new HikariDataSource(config);
+             HikariDataSource poolOperacional = new HikariDataSource(operacional)) {
+            var controller = new RotasLentas(pool, poolOperacional, 3);
+            MockMvc mvc = mvc(controller, new LimiteConsultasAnaliticasInterceptor(3, 3, mapper));
             var executor = Executors.newFixedThreadPool(3);
             try {
                 var tasks = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
@@ -66,19 +70,19 @@ class ConsultasAnaliticasWebConfigTest {
     }
 
     @Test
-    void reservaDuasConexoesELiberaVagaAposErro() throws Exception {
-        var limite = new LimiteConsultasAnaliticasInterceptor(99, 3, mapper);
+    void limitaPeloPoolAnaliticoELiberaVagaAposErro() throws Exception {
+        var limite = new LimiteConsultasAnaliticasInterceptor(99, 1, mapper);
         MockMvc mvc = mvc(new RotasRapidas(), limite);
         mvc.perform(get("/api/painel/falha")).andExpect(status().isConflict());
         mvc.perform(get("/api/dimensoes/filiais")).andExpect(status().isOk());
-        assertThatThrownBy(() -> new LimiteConsultasAnaliticasInterceptor(3, 2, mapper))
+        assertThatThrownBy(() -> new LimiteConsultasAnaliticasInterceptor(3, 0, mapper))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void exportacaoMantemVagaAteTerminarOTrabalhoAssincrono() throws Exception {
         var controller = new ExportacaoLenta();
-        var limite = new LimiteConsultasAnaliticasInterceptor(3, 3, mapper);
+        var limite = new LimiteConsultasAnaliticasInterceptor(3, 1, mapper);
         MockMvc mvc = mvc(controller, limite);
         var exportacao = mvc.perform(get("/api/painel/coletas/exportacao")).andReturn();
         try {
@@ -109,10 +113,12 @@ class ConsultasAnaliticasWebConfigTest {
     @RestController
     static class RotasLentas extends RotasRapidas {
         final HikariDataSource pool;
+        final HikariDataSource poolOperacional;
         final CountDownLatch iniciadas;
         final CountDownLatch liberar = new CountDownLatch(1);
-        RotasLentas(HikariDataSource pool, int quantidade) {
+        RotasLentas(HikariDataSource pool, HikariDataSource poolOperacional, int quantidade) {
             this.pool = pool;
+            this.poolOperacional = poolOperacional;
             iniciadas = new CountDownLatch(quantidade);
         }
         @GetMapping("/api/painel/performance/overview")
@@ -125,7 +131,7 @@ class ConsultasAnaliticasWebConfigTest {
         }
         @PostMapping({"/api/auth/login", "/api/auth/refresh"})
         String autenticar() {
-            return new JdbcTemplate(pool).queryForObject("SELECT 'ok'", String.class);
+            return new JdbcTemplate(poolOperacional).queryForObject("SELECT 'ok'", String.class);
         }
         @GetMapping("/api/auth/me")
         String sessao() { return autenticar(); }

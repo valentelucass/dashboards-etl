@@ -21,6 +21,7 @@ const ETAPAS_VAZIAS: EtapaOperacional[] = [];
 export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
   inicio: string; fim: string; destinos: string[];
 }) {
+  const selia = destinos.length === 1 && destinos[0] === 'SELIA';
   const { isDark } = useEchartsTheme();
   const query = useQuery({
     ...INTEGRATION_QUERY_POLLING_OPTIONS,
@@ -69,7 +70,7 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
   }, [isDark, etapas, inicio, fim, query.data?.evolucao]);
 
   const disponivel = query.data !== undefined && !query.isError;
-  const comprovantesDefinition = KpiDictionary.integracoes.comprovantesConfirmados;
+  const comprovantesDefinition = selia ? KpiDictionary.integracoes.seliaComprovantesConfirmados : KpiDictionary.integracoes.comprovantesConfirmados;
   const detalhesComprovantes = disponivel && totais.semDataConfiavel > 0 ? {
     ...comprovantesDefinition,
     observacao: `${formatarNumero(totais.semDataConfiavel)} comprovantes confirmados com data a conferir, considerando todo o histórico das integrações selecionadas. ${comprovantesDefinition.observacao}`,
@@ -79,8 +80,8 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
     ? 'Não foi possível carregar os indicadores separados. Confira se o Satélite e a API do Dashboard foram atualizados.'
     : null;
   const periodos = [
-    { key: 'dados', label: 'XML / dados confirmados', valor: totais.dados, kpi: 'integracoes.dadosConfirmados', base: 'No período', tone: 'positive' },
-    { key: 'pod', label: 'Comprovantes confirmados', valor: totais.comprovantes, kpi: 'integracoes.comprovantesConfirmados', base: 'No período', tone: 'positive' },
+    { key: 'dados', label: selia ? 'Eventos AddEvents confirmados' : 'XML / dados confirmados', valor: totais.dados, kpi: selia ? 'integracoes.seliaEventosConfirmados' : 'integracoes.dadosConfirmados', base: 'No período', tone: 'positive' },
+    { key: 'pod', label: selia ? 'POD / comprovantes confirmados' : 'Comprovantes confirmados', valor: totais.comprovantes, kpi: 'integracoes.comprovantesConfirmados', base: 'No período', tone: 'positive' },
     { key: 'pendentes', label: 'Etapas em acompanhamento', valor: totais.pendentes, kpi: 'integracoes.etapasPendentes', base: 'Saldo atual · todas as datas', tone: 'warning' },
     { key: 'bloqueados', label: 'Exigem intervenção', valor: totais.bloqueados, kpi: 'integracoes.etapasBloqueadas', base: 'Saldo atual · todas as datas', tone: 'negative' },
   ] as const;
@@ -97,15 +98,15 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
         ))}
       </div>
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ChartWrapper titulo="XML / dados por dia" option={options.dados} altura={350}
+        <ChartWrapper titulo={selia ? 'Eventos AddEvents por dia' : 'XML / dados por dia'} option={options.dados} altura={350}
           chartKey="integracoesDadosPorDia" isLoading={query.isPending} erro={erro} isEmpty={!disponivel} />
-        <ChartWrapper titulo="Comprovantes por dia" option={options.comprovantes} altura={350}
+        <ChartWrapper titulo={selia ? 'POD / comprovantes por dia' : 'Comprovantes por dia'} option={options.comprovantes} altura={350}
           chartKey="integracoesComprovantesPorDia" isLoading={query.isPending} erro={erro} isEmpty={!disponivel} />
         <ChartWrapper titulo="Confirmações por etapa no período" option={options.resumo} altura={350}
           chartKey="integracoesResultadosEtapas" className="lg:col-span-2" isLoading={query.isPending}
           erro={erro} isEmpty={!disponivel || etapas.length === 0} />
       </div>
-      <AtividadeIntegracoesPanel dados={disponivel ? query.data : undefined} />
+      <AtividadeIntegracoesPanel dados={disponivel ? query.data : undefined} destinos={destinos} />
       <PendenciasEtapasPanel etapas={etapas}
         estado={disponivel ? 'disponivel' : query.isPending ? 'carregando' : 'indisponivel'} />
     </section>

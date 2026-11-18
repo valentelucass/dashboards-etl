@@ -1,3 +1,4 @@
+import DashboardButton from "../shared/DashboardButton";
 import { SlidersHorizontal, X } from 'lucide-react';
 import type {
   KpiGoalIndicatorKey,
@@ -72,7 +73,7 @@ export default function BranchGoalOverridesBanner({
           const active = selectedBranch === override.branchId || selectedBranch === override.branchName;
           const differsFromGlobal = Number(override.goalValue) !== Number(globalGoal);
           return (
-            <button
+            <DashboardButton
               key={`${override.branchId}-${override.goalValue}`}
               type="button"
               onClick={() => onSelectBranch(override.branchId)}
@@ -85,11 +86,11 @@ export default function BranchGoalOverridesBanner({
             >
               {shortBranchName(override.branchName || override.branchId)} · {label} {formatGoal(override.goalValue)}%
               {differsFromGlobal ? '' : ' · igual à global atual'}
-            </button>
+            </DashboardButton>
           );
         })}
         {selectedBranch ? (
-          <button
+          <DashboardButton
             type="button"
             onClick={onClearFilter}
             className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--color-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -97,7 +98,7 @@ export default function BranchGoalOverridesBanner({
           >
             <X size={12} />
             Limpar filtro
-          </button>
+          </DashboardButton>
         ) : null}
       </div>
     </div>

@@ -638,7 +638,7 @@ export const KpiDictionary = {
       descricao: 'Percentual de títulos identificados como conciliados.',
       calculo: 'Títulos com indicação de Conciliação ÷ Total de Títulos × 100.',
       observacao:
-        `A indicação é reconhecida quando o texto de conciliação contém a expressão “conciliado”. ${percentualSemBase}`,
+        `A indicação é reconhecida quando o status é exatamente “Conciliado”, após remover espaços nas extremidades e ignorar maiúsculas/minúsculas. “Não conciliado” e valores vazios não entram no numerador. ${percentualSemBase}`,
     },
   },
 
@@ -830,6 +830,18 @@ export const KpiDictionary = {
   },
 
   integracoes: {
+    seliaEventosConfirmados: {
+      titulo: 'Eventos AddEvents confirmados',
+      descricao: 'Eventos da SELIA com sucesso e data própria dentro do período selecionado.',
+      calculo: 'Contagem por ocorrência ativa da SELIA com status de dados SUCESSO, ENVIADO ou PROCESSADO e data da etapa no período.',
+      observacao: 'Considera somente a integração SELIA. Não usa a data do POD nem o status geral. Avaliações e tentativas não são confirmações de envio.',
+    },
+    seliaComprovantesConfirmados: {
+      titulo: 'POD / comprovantes confirmados',
+      descricao: 'Comprovantes POD da SELIA com sucesso e data própria dentro do período selecionado.',
+      calculo: 'Contagem por ocorrência ativa da SELIA com status de comprovante SUCESSO, ENVIADO ou PROCESSADO e data da etapa no período.',
+      observacao: 'Não copia o total de eventos AddEvents nem conta NAO_APLICAVEL como envio. Confirmações com data incerta ficam fora dos totais por período e não são pendências de envio.',
+    },
     dadosConfirmados: {
       titulo: 'XML / dados confirmados',
       descricao: 'Etapas de XML, dados ou eventos com sucesso e data própria dentro do período selecionado.',
@@ -864,7 +876,7 @@ export const KpiDictionary = {
       titulo: 'Avaliações e tentativas registradas',
       descricao: 'Histórico permanente de avaliações, consultas XML à origem e envios iniciados, separado das confirmações e do saldo atual.',
       calculo: 'Contagem SQL dos eventos na data em que ocorreram. Repetições de envio são um subconjunto de envios iniciados: eventos posteriores ao primeiro registrado para o mesmo destino/documento/etapa.',
-      observacao: 'Envios e consultas abrangem Vedacit. Avaliação sem conclusão pode ocorrer sem transmissão. Eventos antigos não mudam de dia quando o documento é reavaliado ou confirmado. A medição começa no primeiro evento registrado; períodos anteriores não são reconstruídos nem considerados zero. Início de envio não comprova recebimento.',
+      observacao: 'Respeita a integração selecionada. Envios e consultas abrangem Vedacit; quando a seleção não inclui esse escopo, aparecem como Não medido, sem inferir zero. Avaliação sem conclusão pode ocorrer sem transmissão. Eventos antigos não mudam de dia quando o documento é reavaliado ou confirmado. A medição começa no primeiro evento registrado; períodos anteriores não são reconstruídos nem considerados zero. Início de envio não comprova recebimento.',
     },
     origemComprovantesCiclo: {
       titulo: 'Origem dos comprovantes',
@@ -893,7 +905,7 @@ export const KpiDictionary = {
     agendaComprovantesCiclo: {
       titulo: 'Horários do processo',
       descricao: 'Em andamento, informa início e última atualização dos resultados parciais. Finalizado, informa término e estimativa do próximo ciclo.',
-      calculo: 'Próximo ciclo estimado = término + 30 minutos, somente após finalizar. O histórico filtra ciclos finalizados pelo término e abertos pelo início, mantendo uma linha por execução.',
+      calculo: 'Próximo ciclo estimado = término + 30 minutos, somente após finalizar. O histórico respeita a integração selecionada no topo e filtra ciclos finalizados pelo término e abertos pelo início, mantendo uma linha por execução. Ausência de ciclos auditados para o cliente não confirma parada nem sucesso do processo.',
       observacao: 'A tela consulta a cada minuto enquanto aberta e distingue a hora da consulta da atualização na origem. Sem o contrato de progresso, informa que exibe apenas o último ciclo registrado. Mais de dez minutos sem atualização parcial geram aviso, sem inventar término ou declarar parada. Uma estimativa vencida não é apresentada como próximo horário; aguarda novo início informado pelo processo.',
     },
     volumeOperacional: {

@@ -1,3 +1,7 @@
+import DashboardSelector from "../components/shared/DashboardSelector";
+import DashboardButton from "../components/shared/DashboardButton";
+import ColetasBars from '../components/domain/coletas/ColetasBars';
+import { ColetasRegionChart, ColetasStatusChart } from '../components/domain/coletas/ColetasOperationalCharts';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -5,7 +9,6 @@ import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 import ColetasKpiGrid from '../components/domain/coletas/ColetasKpiGrid';
 import ColetasTrend from '../components/domain/coletas/ColetasTrend';
 import ChartWrapper from '../components/charts/ChartWrapper';
-import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import AsyncMultiSelect from '../components/shared/AsyncMultiSelect';
 import AnalyticalDataTable, { type ColunaTabelaAnalitica } from '../components/shared/AnalyticalDataTable';
 import DateRangePicker from '../components/shared/DateRangePicker';
@@ -24,7 +27,6 @@ import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import type { ColetaResumoRow, ColetasFiltro, ColetasHistoricoPerformance, ColetasHistoricoPeriodo } from '../types/coletas';
 import { CORES } from '../utils/chartColors';
-import { buildBaseBarOption, buildBaseLineOption, getEchartsThemeTokens } from '../utils/echartsBuilders';
 import { formatarMoeda, formatarPeso, formatarPorcentagem } from '../utils/formatadores';
 import { combinarStatusOptions } from '../utils/tableStatusOptions';
 
@@ -78,12 +80,12 @@ function HistoricoPeriodoActions({
   onPeriodoChange: (periodo: ColetasHistoricoPeriodo) => void;
 }) {
   return (
-    <label className="block">
+    <div className="block">
       <span className="sr-only">Período do histórico de coletas</span>
-      <select
+      <DashboardSelector
         aria-label="Período do histórico de coletas"
         value={periodo}
-        onChange={(event) => onPeriodoChange(normalizeHistoricoPeriodo(event.target.value))}
+        onValueChange={selectedValue => onPeriodoChange(normalizeHistoricoPeriodo(selectedValue))}
         className="h-8 rounded-md border px-2 text-xs font-semibold outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]"
         style={{
           backgroundColor: 'var(--color-card)',
@@ -96,14 +98,13 @@ function HistoricoPeriodoActions({
             {item.label}
           </option>
         ))}
-      </select>
-    </label>
+      </DashboardSelector>
+    </div>
   );
 }
 
 export default function ColetasPage() {
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
-  const { isDark } = useEchartsTheme();
   const [regiaoLogisticaSelecionada, setRegiaoLogisticaSelecionada] = useState<string | null>(null);
   const [regiaoLogisticaEmFoco, setRegiaoLogisticaEmFoco] = useState<string | null>(null);
   const [origemLimite, setOrigemLimite] = useState<(typeof ORIGEM_LIMITES)[number]>(10);
@@ -187,40 +188,14 @@ export default function ColetasPage() {
     filtros.status,
   ), [filtros.status, statusData, tabelaConteudo]);
 
-  const statusOption: EChartsOption = useMemo(() => {
-    const tokens = getEchartsThemeTokens(isDark);
-
-    return buildBaseBarOption(isDark, {
-      grid: { top: 24, right: 18, bottom: 18, left: 34, containLabel: true },
-      xAxis: {
-        type: 'category',
-        data: statusData.map((item) => item.status),
-        axisLabel: {
-          interval: 0,
-          formatter: (value: string) => value.length > 12 ? value.slice(0, 12) + '…' : value,
-        },
-      },
-      yAxis: { type: 'value' },
-      series: [{
-        type: 'bar',
-        data: statusData.map((item, index) => ({
-          name: item.status,
-          value: item.total,
-          itemStyle: { color: tokens.palette[index % tokens.palette.length] },
-        })),
-      }],
-    });
-  }, [isDark, statusData]);
-
   const historicoPerformanceOption: EChartsOption = useMemo(() => {
-    const tokens = getEchartsThemeTokens(isDark);
     const percentuais = historicoPerformance.flatMap((item) => [item.performancePercentual, item.metaPercentual]);
     const menor = percentuais.length > 0 ? Math.min(...percentuais) : 0;
     const maior = percentuais.length > 0 ? Math.max(...percentuais) : 100;
     const yMin = Math.max(0, Math.floor(menor - 3));
     const yMax = Math.min(100, Math.ceil(maior + 3));
 
-    return buildBaseLineOption(isDark, {
+    return {
       title: {
         text: 'Histórico da Performance de Coletas',
         left: 8,
@@ -278,105 +253,22 @@ export default function ColetasPage() {
         {
           name: 'Performance',
           type: 'line',
-          smooth: true,
+          smooth: false,
           data: historicoPerformance.map((item) => item.performancePercentual),
-          symbol: 'circle',
-          symbolSize: 6,
-          label: {
-            show: true,
-            position: 'top',
-            distance: 10,
-            formatter: (params: unknown) => {
-              const item = params as { value?: unknown };
-              return formatarPorcentagem(Number(item.value ?? 0), 1);
-            },
-            fontSize: 10,
-            fontWeight: 700,
-          },
-          lineStyle: { width: 3, color: tokens.palette[0] },
-          itemStyle: { color: tokens.palette[0] },
+          symbol: 'none',
+          lineStyle: { width: 2, color: 'var(--coletas-chart-volume)' },
         },
         {
           name: 'Meta',
           type: 'line',
           data: historicoPerformance.map((item) => item.metaPercentual),
           symbol: 'none',
-          lineStyle: { width: 2, type: 'dashed', color: tokens.mutedTextColor },
-          itemStyle: { color: tokens.mutedTextColor },
+          lineStyle: { width: 2, type: 'dashed', color: 'var(--color-text-muted)' },
+          itemStyle: { color: 'var(--color-text-muted)' },
         },
       ],
-    });
-  }, [historicoPerformance, historicoPeriodo, isDark]);
-
-  const origemOption: EChartsOption = useMemo(() => {
-    const tokens = getEchartsThemeTokens(isDark);
-    const coletaColor = regiaoLogisticaSelecionada ? tokens.palette[2] : tokens.palette[0];
-    const pesoColor = tokens.palette[1];
-
-    return buildBaseLineOption(isDark, buildBaseBarOption(isDark, {
-      legend: { show: false },
-      grid: { top: 28, right: 20, bottom: 0, left: 20, containLabel: true },
-      tooltip: {
-        trigger: 'axis',
-        formatter: (params: unknown) => {
-          const entries = params as { marker?: string; seriesName: string; name: string; value: number }[];
-          const primeira = entries[0];
-          return [
-            escapeHtml(primeira?.name),
-            ...entries.map((item) => {
-              const valor = item.seriesName === 'Peso Taxado'
-                ? formatarPeso(Number(item.value ?? 0))
-                : Number(item.value ?? 0).toLocaleString('pt-BR');
-              return `${item.marker ?? ''}${escapeHtml(item.seriesName)}: ${valor}`;
-            }),
-          ].join('<br/>');
-        },
-      },
-      xAxis: {
-        type: 'category',
-        data: origemData.map((item) => item.nome),
-        axisLabel: {
-          interval: 0,
-          rotate: 24,
-          formatter: (value: string) => value.length > 14 ? value.slice(0, 14) + '…' : value,
-        },
-      },
-      yAxis: [
-        { type: 'value', name: 'Coletas' },
-        {
-          type: 'value',
-          name: 'Peso',
-          position: 'right',
-          axisLabel: {
-            formatter: (value: number) => formatarPeso(value).replace(' ', ''),
-          },
-        },
-      ],
-      series: [
-        {
-          name: 'Coletas',
-          type: 'bar',
-          data: origemData.map((item) => item.totalColetas),
-          cursor: regiaoLogisticaSelecionada ? 'default' : 'pointer',
-          itemStyle: { color: coletaColor },
-          emphasis: {
-            itemStyle: { color: coletaColor },
-          },
-        },
-        {
-          name: 'Peso Taxado',
-          type: 'line',
-          yAxisIndex: 1,
-          data: origemData.map((item) => item.pesoTaxado),
-          smooth: true,
-          symbol: 'circle',
-          symbolSize: 6,
-          itemStyle: { color: pesoColor },
-          lineStyle: { color: pesoColor, width: 2 },
-        },
-      ],
-    }));
-  }, [isDark, origemData, regiaoLogisticaSelecionada]);
+    };
+  }, [historicoPerformance, historicoPeriodo]);
 
   const handleOrigemClick = useCallback((params: unknown) => {
     if (regiaoLogisticaSelecionada) {
@@ -422,10 +314,10 @@ export default function ColetasPage() {
 
   const origemActions = useMemo(() => (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <select
+      <DashboardSelector
         aria-label="Quantidade exibida"
         value={origemLimite}
-        onChange={(event) => setOrigemLimite(Number(event.target.value) as (typeof ORIGEM_LIMITES)[number])}
+        onValueChange={selectedValue => setOrigemLimite(Number(selectedValue) as (typeof ORIGEM_LIMITES)[number])}
         className="h-8 rounded-md border bg-transparent px-2 text-[11px] font-semibold outline-none"
         style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
       >
@@ -434,9 +326,9 @@ export default function ColetasPage() {
             Top {limite}
           </option>
         ))}
-      </select>
+      </DashboardSelector>
       <div className="flex min-w-0 items-center gap-1 rounded-lg border px-1 py-0.5" style={{ borderColor: 'var(--color-border)' }}>
-        <button
+        <DashboardButton
           type="button"
           title="Drill up"
           aria-label="Drill up para regiões"
@@ -446,8 +338,8 @@ export default function ColetasPage() {
           style={{ color: regiaoLogisticaSelecionada ? CORES.primaria : 'var(--color-text-muted)' }}
         >
           <ChevronUp size={14} />
-        </button>
-        <button
+        </DashboardButton>
+        <DashboardButton
           type="button"
           onClick={fazerDrillUpOrigem}
           className="rounded-md px-2 py-1 text-[11px] font-semibold transition"
@@ -457,9 +349,9 @@ export default function ColetasPage() {
           }}
         >
           Regiões logísticas
-        </button>
+        </DashboardButton>
         <ChevronRight size={12} style={{ color: 'var(--color-text-subtle)' }} />
-        <button
+        <DashboardButton
           type="button"
           title={regiaoLogisticaSelecionada ? `Cidades de ${regiaoLogisticaSelecionada}` : regiaoLogisticaDrilldown ? `Drill down para ${regiaoLogisticaDrilldown}` : 'Sem regiões para drill down'}
           disabled={!podeDrillDownOrigem && !regiaoLogisticaSelecionada}
@@ -475,8 +367,8 @@ export default function ColetasPage() {
           }}
         >
           Cidades
-        </button>
-        <button
+        </DashboardButton>
+        <DashboardButton
           type="button"
           title={regiaoLogisticaDrilldown ? `Drill down para ${regiaoLogisticaDrilldown}` : 'Sem regiões para drill down'}
           aria-label="Drill down para cidades"
@@ -486,30 +378,12 @@ export default function ColetasPage() {
           style={{ color: podeDrillDownOrigem ? CORES.sucesso : 'var(--color-text-muted)' }}
         >
           <ChevronDown size={14} />
-        </button>
+        </DashboardButton>
       </div>
     </div>
   ), [fazerDrillDownOrigem, fazerDrillUpOrigem, origemLimite, podeDrillDownOrigem, regiaoLogisticaDrilldown, regiaoLogisticaSelecionada]);
 
-  const agingOption: EChartsOption = useMemo(() => {
-    const tokens = getEchartsThemeTokens(isDark);
-    const agingColors = [tokens.palette[2], tokens.palette[8], tokens.palette[1], tokens.palette[3]];
-
-    return buildBaseBarOption(isDark, {
-      grid: { top: 22, right: 18, bottom: 0, left: 34, containLabel: true },
-      xAxis: { type: 'category', data: aging.map((item) => item.faixa) },
-      yAxis: { type: 'value' },
-      series: [{
-        type: 'bar',
-        data: aging.map((item, index) => ({
-          name: item.faixa,
-          value: item.total,
-          itemStyle: { color: agingColors[index % agingColors.length] },
-        })),
-        barMaxWidth: 72,
-      }],
-    });
-  }, [aging, isDark]);
+  const agingChart = useMemo(() => aging.map((item) => ({ nome: item.faixa, total: item.total })), [aging]);
 
   const colunas: ColunaTabelaAnalitica<ColetaResumoRow>[] = useMemo(() => [
     { chave: 'coleta', label: 'Coleta', fixo: true, filtroTabela: 'codigo' },
@@ -569,10 +443,12 @@ export default function ColetasPage() {
         <div className="col-span-full 2xl:col-span-2">
           <ColetasTrend dados={serieData} isLoading={serie.isLoading} />
         </div>
-        <ChartWrapper titulo="Distribuição por Status" chartKey="coletasStatus" option={statusOption} isLoading={statusQuery.isLoading} erro={statusQuery.isError ? getApiErrorMessage(statusQuery.error, 'Erro ao carregar distribuição por status.') : null} isEmpty={statusData.length === 0} className="2xl:col-span-2" />
+        <ColetasStatusChart data={statusData} isLoading={statusQuery.isLoading}
+          erro={statusQuery.isError ? getApiErrorMessage(statusQuery.error, 'Erro ao carregar distribuição por status.') : null} />
         <ChartWrapper
           titulo="Histórico da Performance"
           chartKey="coletasHistoricoPerformance"
+          altura="100%"
           option={historicoPerformanceOption}
           actions={<HistoricoPeriodoActions periodo={historicoPeriodo} onPeriodoChange={setHistoricoPeriodo} />}
           isLoading={historicoPerformanceQuery.isLoading}
@@ -580,18 +456,9 @@ export default function ColetasPage() {
           erro={historicoPerformanceQuery.isError ? getApiErrorMessage(historicoPerformanceQuery.error, 'Erro ao carregar histórico de performance de coletas.') : null}
           className="2xl:col-span-2"
         />
-        <ChartWrapper
-          titulo="Coletas por Região Logística e Cidade"
-          chartKey="coletasOrigem"
-          option={origemOption}
-          actions={origemActions}
-          onEvents={origemEvents}
-          isLoading={regiaoLogisticaSelecionada ? cidadesOrigem.isLoading : graficos.isLoading}
-          isEmpty={origemData.length === 0}
-          emptyMessage={regiaoLogisticaSelecionada ? 'Nenhuma cidade encontrada para a região logística selecionada.' : 'Nenhuma região logística encontrada para o período selecionado.'}
-          className="2xl:col-span-3"
-        />
-        <ChartWrapper titulo="Coletas em aberto" chartKey="coletasAging" option={agingOption} isLoading={graficos.isLoading} isEmpty={false} altura={350} className="2xl:col-span-3" />
+        <ColetasRegionChart data={origemData} cityView={Boolean(regiaoLogisticaSelecionada)} actions={origemActions}
+          onEvents={origemEvents} isLoading={regiaoLogisticaSelecionada ? cidadesOrigem.isLoading : graficos.isLoading} />
+        <ColetasBars titulo="Coletas em aberto" chartKey="coletasAging" data={agingChart} isLoading={graficos.isLoading} className="2xl:col-span-3" />
       </div>
 
       <AnalyticalDataTable

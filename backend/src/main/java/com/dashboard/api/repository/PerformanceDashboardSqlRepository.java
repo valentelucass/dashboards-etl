@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.dto.dimensoes.DimensaoOpcaoDTO;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.PaginaDTO;
@@ -50,7 +51,7 @@ public class PerformanceDashboardSqlRepository {
     private volatile PerformanceViewColumns performanceViewColumns;
 
     public PerformanceDashboardSqlRepository(
-            NamedParameterJdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
             ValidadorPeriodoService validadorPeriodo,
             EscopoFilialService escopoFilialService
     ) {

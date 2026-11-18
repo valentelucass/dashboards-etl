@@ -203,26 +203,30 @@ public class DimensoesService {
                 : faturasClienteRepository.findDistinctClientesByFilialIn(filiaisNormalizadas(escopo)));
     }
 
-    public List<String> listarClientesCnpjFaturasPorCliente() {
+    public List<String> listarPagadoresFaturasPorCliente() {
         EscopoFilialService.EscopoFilial escopo = escopoFilialService.escopoAtual();
-        try {
-            if (escopo.acessoTotal()) {
-                return faturasClienteRepository.findDistinctClienteCnpj();
-            }
+        if (escopo.acessoTotal()) {
+            return faturasClienteRepository.findDistinctPagadores();
+        }
 
-            List<String> filiais = escopo.filiaisOrdenadas().stream()
-                    .filter(this::temTexto)
-                    .map(valor -> valor.trim().toLowerCase(Locale.ROOT))
-                    .toList();
-            if (filiais.isEmpty()) {
-                return List.of();
-            }
-            return faturasClienteRepository.findDistinctClienteCnpjByFilialIn(filiais);
-        } catch (DataAccessException ex) {
-            log.warn("Dimensão Cliente/CNPJ indisponível. Verifique se a fato_gestao_vista_faturas expõe cliente_cnpj. Causa: {}",
-                    ex.getMostSpecificCause().getMessage());
+        if (escopo.filiaisOrdenadas().isEmpty()) {
             return List.of();
         }
+
+        return faturasClienteRepository.findDistinctPagadoresByFilialIn(filiaisNormalizadas(escopo));
+    }
+
+    public List<String> listarClientesCnpjFaturasPorCliente() {
+        EscopoFilialService.EscopoFilial escopo = escopoFilialService.escopoAtual();
+        if (escopo.acessoTotal()) {
+            return faturasClienteRepository.findDistinctClienteCnpj();
+        }
+
+        if (escopo.filiaisOrdenadas().isEmpty()) {
+            return List.of();
+        }
+
+        return faturasClienteRepository.findDistinctClienteCnpjByFilialIn(filiaisNormalizadas(escopo));
     }
 
     public List<PagadorDimDTO> buscarPagadores(String busca, int limite) {

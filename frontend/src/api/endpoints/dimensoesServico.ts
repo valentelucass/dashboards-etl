@@ -55,6 +55,11 @@ export async function buscarPagadores(busca?: string, signal?: AbortSignal): Pro
   return data;
 }
 
+export async function buscarFaturasPorClientePagadores(signal?: AbortSignal): Promise<string[]> {
+  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/faturas-por-cliente/pagadores', { signal });
+  return data;
+}
+
 export async function buscarFaturasPorClienteClientesCnpj(signal?: AbortSignal): Promise<string[]> {
   const { data } = await clienteAxios.get<string[]>('/api/dimensoes/faturas-por-cliente/clientes-cnpj', { signal });
   return data;

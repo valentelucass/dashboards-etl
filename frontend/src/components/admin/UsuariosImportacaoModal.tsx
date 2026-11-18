@@ -1,8 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { ChangeEvent, DragEvent, FormEvent } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, FileSpreadsheet, RefreshCcw, UploadCloud, X } from 'lucide-react';
+import { Dialog } from '@astryxdesign/core/Dialog';
+import { FileInput } from '@astryxdesign/core/FileInput';
+import { Text } from '@astryxdesign/core/Text';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import DashboardButton from "../shared/DashboardButton";
+import { Button } from '@astryxdesign/core/Button';
+import { Card } from '@astryxdesign/core/Card';
+import { Selector } from '@astryxdesign/core/Selector';
+import { FormTextField } from '../shared/FormTextField';
+import { useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
+import { AlertCircle, FileSpreadsheet, RefreshCcw, X } from 'lucide-react';
 import FiliaisPermitidasSplitSelect from './FiliaisPermitidasSplitSelect';
 import PermissionMatrix from './PermissionMatrix';
 import DataTable, { type ColunaTabela } from '../shared/DataTable';
@@ -30,26 +37,15 @@ import { createEmptyPermissionMap } from '../../utils/accessControl';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { exportarRelatorioImportacaoCsv } from '../../utils/userImportReport';
 
-const SURFACE_STYLE = {
-  backgroundColor: 'var(--color-card)',
-  borderColor: 'var(--color-border)',
-};
-
-const FIELD_STYLE = {
-  backgroundColor: 'var(--color-bg)',
-  borderColor: 'var(--color-border)',
-  color: 'var(--color-text)',
-};
-
-const PRIMARY_BUTTON_STYLE = {
-  backgroundColor: 'var(--color-primary)',
-  color: '#fff',
-};
-
 const SECONDARY_BUTTON_STYLE = {
   backgroundColor: 'var(--color-bg)',
   borderColor: 'var(--color-border)',
   color: 'var(--color-text)',
+};
+
+const SURFACE_STYLE = {
+  backgroundColor: 'var(--color-card)',
+  borderColor: 'var(--color-border)',
 };
 
 const SOFT_PANEL_STYLE = {
@@ -128,14 +124,14 @@ function previewStatusStyle(status: UserImportPreviewRow['status']) {
 
 function SummaryCard({ label, value, accent }: { label: string; value: number; accent: string }) {
   return (
-    <div className="rounded-2xl border px-4 py-3" style={SURFACE_STYLE}>
+    <Card padding={0} className="rounded-2xl border px-4 py-3" style={SURFACE_STYLE}>
       <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>
         {label}
       </div>
       <div className="mt-1 text-2xl font-bold" style={{ color: accent }}>
         {value}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -177,55 +173,33 @@ function CriarSetorInlineModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 12 }}
-        className="max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-3xl border p-6 shadow-2xl"
-        style={SURFACE_STYLE}
-      >
+    <Dialog isOpen purpose="form" aria-labelledby="inline-setor-title" width={840} className="dashboard-admin"
+      onOpenChange={open => { if (!open) onClose(); }}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-xl font-semibold" style={{ color: 'var(--color-text)' }}>
+            <h3 id="inline-setor-title" className="text-xl font-semibold" style={{ color: 'var(--color-text)' }}>
               Criar setor agora
             </h3>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
               Configure filiais e permissões mínimas para o setor <strong>{setorOriginal}</strong>.
             </p>
           </div>
-          <button
+          <DashboardButton
             type="button"
             onClick={onClose}
             className="rounded-xl border px-3 py-2 text-sm font-medium"
             style={SECONDARY_BUTTON_STYLE}
           >
             Fechar
-          </button>
+          </DashboardButton>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Nome do setor</span>
-              <input
-                value={form.nome}
-                onChange={(event) => setForm((current) => ({ ...current, nome: event.target.value }))}
-                className="w-full rounded-xl border px-3 py-2.5"
-                style={FIELD_STYLE}
-                required
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Descrição</span>
-              <input
-                value={form.descricao ?? ''}
-                onChange={(event) => setForm((current) => ({ ...current, descricao: event.target.value }))}
-                className="w-full rounded-xl border px-3 py-2.5"
-                style={FIELD_STYLE}
-              />
-            </label>
+            <FormTextField label="Nome do setor" value={form.nome} required
+              onChange={nome => setForm(current => ({ ...current, nome }))} />
+            <FormTextField label="Descrição" value={form.descricao ?? ''}
+              onChange={descricao => setForm(current => ({ ...current, descricao }))} />
           </div>
 
           <div className="space-y-3">
@@ -265,26 +239,11 @@ function CriarSetorInlineModal({
           )}
 
           <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={criarSetor.isPending || form.filiaisPermitidas.length === 0}
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-              style={PRIMARY_BUTTON_STYLE}
-            >
-              {criarSetor.isPending ? 'Salvando setor...' : 'Salvar setor'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border px-4 py-2.5 text-sm font-medium"
-              style={SECONDARY_BUTTON_STYLE}
-            >
-              Cancelar
-            </button>
+            <Button type="submit" label="Salvar setor" variant="primary" className="dashboard-form-submit" isLoading={criarSetor.isPending} isDisabled={form.filiaisPermitidas.length === 0} />
+            <Button label="Cancelar" variant="secondary" className="dashboard-form-secondary" onClick={onClose} />
           </div>
         </form>
-      </motion.div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -310,23 +269,6 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
   const [resolucoesSetor, setResolucoesSetor] = useState<Record<string, string>>({});
   const [setorCriacaoAberto, setSetorCriacaoAberto] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    }
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onClose]);
 
   function pushToast(message: string, tone: ToastTone) {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -364,24 +306,6 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
       setErroLocal(getApiErrorMessage(error, 'Não foi possível pré-validar a planilha.'));
       pushToast('Falha ao validar a planilha.', 'error');
     }
-  }
-
-  async function handleFileInput(event: ChangeEvent<HTMLInputElement>) {
-    const arquivo = event.target.files?.[0];
-    if (!arquivo) {
-      return;
-    }
-    await processarArquivo(arquivo);
-    event.target.value = '';
-  }
-
-  async function handleDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    const arquivo = event.dataTransfer.files?.[0];
-    if (!arquivo) {
-      return;
-    }
-    await processarArquivo(arquivo);
   }
 
   async function handleBaixarTemplate() {
@@ -498,38 +422,18 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
 
   const faltamMapeamentos = (preview?.setoresInexistentes ?? []).some((setor) => !resolucoesSetor[setor]);
 
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
-  return createPortal(
+  return (
     <>
+    <Dialog isOpen purpose="info" aria-labelledby="admin-user-import-title" width="min(80rem, calc(100vw - 1.5rem))" maxHeight="calc(100dvh - 1.5rem)" padding={0}
+      onOpenChange={open => { if (!open) onClose(); }} className="dashboard-admin">
       <ToastStack items={toasts} />
-      <AnimatePresence>
-        <motion.div
-          className="fixed inset-0 z-[80] bg-slate-950/45 backdrop-blur-[2px]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        />
-
-        <motion.div
-          role="dialog"
-          aria-modal="true"
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 18 }}
-          className="fixed inset-x-4 bottom-4 top-4 z-[81] mx-auto flex max-w-7xl flex-col overflow-hidden rounded-[28px] border shadow-2xl"
-          style={SURFACE_STYLE}
-        >
           <div className="flex items-start justify-between gap-4 border-b px-6 py-5" style={{ borderColor: 'var(--color-border)' }}>
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>
                 <FileSpreadsheet size={18} />
                 Importação em massa de usuários
               </div>
-              <h2 className="mt-1 text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
+              <h2 id="admin-user-import-title" className="mt-1 text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
                 Excel com preview, resolução guiada de setores e relatório final
               </h2>
               <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>
@@ -537,15 +441,7 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border p-2 transition-opacity hover:opacity-80"
-              style={SECONDARY_BUTTON_STYLE}
-              aria-label="Fechar importação"
-            >
-              <X size={18} />
-            </button>
+            <Button label="Fechar importação" isIconOnly icon={<X size={18} />} variant="secondary" className="dashboard-form-secondary" onClick={onClose} />
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 py-5">
@@ -561,44 +457,15 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => void handleBaixarTemplate()}
-                      disabled={baixarTemplate.isPending}
-                      className="rounded-xl border px-4 py-2.5 text-sm font-medium disabled:opacity-50"
-                      style={SECONDARY_BUTTON_STYLE}
-                    >
-                      {baixarTemplate.isPending ? 'Baixando...' : 'Baixar template Excel'}
-                    </button>
-                    <label
-                      className="inline-flex cursor-pointer items-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
-                      style={PRIMARY_BUTTON_STYLE}
-                    >
-                      Selecionar arquivo
-                      <input type="file" accept=".xlsx,.xls" className="hidden" onChange={(event) => void handleFileInput(event)} />
-                    </label>
+                    <Button label="Baixar template Excel" variant="secondary" className="dashboard-form-secondary" isLoading={baixarTemplate.isPending} onClick={() => void handleBaixarTemplate()} />
                   </div>
                 </div>
 
-                <div
-                  className="mt-4 rounded-3xl border border-dashed p-6 text-center"
-                  style={{
-                    borderColor: 'var(--color-primary)',
-                    backgroundColor: 'var(--color-bg)',
-                  }}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={(event) => void handleDrop(event)}
-                >
-                  <UploadCloud className="mx-auto mb-3" size={24} style={{ color: 'var(--color-primary)' }} />
-                  <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                    Arraste o Excel aqui ou use o botão de seleção
-                  </p>
-                  <p className="mt-1 text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-                    Aceitamos arquivos `.xlsx` e `.xls`. Não existe coluna de senha.
-                  </p>
-                  <p className="mt-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                    {arquivoSelecionado ? `Arquivo atual: ${arquivoSelecionado.name}` : 'Nenhum arquivo selecionado ainda.'}
-                  </p>
+                <div className="mt-4 space-y-2 min-w-0">
+                  <FileInput mode="dropzone" label="Selecionar planilha" accept=".xlsx,.xls" value={null}
+                    width="100%" placeholder="Selecione ou arraste a planilha" description="Nome, e-mail e setor. Selecione ou arraste uma planilha Excel."
+                    onChange={file => { if (file instanceof File) void processarArquivo(file); }} />
+                  {arquivoSelecionado && <Text as="p" size="sm" color="secondary" className="break-all">Arquivo atual: {arquivoSelecionado.name}</Text>}
                 </div>
 
                 {erroLocal && (
@@ -645,31 +512,13 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
                               </div>
 
                               <div className="flex flex-wrap items-center gap-3">
-                                <select
-                                  value={resolucoesSetor[setor] ?? ''}
-                                  onChange={(event) => setResolucoesSetor((current) => ({
-                                    ...current,
-                                    [setor]: event.target.value,
-                                  }))}
-                                  className="min-w-[220px] rounded-xl border px-3 py-2 text-sm"
-                                  style={FIELD_STYLE}
-                                >
-                                  <option value="">Mapear para setor existente</option>
-                                  {(setores.data ?? []).map((setorExistente) => (
-                                    <option key={setorExistente.id} value={setorExistente.id}>
-                                      {setorExistente.nome}
-                                    </option>
-                                  ))}
-                                </select>
+                                <Selector label="Setor existente" placeholder="Mapear para setor existente" hasClear
+                                  value={resolucoesSetor[setor] || null}
+                                  onChange={setorId => setResolucoesSetor(current => ({ ...current, [setor]: setorId ?? '' }))}
+                                  options={(setores.data ?? []).map(item => ({ value: item.id, label: item.nome }))}
+                                  width={240} controlClassName="dashboard-admin-selector" />
 
-                                <button
-                                  type="button"
-                                  onClick={() => setSetorCriacaoAberto(setor)}
-                                  className="rounded-xl border px-3 py-2 text-sm font-medium"
-                                  style={SECONDARY_BUTTON_STYLE}
-                                >
-                                  Criar setor agora
-                                </button>
+                                <Button label="Criar setor agora" variant="secondary" className="dashboard-form-secondary" onClick={() => setSetorCriacaoAberto(setor)} />
                               </div>
                             </div>
                           </div>
@@ -677,24 +526,8 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => void handleRevalidar()}
-                          disabled={revalidacao.isPending || faltamMapeamentos}
-                          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                          style={PRIMARY_BUTTON_STYLE}
-                        >
-                          <RefreshCcw size={16} />
-                          {revalidacao.isPending ? 'Reprocessando...' : 'Reprocessar importação'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={onClose}
-                          className="rounded-xl border px-4 py-2.5 text-sm font-medium"
-                          style={SECONDARY_BUTTON_STYLE}
-                        >
-                          Cancelar importação
-                        </button>
+                        <Button label="Reprocessar importação" icon={<RefreshCcw size={16} />} variant="primary" className="dashboard-form-submit" isLoading={revalidacao.isPending} isDisabled={faltamMapeamentos} onClick={() => void handleRevalidar()} />
+                        <Button label="Cancelar importação" variant="secondary" className="dashboard-form-secondary" onClick={onClose} />
                       </div>
                     </section>
                   )}
@@ -708,23 +541,8 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
                   />
 
                   <div className="flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => void handleImportar()}
-                      disabled={!preview.podeImportar || importacao.isPending}
-                      className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                      style={PRIMARY_BUTTON_STYLE}
-                    >
-                      {importacao.isPending ? 'Importando agora...' : 'Importar agora'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleBaixarTemplate()}
-                      className="rounded-xl border px-4 py-2.5 text-sm font-medium"
-                      style={SECONDARY_BUTTON_STYLE}
-                    >
-                      Baixar template novamente
-                    </button>
+                    <Button label="Importar agora" variant="primary" className="dashboard-form-submit" isLoading={importacao.isPending} isDisabled={!preview.podeImportar} onClick={() => void handleImportar()} />
+                    <Button label="Baixar template novamente" variant="secondary" className="dashboard-form-secondary" onClick={() => void handleBaixarTemplate()} />
                   </div>
                 </>
               )}
@@ -747,14 +565,7 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => exportarRelatorioImportacaoCsv(resultado)}
-                      className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
-                      style={PRIMARY_BUTTON_STYLE}
-                    >
-                      Exportar relatório em CSV
-                    </button>
+                    <Button label="Exportar relatório em CSV" variant="primary" className="dashboard-form-submit" onClick={() => exportarRelatorioImportacaoCsv(resultado)} />
                   </div>
 
                   <div className="rounded-2xl border p-4" style={SURFACE_STYLE}>
@@ -762,22 +573,22 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
                       Credenciais temporárias geradas
                     </div>
                     <div className="mt-3 overflow-x-auto">
-                      <table className="w-full min-w-[540px] text-sm">
-                        <thead>
-                          <tr className="border-b" style={{ borderColor: 'var(--color-border)' }}>
-                            <th className="px-3 py-2 text-left text-xs uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>E-mail</th>
-                            <th className="px-3 py-2 text-left text-xs uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>Senha provisória</th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                      <Table className="w-full min-w-[540px] text-sm">
+                        <TableHeader>
+                          <TableRow isHeaderRow className="border-b" style={{ borderColor: 'var(--color-border)' }}>
+                            <TableHeaderCell className="px-3 py-2 text-left text-xs uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>E-mail</TableHeaderCell>
+                            <TableHeaderCell className="px-3 py-2 text-left text-xs uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>Senha provisória</TableHeaderCell>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {resultado.credenciaisTemporarias.map((credencial) => (
-                            <tr key={credencial.email} className="border-b last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
-                              <td className="px-3 py-2" style={{ color: 'var(--color-text)' }}>{credencial.email}</td>
-                              <td className="px-3 py-2 font-mono text-xs" style={{ color: 'var(--color-text)' }}>{credencial.senhaProvisoria}</td>
-                            </tr>
+                            <TableRow key={credencial.email} className="border-b last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
+                              <TableCell className="px-3 py-2" style={{ color: 'var(--color-text)' }}>{credencial.email}</TableCell>
+                              <TableCell className="px-3 py-2 font-mono text-xs" style={{ color: 'var(--color-text)' }}>{credencial.senhaProvisoria}</TableCell>
+                            </TableRow>
                           ))}
-                        </tbody>
-                      </table>
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
 
@@ -791,10 +602,7 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
               )}
             </div>
           </div>
-        </motion.div>
-      </AnimatePresence>
-
-      <AnimatePresence>
+    </Dialog>
         {setorCriacaoAberto && (
           <CriarSetorInlineModal
             key={setorCriacaoAberto}
@@ -809,8 +617,6 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
             }}
           />
         )}
-      </AnimatePresence>
-    </>,
-    document.body,
+    </>
   );
 }

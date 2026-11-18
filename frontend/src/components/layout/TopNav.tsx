@@ -1,38 +1,27 @@
+import DashboardButton from "../shared/DashboardButton";
+import { Button } from '@astryxdesign/core/Button';
+import { getDashboardNavSections, getNavIcon } from './dashboardNavItems';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import type { ComponentType } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { Dialog } from '@astryxdesign/core/Dialog';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useFiltro } from '../../contexts/FiltroContext';
 import { useTheme } from 'next-themes';
 import {
-  Activity,
-  BarChart3,
-  Building2,
   ChevronLeft,
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  ClipboardList,
-  CreditCard,
-  HeartPulse,
-  LayoutDashboard,
   LogOut,
-  MapPinned,
   Menu,
   Moon,
   Presentation,
   Settings2,
   Sun,
-  Truck,
-  UserCog,
-  Users,
   X,
 } from 'lucide-react';
 import { useAutenticacao } from '../../contexts/AutenticacaoContext';
 import { usePageHeader } from '../../contexts/PageHeaderContext';
 import { usePermissions } from '../../hooks/usePermissions';
-import { ADMIN_NAV_ITEMS, DASHBOARD_NAV_ITEMS, isAdministrativeDashboardNavItem } from '../../utils/accessControl';
 import type { NavItem } from '../../utils/accessControl';
 import { formatarDataHoraMinuto } from '../../utils/formatadores';
 import { filterPresentationPages, type PresentationPage } from '../../utils/presentationSequence';
@@ -40,34 +29,6 @@ import PresentationSequencesModal from '../presentation/PresentationSequencesMod
 import CommunicationsBell from '../home/CommunicationsBell';
 
 const focusRingClass = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
-
-const NAV_ICON_BY_PATH: Record<string, ComponentType<{ size?: number; className?: string }>> = {
-  '/': LayoutDashboard,
-  '/coletas': ClipboardList,
-  '/manifestos': LayoutDashboard,
-  '/faturamento': Truck,
-  '/performance': BarChart3,
-  '/tracking': MapPinned,
-  '/faturas-por-cliente': Users,
-  '/contas-a-pagar': CreditCard,
-  '/cotacoes': ClipboardList,
-  '/indicadores-gestao-a-vista': BarChart3,
-  '/executivo': Activity,
-  '/etl-saude': HeartPulse,
-  '/painel/integracoes': Activity,
-  '/admin/setores': Building2,
-  '/admin/usuarios': UserCog,
-};
-
-const HOME_NAV_ITEM: NavItem = {
-  label: 'Home',
-  path: '/',
-  description: 'Central de dashboards e comunicados',
-};
-
-function getNavIcon(item: NavItem) {
-  return NAV_ICON_BY_PATH[item.path] ?? LayoutDashboard;
-}
 
 function DrawerNavSection({
   title,
@@ -118,7 +79,7 @@ function DrawerNavSection({
               {({ isActive }) => (
                 <>
                   <span
-                    className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-150"
+                    className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-150"
                     style={{
                       backgroundColor: isActive ? 'var(--color-primary)' : 'var(--color-bg)',
                       color: isActive ? '#FFFFFF' : 'var(--color-text-muted)',
@@ -173,22 +134,7 @@ export default function TopNav() {
   const panelId = useId();
   const drawerTitleId = `${panelId}-title`;
 
-  const dashboardsVisiveis = DASHBOARD_NAV_ITEMS
-    .filter((item) => !isAdministrativeDashboardNavItem(item))
-    .filter((item) => item.permission ? canAccess(item.permission) : true)
-    .sort((left, right) => left.label.localeCompare(right.label, 'pt-BR'));
-  const adminItems = [
-    ...DASHBOARD_NAV_ITEMS.filter((item) => (
-      isAdministrativeDashboardNavItem(item)
-      && (item.permission ? canAccess(item.permission) : true)
-    )),
-    ...(isAdminAcesso ? ADMIN_NAV_ITEMS : []),
-  ].sort((left, right) => left.label.localeCompare(right.label, 'pt-BR'));
-  const navSections = [
-    { title: 'Principal', items: [HOME_NAV_ITEM] },
-    { title: 'Dashboards', items: dashboardsVisiveis },
-    ...(adminItems.length > 0 ? [{ title: 'Administração', items: adminItems }] : []),
-  ].filter((section) => section.items.length > 0);
+  const navSections = getDashboardNavSections(canAccess, isAdminAcesso);
 
   const isDarkTheme = theme === 'dark';
   const themeToggleLabel = isDarkTheme ? 'Alternar para modo claro' : 'Alternar para modo escuro';
@@ -316,23 +262,6 @@ export default function TopNav() {
   }, [isMenuOpen, updateDrawerScrollState]);
 
   useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsMenuOpen(false);
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isMenuOpen]);
-
-  useEffect(() => {
     if (isMenuOpen) {
       wasMenuOpenRef.current = true;
       const frame = window.requestAnimationFrame(() => {
@@ -391,42 +320,22 @@ export default function TopNav() {
     setTheme(isDarkTheme ? 'light' : 'dark');
   }
 
-  const drawer = typeof document !== 'undefined'
-    ? createPortal(
-        <AnimatePresence>
-          {isMenuOpen && (
-            <>
-              <motion.div
-                className="top-nav__drawer-backdrop fixed inset-0 z-[55]"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.24, ease: 'easeOut' }}
-                onClick={() => setIsMenuOpen(false)}
-                aria-hidden="true"
-              />
-
-              <motion.aside
-                id={panelId}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={drawerTitleId}
-                className="top-nav__drawer-panel fixed inset-y-0 right-0 z-[60] flex flex-col overflow-hidden border-l shadow-2xl"
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-                style={{
-                  backgroundColor: 'var(--color-card)',
-                  borderColor: 'var(--color-border)',
-                }}
-              >
+  const drawer = isMenuOpen ? (
+    <Dialog id={panelId} purpose="info" isOpen aria-labelledby={drawerTitleId} padding={0}
+      position={{ start: 0, top: 0, bottom: 0 }} width="min(22rem, calc(100vw - 8px))" maxHeight="100dvh"
+      onOpenChange={open => { if (!open) setIsMenuOpen(false); }}>
+      <aside className="top-nav__drawer-panel flex min-w-0 flex-col overflow-hidden">
                 <div
                   className="flex shrink-0 items-center gap-3 border-b px-5 py-4"
                   style={{ borderColor: 'var(--color-border)' }}
                 >
                   <h2 id={drawerTitleId} className="sr-only">Navegação</h2>
                   <div className="min-w-0 flex-1">
+                    <NavLink to="/" onClick={() => setIsMenuOpen(false)} aria-label="Rodogarcia, página inicial" className="mb-3 inline-flex">
+                      <span className="dashboard-brand-wordmark w-full max-w-[220px]">
+                        <img src="/logo.png" alt="" className="dark:brightness-0 dark:invert" />
+                      </span>
+                    </NavLink>
                     <p className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }} title={usuario?.nome}>
                       {usuario?.nome}
                     </p>
@@ -434,7 +343,7 @@ export default function TopNav() {
                       {usuario?.email}
                     </p>
                   </div>
-                  <button
+                  <DashboardButton
                     ref={closeButtonRef}
                     type="button"
                     onClick={() => setIsMenuOpen(false)}
@@ -443,7 +352,7 @@ export default function TopNav() {
                     aria-label="Fechar menu de navegação"
                   >
                     <X size={18} />
-                  </button>
+                  </DashboardButton>
                 </div>
 
                 <div className="relative flex flex-1 overflow-hidden">
@@ -471,7 +380,7 @@ export default function TopNav() {
                         >
                           Conta
                         </h2>
-                        <button
+                        <DashboardButton
                           type="button"
                           onClick={() => void handleLogout()}
                           className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold text-red-500 transition-all duration-150 hover:-translate-y-px hover:bg-red-500 hover:text-white ${focusRingClass}`}
@@ -483,46 +392,26 @@ export default function TopNav() {
                             <LogOut size={16} />
                           </span>
                           Sair
-                        </button>
+                        </DashboardButton>
                       </section>
                     </div>
                   </nav>
 
-                  <button
-                    type="button"
-                    onClick={() => scrollDrawerNavigation('up')}
-                    disabled={!drawerScrollState.canScrollUp}
-                    aria-label="Subir a navegação do menu"
-                    className={`absolute inset-x-0 top-0 z-10 flex justify-center pb-8 pt-3 top-nav__drawer-scroll-indicator top-nav__drawer-scroll-indicator--top ${focusRingClass}`}
-                    style={{
-                      opacity: drawerScrollState.canScrollUp ? 1 : 0,
-                      transform: drawerScrollState.canScrollUp ? 'translateY(0)' : 'translateY(-8px)',
-                    }}
-                  >
-                    <ChevronUp size={18} />
-                  </button>
+                  {drawerScrollState.canScrollUp && (
+                    <Button label="Subir a navegação do menu" variant="ghost" isIconOnly
+                      icon={<ChevronUp size={18} />} onClick={() => scrollDrawerNavigation('up')}
+                      className="top-nav__drawer-scroll-indicator top-nav__drawer-scroll-indicator--top absolute top-2 end-4 z-10" />
+                  )}
 
-                  <button
-                    type="button"
-                    onClick={() => scrollDrawerNavigation('down')}
-                    disabled={!drawerScrollState.canScrollDown}
-                    aria-label="Descer a navegação do menu"
-                    className={`absolute inset-x-0 bottom-0 z-10 flex justify-center pb-3 pt-8 top-nav__drawer-scroll-indicator top-nav__drawer-scroll-indicator--bottom ${focusRingClass}`}
-                    style={{
-                      opacity: drawerScrollState.canScrollDown ? 1 : 0,
-                      transform: drawerScrollState.canScrollDown ? 'translateY(0)' : 'translateY(8px)',
-                    }}
-                  >
-                    <ChevronDown size={18} />
-                  </button>
+                  {drawerScrollState.canScrollDown && (
+                    <Button label="Descer a navegação do menu" variant="ghost" isIconOnly
+                      icon={<ChevronDown size={18} />} onClick={() => scrollDrawerNavigation('down')}
+                      className="top-nav__drawer-scroll-indicator top-nav__drawer-scroll-indicator--bottom absolute bottom-2 end-4 z-10" />
+                  )}
                 </div>
-              </motion.aside>
-            </>
-          )}
-        </AnimatePresence>,
-        document.body,
-      )
-    : null;
+      </aside>
+    </Dialog>
+  ) : null;
 
   return (
     <>
@@ -535,27 +424,13 @@ export default function TopNav() {
       >
         <div className={`flex w-full items-center justify-between ${apresentacao ? 'gap-0' : 'gap-4'}`}>
           <div className={`flex min-w-0 items-center ${apresentacao ? 'max-w-[16rem] shrink gap-2' : 'flex-1 gap-4'}`}>
-            <NavLink
-              to="/"
-              onClick={() => void sairApresentacao()}
-              className={`top-nav__logo-wrap flex shrink-0 items-center border-r ${apresentacao ? 'pr-2' : 'pr-4'} ${focusRingClass}`}
-              style={{ borderColor: 'var(--color-border)' }}
-              aria-label="Ir para Home"
-              title="Ir para Home"
-            >
-              <img
-                src="/logo.png"
-                alt="Logo da empresa"
-                className={`top-nav__logo w-auto object-contain transition-all duration-200 dark:brightness-0 dark:invert ${apresentacao ? 'h-5' : 'h-8'}`}
-              />
-            </NavLink>
-
             <div className={`top-nav__page-copy min-w-0 ${apresentacao ? 'border-r pr-3' : ''}`} style={apresentacao ? { borderColor: 'var(--color-border)' } : undefined}>
+              {!apresentacao && <span className="dashboard-nav-kicker">Dashboards Rodogarcia</span>}
               <h1 className={`truncate font-bold leading-tight ${apresentacao ? 'text-sm' : 'text-lg sm:text-xl'}`} style={{ color: 'var(--color-text)' }}>
-                {pageHeader.title}
+                {pageHeader.title === 'Home' ? 'Início' : pageHeader.title}
               </h1>
               {!apresentacao && pageHeader.description && (
-                <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed sm:text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                <p className="dashboard-nav-description mt-0.5 line-clamp-2 text-xs leading-relaxed sm:text-sm" style={{ color: 'var(--color-text-muted)' }}>
                   {pageHeader.description}
                 </p>
               )}
@@ -581,65 +456,63 @@ export default function TopNav() {
                 <span className="hidden pr-1 text-[10px] font-semibold lg:inline" style={{ color: 'var(--color-text-muted)' }}>
                   {apresentacao.indice + 1}/{apresentacao.paginas.length}
                 </span>
-                <button type="button" onClick={() => navegarApresentacao(-1)} disabled={apresentacao.indice === 0} title="Página anterior" aria-label="Página anterior" className={`flex h-6 w-6 items-center justify-center rounded disabled:opacity-40 ${focusRingClass}`}>
+                <DashboardButton type="button" onClick={() => navegarApresentacao(-1)} disabled={apresentacao.indice === 0} title="Página anterior" aria-label="Página anterior" className={`flex h-6 w-6 items-center justify-center rounded disabled:opacity-40 ${focusRingClass}`}>
                   <ChevronLeft size={14} />
-                </button>
-                <button type="button" onClick={() => navegarApresentacao(1)} disabled={apresentacao.indice === apresentacao.paginas.length - 1} title="Próxima página" aria-label="Próxima página" className={`flex h-6 w-6 items-center justify-center rounded disabled:opacity-40 ${focusRingClass}`}>
+                </DashboardButton>
+                <DashboardButton type="button" onClick={() => navegarApresentacao(1)} disabled={apresentacao.indice === apresentacao.paginas.length - 1} title="Próxima página" aria-label="Próxima página" className={`flex h-6 w-6 items-center justify-center rounded disabled:opacity-40 ${focusRingClass}`}>
                   <ChevronRight size={14} />
-                </button>
-                <button type="button" onClick={() => void sairApresentacao()} title="Sair da apresentação (Esc)" aria-label="Sair da apresentação" className={`flex h-6 w-6 items-center justify-center rounded text-red-500 ${focusRingClass}`}>
+                </DashboardButton>
+                <DashboardButton type="button" onClick={() => void sairApresentacao()} title="Sair da apresentação (Esc)" aria-label="Sair da apresentação" className={`flex h-6 w-6 items-center justify-center rounded text-red-500 ${focusRingClass}`}>
                   <X size={14} />
-                </button>
+                </DashboardButton>
               </div>
             )}
 
-            <button
-              type="button"
+            <Button
+              label="Iniciar apresentação em tela cheia"
+              tooltip="Iniciar apresentação"
+              variant="ghost"
+              isIconOnly
+              icon={<Presentation size={17} aria-hidden="true" />}
               onClick={() => void iniciarApresentacao()}
-              title="Iniciar apresentação"
-              aria-label="Iniciar apresentação em tela cheia"
-              disabled={paginasApresentacao.length === 0}
-              className={`top-nav__theme-button flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-150 hover:bg-[var(--color-bg)] disabled:opacity-40 ${focusRingClass}`}
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              <Presentation size={17} />
-            </button>
+              isDisabled={paginasApresentacao.length === 0}
+              className="top-nav__theme-button"
+            />
 
-            <button
-              type="button"
+            <Button
+              label="Gerenciar apresentações"
+              variant="ghost"
+              isIconOnly
+              icon={<Settings2 size={17} aria-hidden="true" />}
               onClick={() => setIsPresentationManagerOpen(true)}
-              title="Gerenciar apresentações"
-              aria-label="Gerenciar apresentações"
-              className={`top-nav__theme-button flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-150 hover:bg-[var(--color-bg)] ${focusRingClass}`}
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              <Settings2 size={17} />
-            </button>
+              className="top-nav__theme-button"
+            />
 
             <CommunicationsBell />
-            <button
-              type="button"
+            <Button
+              label={themeToggleLabel}
+              tooltip={themeToggleLabel}
+              variant="ghost"
+              isIconOnly
+              icon={isDarkTheme ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
               onClick={toggleTheme}
-              title={themeToggleLabel}
-              aria-label={themeToggleLabel}
-              className={`top-nav__theme-button flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-150 hover:bg-[var(--color-bg)] ${focusRingClass}`}
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              {isDarkTheme ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
+              className="top-nav__theme-button"
+            />
 
-            <button
+            {!apresentacao && usuario && <div className="dashboard-top-account">
+              <Button label="Sair" variant="ghost" icon={<LogOut size={16} aria-hidden="true" />} onClick={() => void handleLogout()} />
+            </div>}
+            <Button
               ref={hamburgerButtonRef}
-              type="button"
+              label={hamburgerLabel}
+              variant="ghost"
+              isIconOnly
+              icon={isMenuOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
               onClick={() => setIsMenuOpen((current) => !current)}
-              aria-label={hamburgerLabel}
               aria-expanded={isMenuOpen}
               aria-controls={panelId}
-              className={`top-nav__menu-button flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-150 hover:bg-[var(--color-bg)] ${focusRingClass}`}
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              {isMenuOpen ? <X size={19} /> : <Menu size={19} />}
-            </button>
+              className="top-nav__menu-button"
+            />
           </div>
         </div>
       </header>

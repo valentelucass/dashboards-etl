@@ -1,3 +1,6 @@
+import { DashboardInput } from "../../shared/DashboardTextEntry";
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import DashboardButton from "../../shared/DashboardButton";
 import { useMemo, useState } from 'react';
 import { AlertTriangle, BarChart3, Coins, Loader2, Search, Trophy } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -241,7 +244,7 @@ function ResumoSortButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <DashboardButton
       type="button"
       onClick={onClick}
       className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border px-4 text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -252,7 +255,7 @@ function ResumoSortButton({
       }}
     >
       {label}
-    </button>
+    </DashboardButton>
   );
 }
 
@@ -358,7 +361,7 @@ export default function CotacoesResumoVisualTable({
         {isInitialLoading ? <LoadingInsightsBar /> : insights.length > 0 && <InsightsBar insights={insights} />}
 
         <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <label className="relative block h-9 w-full min-w-[13rem] sm:w-64">
+          <div className="relative block h-9 w-full min-w-[13rem] sm:w-64">
             <Search
               size={15}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
@@ -366,7 +369,7 @@ export default function CotacoesResumoVisualTable({
               aria-hidden="true"
             />
             <span className="sr-only">Filtrar entidade</span>
-            <input
+            <DashboardInput label="Filtrar entidade"
               type="search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
@@ -379,7 +382,7 @@ export default function CotacoesResumoVisualTable({
                 color: 'var(--color-text)',
               }}
             />
-          </label>
+          </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             {SORT_OPTIONS.map((option) => (
@@ -395,55 +398,55 @@ export default function CotacoesResumoVisualTable({
       </div>
 
       <div className="overflow-x-auto px-4 pb-4 sm:px-5">
-        <table className="cotacoes-resumo-table w-max min-w-[max(100%,1080px)] text-sm">
+        <Table className="cotacoes-resumo-table w-max min-w-[max(100%,1080px)] text-sm">
           <colgroup>
             {RESUMO_COLUMNS.map((column, index) => (
               <col key={column.key} className={`cotacoes-col-${column.key}`} style={{ backgroundColor: getColumnBodyBackground(index) }} />
             ))}
           </colgroup>
-          <thead>
-            <tr className="h-10 border-b" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+          <TableHeader>
+            <TableRow isHeaderRow className="h-10 border-b" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
               {RESUMO_COLUMNS.map((column, index) => (
-                <th
+                <TableHeaderCell
                   key={column.key}
                   className={`h-10 whitespace-nowrap px-3 py-2.5 text-xs font-medium uppercase tracking-wider ${column.align}`}
                   style={{ color: 'var(--color-text-muted)', backgroundColor: getColumnHeaderBackground(index) }}
                 >
                   {column.label}
-                </th>
+                </TableHeaderCell>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {isInitialLoading && (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
+              <TableRow>
+                <TableCell colSpan={8} className="px-3 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
                   <span className="inline-flex items-center justify-center gap-2 font-semibold" aria-live="polite">
                     <Loader2 size={16} className="animate-spin" aria-hidden="true" />
                     {config.loadingMessage}
                   </span>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
 
             {!isInitialLoading && errorMessage && (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-sm font-semibold" style={{ color: 'var(--color-negative-text)' }}>
+              <TableRow>
+                <TableCell colSpan={8} className="px-3 py-8 text-center text-sm font-semibold" style={{ color: 'var(--color-negative-text)' }}>
                   {errorMessage}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
 
             {!isInitialLoading && !errorMessage && rows.map((row, index) => {
               const conversao = taxaConversao(row);
 
               return (
-                <tr
+                <TableRow
                   key={`${row.id}-${index}`}
                   className="border-b transition-colors hover:bg-[var(--color-bg)]"
                   style={{ borderColor: 'var(--color-border)' }}
                 >
-                  <td className={`max-w-[26rem] px-3 py-3 align-middle ${RESUMO_COLUMNS[0].align}`}>
+                  <TableCell className={`max-w-[26rem] px-3 py-3 align-middle ${RESUMO_COLUMNS[0].align}`}>
                     <div className="flex min-w-0 items-center gap-3">
                       <span
                         className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black tabular-nums"
@@ -459,59 +462,59 @@ export default function CotacoesResumoVisualTable({
                         {row.entidade}
                       </span>
                     </div>
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     className={`px-3 py-3 font-black tabular-nums ${RESUMO_COLUMNS[1].align}`}
                     style={{ color: 'var(--color-text)' }}
                   >
                     {formatarNumero(row.totalCotacoes)}
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     className={`px-3 py-3 tabular-nums ${RESUMO_COLUMNS[2].align}`}
                     style={{ color: 'var(--color-text)' }}
                   >
                     {formatarNumero(row.ganhas)}
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     className={`px-3 py-3 tabular-nums ${RESUMO_COLUMNS[3].align}`}
                     style={{ color: 'var(--color-text)' }}
                   >
                     {formatarNumero(row.emAberto)}
-                  </td>
-                  <td className={`px-3 py-3 ${RESUMO_COLUMNS[4].align}`}>
+                  </TableCell>
+                  <TableCell className={`px-3 py-3 ${RESUMO_COLUMNS[4].align}`}>
                     <ConversionProgress value={conversao} />
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     className={`px-3 py-3 tabular-nums ${RESUMO_COLUMNS[5].align}`}
                     style={{ color: 'var(--color-text)' }}
                   >
                     {formatarMoeda(row.freteCotado)}
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     className={`px-3 py-3 tabular-nums ${RESUMO_COLUMNS[6].align}`}
                     style={{ color: 'var(--color-text)' }}
                   >
                     {formatarMoeda(row.freteGanho)}
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     className={`px-3 py-3 tabular-nums ${RESUMO_COLUMNS[7].align}`}
                     style={{ color: 'var(--color-text)' }}
                   >
                     {formatarNumero(row.volumeM3, 2)}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
 
             {!isInitialLoading && !errorMessage && rows.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
+              <TableRow>
+                <TableCell colSpan={8} className="px-3 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
                   {searchTerm ? 'Nenhum registro encontrado.' : config.emptyMessage}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </section>
   );

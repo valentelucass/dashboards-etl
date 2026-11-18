@@ -166,7 +166,7 @@ dashboards/
 │   ├── mvnw.cmd           # Executável do Maven no Windows
 │   └── pom.xml            # Gerenciador de dependências Maven
 ├── frontend/              # Código-fonte da aplicação React
-│   ├── dist-prod/         # Build estático gerado exclusivamente por iniciar-prod.bat
+│   ├── dist-prod/         # Diretório operacional legado; preservado pelo build
 │   ├── node_modules/      # Dependências do Node.js
 │   ├── public/            # Ativos públicos (favicons, imagens estáticas)
 │   ├── src/               # Componentes, Páginas, Hooks e Contexts React
@@ -207,14 +207,15 @@ DASHBOARD_DEV_TUNNEL_ORIGIN=https://SEU-TUNEL-5174.brs.devtunnels.ms
 Use o endereço atual, sem `/login` ou outros caminhos, e atualize-o se o túnel mudar. A opção é exclusiva do servidor DEV; não permite outros túneis e não altera o CORS do backend. Após mudanças, recarregue a página para obter o código atualizado. O diagnóstico e os testes estão em [docs/acesso-tunel-vscode-2026-09-10.md](docs/acesso-tunel-vscode-2026-09-10.md).
 
 #### 🏭 Ambiente de Produção (Homologação / VM)
-Para compilar e subir o bundle otimizado simulando o ambiente de produção localmente ou na VM:
+Para preparar os pacotes de produção sem substituir os arquivos em uso:
 ```powershell
 .\iniciar-prod.bat
 ```
-* O script valida se as variáveis necessárias estão ativas.
-* Compila o frontend gerando a pasta `dist-prod`.
-* Valida a inicialização da API na porta de produção `5010`.
-* Executa testes automáticos de integridade (preflight CORS) antes de finalizar.
+* Exige branch `main` e worktree limpa; valida Java, Node, `.env` e o contrato SQL em leitura.
+* O `.env` é interpretado como dados pelo PowerShell, sem interpolação de caracteres pelo CMD.
+* Compila backend e frontend em `.tmp/production/<build-id>/`, sem `mvn clean` sobre `backend/target`, sem limpar `dist-prod` e sem iniciar ou parar processos.
+* Gera `build-info.json` e `build-manifest.json` com caminhos e hashes. A publicação desses candidatos pertence ao procedimento do runtime compartilhado `../.runtime/pm2`; o build não ativa a versão nem persiste cadastros para reboot.
+* `iniciar-prod.bat --dry-run` descreve o procedimento sem compilar ou consultar o banco. Os testes de regressão do preparador estão em `scripts/test-build-prod.ps1`.
 
 ---
 

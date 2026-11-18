@@ -1,5 +1,10 @@
+import DashboardButton from "../components/shared/DashboardButton";
 import { useEffect, useMemo, useState } from 'react';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Banner } from '@astryxdesign/core/Banner';
+import { Button } from '@astryxdesign/core/Button';
+import { Card } from '@astryxdesign/core/Card';
+import { FormTextField } from '../components/shared/FormTextField';
 import FiliaisPermitidasSplitSelect from '../components/admin/FiliaisPermitidasSplitSelect';
 import PermissionMatrix from '../components/admin/PermissionMatrix';
 import DataTable, { type ColunaTabela } from '../components/shared/DataTable';
@@ -15,14 +20,9 @@ import { useFiliais } from '../hooks/queries/useDimensoes';
 import type { PermissionMap, SetorAdmin, SetorPayload } from '../types/access';
 import { createEmptyPermissionMap, permissionSummary } from '../utils/accessControl';
 import { getApiErrorMessage } from '../utils/apiError';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { AlertDialog } from '@astryxdesign/core/AlertDialog';
+import { DropdownMenu, DropdownMenuDivider, DropdownMenuItem } from '@astryxdesign/core/DropdownMenu';
+import { Popover } from '@astryxdesign/core/Popover';
 
 interface SetorRow extends SetorAdmin {
   detalhes: string;
@@ -36,17 +36,6 @@ const FORM_INICIAL: SetorPayload = {
   descricao: '',
   permissoes: createEmptyPermissionMap(),
   filiaisPermitidas: [],
-};
-
-const SURFACE_STYLE = {
-  backgroundColor: 'var(--color-card)',
-  borderColor: 'var(--color-border)',
-};
-
-const FIELD_STYLE = {
-  backgroundColor: 'var(--color-bg)',
-  borderColor: 'var(--color-border)',
-  color: 'var(--color-text)',
 };
 
 const SECONDARY_BUTTON_STYLE = {
@@ -68,11 +57,6 @@ const ACTIVE_BADGE_STYLE = {
 const INACTIVE_BADGE_STYLE = {
   backgroundColor: 'rgba(71, 85, 105, 0.12)',
   color: 'var(--color-text-subtle)',
-};
-
-const DANGER_BUTTON_STYLE = {
-  borderColor: '#dc2626',
-  color: '#dc2626',
 };
 
 const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
@@ -182,24 +166,8 @@ function renderSetorAccessCell(row: SetorRow) {
 
 function renderSetorDetailsPopover(row: SetorRow) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-all duration-150 hover:-translate-y-px hover:bg-[var(--color-bg)] ${FOCUS_RING_CLASS}`}
-          style={SECONDARY_BUTTON_STYLE}
-          aria-label={`Ver detalhes de ${row.nome}`}
-        >
-          <Eye size={14} />
-          Ver mais
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="max-h-[min(34rem,calc(100vh-5rem))] overflow-y-auto p-4"
-        style={{ width: 'min(30rem, calc(100vw - 24px))' }}
-      >
+    <Popover label={"Detalhes de " + row.nome} alignment="end" width="min(30rem, calc(100vw - 24px))" padding={3}
+      content={<div className="max-h-[min(34rem,70dvh)] overflow-y-auto">
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -222,7 +190,18 @@ function renderSetorDetailsPopover(row: SetorRow) {
           <DetailTextBlock label="Filiais permitidas" value={row.filiaisResumo} fallback="Nenhuma filial" />
           <DetailTextBlock label="Baseline de acesso" value={row.permissoesResumo} fallback="Sem permissões" />
         </div>
-      </PopoverContent>
+        </div>}>
+      {trigger => (
+        <DashboardButton {...trigger}
+          type="button"
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-all duration-150 hover:-translate-y-px hover:bg-[var(--color-bg)] ${FOCUS_RING_CLASS}`}
+          style={SECONDARY_BUTTON_STYLE}
+          aria-label={`Ver detalhes de ${row.nome}`}
+        >
+          <Eye size={14} />
+          Ver mais
+        </DashboardButton>
+      )}
     </Popover>
   );
 }
@@ -238,6 +217,7 @@ export default function AdminSetoresPage() {
   const [editing, setEditing] = useState<SetorAdmin | null>(null);
   const [form, setForm] = useState<SetorPayload>(FORM_INICIAL);
   const [erro, setErro] = useState('');
+  const [exclusao, setExclusao] = useState<SetorAdmin | null>(null);
   const isMobileSetoresTable = useIsMobileSetoresTable();
   const filiaisDisponiveis = filiais.data ?? [];
 
@@ -292,7 +272,6 @@ export default function AdminSetoresPage() {
   }
 
   async function handleDelete(setor: SetorAdmin) {
-    if (!window.confirm(`Excluir o setor "${setor.nome}"?`)) return;
 
     try {
       await excluirSetor.mutateAsync(setor.id);
@@ -304,39 +283,12 @@ export default function AdminSetoresPage() {
 
   function renderActionMenu(row: SetorRow) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-all duration-150 hover:-translate-y-px hover:bg-[var(--color-bg)] ${FOCUS_RING_CLASS}`}
-            style={SECONDARY_BUTTON_STYLE}
-            aria-label={`Abrir ações de ${row.nome}`}
-          >
-            <MoreHorizontal size={17} />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[12rem]">
-          <DropdownMenuItem
-            onSelect={() => startEdit(row)}
-            className="gap-2"
-          >
-            <Pencil size={14} />
-            Editar
-          </DropdownMenuItem>
-          <DropdownMenuSeparator
-            className="mx-2 my-1 h-px"
-            style={{ backgroundColor: 'var(--color-border)' }}
-          />
-          <DropdownMenuItem
-            disabled={row.sistema}
-            onSelect={() => void handleDelete(row)}
-            className="gap-2 font-semibold"
-            style={DANGER_BUTTON_STYLE}
-          >
-            <Trash2 size={14} />
-            Excluir
-          </DropdownMenuItem>
-        </DropdownMenuContent>
+      <DropdownMenu alignment="end" menuWidth={192} hasChevron={false}
+        button={{ label: 'Abrir ações de ' + row.nome, isIconOnly: true, icon: <MoreHorizontal size={17} /> }}>
+        <DropdownMenuItem label="Editar" icon={<Pencil size={14} />} onClick={() => startEdit(row)} />
+        <DropdownMenuDivider />
+        <DropdownMenuItem label="Excluir" icon={<Trash2 size={14} />} variant="destructive"
+          isDisabled={row.sistema} onClick={() => setExclusao(row)} />
       </DropdownMenu>
     );
   }
@@ -400,32 +352,15 @@ export default function AdminSetoresPage() {
   ];
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[20px] border p-4 shadow-sm sm:p-5" style={SURFACE_STYLE}>
+    <div className="dashboard-admin space-y-5">
+      <Card padding={0} className="dashboard-admin-card">
         <form onSubmit={handleSubmit} className="space-y-4">
+          <h2>{editing ? 'Editar setor' : 'Cadastro de setor'}</h2>
           <div className="grid min-w-0 items-start gap-4 border-b pb-4 lg:grid-cols-2 [&>*]:min-w-0" style={{ borderColor: 'var(--color-border)' }}>
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Nome do setor</span>
-              <input
-                value={form.nome}
-                onChange={(e) => setForm((atual) => ({ ...atual, nome: e.target.value }))}
-                className="w-full rounded-xl border px-3 py-2.5"
-                style={FIELD_STYLE}
-                placeholder="Ex: Financeiro"
-                required
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-subtle)' }}>Descrição</span>
-              <input
-                value={form.descricao ?? ''}
-                onChange={(e) => setForm((atual) => ({ ...atual, descricao: e.target.value }))}
-                className="w-full rounded-xl border px-3 py-2.5"
-                style={FIELD_STYLE}
-                placeholder="Resumo do setor"
-              />
-            </label>
+            <FormTextField label="Nome do setor" value={form.nome} placeholder="Ex: Financeiro" required
+              onChange={nome => setForm(atual => ({ ...atual, nome }))} />
+            <FormTextField label="Descrição" value={form.descricao ?? ''} placeholder="Resumo do setor"
+              onChange={descricao => setForm(atual => ({ ...atual, descricao }))} />
 
             <div className="space-y-3 lg:col-span-2">
               <div className="space-y-1">
@@ -455,34 +390,19 @@ export default function AdminSetoresPage() {
             />
           </div>
 
-          {erro && <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">{erro}</p>}
+          {erro && <Banner status="error" title={erro} role="alert" />}
           {!erro && form.filiaisPermitidas.length === 0 && (
-            <p className="rounded-xl border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-700 dark:border-orange-900/60 dark:bg-orange-950/30 dark:text-orange-300">
-              Selecione pelo menos uma filial para salvar o setor.
-            </p>
+            <Banner status="warning" title="Selecione pelo menos uma filial para salvar o setor." />
           )}
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={criarSetor.isPending || atualizarSetor.isPending || form.filiaisPermitidas.length === 0}
-              className="rounded-xl bg-[#21478A] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {editing ? 'Salvar alterações' : 'Criar setor'}
-            </button>
-            {editing && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl border px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-80"
-                style={SECONDARY_BUTTON_STYLE}
-              >
-                Cancelar edição
-              </button>
-            )}
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" label={editing ? 'Salvar alterações' : 'Criar setor'} variant="primary"
+              className="dashboard-form-submit" isLoading={criarSetor.isPending || atualizarSetor.isPending}
+              isDisabled={form.filiaisPermitidas.length === 0} />
+            {editing && <Button label="Cancelar edição" variant="ghost" className="dashboard-form-secondary" onClick={resetForm} />}
           </div>
         </form>
-      </section>
+      </Card>
 
       <DataTable
         titulo="Setores cadastrados"
@@ -491,6 +411,11 @@ export default function AdminSetoresPage() {
         isLoading={setores.isLoading}
         colunas={isMobileSetoresTable ? colunasSetoresMobile : colunasSetoresDesktop}
       />
+      {exclusao && (
+        <AlertDialog isOpen title="Excluir setor?" description={'Confirme a exclusão do setor ' + exclusao.nome + '.'}
+          actionLabel="Excluir" onOpenChange={open => { if (!open) setExclusao(null); }}
+          onAction={() => { setExclusao(null); void handleDelete(exclusao); }} />
+      )}
     </div>
   );
 }

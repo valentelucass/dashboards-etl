@@ -1,5 +1,6 @@
 package com.dashboard.api.service;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -22,7 +23,7 @@ public class IndicadoresGestaoInfraBootstrapService implements ApplicationRunner
     private final boolean failOnSchemaMismatch;
 
     public IndicadoresGestaoInfraBootstrapService(
-            JdbcTemplate jdbcTemplate,
+            @ConsultaAnalitica JdbcTemplate jdbcTemplate,
             @Value("${dashboard.indicadores.fail-on-schema-mismatch:false}") boolean failOnSchemaMismatch
     ) {
         this.jdbcTemplate = jdbcTemplate;

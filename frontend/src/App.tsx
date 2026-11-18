@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAutenticacao } from './contexts/AutenticacaoContext';
 import RotaProtegida from './components/layout/RotaProtegida';
 import LayoutPainel from './components/layout/LayoutPainel';
+import DashboardRouteLoading from './components/layout/DashboardRouteLoading';
 import ApiStatusToast from './components/ui/ApiStatusToast';
 import { firstAccessibleRoute } from './utils/accessControl';
 
@@ -25,19 +26,11 @@ const IntegracoesPage = lazy(() => import('./pages/IntegracoesPage'));
 const AdminSetoresPage = lazy(() => import('./pages/AdminSetoresPage'));
 const AdminUsuariosPage = lazy(() => import('./pages/AdminUsuariosPage'));
 
-function TelaCarregamento() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#21478A] border-t-transparent" />
-    </div>
-  );
-}
-
 function RedirecionamentoInicial() {
   const { usuario, carregandoSessao } = useAutenticacao();
 
   if (carregandoSessao) {
-    return <TelaCarregamento />;
+    return <DashboardRouteLoading />;
   }
 
   return <Navigate to={usuario ? firstAccessibleRoute(usuario) : '/login'} replace />;
@@ -47,7 +40,7 @@ function RotaLogin() {
   const { usuario, carregandoSessao } = useAutenticacao();
 
   if (carregandoSessao) {
-    return <TelaCarregamento />;
+    return <DashboardRouteLoading />;
   }
 
   if (usuario) {
@@ -61,7 +54,7 @@ export default function App() {
   return (
     <>
       <ApiStatusToast />
-      <Suspense fallback={<TelaCarregamento />}>
+      <Suspense fallback={<DashboardRouteLoading />}>
         <Routes>
           <Route path="/login" element={<RotaLogin />} />
           <Route path="/auth/trocar-senha" element={<RotaLogin />} />

@@ -17,6 +17,7 @@ import {
   useFaturamentoResponsaveis,
   useFaturamentoStatus,
   useFaturasPorClienteClientesCnpj,
+  useFaturasPorClientePagadores,
   useFiliais,
   useFretesStatus,
   useMotoristas,
@@ -49,6 +50,7 @@ describe('escopo do polling', () => {
     useClientes();
     usePagadores('');
     useFaturasPorClienteClientesCnpj();
+    useFaturasPorClientePagadores();
     useMotoristas();
     useVeiculos();
     usePlanoContas();

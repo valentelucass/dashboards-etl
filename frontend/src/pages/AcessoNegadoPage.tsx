@@ -1,3 +1,6 @@
+import { Button } from '@astryxdesign/core/Button';
+import DashboardAuthLayout from '../components/layout/DashboardAuthLayout';
+import DashboardRouteLoading from '../components/layout/DashboardRouteLoading';
 import { useNavigate } from 'react-router-dom';
 import { useAutenticacao } from '../contexts/AutenticacaoContext';
 import { firstAccessibleRoute } from '../utils/accessControl';
@@ -16,62 +19,21 @@ export default function AcessoNegadoPage() {
     navigate(destinoPadrao, { replace: true });
   }
 
-  if (carregandoSessao) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#21478A] border-t-transparent" />
-      </div>
-    );
-  }
+  if (carregandoSessao) return <DashboardRouteLoading />;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-lg rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-red-600 bg-red-50 text-2xl font-bold text-red-600">
-          !
-        </div>
-        <h1 className="mt-5 text-2xl font-bold text-gray-900">Acesso negado</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Voce nao tem permissao para acessar este recurso com o perfil atual.
-        </p>
-
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          {usuario && destinoPadrao !== '/acesso-negado' ? (
-            <>
-              <button
-                type="button"
-                onClick={handleIrParaDashboard}
-                className="rounded-xl bg-[#21478A] px-4 py-2.5 text-sm font-medium text-white"
-              >
-                Ir para meu dashboard
-              </button>
-              <button
-                type="button"
-                onClick={handleSair}
-                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700"
-              >
-                Trocar usuario
-              </button>
-            </>
-          ) : usuario ? (
-            <button
-              type="button"
-              onClick={handleSair}
-              className="rounded-xl bg-[#21478A] px-4 py-2.5 text-sm font-medium text-white"
-            >
-              Trocar usuario
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => navigate('/login', { replace: true })}
-              className="rounded-xl bg-[#21478A] px-4 py-2.5 text-sm font-medium text-white"
-            >
-              Ir para login
-            </button>
-          )}
-        </div>
+    <DashboardAuthLayout title="Acesso negado" description="Seu perfil não tem permissão para acessar esta área.">
+      <div className="flex flex-wrap gap-2">
+        {usuario && destinoPadrao !== '/acesso-negado' && (
+          <Button label="Ir para meu dashboard" variant="primary" className="dashboard-form-submit" onClick={handleIrParaDashboard} />
+        )}
+        {usuario ? (
+          <Button label="Trocar usuário" variant="secondary" className="dashboard-form-secondary" onClick={handleSair} />
+        ) : (
+          <Button label="Ir para login" variant="primary" className="dashboard-form-submit"
+            onClick={() => navigate('/login', { replace: true })} />
+        )}
       </div>
-    </div>
+    </DashboardAuthLayout>
   );
 }

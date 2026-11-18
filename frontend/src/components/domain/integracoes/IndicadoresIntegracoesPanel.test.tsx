@@ -27,6 +27,26 @@ function abrir(destinos: string[] = []) {
 }
 afterEach(() => { cleanup(); client?.clear(); vi.resetAllMocks(); });
 
+it('mostra eventos e POD da SELIA e distingue transmissões não medidas de zero', async () => {
+  vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta,
+    etapas: resposta.etapas.map(item => ({ ...item, sistemaDestino: 'SELIA' })),
+    atividade: [{ data: '2026-09-02', etapa: 'DADOS', avaliacoes: 20, enviosIniciados: 0,
+      reenviosIniciados: 0, consultasOrigem: 0, retencoes: 20, confirmacoesAvaliadas: 0 }],
+  } });
+  abrir(['SELIA']);
+  await screen.findByRole('table', { name: 'Pendências de SELIA' });
+  expect(screen.getByText('Eventos AddEvents confirmados')).toBeTruthy();
+  expect(screen.getByText('POD / comprovantes confirmados')).toBeTruthy();
+  expect(screen.getByRole('region', { name: 'Eventos AddEvents por dia' })).toBeTruthy();
+  expect(screen.queryByText(/abrangem Vedacit/)).toBeNull();
+  fireEvent.click(screen.getByText('Avaliações e tentativas no período'));
+  const historico = within(screen.getByRole('table', { name: 'Histórico de avaliações e tentativas' }));
+  expect(historico.getByText('AddEvents')).toBeTruthy();
+  expect(historico.getAllByText('Não medido')).toHaveLength(3);
+  const params = vi.mocked(clienteAxios.get).mock.calls[0][1]?.params as URLSearchParams;
+  expect(params.getAll('destino')).toEqual(['SELIA']);
+});
+
 it('preserva 702 confirmações com data incerta no tooltip sem somá-las ao período ou à fila', async () => {
   vi.mocked(clienteAxios.get).mockResolvedValue({ data: { ...resposta, etapas: resposta.etapas.map(item =>
     ({ ...item, confirmadosSemDataConfiavel: item.etapa === 'COMPROVANTE' ? 702 : 0 })) } });

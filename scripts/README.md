@@ -1,5 +1,11 @@
 # Scripts
 
+## Preparação isolada de produção
+
+`iniciar-prod.bat` delega a `build-prod.ps1`, que lê o `.env` como dados, exige `main`/worktree limpa, valida o contrato SQL e gera candidatos em `.tmp/production/<build-id>/`. O perfil Maven `prod-build` usa diretório próprio; não há limpeza ou substituição de `backend/target` ou `frontend/dist-prod`. O manifesto lista os arquivos e hashes, sem credenciais. A ativação continua separada, pelo runtime compartilhado e pelo operador humano.
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-build-prod.ps1` testa caracteres especiais, erros sanitizados, guard Git, propagação de falha nativa, orquestração com compiladores simulados, JAR operacional bloqueado, preservação do frontend e restauração do ambiente. As fixtures ficam em `.tmp/build-prod-tests/`; não há consulta SQL nem controle de processos de produção.
+
 ## Qualidade isolada, cobertura e build
 
 Na raiz, execute `./scripts/run-quality.ps1`. O runner seleciona um JDK 17 instalado em Eclipse Adoptium, ou aceita `-JavaHome 'C:/caminho/jdk-17'`. Ele exige Maven, Node e dependências frontend previamente instalados; não instala nem atualiza pacotes.

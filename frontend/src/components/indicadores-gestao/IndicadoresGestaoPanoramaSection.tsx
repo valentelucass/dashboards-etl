@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
+import { ProgressBar } from '@astryxdesign/core/ProgressBar';
 import { CircleCheck } from 'lucide-react';
 import type { KpiDefinition } from '../../constants/kpiDictionary';
-import { getGoalToneStyle, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
+import { getGoalToneStyle, goalProgressVariant, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
 import TooltipKpi from '../shared/TooltipKpi';
 import './IndicadoresGestaoOverview.css';
 
@@ -79,17 +80,7 @@ export default function IndicadoresGestaoPanoramaSection({
                       <strong style={{ color: style.text }}>{formatarProgresso(item.progressPct)}</strong>
                     </div>
                     {item.progressPct != null ? (
-                      <div
-                        className="gestao-goal-track gestao-comparison-track"
-                        role="progressbar"
-                        aria-label={item.title + ': cobertura da meta'}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={progressPct}
-                        style={{ backgroundColor: style.track }}
-                      >
-                        <div className="h-full rounded-full" style={{ width: progressPct + '%', backgroundColor: style.fill }} />
-                      </div>
+                      <ProgressBar label={`${item.title}: cobertura da meta`} value={progressPct} variant={goalProgressVariant[item.tone]} isLabelHidden />
                     ) : null}
                     <div className="gestao-lane-detail">
                       <span>{item.detail}</span>

@@ -1,3 +1,7 @@
+import { NumberInput } from '@astryxdesign/core/NumberInput';
+import { Selector } from '@astryxdesign/core/Selector';
+import DashboardSelector from "../shared/DashboardSelector";
+import DashboardButton from "../shared/DashboardButton";
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ChevronLeft, ChevronRight, Edit3, RotateCcw, Save, Trash2 } from 'lucide-react';
@@ -69,6 +73,11 @@ const DEFAULT_GOALS: KpiGoalsMap = {
   cutoff_time: 98,
 };
 
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => ({
+  value: String(index + 1).padStart(2, '0'),
+  label: new Intl.DateTimeFormat('pt-BR', { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2020, index, 1))),
+}));
+
 const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
 
 function cloneGoals(goals?: KpiGoalsMap): KpiGoalsMap {
@@ -129,40 +138,17 @@ function GoalInputs({
       {KPI_GOAL_INDICATOR_KEYS.map((indicatorKey) => {
         const isInherited = inheritedMode && globalGoals && sameGoal(value[indicatorKey], globalGoals[indicatorKey]);
         return (
-          <label
-            key={indicatorKey}
-            className="kpi-goals-field"
-          >
-            <span className="kpi-goals-field-label" style={{ color: 'var(--color-text)' }}>
-              {GOAL_LABELS[indicatorKey]}
-            </span>
-            <div className="kpi-goals-input">
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step={indicatorKey === 'cargo_indemnity' ? '0.01' : '0.1'}
-                value={value[indicatorKey]}
-                onChange={(event) => {
-                  const nextValue = Number(event.target.value);
-                  onChange({
-                    ...value,
-                    [indicatorKey]: Number.isFinite(nextValue) ? nextValue : 0,
-                  });
-                }}
-                className={`h-10 w-full min-w-0 flex-1 rounded-lg px-3 text-sm tabular-nums ${FOCUS_RING_CLASS}`}
-                style={{ backgroundColor: 'transparent', color: 'var(--color-text)' }}
-                aria-label={GOAL_LABELS[indicatorKey]}
-                disabled={disabled}
-              />
-              <span aria-hidden="true" className="pr-3 text-sm font-semibold" style={{ color: 'var(--color-text-muted)' }}>%</span>
-            </div>
+          <div key={indicatorKey} className="kpi-goals-field">
+            <NumberInput label={GOAL_LABELS[indicatorKey] + ' (%)'} value={value[indicatorKey]}
+              min={0} max={100} step={indicatorKey === 'cargo_indemnity' ? 0.01 : 0.1}
+              isDisabled={disabled} width="100%"
+              onChange={nextValue => onChange({ ...value, [indicatorKey]: nextValue })} />
             {globalGoals ? (
               <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
                 {isInherited ? 'Valor herdado' : 'Meta global'}: {formatGoal(globalGoals[indicatorKey])}
               </span>
             ) : null}
-          </label>
+          </div>
         );
       })}
     </div>
@@ -292,23 +278,14 @@ export default function KpiGoalsManagerPanel({
             Metas globais, exceções por filial e histórico de alterações.
           </p>
         </div>
-        <label className="kpi-goals-competencia block space-y-1">
-          <span className="text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
-            Competência
-          </span>
-          <input
-            type="month"
-            min="2000-01"
-            max="2100-12"
-            required
-            aria-label="Competência das metas"
-            value={competenciaParaMonthInput(competencia)}
-            onChange={(event) => onCompetenciaChange(normalizarCompetenciaApi(event.target.value))}
-            className={`h-11 w-full rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
-            style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-            disabled={isSaving}
-          />
-        </label>
+        <div className="kpi-goals-competencia grid grid-cols-2 gap-2" role="group" aria-label="Competência das metas">
+          <Selector label="Mês" value={competenciaParaMonthInput(competencia).slice(5)}
+            options={MONTH_OPTIONS} isDisabled={isSaving} width="100%"
+            onChange={month => onCompetenciaChange(normalizarCompetenciaApi(competencia.slice(0, 4) + '-' + month))} />
+          <NumberInput label="Ano" value={Number(competenciaParaMonthInput(competencia).slice(0, 4))}
+            min={2000} max={2100} step={1} isDisabled={isSaving} width="100%"
+            onChange={year => onCompetenciaChange(normalizarCompetenciaApi(year + '-' + competenciaParaMonthInput(competencia).slice(5)))} />
+        </div>
         {isLoading ? (
           <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: 'rgba(37, 99, 235, 0.12)', color: '#1d4ed8' }}>
             Carregando metas
@@ -339,7 +316,7 @@ export default function KpiGoalsManagerPanel({
                 {competenciaLabel}
               </span>
             </div>
-            <button
+            <DashboardButton
               type="submit"
               disabled={!canEdit || branchSpecificBranches.length > 0}
               className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
@@ -347,7 +324,7 @@ export default function KpiGoalsManagerPanel({
             >
               <Save size={15} />
               {isSaving ? 'Salvando...' : branchSpecificBranches.length > 0 ? 'Remova metas específicas' : 'Aplicar Meta Global'}
-            </button>
+            </DashboardButton>
           </div>
 
           <GoalInputs value={globalForm} disabled={!canEdit || branchSpecificBranches.length > 0} onChange={setGlobalForm} />
@@ -389,15 +366,15 @@ export default function KpiGoalsManagerPanel({
               </span>
             </div>
             <div className="kpi-goals-branch-selector">
-              <label className="block space-y-1">
+              <div className="block space-y-1">
                 <span className="text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
                   Filial
                 </span>
-                <select
+                <DashboardSelector
                   value={branchId}
                   aria-label="Filial das metas"
                   title={branchLabel(branchId)}
-                  onChange={(event) => onBranchChange(event.target.value)}
+                  onValueChange={selectedValue => onBranchChange(selectedValue)}
                   className={`h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${FOCUS_RING_CLASS}`}
                   style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
                   disabled={isSaving}
@@ -410,12 +387,12 @@ export default function KpiGoalsManagerPanel({
                       {branchLabel(option)}
                     </option>
                   ))}
-                </select>
-              </label>
+                </DashboardSelector>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {branchOverride ? (
-                <button
+                <DashboardButton
                   type="button"
                   disabled={!canEdit}
                   onClick={() => void handleRemoveOverride(branchId)}
@@ -424,9 +401,9 @@ export default function KpiGoalsManagerPanel({
                 >
                   <Trash2 size={15} />
                   Remover Override
-                </button>
+                </DashboardButton>
               ) : null}
-              <button
+              <DashboardButton
                 type="submit"
                 disabled={!canEdit || !branchId}
                 className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
@@ -434,7 +411,7 @@ export default function KpiGoalsManagerPanel({
               >
                 <Save size={15} />
                 {isSaving ? 'Salvando...' : 'Salvar Meta para esta Filial'}
-              </button>
+              </DashboardButton>
             </div>
           </div>
 
@@ -495,7 +472,7 @@ export default function KpiGoalsManagerPanel({
                   Página {historyCurrentPage} de {historyTotalPages}
                 </span>
                 <div className="flex items-center gap-2">
-                  <button
+                  <DashboardButton
                     type="button"
                     disabled={isHistoryLoading || historyCurrentPage <= 1}
                     onClick={() => onHistoryPageChange(Math.max(1, historyCurrentPage - 1))}
@@ -504,8 +481,8 @@ export default function KpiGoalsManagerPanel({
                   >
                     <ChevronLeft size={14} />
                     Anterior
-                  </button>
-                  <button
+                  </DashboardButton>
+                  <DashboardButton
                     type="button"
                     disabled={isHistoryLoading || historyCurrentPage >= historyTotalPages}
                     onClick={() => onHistoryPageChange(Math.min(historyTotalPages, historyCurrentPage + 1))}
@@ -514,7 +491,7 @@ export default function KpiGoalsManagerPanel({
                   >
                     Próxima
                     <ChevronRight size={14} />
-                  </button>
+                  </DashboardButton>
                 </div>
               </div>
             ) : null}
@@ -576,7 +553,7 @@ export default function KpiGoalsManagerPanel({
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <button
+                    <DashboardButton
                       type="button"
                       disabled={isSaving}
                       onClick={() => onBranchChange(branch.branchId)}
@@ -585,8 +562,8 @@ export default function KpiGoalsManagerPanel({
                     >
                       <Edit3 size={13} />
                       Editar
-                    </button>
-                    <button
+                    </DashboardButton>
+                    <DashboardButton
                       type="button"
                       disabled={!canEdit}
                       onClick={() => void handleRemoveOverride(branch.branchId)}
@@ -595,7 +572,7 @@ export default function KpiGoalsManagerPanel({
                     >
                       <RotateCcw size={13} />
                       Remover Override
-                    </button>
+                    </DashboardButton>
                   </div>
                 </div>
               ))

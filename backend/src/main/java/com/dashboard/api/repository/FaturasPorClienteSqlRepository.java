@@ -1,5 +1,6 @@
 package com.dashboard.api.repository;
 
+import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteAgingBucketDTO;
@@ -27,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.stereotype.Repository;
@@ -48,7 +50,7 @@ public class FaturasPorClienteSqlRepository {
     private final EscopoFilialService escopoFilialService;
 
     public FaturasPorClienteSqlRepository(
-            NamedParameterJdbcOperations jdbcTemplate,
+            @ConsultaAnalitica NamedParameterJdbcOperations jdbcTemplate,
             DashboardExportSqlBuilder sqlBuilder,
             EscopoFilialService escopoFilialService
     ) {
@@ -406,15 +408,30 @@ public class FaturasPorClienteSqlRepository {
         String periodo = periodoSql(granularidade, "data_emissao_cte");
         String sql = baseNormalizadaSql(source) + """
                 SELECT %s AS periodo,
-                    SUM(CASE WHEN status_processo = N'Faturado' THEN 1 ELSE 0 END) AS faturado,
-                    SUM(CASE WHEN status_processo = N'Aguardando Faturamento' THEN 1 ELSE 0 END) AS aguardando_faturamento
+                    CASE WHEN status_processo = N'Faturado' THEN 1
+                         WHEN status_processo = N'Aguardando Faturamento' THEN 2 ELSE 0 END AS situacao
                 FROM base_normalizada
-                GROUP BY %s
-                ORDER BY periodo
-                """.formatted(periodo, periodo);
-        return jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new FaturasPorClienteStatusEvolucaoDTO(
-                rs.getString("periodo"), rs.getInt("faturado"), rs.getInt("aguardando_faturamento")
-        ));
+                OPTION (MAXDOP 1)
+                """.formatted(periodo);
+        // O agrupamento no SQL disputa memória com os relatórios. O leitor conserva apenas dois totais por período.
+        return jdbcTemplate.query(sql, copiarParams(source), rs -> {
+            var totais = new TreeMap<String, ContagemStatus>();
+            while (rs.next()) {
+                var contagem = totais.computeIfAbsent(rs.getString("periodo"), key -> new ContagemStatus());
+                switch (rs.getInt("situacao")) {
+                    case 1 -> contagem.faturado++;
+                    case 2 -> contagem.aguardando++;
+                    default -> { }
+                }
+            }
+            return totais.entrySet().stream().map(entry -> new FaturasPorClienteStatusEvolucaoDTO(
+                    entry.getKey(), entry.getValue().faturado, entry.getValue().aguardando)).toList();
+        });
+    }
+
+    private static final class ContagemStatus {
+        private int faturado;
+        private int aguardando;
     }
 
     private String baseNormalizadaSql(DashboardExportSqlBuilder.ExportSql source) {
