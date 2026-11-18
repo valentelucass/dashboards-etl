@@ -6,8 +6,8 @@ REM Arquivo : iniciar-dev.bat
 REM Papel   : Inicia backend e frontend do monorepo em paralelo.
 REM AVISO IA: este e o unico modo permitido para IA subir/testar a aplicacao.
 REM AVISO IA: backend 5011 e frontend 5174. Producao fica fora do fluxo da IA.
-REM Uso     : iniciar-dev.bat [--front-only]
-REM Teste   : iniciar-dev.bat --dry-run [--front-only]
+REM Uso     : iniciar-dev.bat com --front-only ou --back-only opcionais
+REM Teste   : iniciar-dev.bat --dry-run com um dos modos opcionais
 REM ============================================================
 
 chcp 65001 >nul
@@ -35,11 +35,21 @@ set "LOCAL_FRONTEND_ORIGINS=http://127.0.0.1:%FRONTEND_PORT%,http://localhost:%F
 set "BACKEND_CMD=call "%BACKEND_MVNW%" -f "%BACKEND_POM%" spring-boot:run -Dspring-boot.run.profiles=dev"
 set "DRY_RUN=0"
 set "FRONT_ONLY=0"
+set "BACK_ONLY=0"
 
+:parse_args
+if "%~1"=="" goto args_ready
 if /i "%~1"=="--dry-run" set "DRY_RUN=1"
-if /i "%~2"=="--dry-run" set "DRY_RUN=1"
 if /i "%~1"=="--front-only" set "FRONT_ONLY=1"
-if /i "%~2"=="--front-only" set "FRONT_ONLY=1"
+if /i "%~1"=="--back-only" set "BACK_ONLY=1"
+shift
+goto parse_args
+
+:args_ready
+if "%FRONT_ONLY%%BACK_ONLY%"=="11" (
+    echo [ERRO] Use apenas um dos modos --front-only ou --back-only.
+    exit /b 1
+)
 
 call :prefer_java_home
 
@@ -125,19 +135,22 @@ if "%FRONT_ONLY%"=="1" (
     echo        - npm run dev -- --mode %FRONTEND_MODE% --strictPort
 ) else (
     echo        - backend\mvnw.cmd spring-boot:run
-    echo        - npm run dev -- --mode %FRONTEND_MODE% --strictPort
+    if "%BACK_ONLY%"=="0" echo        - npm run dev -- --mode %FRONTEND_MODE% --strictPort
 )
 if "%FRONT_ONLY%"=="1" (
     echo [INFO] Modo --front-only ativo: backend existente sera preservado.
     echo [INFO] Antes de iniciar, apenas processos na porta dev do frontend serao encerrados.
+) else if "%BACK_ONLY%"=="1" (
+    echo [INFO] Modo --back-only ativo: frontend existente sera preservado.
+    echo [INFO] Antes de iniciar, apenas processos na porta dev do backend serao encerrados.
 ) else (
     echo [INFO] Antes de iniciar, apenas processos nas portas dev serao encerrados.
     echo [INFO] O backend roda em background e grava log em backend\logs.
 )
-echo [INFO] O frontend roda neste terminal.
-echo [INFO] Este modo injeta API local no frontend: %LOCAL_API_URL%
+if "%BACK_ONLY%"=="0" echo [INFO] O frontend roda neste terminal.
+if "%BACK_ONLY%"=="0" echo [INFO] Este modo injeta API local no frontend: %LOCAL_API_URL%
 echo [INFO] Este modo libera CORS local para: %LOCAL_FRONTEND_ORIGINS%
-echo [INFO] Vite carregara .env.development e recusara fallback para API publica.
+if "%BACK_ONLY%"=="0" echo [INFO] Vite carregara .env.development e recusara fallback para API publica.
 if "%FRONT_ONLY%"=="1" (
     echo [INFO] Front-only valida .env.development.local, mas nao reinicia o backend.
 ) else (
@@ -152,6 +165,9 @@ if "%DRY_RUN%"=="1" (
     if "%FRONT_ONLY%"=="1" (
         echo [DRY-RUN] modo front-only: liberar apenas porta %FRONTEND_PORT%
         echo [DRY-RUN] backend preservado na porta %BACKEND_PORT%
+    ) else if "%BACK_ONLY%"=="1" (
+        echo [DRY-RUN] modo back-only: liberar apenas porta %BACKEND_PORT%
+        echo [DRY-RUN] frontend preservado na porta %FRONTEND_PORT%
     ) else (
         echo [DRY-RUN] liberar portas %BACKEND_PORT% e %FRONTEND_PORT%
     )
@@ -168,8 +184,10 @@ if "%DRY_RUN%"=="1" (
         echo [DRY-RUN] log backend: %BACKEND_DEV_LOG%
         echo [DRY-RUN] aguardar healthcheck http://127.0.0.1:%BACKEND_PORT%/actuator/health/liveness
     )
-    echo [DRY-RUN] frontend env: %FRONTEND_DEV_ENV_FILE%
-    echo [DRY-RUN] frontend neste terminal: npm run dev -- --mode %FRONTEND_MODE% --host 127.0.0.1 --port %FRONTEND_PORT% --strictPort
+    if "%BACK_ONLY%"=="0" (
+        echo [DRY-RUN] frontend env: %FRONTEND_DEV_ENV_FILE%
+        echo [DRY-RUN] frontend neste terminal: npm run dev -- --mode %FRONTEND_MODE% --host 127.0.0.1 --port %FRONTEND_PORT% --strictPort
+    )
     echo [DRY-RUN] sem build de producao, sem deploy, sem alteracao em frontend\dist-prod
     exit /b 0
 )
@@ -177,6 +195,7 @@ if "%DRY_RUN%"=="1" (
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ports = @(%FRONTEND_PORT%);" ^
   "if ($env:FRONT_ONLY -ne '1') { $ports = @(%BACKEND_PORT%, %FRONTEND_PORT%) };" ^
+  "if ($env:BACK_ONLY -eq '1') { $ports = @(%BACKEND_PORT%) };" ^
   "$forbidden = @(%PROD_BACKEND_PORT%, %PROD_FRONTEND_PORT%);" ^
   "if ($ports | Where-Object { $forbidden -contains $_ }) { Write-Host '[ERRO] Script DEV tentou operar em porta de producao.'; exit 4 }" ^
   "foreach ($port in $ports) {" ^
@@ -257,7 +276,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [INFO] Aguardando backend responder antes de iniciar o frontend...
+echo [INFO] Aguardando backend responder...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$url = 'http://127.0.0.1:%BACKEND_PORT%/actuator/health/liveness';" ^
   "$deadline = (Get-Date).AddSeconds(120);" ^
@@ -273,7 +292,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 
 if errorlevel 1 (
     echo.
-    echo [ERRO] Frontend nao iniciado porque o backend ainda nao ficou disponivel.
+    echo [ERRO] O backend DEV ainda nao ficou disponivel.
     echo Verifique os logs:
     echo   %BACKEND_DEV_LOG%
     echo   %BACKEND_DEV_ERR%
@@ -285,6 +304,8 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
+if "%BACK_ONLY%"=="1" exit /b 0
 
 :start_frontend
 echo.
