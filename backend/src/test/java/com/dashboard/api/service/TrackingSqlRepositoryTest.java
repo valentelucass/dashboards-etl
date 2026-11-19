@@ -49,7 +49,7 @@ class TrackingSqlRepositoryTest {
         String sqlExecutado = String.join("\n", jdbcTemplate.sqls());
         assertThat(sqlExecutado)
                 .contains("CAST([Data do frete] AS date) AS data_frete")
-                .contains("SUM(CASE WHEN status_exibicao = N'NO ARMAZÉM'")
+                .contains("SUM(CASE WHEN status_exibicao = N'No Armazém'")
                 .contains("GROUP BY data_frete")
                 .contains("ORDER BY data_frete")
                 .doesNotContain("TRY_CONVERT(datetimeoffset, [Data do frete])");

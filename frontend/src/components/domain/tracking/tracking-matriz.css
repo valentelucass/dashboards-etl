@@ -1,0 +1,25 @@
+.tracking-cabecalho, .tracking-paginacao { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.tracking-cabecalho { justify-content: space-between; margin-bottom: .85rem; }
+.tracking-cabecalho h2 { font-size: .9rem; font-weight: 700; }
+.tracking-linha { border: 1px solid var(--color-border); border-radius: .55rem; margin: .35rem 0; background: var(--color-card); }
+.tracking-resumo { display: grid; grid-template-columns: minmax(7rem, 1.45fr) repeat(6, minmax(0, 1fr)); width: 100%; align-items: center; gap: .75rem; padding: .65rem .85rem; border-radius: .5rem; text-align: right; color: var(--color-text); font-size: .84rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tracking-expansor:hover { background: var(--color-bg); }
+.tracking-expansor:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.tracking-resumo small { display: block; font-size: .7rem; font-weight: 500; color: var(--color-text-subtle); }
+.tracking-identificador { display: flex; align-items: center; text-align: left; gap: .45rem; font-weight: 700; overflow-wrap: anywhere; }
+.tracking-identificador svg { flex: none; }
+.tracking-atrasadas { color: var(--color-negative-text); }
+.tracking-subnivel { border-top: 1px solid var(--color-border); padding: .7rem .8rem .75rem 1.1rem; background: var(--color-bg); }
+.tracking-subnivel :is(h3,h4,h5) { font-size: .8rem; font-weight: 650; padding-bottom: .35rem; }
+.tracking-aviso { padding: .65rem 0; color: var(--color-text-muted); font-size: .85rem; }
+.tracking-notas { display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; padding: 0; }
+.tracking-notas li { border: 1px solid var(--color-border); padding: .2rem .5rem; border-radius: .35rem; background: var(--color-card); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; max-width: 100%; }
+.tracking-paginacao { justify-content: flex-end; margin-top: .6rem; font-size: .8rem; }
+@media (max-width: 850px) {
+  .tracking-resumo { grid-template-columns: repeat(3, minmax(0, 1fr)); text-align: left; gap: .45rem; }
+  .tracking-identificador { grid-column: 1 / -1; }
+  .tracking-subnivel { padding: .45rem; }
+}
+@media (max-width: 440px) {
+  .tracking-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

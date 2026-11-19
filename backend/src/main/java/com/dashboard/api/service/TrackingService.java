@@ -3,7 +3,10 @@ package com.dashboard.api.service;
 import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.dto.FiltroConsultaDTO;
+import com.dashboard.api.dto.PaginaDTO;
 import com.dashboard.api.dto.tracking.TrackingChartsDTO;
+import com.dashboard.api.dto.tracking.TrackingFreteDTO;
+import com.dashboard.api.dto.tracking.TrackingRegiaoDTO;
 import com.dashboard.api.dto.tracking.TrackingDashboardDTO;
 import com.dashboard.api.dto.tracking.TrackingOverviewDTO;
 import com.dashboard.api.dto.tracking.TrackingResumoDTO;
@@ -135,6 +138,25 @@ public class TrackingService {
     public FiltroConsultaDTO normalizarFiltroComFilialAtualObrigatoria(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
         return aplicarFilialAtualObrigatoria(filtro, escopoFilialService.escopoAtual());
+    }
+
+    public PaginaDTO<TrackingRegiaoDTO> buscarRegioes(FiltroConsultaDTO filtro, int pagina, int tamanho) {
+        exigirFiltroUnico(filtro, "siglaResponsavel");
+        FiltroConsultaDTO filtroDoRamo = normalizarFiltroComFilialAtualObrigatoria(filtro);
+        return sqlRepository().buscarRegioes(filtroDoRamo, pagina, tamanho);
+    }
+
+    public PaginaDTO<TrackingFreteDTO> buscarFretes(FiltroConsultaDTO filtro, int pagina, int tamanho) {
+        exigirFiltroUnico(filtro, "siglaResponsavel");
+        exigirFiltroUnico(filtro, "regiaoDestino");
+        FiltroConsultaDTO filtroDoRamo = normalizarFiltroComFilialAtualObrigatoria(filtro);
+        return sqlRepository().buscarFretes(filtroDoRamo, pagina, tamanho);
+    }
+
+    private void exigirFiltroUnico(FiltroConsultaDTO filtro, String chave) {
+        if (filtro.valores(chave).size() != 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe um único valor de " + chave + " para expandir a linha.");
+        }
     }
 
     public List<TrackingTimelinePointDTO> buscarSerie(FiltroConsultaDTO filtro) {

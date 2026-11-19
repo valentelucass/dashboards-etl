@@ -4,6 +4,12 @@ Na tela Performance, os fretes complementares e de substituição ficam fora da 
 
 No DEV, de 16 a 18/11, o total passou de 2.534 para 2.496 e a performance de 94,69% para 95,44%. O CT-e 65524, emitido em 16/11, passou de 24/11 para 18/11. O CT-e 65820, emitido em 18/11, passou de 19/11 para 23/11, após o feriado e o fim de semana. O substituto 76100 saiu da contagem e o original 74650 permaneceu.
 
+## 19/11/2026 — Localização de Cargas por responsável
+
+O período considera a data do frete. A matriz, a distribuição e o total incluem No Armazém (galpão, pendente ou sem status), Em Transferência, Manifestada, Em Entrega e Finalizadas. Valor em carteira e previsão vencida consideram apenas cargas abertas. A matriz agrupa o frete pelas três primeiras letras do nome fantasia do responsável pela região de destino. Na ausência de responsável, usa FEC.
+
+A expansão apresenta as regiões atendidas pelo responsável e, dentro de cada região, as minutas com as respectivas notas fiscais. Uma minuta com várias notas continua sendo um único frete. O filtro por número de minuta vale também para os indicadores, os gráficos, os detalhes e a exportação.
+
 ## 19/11/2026 — Painel DEV na V2
 
 Duas atualizações automáticas chegaram ao SQL e ao painel DEV em 19/11. O intervalo do fim da primeira publicação ao início da segunda busca foi de 60 minutos e 8 segundos. As 13 fontes tinham recebimentos confirmados para as 90 datas entre 22/08 e 19/11. A fila de publicação terminou vazia em ambos os lotes.

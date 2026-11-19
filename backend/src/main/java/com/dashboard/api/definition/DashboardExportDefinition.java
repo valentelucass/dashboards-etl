@@ -56,7 +56,9 @@ public enum DashboardExportDefinition {
                     "filialDestino", List.of("[Filial Destino]"),
                     "regiaoOrigem", List.of("[Região Origem]"),
                     "regiaoDestino", List.of("[Região Destino]"),
-                    "statusCarga", List.of("[Status Carga]")
+                    "statusCarga", List.of("[Status Carga]"),
+                    "siglaResponsavel", List.of("[Sigla Responsável Região Destino]"),
+                    "numeroMinuta", List.of("[N° Minuta]")
             ),
             List.of("[Data do frete] DESC", "[N° Minuta] DESC"),
             null
@@ -277,31 +279,15 @@ public enum DashboardExportDefinition {
                         base_raw.[Tipo Serviço],
                         filial_emissora.valor AS [Filial Emissora],
                         base_raw.[Previsão Entrega/Previsão de entrega],
-                        base_raw.[Região Destino],
+                        COALESCE(NULLIF(TRIM(base_raw.[Região Destino]), N''), N'Sem região') AS [Região Destino],
                         filial_destino.valor AS [Filial Destino],
                         responsavel_destino.valor AS [Responsável pela Região de Destino],
                         responsavel_destino.sigla AS [Sigla Responsável Região Destino],
                         base_raw.[Classificação],
-                        CASE
-                            WHEN status_calc.status_norm IS NULL
-                              OR status_calc.status_norm IN (N'pending', N'pendente', N'sem_status', N'sem status')
-                            THEN N'NO ARMAZÉM'
-                            ELSE COALESCE(status_calc.status_carga, status_calc.status_norm)
-                        END AS [Status Carga],
-                        CASE
-                            WHEN status_calc.status_norm IS NULL
-                              OR status_calc.status_norm IN (N'pending', N'pendente', N'sem_status', N'sem status')
-                            THEN N'no armazém'
-                            ELSE status_calc.status_norm
-                        END AS [Status Normalizado],
-                        CASE
-                            WHEN status_calc.status_norm IN (N'finished', N'finalizado', N'delivered', N'entregue', N'canceled', N'cancelled', N'cancelado')
-                            THEN 1 ELSE 0
-                        END AS [Status Terminal],
-                        CASE
-                            WHEN status_calc.status_norm IN (N'canceled', N'cancelled', N'cancelado')
-                            THEN 1 ELSE 0
-                        END AS [Cancelado Flag],
+                        status_painel.valor AS [Status Carga],
+                        LOWER(status_painel.valor) AS [Status Normalizado],
+                        CASE WHEN status_painel.valor = N'Finalizadas' THEN 1 ELSE 0 END AS [Status Terminal],
+                        0 AS [Cancelado Flag],
                         filial_atual.valor AS [Filial Atual],
                         base_raw.[Região Origem],
                         filial_origem.valor AS [Filial Origem],
@@ -310,28 +296,27 @@ public enum DashboardExportDefinition {
                         base_raw.[Metadata],
                         base_raw.[Data de extracao]
                     FROM [vw_localizacao_cargas_powerbi] base_raw
-                    OUTER APPLY (
-                        SELECT
-                            NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(100), base_raw.[Status Carga]))), N'') AS status_carga,
-                            NULLIF(LOWER(COALESCE(
-                                NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(100), base_raw.[Status Normalizado]))), N''),
-                                NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(100), base_raw.[Status Carga]))), N'')
-                            )), N'') AS status_norm
-                    ) status_calc
+                    CROSS APPLY (VALUES (LOWER(COALESCE(
+                        NULLIF(TRIM(base_raw.[Status Normalizado]), N''),
+                        NULLIF(TRIM(base_raw.[Status Carga]), N''),
+                        N'sem_status'
+                    )) COLLATE Latin1_General_CI_AI)) origem(status)
+                    CROSS APPLY (VALUES (CASE
+                        WHEN origem.status IN (N'pending', N'pendente', N'sem_status', N'sem status', N'in_warehouse',
+                                               N'no galpão', N'no armazém', N'em armazém') THEN N'No Armazém'
+                        WHEN origem.status IN (N'in_transfer', N'em transferência') THEN N'Em Transferência'
+                        WHEN origem.status IN (N'manifested', N'manifestada', N'manifestado') THEN N'Manifestada'
+                        WHEN origem.status IN (N'delivering', N'em entrega') THEN N'Em Entrega'
+                        WHEN origem.status IN (N'finished', N'delivered', N'finalizado', N'finalizada', N'finalizadas',
+                                               N'entregue') THEN N'Finalizadas'
+                    END)) status_painel(valor)
                     %s
                     %s
                     %s
                     %s
                     %s
                     %s
-                    WHERE (
-                            base_raw.[Status Normalizado] IS NULL
-                            OR base_raw.[Status Normalizado] NOT IN (N'finished', N'finalizado', N'FINISHED', N'FINALIZADO', N'Finished', N'Finalizado')
-                        )
-                      AND (
-                            base_raw.[Status Carga] IS NULL
-                            OR base_raw.[Status Carga] NOT IN (N'finished', N'finalizado', N'FINISHED', N'FINALIZADO', N'Finished', N'Finalizado')
-                        )
+                    WHERE status_painel.valor IS NOT NULL
                     /*__TRACKING_BASE_FILTERS__*/
                 )
                 """.formatted(
@@ -353,64 +338,17 @@ public enum DashboardExportDefinition {
     }
 
     private static String responsavelRegiaoDestinoApply() {
-        String responsavelFonte = "responsavel_destino_raw.responsavel_original";
-        String siglaFonte = "COALESCE(responsavel_destino_raw.sigla_original, responsavel_destino_raw.responsavel_original)";
-
         return """
-                    OUTER APPLY (
-                        SELECT
-                            NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), base_raw.[Responsável pela Região de Destino]))), N'') AS responsavel_original,
-                            NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), base_raw.[Sigla Responsável Região Destino]))), N'') AS sigla_original
-                    ) responsavel_destino_raw
-                    OUTER APPLY (
-                        SELECT
-                            NULLIF(LTRIM(RTRIM(%s)), N'') AS responsavel_sigla,
-                            NULLIF(LTRIM(RTRIM(%s)), N'') AS sigla_sigla
-                    ) responsavel_destino_segmento
-                    OUTER APPLY (
-                        SELECT
-                            %s AS valor,
-                            %s AS sigla
-                    ) responsavel_destino
-                """.formatted(
-                parceiroSiglaSegmentoSql(responsavelFonte),
-                parceiroSiglaSegmentoSql(siglaFonte),
-                parceiroTrackingSql(responsavelFonte, "responsavel_destino_segmento.responsavel_sigla"),
-                parceiroTrackingSql(siglaFonte, "responsavel_destino_segmento.sigla_sigla")
-        );
-    }
-
-    private static String parceiroTrackingSql(String fonte, String segmentoSigla) {
-        return """
-                COALESCE(
-                    CASE
-                        WHEN %1$s IS NULL THEN N'Sem Responsável'
-                        WHEN UPPER(%1$s) IN (N'SEM_MAP', N'SEM RESPONSÁVEL', N'SEM RESPONSAVEL') THEN N'Sem Responsável'
-                        WHEN UPPER(%1$s) LIKE N'SEM_MAP%%' THEN
-                            CASE
-                                WHEN LEN(%2$s) >= 3 THEN UPPER(LEFT(%2$s, 3))
-                                ELSE N'Sem Responsável'
-                            END
-                        ELSE %1$s
-                    END,
-                    N'Sem Responsável'
-                )
-                """.formatted(fonte, segmentoSigla);
-    }
-
-    private static String parceiroSiglaSegmentoSql(String fonte) {
-        return """
-                CASE
-                    WHEN %1$s IS NULL OR CHARINDEX(N'-', %1$s) = 0 THEN NULL
-                    WHEN CHARINDEX(N'-', %1$s, CHARINDEX(N'-', %1$s) + 1) > 0
-                    THEN SUBSTRING(
-                        %1$s,
-                        CHARINDEX(N'-', %1$s) + 1,
-                        CHARINDEX(N'-', %1$s, CHARINDEX(N'-', %1$s) + 1) - CHARINDEX(N'-', %1$s) - 1
-                    )
-                    ELSE SUBSTRING(%1$s, CHARINDEX(N'-', %1$s) + 1, LEN(%1$s))
-                END
-                """.formatted(fonte);
+                    CROSS APPLY (VALUES (NULLIF(TRIM(base_raw.[Responsável pela Região de Destino]), N''))) nome(fantasia)
+                    CROSS APPLY (VALUES (CASE
+                        WHEN nome.fantasia COLLATE Latin1_General_CI_AI IN (N'SEM_MAP', N'Sem responsável') THEN NULL
+                        ELSE nome.fantasia
+                    END)) responsavel(nome)
+                    CROSS APPLY (VALUES (
+                        COALESCE(responsavel.nome, N'Sem responsável'),
+                        COALESCE(UPPER(LEFT(responsavel.nome, 3)), N'FEC')
+                    )) responsavel_destino(valor, sigla)
+                """;
     }
 
     private static String filialSiglaApply(String alias, List<String> colunasFallback) {

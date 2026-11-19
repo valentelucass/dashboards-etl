@@ -362,12 +362,9 @@ class DashboardExportSqlBuilderTest {
         );
 
         assertThat(query.sql())
-                .contains("N'NO ARMAZÉM'")
-                .contains("status_calc.status_norm IN (N'pending', N'pendente', N'sem_status', N'sem status')")
-                .contains("base_raw.[Status Normalizado] IS NULL")
-                .contains("base_raw.[Status Normalizado] NOT IN (N'finished', N'finalizado', N'FINISHED', N'FINALIZADO', N'Finished', N'Finalizado')")
-                .contains("base_raw.[Status Carga] IS NULL")
-                .contains("base_raw.[Status Carga] NOT IN (N'finished', N'finalizado', N'FINISHED', N'FINALIZADO', N'Finished', N'Finalizado')")
+                .contains("THEN N'No Armazém'")
+                .contains("THEN N'Finalizadas'")
+                .contains("WHERE status_painel.valor IS NOT NULL")
                 .contains("base_raw.[Data do frete] >= :inicioOffset AND base_raw.[Data do frete] < :fimOffset")
                 .contains("base_raw.[Localização Atual] IN (:filtro_filialAtualCodigos)")
                 .doesNotContain("WHERE COALESCE(status_calc.status_norm")
@@ -377,11 +374,24 @@ class DashboardExportSqlBuilderTest {
                 .contains("base_raw.[Filial Emissora]")
                 .contains("filial_atual.valor AS [Filial Atual]")
                 .contains("responsavel_destino.valor AS [Responsável pela Região de Destino]")
-                .contains("responsavel_destino.sigla AS [Sigla Responsável Região Destino]")
-                .contains("UPPER(responsavel_destino_raw.responsavel_original) LIKE N'SEM_MAP%'")
-                .contains("UPPER(LEFT(responsavel_destino_segmento.sigla_sigla, 3))")
-                .contains("N'Sem Responsável'");
+                .contains("COALESCE(UPPER(LEFT(responsavel.nome, 3)), N'FEC')");
         assertThat(query.params().getValues()).containsEntry("filtro_filialAtualCodigos", List.of("ppb"));
+    }
+
+    @Test
+    void trackingFiltraMinutaPorNumeroEStatusDepoisDoAgrupamento() {
+        var query = builder.buildSelect(DashboardExportDefinition.TRACKING,
+                filtro(Map.of("numeroMinuta", List.of("0492325"), "statusCarga", List.of("No Armazém"))),
+                EscopoFilialService.EscopoFilial.comAcessoTotal(), Set.of());
+
+        assertThat(query.params().getValues()).containsEntry("filtro_numeroMinuta", List.of(492325L));
+        assertThat(query.sql()).contains("[N° Minuta] IN (:filtro_numeroMinuta)", "[Status Carga] IN (:filtro_statusCarga)")
+                .doesNotContain("base_raw.[Status Carga] IN (:filtro_statusCarga)");
+
+        var invalida = builder.buildCount(DashboardExportDefinition.TRACKING,
+                filtro(Map.of("numeroMinuta", List.of("sem-numero"))),
+                EscopoFilialService.EscopoFilial.comAcessoTotal(), Set.of());
+        assertThat(invalida.sql()).contains("1 = 0");
     }
 
     private static FiltroConsultaDTO filtro(Map<String, List<String>> filtros) {

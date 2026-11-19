@@ -32,14 +32,32 @@ export interface TrackingOverview {
   pctFinalizado: number;
 }
 
-export interface TrackingMatrizRegiao {
-  siglaRegiaoDestino: string;
-  responsavelRegiaoDestino: string;
+interface TrackingTotaisGrupo {
+  totalCargas: number;
   pesoTaxado: number;
   valorFrete: number;
   valorNota: number;
   volumes: number;
   foraDoPrazo: number;
+}
+
+export interface TrackingMatrizRegiao extends TrackingTotaisGrupo {
+  siglaRegiaoDestino: string;
+  responsavelRegiaoDestino: string | null;
+}
+
+export interface TrackingRegiao extends TrackingTotaisGrupo {
+  regiaoDestino: string;
+}
+
+export interface TrackingFrete {
+  numeroMinuta: number;
+  numerosNf: string[];
+  statusCarga: string;
+  volumes: number;
+  pesoTaxado: number;
+  valorFrete: number;
+  valorNota: number;
 }
 
 export interface TrackingStatusDistribuicao {
@@ -82,6 +100,7 @@ export interface TrackingDashboard {
 export interface TrackingTimelinePoint {
   date: string;
   pendente: number;
+  manifestada: number;
   emEntrega: number;
   emTransferencia: number;
   finalizado: number;
@@ -90,6 +109,7 @@ export interface TrackingTimelinePoint {
 export interface TrackingFiltro {
   dataInicio: string;
   dataFim: string;
+  numeroMinuta?: string;
   filialEmissora?: string[];
   filialAtual?: string[];
   filialDestino?: string[];

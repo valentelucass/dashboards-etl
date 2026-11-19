@@ -292,8 +292,6 @@ public class DashboardExportSqlBuilder {
         adicionarFiltroBaseTracking(whereBase, params, filtro, filtrosIgnorados, "filialAtual", "filtro_filialAtual", "filtro_filialAtualCodigos", List.of("base_raw.[Filial Atual]", "base_raw.[Localização Atual]", "base_raw.[Filial Emissora]"), true);
         adicionarFiltroBaseTracking(whereBase, params, filtro, filtrosIgnorados, "filialDestino", "filtro_filialDestino", "filtro_filialDestinoCodigos", List.of("base_raw.[Filial Destino]"), true);
         adicionarFiltroBaseTracking(whereBase, params, filtro, filtrosIgnorados, "regiaoOrigem", "filtro_regiaoOrigem", null, List.of("base_raw.[Região Origem]"), false);
-        adicionarFiltroBaseTracking(whereBase, params, filtro, filtrosIgnorados, "regiaoDestino", "filtro_regiaoDestino", null, List.of("base_raw.[Região Destino]"), false);
-        adicionarFiltroBaseTracking(whereBase, params, filtro, filtrosIgnorados, "statusCarga", "filtro_statusCarga", null, List.of("base_raw.[Status Carga]"), false);
 
         String substituicao = whereBase.isEmpty()
                 ? ""
@@ -448,6 +446,18 @@ public class DashboardExportSqlBuilder {
                         entry.getValue(),
                         filtro.valores(chave)
                 );
+                continue;
+            }
+
+            if (definition == DashboardExportDefinition.TRACKING && "numeroMinuta".equals(chave)) {
+                List<Long> minutas = filtro.valores(chave).stream()
+                        .map(this::parseLongOrNull).filter(Objects::nonNull).distinct().toList();
+                if (minutas.isEmpty()) {
+                    where.add("1 = 0");
+                } else {
+                    params.addValue("filtro_numeroMinuta", minutas);
+                    where.add("[N° Minuta] IN (:filtro_numeroMinuta)");
+                }
                 continue;
             }
 

@@ -165,6 +165,19 @@ class TrackingServiceTest {
     }
 
     @Test
+    void expansaoRequerRamoSelecionadoEFilialAtual() {
+        TrackingService comAcessoTotal = serviceComEscopo(EscopoFilialService.EscopoFilial.comAcessoTotal());
+        assertThatThrownBy(() -> comAcessoTotal.buscarFretes(filtroPadrao(), 1, 10))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("siglaResponsavel");
+        var apenasSigla = new FiltroConsultaDTO(filtroPadrao().dataInicio(), filtroPadrao().dataFim(),
+                Map.of("siglaResponsavel", List.of("AGU")));
+        assertThatThrownBy(() -> comAcessoTotal.buscarFretes(apenasSigla, 1, 10))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("regiaoDestino");
+        assertThatThrownBy(() -> comAcessoTotal.buscarRegioes(apenasSigla, 1, 10))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Filial Atual");
+    }
+
+    @Test
     void buscarDashboardDeveUsarConsultaUnicaSargableDaViewDeTracking() {
         CapturandoNamedParameterJdbcTemplate jdbcTemplate = new CapturandoNamedParameterJdbcTemplate();
         TrackingService serviceDashboard = new TrackingService(
@@ -220,12 +233,9 @@ class TrackingServiceTest {
 
         String sqlExecutado = String.join("\n", jdbcTemplate.sqls());
         assertThat(sqlExecutado)
-                .contains("N'NO ARMAZÉM'")
-                .contains("status_calc.status_norm IN (N'pending', N'pendente', N'sem_status', N'sem status')")
-                .contains("base_raw.[Status Normalizado] IS NULL")
-                .contains("base_raw.[Status Normalizado] NOT IN (N'finished', N'finalizado', N'FINISHED', N'FINALIZADO', N'Finished', N'Finalizado')")
-                .contains("base_raw.[Status Carga] IS NULL")
-                .contains("base_raw.[Status Carga] NOT IN (N'finished', N'finalizado', N'FINISHED', N'FINALIZADO', N'Finished', N'Finalizado')")
+                .contains("THEN N'No Armazém'")
+                .contains("THEN N'Finalizadas'")
+                .contains("WHERE status_painel.valor IS NOT NULL")
                 .contains("base_raw.[Data do frete] >= :inicioOffset AND base_raw.[Data do frete] < :fimOffset")
                 .contains("base_raw.[Localização Atual] IN (:filtro_filialAtualCodigos)")
                 .doesNotContain("WHERE COALESCE(status_calc.status_norm")

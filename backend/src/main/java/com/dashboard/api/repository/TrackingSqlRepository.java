@@ -4,6 +4,15 @@ import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
 import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.FiltroConsultaDTO;
+import com.dashboard.api.dto.PaginaDTO;
+import com.dashboard.api.dto.tracking.TrackingFreteDTO;
+import com.dashboard.api.dto.tracking.TrackingRegiaoDTO;
+import com.dashboard.api.util.ConsultaLimiteUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import java.sql.SQLException;
+import org.springframework.jdbc.core.RowMapper;
 import com.dashboard.api.dto.tracking.TrackingChartsDTO;
 import com.dashboard.api.dto.tracking.TrackingDashboardDTO;
 import com.dashboard.api.dto.tracking.TrackingMatrizRegiaoDTO;
@@ -34,6 +43,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class TrackingSqlRepository {
 
+    private static final ObjectReader NUMEROS_NF = new ObjectMapper().readerForListOf(String.class);
     private static final Logger log = LoggerFactory.getLogger(TrackingSqlRepository.class);
     private final NamedParameterJdbcOperations jdbcTemplate;
     private final DashboardExportSqlBuilder sqlBuilder;
@@ -59,7 +69,6 @@ public class TrackingSqlRepository {
         MapSqlParameterSource params = copiarParams(source);
         params.addValue("hoje", periodoOffsetDateTimeHelper.hoje());
 
-        String statusNormalizadoSql = statusNormalizadoSql(colunas);
         String sql = """
                 WITH base_filtrada AS (
                     SELECT *
@@ -70,14 +79,13 @@ public class TrackingSqlRepository {
                         MAX(%s) AS updated_at,
                         COUNT(1) AS total_cargas,
                         SUM(CASE
-                            WHEN %s IN (N'delivering', N'in_transfer', N'manifested', N'em entrega', N'em transferência', N'em transferencia', N'manifestado')
+                            WHEN [Status Carga] IN (N'Em Entrega', N'Em Transferência', N'Manifestada')
                             THEN 1 ELSE 0
                         END) AS em_transito,
                         SUM(CASE WHEN %s THEN 1 ELSE 0 END) AS previsao_vencida,
-                        SUM(%s) AS valor_frete,
+                        SUM(CASE WHEN [Status Terminal] = 0 THEN %s ELSE 0 END) AS valor_frete,
                         SUM(%s) AS peso_taxado,
-                        SUM(CASE WHEN %s IN (N'finished', N'delivered', N'finalizado', N'entregue') THEN 1 ELSE 0 END) AS finalizadas,
-                        SUM(CASE WHEN %s NOT IN (N'canceled', N'cancelled', N'cancelado') THEN 1 ELSE 0 END) AS elegiveis_finalizacao
+                        SUM([Status Terminal]) AS finalizadas
                     FROM base_filtrada
                 )
                 SELECT
@@ -87,17 +95,14 @@ public class TrackingSqlRepository {
                     previsao_vencida,
                     CAST(COALESCE(valor_frete, 0) AS DECIMAL(19,2)) AS valor_frete,
                     CAST(COALESCE(peso_taxado, 0) AS DECIMAL(19,2)) AS peso_taxado,
-                    CAST(COALESCE(CAST(finalizadas AS FLOAT) * 100.0 / NULLIF(elegiveis_finalizacao, 0), 0) AS DECIMAL(19,2)) AS pct_finalizado
+                    CAST(COALESCE(CAST(finalizadas AS FLOAT) * 100.0 / NULLIF(total_cargas, 0), 0) AS DECIMAL(19,2)) AS pct_finalizado
                 FROM agregado
                 """.formatted(
                 source.sql(),
                 dataExtracaoSql(),
-                statusNormalizadoSql,
-                previsaoVencidaSql(statusNormalizadoSql),
+                previsaoVencidaSql(),
                 valorFreteSql(),
-                pesoSql(colunas),
-                statusNormalizadoSql,
-                statusNormalizadoSql
+                pesoSql(colunas)
         );
 
         return jdbcTemplate.queryForObject(sql, params, (rs, rowNum) -> new TrackingOverviewDTO(
@@ -113,7 +118,6 @@ public class TrackingSqlRepository {
 
     public List<TrackingTimelinePointDTO> buscarSerie(FiltroConsultaDTO filtro) {
         DashboardExportSqlBuilder.ExportSql source = source(filtro);
-        String statusExibicaoSql = statusExibicaoSql();
         String sql = """
                 WITH base_filtrada AS (
                     SELECT *
@@ -122,27 +126,29 @@ public class TrackingSqlRepository {
                 base_metricas AS (
                     SELECT
                         CAST([Data do frete] AS date) AS data_frete,
-                        %s AS status_exibicao
+                        [Status Carga] AS status_exibicao
                     FROM base_filtrada
                     WHERE [Data do frete] IS NOT NULL
                 )
                 SELECT
                     data_frete,
-                    SUM(CASE WHEN status_exibicao = N'NO ARMAZÉM' THEN 1 ELSE 0 END) AS pendente,
-                    SUM(CASE WHEN LOWER(status_exibicao) = N'em entrega' THEN 1 ELSE 0 END) AS em_entrega,
-                    SUM(CASE WHEN LOWER(status_exibicao) IN (N'em transferência', N'em transferencia') THEN 1 ELSE 0 END) AS em_transferencia,
-                    0 AS finalizado
+                    SUM(CASE WHEN status_exibicao = N'No Armazém' THEN 1 ELSE 0 END) AS pendente,
+                    SUM(CASE WHEN status_exibicao = N'Em Entrega' THEN 1 ELSE 0 END) AS em_entrega,
+                    SUM(CASE WHEN status_exibicao = N'Em Transferência' THEN 1 ELSE 0 END) AS em_transferencia,
+                    SUM(CASE WHEN status_exibicao = N'Finalizadas' THEN 1 ELSE 0 END) AS finalizado,
+                    SUM(CASE WHEN status_exibicao = N'Manifestada' THEN 1 ELSE 0 END) AS manifestada
                 FROM base_metricas
                 GROUP BY data_frete
                 ORDER BY data_frete
-                """.formatted(source.sql(), statusExibicaoSql);
+                """.formatted(source.sql());
 
         return jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new TrackingTimelinePointDTO(
                 data(rs.getDate("data_frete")),
                 rs.getInt("pendente"),
                 rs.getInt("em_entrega"),
                 rs.getInt("em_transferencia"),
-                rs.getInt("finalizado")
+                rs.getInt("finalizado"),
+                rs.getInt("manifestada")
         ));
     }
 
@@ -163,7 +169,7 @@ public class TrackingSqlRepository {
         TrackingChartsDTO graficos = new TrackingChartsDTO(
               buscarStatusDistribuicao(source),
                 List.of(),
-              buscarValorRegiaoDestinoTop10(source, colunas)
+              buscarValorRegiaoDestinoTop10(source)
         );
 
         return new TrackingDashboardDTO(
@@ -179,39 +185,15 @@ public class TrackingSqlRepository {
     ) {
         MapSqlParameterSource params = copiarParams(source);
         params.addValue("hoje", periodoOffsetDateTimeHelper.hoje());
-        String siglaRegiaoSql = siglaRegiaoDestinoSql(colunas);
-        String responsavelRegiaoSql = responsavelRegiaoDestinoSql();
-        String statusNormalizadoSql = statusNormalizadoSql(colunas);
         String sql = """
-                WITH base_filtrada AS (
-                    SELECT *
-                    %s
-                )
-                SELECT
-                    %s AS sigla,
-                    %s AS responsavel,
-                    CAST(COALESCE(SUM(%s), 0) AS DECIMAL(19,2)) AS peso_taxado,
-                    CAST(COALESCE(SUM(%s), 0) AS DECIMAL(19,2)) AS valor_frete,
-                    CAST(COALESCE(SUM(%s), 0) AS DECIMAL(19,2)) AS valor_nota,
-                    SUM(%s) AS volumes,
-                    SUM(CASE WHEN %s THEN 1 ELSE 0 END) AS fora_prazo
-                FROM base_filtrada
-                GROUP BY
-                    %s,
-                    %s
+                SELECT [Sigla Responsável Região Destino] AS sigla,
+                       CASE WHEN MIN([Responsável pela Região de Destino]) = MAX([Responsável pela Região de Destino])
+                            THEN MIN([Responsável pela Região de Destino]) END AS responsavel,
+                       %s
+                %s
+                GROUP BY [Sigla Responsável Região Destino]
                 ORDER BY peso_taxado DESC, sigla ASC
-                """.formatted(
-                source.sql(),
-                siglaRegiaoSql,
-                responsavelRegiaoSql,
-                pesoSql(colunas),
-                valorFreteSql(),
-                valorNfSql(colunas),
-                volumesSql(),
-                previsaoVencidaSql(statusNormalizadoSql),
-                siglaRegiaoSql,
-                responsavelRegiaoSql
-        );
+                """.formatted(metricasMatriz(colunas), source.sql());
 
         return jdbcTemplate.query(sql, params, (rs, rowNum) -> new TrackingMatrizRegiaoDTO(
                 rs.getString("sigla"),
@@ -220,25 +202,92 @@ public class TrackingSqlRepository {
                 decimal(rs.getBigDecimal("valor_frete")),
                 decimal(rs.getBigDecimal("valor_nota")),
                 rs.getInt("volumes"),
-                rs.getInt("fora_prazo")
+                rs.getInt("fora_prazo"),
+                rs.getInt("total_cargas")
         ));
     }
 
+    private String metricasMatriz(TrackingViewColumns colunas) {
+        return """
+                CAST(COALESCE(SUM(%s), 0) AS DECIMAL(19,2)) AS peso_taxado,
+                CAST(COALESCE(SUM(%s), 0) AS DECIMAL(19,2)) AS valor_frete,
+                CAST(COALESCE(SUM(%s), 0) AS DECIMAL(19,2)) AS valor_nota,
+                SUM(%s) AS volumes,
+                SUM(CASE WHEN %s THEN 1 ELSE 0 END) AS fora_prazo,
+                COUNT(1) AS total_cargas
+                """.formatted(pesoSql(colunas), valorFreteSql(), valorNfSql(colunas), volumesSql(), previsaoVencidaSql());
+    }
+
+    public PaginaDTO<TrackingRegiaoDTO> buscarRegioes(FiltroConsultaDTO filtro, int pagina, int tamanho) {
+        DashboardExportSqlBuilder.ExportSql source = source(filtro);
+        String count = "SELECT COUNT(DISTINCT [Região Destino]) " + source.sql();
+        String sql = """
+                SELECT [Região Destino], %s
+                %s
+                GROUP BY [Região Destino]
+                ORDER BY peso_taxado DESC, [Região Destino]
+                """.formatted(metricasMatriz(carregarColunasTracking()), source.sql());
+        return pagina(count, sql, source, pagina, tamanho, (rs, rowNum) -> new TrackingRegiaoDTO(
+                rs.getString("Região Destino"), rs.getBigDecimal("peso_taxado"), rs.getBigDecimal("valor_frete"),
+                rs.getBigDecimal("valor_nota"), rs.getInt("volumes"), rs.getInt("fora_prazo"), rs.getInt("total_cargas")
+        ));
+    }
+
+    public PaginaDTO<TrackingFreteDTO> buscarFretes(FiltroConsultaDTO filtro, int pagina, int tamanho) {
+        DashboardExportSqlBuilder.ExportSql source = source(filtro);
+        TrackingViewColumns colunas = carregarColunasTracking();
+        String sql = """
+                SELECT [N° Minuta], [Status Carga], %s AS volumes, %s AS peso_taxado,
+                       %s AS valor_frete, %s AS valor_nota,
+                       JSON_QUERY([Metadata], '$.invoices_mapping') AS notas
+                %s
+                ORDER BY [Data do frete] DESC, [N° Minuta] DESC, [Hash Localização]
+                """.formatted(volumesSql(), pesoSql(colunas), valorFreteSql(), valorNfSql(colunas), source.sql());
+        return pagina("SELECT COUNT_BIG(1) " + source.sql(), sql, source, pagina, tamanho, (rs, rowNum) -> new TrackingFreteDTO(
+                rs.getObject("N° Minuta", Long.class), numerosNf(rs.getString("notas")), rs.getString("Status Carga"),
+                rs.getInt("volumes"), rs.getBigDecimal("peso_taxado"), rs.getBigDecimal("valor_frete"), rs.getBigDecimal("valor_nota")
+        ));
+    }
+
+    private static List<String> numerosNf(String json) throws SQLException {
+        if (json == null) {
+            return List.of();
+        }
+        try {
+            return NUMEROS_NF.readValue(json);
+        } catch (JsonProcessingException e) {
+            throw new SQLException("Lista de notas fiscais inválida no relatório de localização.", e);
+        }
+    }
+
+    private <T> PaginaDTO<T> pagina(String count, String sql, DashboardExportSqlBuilder.ExportSql source,
+                                   int paginaSolicitada, int tamanhoSolicitado, RowMapper<T> mapper) {
+        int pagina = Math.max(1, paginaSolicitada);
+        int tamanho = ConsultaLimiteUtils.limitar(tamanhoSolicitado, 10, 100);
+        MapSqlParameterSource params = copiarParams(source);
+        params.addValue("hoje", periodoOffsetDateTimeHelper.hoje());
+        params.addValue("offset", (long) (pagina - 1) * tamanho);
+        params.addValue("tamanho", tamanho);
+        Long total = jdbcTemplate.queryForObject(count, params, Long.class);
+        List<T> linhas = jdbcTemplate.query(sql + " OFFSET :offset ROWS FETCH NEXT :tamanho ROWS ONLY", params, mapper);
+        long totalLinhas = total == null ? 0 : total;
+        return new PaginaDTO<>(linhas, totalLinhas, (int) Math.ceil(totalLinhas / (double) tamanho), pagina, tamanho);
+    }
+
     private List<TrackingStatusDistribuicaoDTO> buscarStatusDistribuicao(DashboardExportSqlBuilder.ExportSql source) {
-        String statusExibicaoSql = statusExibicaoSql();
         String sql = """
                 WITH base_filtrada AS (
                     SELECT *
                     %s
                 )
                 SELECT
-                    %s AS status,
+                    [Status Carga] AS status,
                     COUNT(1) AS total,
                     CAST(COALESCE(SUM(%s), 0) AS DECIMAL(19,2)) AS valor_frete
                 FROM base_filtrada
-                GROUP BY %s
+                GROUP BY [Status Carga]
                 ORDER BY total DESC, status ASC
-                """.formatted(source.sql(), statusExibicaoSql, valorFreteSql(), statusExibicaoSql);
+                """.formatted(source.sql(), valorFreteSql());
 
         return jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new TrackingStatusDistribuicaoDTO(
                 rs.getString("status"),
@@ -253,9 +302,8 @@ public class TrackingSqlRepository {
     ) {
         MapSqlParameterSource params = copiarParams(source);
         params.addValue("hoje", periodoOffsetDateTimeHelper.hoje());
-        String statusNormalizadoSql = statusNormalizadoSql(colunas);
         String filialAtualSql = filialAtualSql();
-        String previsaoVencidaSql = previsaoVencidaSql(statusNormalizadoSql);
+        String previsaoVencidaSql = previsaoVencidaSql();
         String sql = """
                 WITH base_filtrada AS (
                     SELECT *
@@ -302,10 +350,9 @@ public class TrackingSqlRepository {
     }
 
     private List<TrackingValorPorRegiaoDTO> buscarValorRegiaoDestinoTop10(
-            DashboardExportSqlBuilder.ExportSql source,
-            TrackingViewColumns colunas
+            DashboardExportSqlBuilder.ExportSql source
     ) {
-        String siglaRegiaoSql = siglaRegiaoDestinoSql(colunas);
+        String siglaRegiaoSql = "[Sigla Responsável Região Destino]";
         String sql = """
                 WITH base_filtrada AS (
                     SELECT *
@@ -368,10 +415,8 @@ public class TrackingSqlRepository {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         TrackingViewColumns carregadas = new TrackingViewColumns(
-                colunas.contains("Status Normalizado"),
                 colunas.contains("Peso Taxado Decimal"),
-                colunas.contains("Valor NF Decimal"),
-                colunas.contains("Sigla Responsável Região Destino")
+                colunas.contains("Valor NF Decimal")
         );
 
         if (!carregadas.contratoGovernadoCompleto()) {
@@ -385,44 +430,8 @@ public class TrackingSqlRepository {
         return carregadas;
     }
 
-    private String statusExibicaoSql() {
-        return """
-                CASE
-                    WHEN [Status Carga] IS NULL
-                      OR LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status Carga])))) IN (N'pending', N'pendente', N'sem_status', N'sem status')
-                    THEN N'NO ARMAZÉM'
-                    ELSE LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status Carga])))
-                END
-                """;
-    }
-
-    private String statusNormalizadoSql(TrackingViewColumns colunas) {
-        if (colunas.statusNormalizado()) {
-            return """
-                    COALESCE(
-                        NULLIF(LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status Normalizado])))), N''),
-                        NULLIF(LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status Carga])))), N''),
-                        N'sem_status'
-                    )
-                    """;
-        }
-
-        return """
-                COALESCE(
-                    NULLIF(LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status Carga])))), N''),
-                    N'sem_status'
-                )
-                """;
-    }
-
-    private String previsaoVencidaSql(String statusNormalizadoSql) {
-        return """
-                (
-                    [Previsão Entrega/Previsão de entrega] IS NOT NULL
-                    AND [Previsão Entrega/Previsão de entrega] < :hoje
-                    AND %s NOT IN (N'finished', N'delivered', N'canceled', N'cancelled', N'finalizado', N'entregue', N'cancelado')
-                )
-                """.formatted(statusNormalizadoSql);
+    private String previsaoVencidaSql() {
+        return "[Previsão Entrega/Previsão de entrega] < :hoje AND [Status Terminal] = 0";
     }
 
     private String pesoSql(TrackingViewColumns colunas) {
@@ -486,35 +495,6 @@ public class TrackingSqlRepository {
                 """;
     }
 
-    private String siglaRegiaoDestinoSql(TrackingViewColumns colunas) {
-        if (colunas.siglaResponsavelRegiaoDestino()) {
-            return """
-                    COALESCE(
-                        NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Sigla Responsável Região Destino]))), N''),
-                        NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Responsável pela Região de Destino]))), N''),
-                        N'SEM_MAP'
-                    )
-                    """;
-        }
-
-        return """
-                COALESCE(
-                    NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Responsável pela Região de Destino]))), N''),
-                    NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Região Destino]))), N''),
-                    N'SEM_MAP'
-                )
-                """;
-    }
-
-    private String responsavelRegiaoDestinoSql() {
-        return """
-                COALESCE(
-                    NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Responsável pela Região de Destino]))), N''),
-                    N'Sem responsável'
-                )
-                """;
-    }
-
     private String filialAtualSql() {
         return """
                 COALESCE(
@@ -547,16 +527,11 @@ public class TrackingSqlRepository {
     }
 
     private record TrackingViewColumns(
-            boolean statusNormalizado,
             boolean pesoTaxadoDecimal,
-            boolean valorNfDecimal,
-            boolean siglaResponsavelRegiaoDestino
+            boolean valorNfDecimal
     ) {
         private boolean contratoGovernadoCompleto() {
-            return statusNormalizado
-                    && pesoTaxadoDecimal
-                    && valorNfDecimal
-                    && siglaResponsavelRegiaoDestino;
+            return pesoTaxadoDecimal && valorNfDecimal;
         }
     }
 }

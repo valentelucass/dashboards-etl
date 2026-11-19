@@ -55,6 +55,9 @@ const periodoCotacoes =
 const periodoTracking =
   'O período considera a data do frete e trabalha somente com cargas ainda não finalizadas.';
 
+const filtrosLocalizacao =
+  'O período usa a data do frete. Filial atual, status e número da minuta restringem a consulta. No Armazém reúne No Galpão, Pendente e cargas sem status.';
+
 const baseGestaoPerformance =
   'Considera minutas válidas, com previsão e filial de performance, excluindo cancelamentos, cortesias e registros operacionalmente inelegíveis. Cada minuta aparece uma única vez.';
 
@@ -716,42 +719,41 @@ export const KpiDictionary = {
   tracking: {
     totalCargas: {
       titulo: 'Total de Cargas',
-      descricao: 'Quantidade de cargas em aberto no período.',
-      calculo: 'Contagem de Cargas Não Finalizadas.',
-      observacao: periodoTracking,
+      descricao: 'Quantidade de cargas no período e na filial selecionados.',
+      calculo: 'Soma as cargas dos grupos No Armazém, Em Transferência, Manifestada, Em Entrega e Finalizadas.',
+      observacao: filtrosLocalizacao,
     },
     emTransito: {
       titulo: 'Cargas em Trânsito',
       descricao: 'Quantidade de cargas em entrega, transferência ou manifestadas.',
       calculo:
-        'Contagem de Cargas com status Em Entrega, Em Transferência ou Manifestado.',
-      observacao: periodoTracking,
+        'Conta as cargas Em Entrega, Em Transferência ou Manifestada.',
+      observacao: filtrosLocalizacao,
     },
     previsaoVencida: {
       titulo: 'Previsão Vencida',
       descricao: 'Cargas abertas cuja previsão de entrega já venceu.',
       calculo:
-        'Cargas com Previsão anterior à data atual e sem status Finalizado ou Cancelado.',
-      observacao: periodoTracking,
+        'Conta as cargas em aberto cuja previsão de entrega é anterior a hoje.',
+      observacao: filtrosLocalizacao,
     },
     valorCarteira: {
       titulo: 'Valor da Carteira',
       descricao: 'Valor de frete total das cargas em aberto.',
       calculo: 'Soma do Valor de Frete das Cargas Não Finalizadas.',
-      observacao: periodoTracking,
+      observacao: filtrosLocalizacao,
     },
     pesoTaxado: {
       titulo: 'Peso Taxado',
-      descricao: 'Peso taxado total das cargas em aberto.',
-      calculo: 'Soma do Peso Taxado das Cargas Não Finalizadas.',
-      observacao: periodoTracking,
+      descricao: 'Peso taxado das cargas no período e na filial selecionados.',
+      calculo: 'Soma o peso taxado, em quilogramas, das cargas incluídas no total.',
+      observacao: filtrosLocalizacao,
     },
     percentualFinalizado: {
       titulo: 'Percentual Finalizado',
-      descricao: 'Percentual de cargas finalizadas entre as cargas não canceladas.',
-      calculo: 'Cargas Finalizadas ÷ Cargas Não Canceladas × 100.',
-      observacao:
-        'A projeção usada pelo dashboard já exclui cargas finalizadas; por isso, este campo tende a retornar zero e não é exibido nos cards atuais.',
+      descricao: 'Participação das cargas finalizadas entre as cargas selecionadas.',
+      calculo: 'Cargas Finalizadas ÷ Total de Cargas × 100.',
+      observacao: filtrosLocalizacao,
     },
   },
 

@@ -9,6 +9,7 @@ public record TrackingMatrizRegiaoDTO(
         BigDecimal valorFrete,
         BigDecimal valorNota,
         int volumes,
-        int foraDoPrazo
+        int foraDoPrazo,
+        int totalCargas
 ) {
 }

@@ -257,7 +257,7 @@ export const chartDictionary = {
     descricao: 'Resume cargas rastreadas por status de exibição e valor de frete para avaliar onde está o volume financeiro em trânsito.',
     calculoTecnico: 'COUNT(1); CAST(COALESCE(SUM(valor_frete), 0) AS DECIMAL(19,2))',
     calculoNegocio:
-      'Conta as cargas em cada status de tracking e soma o valor de frete associado, conectando quantidade operacional com exposição financeira.',
+      'Mostra a quantidade de cargas em cada um dos cinco status. No Armazém reúne No Galpão, Pendente e cargas sem status. Cada fatia corresponde à participação do grupo no total filtrado.',
     agrupamento: 'GROUP BY status_exibicao',
   },
   trackingValorRegiao: {
@@ -265,8 +265,8 @@ export const chartDictionary = {
     descricao: 'Distribui valor de frete e quantidade de cargas por região de destino, destacando as regiões mais relevantes no tracking.',
     calculoTecnico: "CAST(COALESCE(SUM(valor_frete), 0) AS DECIMAL(19,2)); COUNT(1)",
     calculoNegocio:
-      'Soma o valor dos fretes e conta cargas por região de destino; depois consolida regiões fora do Top 10 em "Outros" para manter leitura executiva.',
-    agrupamento: "GROUP BY sigla_regiao_destino; depois GROUP BY CASE WHEN rn <= 10 THEN regiao ELSE N'Outros' END no Top 10",
+      'Soma o valor dos fretes por sigla do responsável pela região de destino. Mostra as dez siglas de maior valor e reúne as demais em Outros.',
+    agrupamento: 'Agrupa pelas três primeiras letras do nome fantasia do responsável. Sem responsável, usa FEC.',
   },
 
   faturasMensal: {

@@ -3,6 +3,8 @@ package com.dashboard.api.controller;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.PaginaDTO;
 import com.dashboard.api.dto.tracking.TrackingChartsDTO;
+import com.dashboard.api.dto.tracking.TrackingFreteDTO;
+import com.dashboard.api.dto.tracking.TrackingRegiaoDTO;
 import com.dashboard.api.dto.tracking.TrackingDashboardDTO;
 import com.dashboard.api.dto.tracking.TrackingOverviewDTO;
 import com.dashboard.api.dto.tracking.TrackingResumoDTO;
@@ -76,6 +78,22 @@ public class TrackingController {
             @RequestParam(defaultValue = "100") int limite,
             @RequestParam MultiValueMap<String, String> params) {
         return ResponseEntity.ok(trackingService.buscarTabela(FiltroRequestMapper.from(dataInicio, dataFim, params), limite));
+    }
+
+    @GetMapping("/regioes")
+    public ResponseEntity<PaginaDTO<TrackingRegiaoDTO>> regioes(
+            @RequestParam LocalDate dataInicio, @RequestParam LocalDate dataFim,
+            @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int size,
+            @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(trackingService.buscarRegioes(FiltroRequestMapper.from(dataInicio, dataFim, params), page, size));
+    }
+
+    @GetMapping("/fretes")
+    public ResponseEntity<PaginaDTO<TrackingFreteDTO>> fretes(
+            @RequestParam LocalDate dataInicio, @RequestParam LocalDate dataFim,
+            @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int size,
+            @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(trackingService.buscarFretes(FiltroRequestMapper.from(dataInicio, dataFim, params), page, size));
     }
 
     @GetMapping("/detalhes")

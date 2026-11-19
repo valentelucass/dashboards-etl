@@ -5,5 +5,6 @@ public record TrackingTimelinePointDTO(
         int pendente,
         int emEntrega,
         int emTransferencia,
-        int finalizado
+        int finalizado,
+        int manifestada
 ) {}

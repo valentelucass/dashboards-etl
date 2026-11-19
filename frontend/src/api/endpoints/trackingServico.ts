@@ -4,7 +4,7 @@ import { aplicarFiltrosTabelaParams } from '../tableFilters';
 import { buscarTabelaPaginada, normalizarPaginacaoResponse } from '../tabelaPaginada';
 import { montarQueryParams } from './queryParams';
 import type { PaginacaoResponse } from '../../types/common';
-import type { TrackingCharts, TrackingDashboard, TrackingFiltro, TrackingOverview, TrackingRawRow, TrackingTimelinePoint } from '../../types/tracking';
+import type { TrackingCharts, TrackingDashboard, TrackingFiltro, TrackingFrete, TrackingOverview, TrackingRawRow, TrackingRegiao, TrackingTimelinePoint } from '../../types/tracking';
 import type { TableApiFilters } from '../../types/tableFilters';
 
 type TrackingApiRow = TrackingRawRow & { pesoTaxado?: number; valorNf?: number };
@@ -115,7 +115,7 @@ export async function buscarTrackingDetalhesPaginada(
   aplicarFiltrosTabelaParams(params, filtrosTabela);
   params.set('pagina', String(pagina));
   params.set('tamanhoPagina', String(tamanhoPagina));
-  params.set('page', String(Math.max(0, pagina - 1)));
+  params.set('page', String(pagina));
   params.set('size', String(tamanhoPagina));
 
   const { data } = await clienteAxios.get<PaginacaoResponse<TrackingApiRow>>('/api/painel/tracking/detalhes', { signal, params });
@@ -128,4 +128,20 @@ export async function buscarTrackingDetalhesPaginada(
 
 export async function exportarTrackingCsv(filtro: TrackingFiltro, filtrosTabela?: TableApiFilters): Promise<void> {
   await baixarCsv('/api/painel/tracking/exportacao', filtro, 'localizacao-cargas', filtrosTabela);
+}
+
+export async function buscarTrackingRegioes(filtro: TrackingFiltro, sigla: string, pagina: number, tamanho: number, signal?: AbortSignal) {
+  const params = montarQueryParams({ ...filtro, siglaResponsavel: sigla });
+  params.set('page', String(pagina));
+  params.set('size', String(tamanho));
+  const { data } = await clienteAxios.get<PaginacaoResponse<TrackingRegiao>>('/api/painel/tracking/regioes', { params, signal });
+  return data;
+}
+
+export async function buscarTrackingFretes(filtro: TrackingFiltro, sigla: string, regiao: string, pagina: number, tamanho: number, signal?: AbortSignal) {
+  const params = montarQueryParams({ ...filtro, siglaResponsavel: sigla, regiaoDestino: [regiao] });
+  params.set('page', String(pagina));
+  params.set('size', String(tamanho));
+  const { data } = await clienteAxios.get<PaginacaoResponse<TrackingFrete>>('/api/painel/tracking/fretes', { params, signal });
+  return data;
 }

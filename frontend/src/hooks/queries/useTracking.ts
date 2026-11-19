@@ -3,6 +3,8 @@ import {
   buscarTrackingGraficos,
   buscarTrackingDashboard,
   buscarTrackingDetalhesPaginada,
+  buscarTrackingRegioes,
+  buscarTrackingFretes,
   buscarTrackingOverview,
   buscarTrackingSerie,
   buscarTrackingTabela,
@@ -31,7 +33,6 @@ export function useTrackingDashboard(filtro: TrackingFiltro, enabled = true) {
     queryKey: ['tracking', 'dashboard', filtro],
     queryFn: ({ signal }) => buscarTrackingDashboard(filtro, signal),
     enabled,
-    placeholderData: (previousData) => previousData,
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -105,7 +106,26 @@ export function useTrackingDetalhesPaginada(
     queryKey: ['tracking', 'detalhes', filtro, pagina, tamanhoPagina, filtrosTabela],
     queryFn: ({ signal }) => buscarTrackingDetalhesPaginada(filtro, pagina, tamanhoPagina, filtrosTabela, signal),
     enabled,
-    placeholderData: (previousData) => previousData,
+    staleTime: STALE_TIME,
+    retry: 1,
+  });
+}
+
+export function useTrackingRegioes(filtro: TrackingFiltro, sigla: string, pagina: number, tamanho: number) {
+  return useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: ['tracking', 'regioes', filtro, sigla, pagina, tamanho],
+    queryFn: ({ signal }) => buscarTrackingRegioes(filtro, sigla, pagina, tamanho, signal),
+    staleTime: STALE_TIME,
+    retry: 1,
+  });
+}
+
+export function useTrackingFretes(filtro: TrackingFiltro, sigla: string, regiao: string, pagina: number, tamanho: number) {
+  return useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: ['tracking', 'fretes', filtro, sigla, regiao, pagina, tamanho],
+    queryFn: ({ signal }) => buscarTrackingFretes(filtro, sigla, regiao, pagina, tamanho, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
