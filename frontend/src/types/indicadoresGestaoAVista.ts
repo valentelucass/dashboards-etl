@@ -86,6 +86,7 @@ export interface KpiGoalOverridesResponse {
 export interface PerformanceEntregaOverview {
   updatedAt: string;
   totalEntregas: number;
+  finalizadas: number;
   entregasNoPrazo: number;
   entregasForaDoPrazo: number;
   pctNoPrazo: number;
@@ -104,6 +105,7 @@ export interface PerformanceEntregaSeriePoint {
   filtro: string | null;
   visao: NivelVisaoPerformance;
   totalEntregas: number;
+  finalizadas: number;
   entregasNoPrazo: number;
   entregasForaDoPrazo: number;
   pctNoPrazo: number;

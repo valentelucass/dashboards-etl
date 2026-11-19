@@ -1,3 +1,7 @@
+## 19/11/2026 — Performance na Gestão à Vista
+
+A Gestão à Vista usa a mesma seleção de minutas da tela Performance para o cartão, o ranking e o detalhamento. O percentual divide as entregas finalizadas no prazo por todas as finalizadas e aparece com duas casas decimais. O total de entregas continua disponível separadamente. Na conferência de 1 a 19/11/2026, as duas telas mostraram 9.010 entregas no prazo de 10.208 finalizadas (88,26%). Ao filtrar a filial AGU, ambas mostraram 86,95%.
+
 ## 19/11/2026 — Modais e paginação da presença
 
 Os modais do Dashboard desfocam o fundo nos temas claro e escuro, respeitando a preferência por transparência reduzida. Em Gestão de usuários, a presença abre em uma janela central no desktop e em uma folha no celular. Cada grupo tem cinco pessoas por página, contagem própria e navegação até a última ficha. Os cartões Total, Ativos e Solicitações usam o mesmo padrão de janela e paginação. A consulta de recentes retorna todas as pessoas elegíveis pelas regras de foco e atividade já vigentes. O histórico de cada pessoa mantém sua permissão de acesso.

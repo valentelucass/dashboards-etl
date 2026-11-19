@@ -59,7 +59,7 @@ const filtrosLocalizacao =
   'O período usa a data do frete. Filial atual, status e número da minuta restringem a consulta. No Armazém reúne No Galpão, Pendente e cargas sem status.';
 
 const baseGestaoPerformance =
-  'Considera minutas válidas, com previsão e filial de performance, excluindo cancelamentos, cortesias e registros operacionalmente inelegíveis. Cada minuta aparece uma única vez.';
+  'Usa as mesmas minutas e a mesma previsão de entrega da tela Performance. Reentregas com CT-e têm prazo de dois dias úteis. Fretes complementares e de substituição ficam fora da contagem.';
 
 const baseGestaoCubagem =
   'Considera minutas válidas, não canceladas, com valor operacional e fora das exceções oficiais ativas de pagadores sem cubagem em dbo.cliente_excecao_cubagem, além do flag legado de exclusão publicado na fato. Cada minuta aparece uma única vez.';
@@ -1035,10 +1035,10 @@ export const KpiDictionary = {
     resumo: {
       performanceFretes: {
         titulo: 'Nova Tela de Fretes',
-        descricao: 'Percentual de minutas válidas entregues no prazo.',
-        calculo: 'Entregas no Prazo ÷ Total de Entregas Válidas × 100.',
+        descricao: 'Percentual das entregas finalizadas que chegaram no prazo.',
+        calculo: 'Entregas finalizadas no prazo ÷ total de entregas finalizadas × 100.',
         observacao:
-          `${baseGestaoPerformance} Entregas ainda em aberto permanecem no total e reduzem o percentual. O ranking detalha o mesmo contrato por responsável, região e cidade via drill-down.`,
+          `${baseGestaoPerformance} O ranking detalha o mesmo contrato por responsável, região e cidade via drill-down.`,
       },
       utilizacaoColetores: {
         titulo: 'Utilização dos Coletores',
@@ -1072,7 +1072,7 @@ export const KpiDictionary = {
       totalEntregas: {
         titulo: 'Total de Entregas',
         descricao: 'Quantidade de minutas válidas com previsão no período.',
-        calculo: 'Entregas no Prazo + Entregas Fora do Prazo + Entregas em Aberto.',
+        calculo: 'Contagem de minutas no período de previsão, em todos os status considerados na tela Performance.',
         observacao: baseGestaoPerformance,
       },
       foraDoPrazo: {
@@ -1091,10 +1091,10 @@ export const KpiDictionary = {
       },
       percentualNoPrazo: {
         titulo: 'Performance de Entrega',
-        descricao: 'Percentual de todas as minutas válidas que foram concluídas no prazo.',
-        calculo: 'Entregas no Prazo ÷ Total de Entregas Válidas × 100.',
+        descricao: 'Percentual das entregas finalizadas que chegaram no prazo.',
+        calculo: 'Entregas finalizadas no prazo ÷ total de entregas finalizadas × 100.',
         observacao:
-          `${baseGestaoPerformance} Entregas em aberto permanecem no denominador. O gráfico de apoio permite drill-down por responsável, região e cidade, sempre recalculado no SQL para o agrupamento atual. ${percentualSemBase}`,
+          `${baseGestaoPerformance} O gráfico de apoio permite drill-down por responsável, região e cidade, sempre recalculado no SQL para o agrupamento atual. ${percentualSemBase}`,
       },
       gapMeta: {
         titulo: 'Gap vs Meta de Performance',

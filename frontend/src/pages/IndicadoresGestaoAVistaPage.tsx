@@ -628,7 +628,7 @@ export default function IndicadoresGestaoAVistaPage() {
     />
   );
 
-  const performanceHasData = (performanceOverview.data?.totalEntregas ?? 0) > 0;
+  const performanceHasData = (performanceOverview.data?.finalizadas ?? 0) > 0;
   const coletoresHasData = (coletoresOverview.data?.manifestosBipados ?? 0) > 0 || (coletoresOverview.data?.totalManifestos ?? 0) > 0;
   const cubagemHasData = (cubagemOverview.data?.totalFretes ?? 0) > 0;
   const indenizacaoHasData = (indenizacaoOverview.data?.totalSinistros ?? 0) > 0;
@@ -712,6 +712,7 @@ export default function IndicadoresGestaoAVistaPage() {
             `Meta: ${formatarPorcentagem(goals.performance.threshold)}`,
             `Diferença: ${formatarDiferencaMeta(item.pctNoPrazo, goals.performance.threshold)}`,
             `Total: ${formatarNumero(item.totalEntregas)}`,
+            `Finalizadas: ${formatarNumero(item.finalizadas)}`,
             `No prazo: ${formatarNumero(item.entregasNoPrazo)}`,
             `Fora do prazo: ${formatarNumero(item.entregasForaDoPrazo)}`,
           ],
@@ -995,12 +996,12 @@ export default function IndicadoresGestaoAVistaPage() {
       id: 'performance',
       definition: KpiDictionary.gestaoAVista.resumo.performanceFretes,
       title: 'Nova Tela de Fretes - Performance',
-      value: formatarPorcentagem(performanceOverview.data?.pctNoPrazo ?? 0),
+      value: formatarPorcentagem(performanceOverview.data?.pctNoPrazo ?? 0, 2),
       statusLabel: performanceAssessment.label,
       tone: performanceAssessment.tone,
       progressPct: performanceAssessment.progressPct,
-      detail: `${formatarNumero(performanceOverview.data?.entregasNoPrazo ?? 0)} no prazo / ${formatarNumero(performanceOverview.data?.totalEntregas ?? 0)} entregas · ${goals.performance.label}`,
-      alertDetail: `${performanceGapLabel} · ${formatarNumero(performanceOverview.data?.entregasNoPrazo ?? 0)} no prazo de ${formatarNumero(performanceOverview.data?.totalEntregas ?? 0)}`,
+      detail: `${formatarNumero(performanceOverview.data?.entregasNoPrazo ?? 0)} no prazo / ${formatarNumero(performanceOverview.data?.finalizadas ?? 0)} finalizadas · ${goals.performance.label}`,
+      alertDetail: `${performanceGapLabel} · ${formatarNumero(performanceOverview.data?.entregasNoPrazo ?? 0)} no prazo de ${formatarNumero(performanceOverview.data?.finalizadas ?? 0)} finalizadas`,
       severityScore: calcularDistanciaRelativaMeta(performanceOverview.data?.pctNoPrazo ?? 0, goals.performance.threshold, goals.performance.mode),
       icon: <Truck size={16} />,
     },
@@ -1119,9 +1120,9 @@ export default function IndicadoresGestaoAVistaPage() {
         <IndicadoresGestaoSummaryCard
           definition={KpiDictionary.gestaoAVista.resumo.performanceFretes}
           title="Nova Tela de Fretes = Performance"
-          description="Pontualidade por previsão de entrega, incluindo registros em aberto no denominador."
-          value={formatarPorcentagem(performanceOverview.data?.pctNoPrazo ?? 0)}
-          detail={`${formatarNumero(performanceOverview.data?.entregasNoPrazo ?? 0)} no prazo de ${formatarNumero(performanceOverview.data?.totalEntregas ?? 0)} · ${performanceGapLabel}`}
+          description="Proporção de entregas finalizadas que chegaram no prazo previsto."
+          value={formatarPorcentagem(performanceOverview.data?.pctNoPrazo ?? 0, 2)}
+          detail={`${formatarNumero(performanceOverview.data?.entregasNoPrazo ?? 0)} no prazo de ${formatarNumero(performanceOverview.data?.finalizadas ?? 0)} finalizadas · ${performanceGapLabel}`}
           goalLabel={goals.performance.label}
           statusLabel={performanceAssessment.label}
           tone={performanceAssessment.tone}
@@ -1182,7 +1183,7 @@ export default function IndicadoresGestaoAVistaPage() {
 
       <IndicadoresGestaoSection
         title="Nova Tela de Fretes = Performance"
-        description="Performance de entrega com drill-down por responsável, região e cidade, usando previsão de entrega e registros em aberto no denominador."
+        description="Performance de entrega com drill-down por responsável, região e cidade, considerando as entregas finalizadas com previsão no período."
         goalLabel={goals.performance.label}
         goalTone={performanceAssessment.tone}
         error={performanceOverview.error}

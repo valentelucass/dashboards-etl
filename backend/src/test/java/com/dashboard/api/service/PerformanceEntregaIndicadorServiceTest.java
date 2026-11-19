@@ -37,6 +37,7 @@ class PerformanceEntregaIndicadorServiceTest {
         sqlRepository.performanceResumo = new IndicadoresGestaoAVistaSqlRepository.PerformanceEntregaResumo(
                 "2026-04-03T09:00:00",
                 4,
+                3,
                 2,
                 1
         );
@@ -47,7 +48,7 @@ class PerformanceEntregaIndicadorServiceTest {
         assertThat(overview.totalEntregas()).isEqualTo(4);
         assertThat(overview.entregasNoPrazo()).isEqualTo(2);
         assertThat(overview.entregasForaDoPrazo()).isEqualTo(1);
-        assertThat(overview.pctNoPrazo()).isEqualTo(50.0);
+        assertThat(overview.pctNoPrazo()).isEqualTo(66.67);
     }
 
     @Test
@@ -57,6 +58,7 @@ class PerformanceEntregaIndicadorServiceTest {
                 "REC",
                 "REC",
                 NivelVisaoPerformance.RESPONSAVEL,
+                1,
                 1,
                 1,
                 0,

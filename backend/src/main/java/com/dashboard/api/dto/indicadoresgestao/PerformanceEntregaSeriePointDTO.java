@@ -5,6 +5,7 @@ public record PerformanceEntregaSeriePointDTO(
         String filtro,
         NivelVisaoPerformance visao,
         int totalEntregas,
+        int finalizadas,
         int entregasNoPrazo,
         int entregasForaDoPrazo,
         double pctNoPrazo

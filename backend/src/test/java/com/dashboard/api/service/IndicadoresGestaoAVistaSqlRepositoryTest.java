@@ -5,6 +5,7 @@ import com.dashboard.api.dto.indicadoresgestao.NivelVisaoPerformance;
 import com.dashboard.api.repository.IndicadoresGestaoAVistaSqlRepository;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import com.dashboard.api.util.PeriodoOffsetDateTimeHelper;
+import com.dashboard.api.repository.PerformanceDashboardSqlRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,11 +21,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class IndicadoresGestaoAVistaSqlRepositoryTest {
 
     @Test
-    void performanceECubagemUsamFatoGestaoVistaComFiltroParticionado() {
+    void performanceUsaMinutasDaTelaPerformanceECubagemUsaFatoParticionado() {
         CapturandoNamedParameterJdbcTemplate jdbcTemplate = new CapturandoNamedParameterJdbcTemplate();
         IndicadoresGestaoAVistaSqlRepository repository = new IndicadoresGestaoAVistaSqlRepository(
                 jdbcTemplate,
-                PeriodoOffsetDateTimeHelper.padrao()
+                PeriodoOffsetDateTimeHelper.padrao(),
+                new PerformanceDashboardSqlRepository(jdbcTemplate, new ValidadorPeriodoService(), null)
         );
 
         FiltroConsultaDTO filtro = new FiltroConsultaDTO(
@@ -45,18 +47,9 @@ class IndicadoresGestaoAVistaSqlRepositoryTest {
         String coletoresSql = jdbcTemplate.sqls.get(3);
 
         assertThat(performanceSql)
-                .contains("FROM dbo.fato_gestao_vista_fretes")
-                .contains("WHERE indicador_codigo = 'PE'")
-                .contains("AND data_referencia >= :dataInicio")
-                .contains("AND data_referencia < :dataFimExclusivo")
-                .contains("SUM(CAST(is_no_prazo AS BIGINT))")
-                .contains("SUM(CAST(is_fora_prazo AS BIGINT))")
-                .contains("GROUP BY COALESCE(NULLIF(responsavel_regiao_destino")
-                .contains("OFFSET 0 ROWS FETCH NEXT :limitePerformanceDrilldown ROWS ONLY")
-                .doesNotContain("vw_fretes_powerbi")
-                .doesNotContain("fretes_deduplicados")
-                .doesNotContain("ROW_NUMBER()")
-                .doesNotContain("[Previsão de Entrega]");
+                .contains("FROM dbo.vw_fretes_powerbi", "WHERE rn = 1", "NULLIF(SUM(is_finalizada), 0)")
+                .contains("SUM(CAST(is_no_prazo AS BIGINT))", "OFFSET 0 ROWS FETCH NEXT :limitePerformanceDrilldown")
+                .doesNotContain("dbo.fato_gestao_vista_fretes");
 
         assertThat(cubagemSql)
                 .contains("FROM dbo.fato_gestao_vista_fretes")
@@ -102,9 +95,11 @@ class IndicadoresGestaoAVistaSqlRepositoryTest {
                 .doesNotContain("ROW_NUMBER()")
                 .doesNotContain("STRING_SPLIT");
 
-        assertThat(String.join("\n", jdbcTemplate.sqls))
+        assertThat(String.join("\n", cubagemSql, indenizacaoSql, coletoresSql))
                 .doesNotContain("WHERE TRY_CONVERT")
-                .doesNotContain("AND TRY_CONVERT")
+                .doesNotContain("AND TRY_CONVERT");
+
+        assertThat(String.join("\n", jdbcTemplate.sqls))
                 .doesNotContain("WHERE YEAR(")
                 .doesNotContain("AND YEAR(")
                 .doesNotContain("WHERE MONTH(")
@@ -116,7 +111,8 @@ class IndicadoresGestaoAVistaSqlRepositoryTest {
         CapturandoNamedParameterJdbcTemplate jdbcTemplate = new CapturandoNamedParameterJdbcTemplate();
         IndicadoresGestaoAVistaSqlRepository repository = new IndicadoresGestaoAVistaSqlRepository(
                 jdbcTemplate,
-                PeriodoOffsetDateTimeHelper.padrao()
+                PeriodoOffsetDateTimeHelper.padrao(),
+                new PerformanceDashboardSqlRepository(jdbcTemplate, new ValidadorPeriodoService(), null)
         );
 
         FiltroConsultaDTO filtro = new FiltroConsultaDTO(
@@ -146,6 +142,12 @@ class IndicadoresGestaoAVistaSqlRepositoryTest {
 
         private CapturandoNamedParameterJdbcTemplate() {
             super(new JdbcTemplate());
+        }
+
+        @Override
+        public <T> List<T> queryForList(String sql, SqlParameterSource params, Class<T> type) {
+            return List.of("Comprovante Anexado", "Responsável Região Destino Key", "Tipo Frete", "CT-e Emissão")
+                    .stream().map(type::cast).toList();
         }
 
         @Override

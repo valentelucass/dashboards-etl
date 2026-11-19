@@ -89,14 +89,14 @@ describe('indicadoresGestaoVistaUi', () => {
 
   it('mantem performance agregada pelo SQL por label dinamico', () => {
     const ranking = aggregatePerformanceRanking([
-      { label: 'SPO', filtro: 'SPO', visao: 'RESPONSAVEL', totalEntregas: 15, entregasNoPrazo: 9, entregasForaDoPrazo: 6, pctNoPrazo: 60 },
+      { label: 'SPO', filtro: 'SPO', visao: 'RESPONSAVEL', totalEntregas: 15, finalizadas: 15, entregasNoPrazo: 9, entregasForaDoPrazo: 6, pctNoPrazo: 60 },
     ]);
 
     expect(ranking).toEqual([
       {
         group: 'SPO',
         filtro: 'SPO',
-        totalEntregas: 15,
+        totalEntregas: 15, finalizadas: 15,
         entregasNoPrazo: 9,
         entregasForaDoPrazo: 6,
         pctNoPrazo: 60,

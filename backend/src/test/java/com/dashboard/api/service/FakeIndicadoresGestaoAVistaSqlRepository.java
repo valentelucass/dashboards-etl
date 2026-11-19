@@ -19,7 +19,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 class FakeIndicadoresGestaoAVistaSqlRepository extends IndicadoresGestaoAVistaSqlRepository {
 
-    PerformanceEntregaResumo performanceResumo = new PerformanceEntregaResumo(null, 0, 0, 0);
+    PerformanceEntregaResumo performanceResumo = new PerformanceEntregaResumo(null, 0, 0, 0, 0);
     List<PerformanceEntregaSeriePointDTO> performanceSerie = List.of();
     List<PerformanceEntregaRowDTO> performanceLinhas = List.of();
     long performanceTotal;
@@ -50,7 +50,7 @@ class FakeIndicadoresGestaoAVistaSqlRepository extends IndicadoresGestaoAVistaSq
     RuntimeException coletoresResumoException;
 
     FakeIndicadoresGestaoAVistaSqlRepository() {
-        super(new NamedParameterJdbcTemplate(new JdbcTemplate()), PeriodoOffsetDateTimeHelper.padrao());
+        super(new NamedParameterJdbcTemplate(new JdbcTemplate()), PeriodoOffsetDateTimeHelper.padrao(), null);
     }
 
     @Override

@@ -9,7 +9,7 @@ import com.dashboard.api.dto.PaginaDTO;
 import com.dashboard.api.repository.IndicadoresGestaoAVistaSqlRepository;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import com.dashboard.api.util.ConsultaLimiteUtils;
-import com.dashboard.api.util.IndicadoresGestaoMetricasUtils;
+import com.dashboard.api.util.PerformanceMetricasUtils;
 import com.dashboard.api.util.TemporalJsonUtils;
 import java.util.List;
 import java.util.Objects;
@@ -40,9 +40,10 @@ public class PerformanceEntregaIndicadorService {
         return new PerformanceEntregaOverviewDTO(
                 updatedAtOuAgora(resumo.updatedAt()),
                 inteiro(resumo.totalEntregas()),
+                inteiro(resumo.finalizadas()),
                 inteiro(resumo.entregasNoPrazo()),
                 inteiro(resumo.entregasForaDoPrazo()),
-                IndicadoresGestaoMetricasUtils.percentual(resumo.entregasNoPrazo(), resumo.totalEntregas())
+                PerformanceMetricasUtils.percentual(resumo.entregasNoPrazo(), resumo.finalizadas())
         );
     }
 

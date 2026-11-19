@@ -13,6 +13,7 @@ import com.dashboard.api.dto.indicadoresgestao.UtilizacaoColetoresRowDTO;
 import com.dashboard.api.dto.indicadoresgestao.UtilizacaoColetoresSeriePointDTO;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import com.dashboard.api.util.JanelaOffsetDateTime;
+import com.dashboard.api.util.PerformanceMetricasUtils;
 import com.dashboard.api.util.PeriodoOffsetDateTimeHelper;
 import com.dashboard.api.util.TemporalJsonUtils;
 import java.math.BigDecimal;
@@ -60,11 +61,15 @@ public class IndicadoresGestaoAVistaSqlRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper;
 
+    private final PerformanceDashboardSqlRepository performanceRepository;
+
     public IndicadoresGestaoAVistaSqlRepository(
             @ConsultaAnalitica NamedParameterJdbcTemplate jdbcTemplate,
-            PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper
+            PeriodoOffsetDateTimeHelper periodoOffsetDateTimeHelper,
+            PerformanceDashboardSqlRepository performanceRepository
     ) {
         this.jdbcTemplate = jdbcTemplate;
+        this.performanceRepository = performanceRepository;
         this.periodoOffsetDateTimeHelper = periodoOffsetDateTimeHelper;
     }
 
@@ -72,11 +77,12 @@ public class IndicadoresGestaoAVistaSqlRepository {
             FiltroConsultaDTO filtro,
             EscopoFilialService.EscopoFilial escopo
     ) {
-        QueryContext ctx = contextoLocalDate(filtro, escopo, false);
-        String sql = performanceEntregaCte() + """
+        var ctx = performanceRepository.entregasDaGestao(filtro, escopo);
+        String sql = ctx.sql() + """
                 SELECT
                     CONVERT(NVARCHAR(30), MAX(data_extracao), 126) AS updated_at,
                     COUNT_BIG(1) AS total_entregas,
+                    COALESCE(SUM(is_finalizada), 0) AS finalizadas,
                     COALESCE(SUM(CAST(is_no_prazo AS BIGINT)), 0) AS entregas_no_prazo,
                     COALESCE(SUM(CAST(is_fora_prazo AS BIGINT)), 0) AS entregas_fora_do_prazo
                 FROM performance
@@ -99,19 +105,20 @@ public class IndicadoresGestaoAVistaSqlRepository {
             String responsavelFiltro,
             String regiaoFiltro
     ) {
-        QueryContext ctx = contextoLocalDate(filtro, escopo, false);
+        var ctx = performanceRepository.entregasDaGestao(filtro, escopo);
         PerformanceVisaoSql visaoSql = performanceVisaoSql(visao);
-        String filtrosDrilldown = filtrosPerformanceDrilldown(ctx, visao, responsavelFiltro, regiaoFiltro);
+        String filtrosDrilldown = filtrosPerformanceDrilldown(ctx.params(), visao, responsavelFiltro, regiaoFiltro);
         ctx.params().addValue("limitePerformanceDrilldown", PERFORMANCE_DRILLDOWN_LIMITE);
 
-        String sql = performanceEntregaCte() + """
+        String sql = ctx.sql() + """
                 SELECT
                     %s AS label,
                     %s AS filtro,
                     COUNT_BIG(1) AS total_entregas,
+                    COALESCE(SUM(is_finalizada), 0) AS finalizadas,
                     COALESCE(SUM(CAST(is_no_prazo AS BIGINT)), 0) AS entregas_no_prazo,
                     COALESCE(SUM(CAST(is_fora_prazo AS BIGINT)), 0) AS entregas_fora_do_prazo,
-                    CAST(COALESCE(SUM(CAST(is_no_prazo AS FLOAT)) * 100.0 / NULLIF(COUNT_BIG(1), 0), 0) AS DECIMAL(19,2)) AS pct_no_prazo
+                    CAST(COALESCE(SUM(CAST(is_no_prazo AS FLOAT)) * 100.0 / NULLIF(SUM(is_finalizada), 0), 0) AS DECIMAL(19,2)) AS pct_no_prazo
                 FROM performance
                 WHERE 1 = 1
                 """.formatted(visaoSql.labelSql(), visaoSql.filtroSql()) + filtrosDrilldown + """
@@ -128,9 +135,10 @@ public class IndicadoresGestaoAVistaSqlRepository {
                     rs.getString("filtro"),
                     visao,
                     inteiro(total),
+                    inteiro(rs.getLong("finalizadas")),
                     inteiro(noPrazo),
                     inteiro(rs.getLong("entregas_fora_do_prazo")),
-                    percentual(noPrazo, total)
+                    PerformanceMetricasUtils.percentual(noPrazo, rs.getLong("finalizadas"))
             );
         });
     }
@@ -141,11 +149,11 @@ public class IndicadoresGestaoAVistaSqlRepository {
             int offset,
             int limite
     ) {
-        QueryContext ctx = contextoLocalDate(filtro, escopo, false);
+        var ctx = performanceRepository.entregasDaGestao(filtro, escopo);
         ctx.params()
                 .addValue("offsetLinhas", Math.max(0, offset))
                 .addValue("limiteLinhas", Math.max(1, limite));
-        String sql = performanceEntregaLinhasSql("""
+        String sql = ctx.sql() + performanceEntregaLinhasSql("""
                 OFFSET :offsetLinhas ROWS FETCH NEXT :limiteLinhas ROWS ONLY
                 """);
 
@@ -156,16 +164,16 @@ public class IndicadoresGestaoAVistaSqlRepository {
             FiltroConsultaDTO filtro,
             EscopoFilialService.EscopoFilial escopo
     ) {
-        QueryContext ctx = contextoLocalDate(filtro, escopo, false);
-        return jdbcTemplate.query(performanceEntregaLinhasSql(""), ctx.params(), this::mapearPerformanceEntregaLinha);
+        var ctx = performanceRepository.entregasDaGestao(filtro, escopo);
+        return jdbcTemplate.query(ctx.sql() + performanceEntregaLinhasSql(""), ctx.params(), this::mapearPerformanceEntregaLinha);
     }
 
     public long contarPerformanceEntregaLinhas(
             FiltroConsultaDTO filtro,
             EscopoFilialService.EscopoFilial escopo
     ) {
-        QueryContext ctx = contextoLocalDate(filtro, escopo, false);
-        return count(performanceEntregaCte() + "SELECT COUNT_BIG(1) FROM performance", ctx.params());
+        var ctx = performanceRepository.entregasDaGestao(filtro, escopo);
+        return count(ctx.sql() + "SELECT COUNT_BIG(1) FROM performance", ctx.params());
     }
 
     public CubagemResumo buscarCubagemResumo(
@@ -497,8 +505,8 @@ public class IndicadoresGestaoAVistaSqlRepository {
         return count(coletoresAgregadosCte() + "SELECT COUNT_BIG(1) FROM coletores_agregados", ctx.params());
     }
 
-    private String performanceEntregaLinhasSql(String paginacao) {
-        return performanceEntregaCte() + """
+    private static String performanceEntregaLinhasSql(String paginacao) {
+        return """
                 SELECT
                     numero_minuta,
                     CONVERT(NVARCHAR(48), data_frete, 127) AS data_frete,
@@ -585,15 +593,15 @@ public class IndicadoresGestaoAVistaSqlRepository {
                     "COALESCE(NULLIF(regiao_destino, N''), N'SEM_REGIAO')"
             );
             case CIDADE -> new PerformanceVisaoSql(
-                    "COALESCE(NULLIF(destino_cidade, N''), NULLIF(destino, N''), N'SEM_CIDADE')",
-                    "COALESCE(NULLIF(destino_cidade, N''), NULLIF(destino, N''), N'SEM_CIDADE')",
-                    "COALESCE(NULLIF(destino_cidade, N''), NULLIF(destino, N''), N'SEM_CIDADE')"
+                    "COALESCE(NULLIF(destino_cidade, N''), N'SEM_CIDADE')",
+                    "COALESCE(NULLIF(destino_cidade, N''), N'SEM_CIDADE')",
+                    "COALESCE(NULLIF(destino_cidade, N''), N'SEM_CIDADE')"
             );
         };
     }
 
     private static String filtrosPerformanceDrilldown(
-            QueryContext ctx,
+            MapSqlParameterSource params,
             NivelVisaoPerformance visao,
             String responsavelFiltro,
             String regiaoFiltro
@@ -601,7 +609,7 @@ public class IndicadoresGestaoAVistaSqlRepository {
         StringBuilder where = new StringBuilder();
 
         if (visao.exigeResponsavelFiltro()) {
-            ctx.params().addValue("responsavelFiltro", responsavelFiltro);
+            params.addValue("responsavelFiltro", responsavelFiltro);
             where.append("""
                     AND (
                           responsavel_regiao_destino = :responsavelFiltro
@@ -616,7 +624,7 @@ public class IndicadoresGestaoAVistaSqlRepository {
         }
 
         if (visao.exigeRegiaoFiltro()) {
-            ctx.params().addValue("regiaoFiltro", regiaoFiltro);
+            params.addValue("regiaoFiltro", regiaoFiltro);
             where.append("""
                     AND (
                           regiao_destino = :regiaoFiltro
@@ -626,38 +634,6 @@ public class IndicadoresGestaoAVistaSqlRepository {
         }
 
         return where.toString();
-    }
-
-    private static String performanceEntregaCte() {
-        return """
-                WITH performance AS (
-                    SELECT
-                        numero_minuta,
-                        data_frete,
-                        data_referencia AS previsao_entrega,
-                        data_finalizacao_performance AS data_finalizacao,
-                        filial_performance,
-                        filial_emissora,
-                        filial_performance_key,
-                        responsavel_regiao_destino,
-                        regiao_destino,
-                        destino,
-                        destino_cidade,
-                        performance_diferenca_dias,
-                        performance_status,
-                        is_no_prazo,
-                        is_fora_prazo,
-                        data_extracao
-                    FROM dbo.fato_gestao_vista_fretes
-                    WHERE indicador_codigo = 'PE'
-                      AND data_referencia >= :dataInicio
-                      AND data_referencia < :dataFimExclusivo
-                      AND is_linha_valida_indicador = 1
-                      AND excluido_na_origem = 0
-                      AND (:escopoFiliaisVazio = 1 OR filial_performance_key IN (:escopoFiliais))
-                      AND (:filiaisVazio = 1 OR filial_performance_key IN (:filiais))
-                )
-                """;
     }
 
     private record PerformanceVisaoSql(
@@ -954,6 +930,7 @@ public class IndicadoresGestaoAVistaSqlRepository {
         return new PerformanceEntregaResumo(
                 TemporalJsonUtils.garantirIsoComOffset(texto(row, "updated_at")),
                 longo(row, "total_entregas"),
+                longo(row, "finalizadas"),
                 longo(row, "entregas_no_prazo"),
                 longo(row, "entregas_fora_do_prazo")
         );
@@ -1111,6 +1088,7 @@ public class IndicadoresGestaoAVistaSqlRepository {
     public record PerformanceEntregaResumo(
             String updatedAt,
             long totalEntregas,
+            long finalizadas,
             long entregasNoPrazo,
             long entregasForaDoPrazo
     ) {

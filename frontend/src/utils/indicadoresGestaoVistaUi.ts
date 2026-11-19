@@ -44,6 +44,7 @@ export interface PerformanceRankingItem {
   filtro?: string | null;
   pctNoPrazo: number;
   totalEntregas: number;
+  finalizadas: number;
   entregasNoPrazo: number;
   entregasForaDoPrazo: number;
 }
@@ -262,9 +263,10 @@ export function aggregatePerformanceRanking(points: PerformanceEntregaSeriePoint
       group: groupLabel(item.label, 'Agrupamento nao informado'),
       filtro: item.filtro,
       totalEntregas: item.totalEntregas ?? 0,
+      finalizadas: item.finalizadas,
       entregasNoPrazo: item.entregasNoPrazo ?? 0,
       entregasForaDoPrazo: item.entregasForaDoPrazo ?? 0,
-      pctNoPrazo: item.pctNoPrazo ?? percentual(item.entregasNoPrazo, item.totalEntregas),
+      pctNoPrazo: item.pctNoPrazo,
     }))
     .sort((left, right) => left.pctNoPrazo - right.pctNoPrazo || right.totalEntregas - left.totalEntregas || left.group.localeCompare(right.group));
 }

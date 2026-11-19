@@ -111,9 +111,9 @@ public class PerformanceDashboardSqlRepository {
                 SELECT
                     MAX(data_extracao) AS updated_at,
                     COUNT_BIG(1) AS total_entregas,
-                    SUM(CASE WHEN status_norm = N'Finalizada' THEN 1 ELSE 0 END) AS finalizadas,
-                    SUM(CASE WHEN status_norm = N'Finalizada' AND performance_diferenca_dias <= 0 THEN 1 ELSE 0 END) AS no_prazo,
-                    SUM(CASE WHEN status_norm = N'Finalizada' AND performance_diferenca_dias > 0 THEN 1 ELSE 0 END) AS fora_do_prazo,
+                    SUM(is_finalizada) AS finalizadas,
+                    SUM(is_no_prazo) AS no_prazo,
+                    SUM(is_fora_prazo) AS fora_do_prazo,
                     SUM(CASE WHEN status_norm <> N'Finalizada' AND data_previsao_entrega < :hoje THEN 1 ELSE 0 END) AS em_atraso,
                     COALESCE(SUM(peso_taxado), 0) AS peso_taxado,
                     SUM(CASE WHEN status_norm = N'Finalizada' AND comprovante_anexado = 1 THEN 1 ELSE 0 END) AS finalizadas_com_comprovante,
@@ -156,7 +156,7 @@ public class PerformanceDashboardSqlRepository {
                 SELECT
                     CONVERT(char(10), %s, 23) AS date,
                     COUNT_BIG(1) AS total,
-                    SUM(CASE WHEN status_norm = N'Finalizada' THEN 1 ELSE 0 END) AS finalizadas,
+                    SUM(is_finalizada) AS finalizadas,
                     SUM(CASE WHEN status_norm = N'Em Trânsito' THEN 1 ELSE 0 END) AS em_transito,
                     SUM(CASE WHEN status_norm = N'Pendente' THEN 1 ELSE 0 END) AS pendentes,
                     SUM(CASE WHEN status_norm = N'Cancelada' THEN 1 ELSE 0 END) AS canceladas,
@@ -201,8 +201,8 @@ public class PerformanceDashboardSqlRepository {
         String sql = ctx.baseCte() + """
                 SELECT
                     CONVERT(char(7), data_previsao_entrega, 23) + '-01' AS date,
-                    SUM(CASE WHEN status_norm = N'Finalizada' THEN 1 ELSE 0 END) AS finalizadas,
-                    SUM(CASE WHEN status_norm = N'Finalizada' AND performance_diferenca_dias <= 0 THEN 1 ELSE 0 END) AS no_prazo
+                    SUM(is_finalizada) AS finalizadas,
+                    SUM(is_no_prazo) AS no_prazo
                 FROM entregas
                 WHERE 1 = 1
                 """ + ctx.where() + """
@@ -252,8 +252,8 @@ public class PerformanceDashboardSqlRepository {
                 SELECT
                     %s AS nome,
                     %s AS filtro,
-                    SUM(CASE WHEN status_norm = N'Finalizada' AND performance_diferenca_dias <= 0 THEN 1 ELSE 0 END) AS no_prazo,
-                    SUM(CASE WHEN status_norm = N'Finalizada' AND performance_diferenca_dias > 0 THEN 1 ELSE 0 END) AS fora_do_prazo,
+                    SUM(is_no_prazo) AS no_prazo,
+                    SUM(is_fora_prazo) AS fora_do_prazo,
                     SUM(CASE WHEN status_norm <> N'Finalizada' AND data_previsao_entrega < :hoje THEN 1 ELSE 0 END) AS em_atraso,
                     COUNT_BIG(1) AS total
                 FROM entregas
@@ -437,7 +437,30 @@ public class PerformanceDashboardSqlRepository {
         );
     }
 
+    record ConsultaEntregas(String sql, MapSqlParameterSource params) {}
+
+    ConsultaEntregas entregasDaGestao(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo) {
+        QueryContext ctx = criarContexto(filtro, escopo);
+        String sql = ctx.baseCte() + """
+                , performance AS (
+                    SELECT numero_minuta, data_frete, data_previsao_entrega AS previsao_entrega,
+                           data_finalizacao_performance AS data_finalizacao, responsavel AS filial_performance,
+                           filial_emissora, responsavel_regiao_destino, regiao_destino, cidade_destino AS destino_cidade,
+                           performance_diferenca_dias, is_finalizada, is_no_prazo, is_fora_prazo, data_extracao,
+                           CASE WHEN is_no_prazo = 1 THEN N'NO PRAZO'
+                                WHEN is_fora_prazo = 1 THEN N'FORA DO PRAZO'
+                                WHEN is_finalizada = 1 THEN N'SEM DADO'
+                                ELSE N'EM ABERTO' END AS performance_status
+                    FROM entregas WHERE 1 = 1
+                """ + ctx.where() + ")\n";
+        return new ConsultaEntregas(sql, ctx.params());
+    }
+
     private QueryContext criarContexto(FiltroConsultaDTO filtro) {
+        return criarContexto(filtro, escopoFilialService.escopoAtual());
+    }
+
+    private QueryContext criarContexto(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
         List<String> pagadores = valoresDistintos(filtro.valores("pagadores"));
         int pagadoresVazio = pagadores.isEmpty() ? 1 : 0;
@@ -449,7 +472,7 @@ public class PerformanceDashboardSqlRepository {
                 .addValue("pagadoresVazio", pagadoresVazio),
                 carregarColunasPerformance());
 
-        aplicarEscopo(ctx);
+        aplicarEscopo(ctx, escopo);
         adicionarFiltroTexto(ctx.whereBuilder(), ctx.params(), "status", "status_norm", filtro.valores("status"));
         adicionarFiltroTexto(ctx.whereBuilder(), ctx.params(), "filiais", "filial_emissora", filtro.valores("filiais"));
         adicionarFiltroChave(ctx.whereBuilder(), ctx.params(), "responsaveis", "responsavel_key", filtro.valores("responsaveis"));
@@ -837,8 +860,7 @@ public class PerformanceDashboardSqlRepository {
         return null;
     }
 
-    private void aplicarEscopo(QueryContext ctx) {
-        EscopoFilialService.EscopoFilial escopo = escopoFilialService.escopoAtual();
+    private static void aplicarEscopo(QueryContext ctx, EscopoFilialService.EscopoFilial escopo) {
         if (escopo.acessoTotal()) {
             return;
         }
@@ -1101,6 +1123,7 @@ public class PerformanceDashboardSqlRepository {
                 WITH fonte AS (
                     SELECT
                         TRY_CONVERT(BIGINT, [Nº Minuta]) AS numero_minuta,
+                        [Data frete] AS data_frete,
                         COALESCE(prazo_reentrega.data, CAST([Previsão de Entrega] AS date)) AS data_previsao_entrega,
                         CAST([Data de Finalização] AS date) AS data_finalizacao,
                         %s AS data_finalizacao_performance,
@@ -1150,9 +1173,9 @@ public class PerformanceDashboardSqlRepository {
                       )
                       AND (:pagadoresVazio = 1 OR base_raw.[Pagador] IN (:pagadores))
                 ),
-                entregas AS (
+                minutas AS (
                     SELECT
-                        numero_minuta,
+                        numero_minuta, data_frete, data_finalizacao_performance,
                         data_previsao_entrega,
                         data_finalizacao,
                         responsavel_regiao_destino,
@@ -1175,6 +1198,13 @@ public class PerformanceDashboardSqlRepository {
                         ) AS performance_diferenca_dias
                     FROM fonte
                     WHERE rn = 1
+                ),
+                entregas AS (
+                    SELECT minutas.*,
+                           CASE WHEN status_norm = N'Finalizada' THEN 1 ELSE 0 END AS is_finalizada,
+                           CASE WHEN status_norm = N'Finalizada' AND performance_diferenca_dias <= 0 THEN 1 ELSE 0 END AS is_no_prazo,
+                           CASE WHEN status_norm = N'Finalizada' AND performance_diferenca_dias > 0 THEN 1 ELSE 0 END AS is_fora_prazo
+                    FROM minutas
                 )
                 """.formatted(
                 finalizacaoPerformance,

@@ -58,7 +58,7 @@ export function pageFixture(path, params = new URLSearchParams()) {
     const section = path.slice(indicadores.length).split('/')[0];
     const common = { updatedAt: '2026-09-10T00:00:00Z', date: '2026-08-01', filial: 'CWB' };
     const values = {
-      'performance-entrega': { totalEntregas: 100, entregasNoPrazo: 95, entregasForaDoPrazo: 5, pctNoPrazo: 95, label: 'CWB', filtro: 'CWB', visao: 'RESPONSAVEL' },
+      'performance-entrega': { totalEntregas: 110, finalizadas: 100, entregasNoPrazo: 95, entregasForaDoPrazo: 5, pctNoPrazo: 95, label: 'CWB', filtro: 'CWB', visao: 'RESPONSAVEL' },
       'utilizacao-coletores': { manifestosBipados: 95, manifestosEmitidos: 100, manifestosDescarregamento: 95, totalManifestos: 100, manifestosIncompletos: 5, pctUtilizacao: 95, classificacao: 'Distribuição' },
       'cubagem-mercadorias': { totalFretes: 100, fretesCubados: 95, fretesComPesoReal: 100, pctCubagem: 95 },
       'indenizacao-mercadorias': { totalSinistros: 1, valorIndenizadoAbs: 100, valorIndenizadoOriginal: -100, faturamentoBase: 50000, faturamentoPeriodoFilial: 50000, pctIndenizacao: 0.2 },
