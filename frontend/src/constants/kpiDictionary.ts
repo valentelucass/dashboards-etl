@@ -41,7 +41,7 @@ const regraTipoContratoManifestos =
   'Veículos de propriedade da LM Transportes são reclassificados como Frota + PX. Casos sem motorista informado recebem fallback para Terceiro ou Frota + PX dependendo da tração.';
 
 const periodoPerformance =
-  'O período considera a previsão de entrega. Cada minuta aparece uma única vez, priorizando o registro finalizado e mais recente.';
+  'Cada minuta conta uma vez no período da previsão, com prioridade para o registro com finalização e, em seguida, para o mais recente. A reentrega vence no segundo dia útil após a emissão do CT-e. Sem emissão, vale a previsão original. Complementares e substitutos ficam fora. O original substituído e as devoluções continuam elegíveis.';
 
 const periodoFaturamento =
   'O período considera a data de referência de faturamento. Registros excluídos na origem não entram na apuração.';
@@ -401,7 +401,7 @@ export const KpiDictionary = {
       titulo: 'Performance',
       descricao: 'Percentual das entregas finalizadas que ocorreram dentro do prazo.',
       calculo: 'Entregas no Prazo ÷ Entregas Finalizadas × 100.',
-      observacao: percentualSemBase,
+      observacao: `${periodoPerformance} ${percentualSemBase}`,
     },
     emAtraso: {
       titulo: 'Entregas em Atraso',
@@ -409,7 +409,7 @@ export const KpiDictionary = {
       calculo:
         'Contagem de Não Finalizadas com Previsão de Entrega anterior à data atual.',
       observacao:
-        'A regra considera qualquer status diferente de finalizado, inclusive cancelados que permaneçam na base filtrada.',
+        `${periodoPerformance} Inclui qualquer status diferente de finalizado, inclusive cancelados que permaneçam na base filtrada.`,
     },
     pesoTaxadoToneladas: {
       titulo: 'Peso Taxado',
@@ -422,7 +422,7 @@ export const KpiDictionary = {
       descricao: 'Percentual de entregas finalizadas com comprovante anexado.',
       calculo:
         'Finalizadas com Comprovante ÷ Total de Entregas Finalizadas × 100.',
-      observacao: percentualSemBase,
+      observacao: `${periodoPerformance} ${percentualSemBase}`,
     },
     valorNfSemComprovante: {
       titulo: 'Valor de NF sem Comprovante',

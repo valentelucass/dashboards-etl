@@ -122,6 +122,8 @@ class PerformanceDashboardSqlRepositoryTest {
         return List.of(
                 "Nº Minuta",
                 "Previsão de Entrega",
+                "Tipo Frete",
+                "CT-e Emissão",
                 "Data de Finalização",
                 "Finalização da Performance",
                 "Performance Diferença de Dias",
@@ -285,8 +287,7 @@ class PerformanceDashboardSqlRepositoryTest {
                 .contains("SUM(CASE WHEN status_norm = N'Em Trânsito'")
                 && sql.contains("SUM(CASE WHEN status_norm = N'Pendente'")
                 && sql.contains("data_previsao_entrega >= :inicioTemporal")
-                && sql.contains("data_previsao_entrega < :fimTemporal")
-                && sql.contains("GROUP BY data_previsao_entrega")));
+                && sql.contains("data_previsao_entrega < :fimTemporal\nGROUP BY data_previsao_entrega")));
         assertTrue(jdbcTemplate.sqls.stream().noneMatch(sql -> sql.contains("YEAR(data_previsao_entrega) =")));
         assertTrue(jdbcTemplate.sqls.stream().noneMatch(sql -> sql.contains("MONTH(data_previsao_entrega) =")));
         assertEquals(Date.valueOf(LocalDate.of(2026, 5, 1)), jdbcTemplate.ultimoParametro("inicioTemporal"));

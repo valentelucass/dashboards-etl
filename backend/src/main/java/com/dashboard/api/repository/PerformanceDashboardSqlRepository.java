@@ -163,7 +163,7 @@ public class PerformanceDashboardSqlRepository {
                     SUM(CASE WHEN status_norm = N'Em Tratativa' THEN 1 ELSE 0 END) AS em_tratativa
                 FROM entregas
                 WHERE 1 = 1
-                """.formatted(temporal.expressaoData()) + ctx.where() + temporal.where() + """
+                """.formatted(temporal.expressaoData()) + ctx.where() + temporal.where() + "\n" + """
                 GROUP BY %s
                 ORDER BY %s
                 """.formatted(temporal.expressaoData(), temporal.expressaoData());
@@ -1088,6 +1088,8 @@ public class PerformanceDashboardSqlRepository {
         String performanceDiferencaDias = inteiroNullableSql(colunas, "Performance Diferença de Dias");
         String finalizacaoPerformance = dataNullableSql(colunas, "Finalização da Performance", "Data de Finalização");
         exigirColuna(colunas, "Comprovante Anexado");
+        exigirColuna(colunas, "Tipo Frete");
+        exigirColuna(colunas, "CT-e Emissão");
         String comprovanteAnexado = """
                 CASE
                     WHEN UPPER(LTRIM(RTRIM(CONVERT(NVARCHAR(20), [Comprovante Anexado])))) IN (N'SIM', N'TRUE', N'1') THEN 1
@@ -1099,7 +1101,7 @@ public class PerformanceDashboardSqlRepository {
                 WITH fonte AS (
                     SELECT
                         TRY_CONVERT(BIGINT, [Nº Minuta]) AS numero_minuta,
-                        CAST([Previsão de Entrega] AS date) AS data_previsao_entrega,
+                        COALESCE(prazo_reentrega.data, CAST([Previsão de Entrega] AS date)) AS data_previsao_entrega,
                         CAST([Data de Finalização] AS date) AS data_finalizacao,
                         %s AS data_finalizacao_performance,
                         %s AS responsavel_regiao_destino,
@@ -1121,7 +1123,7 @@ public class PerformanceDashboardSqlRepository {
                             ELSE N'Pendente'
                         END AS status_norm,
                         TRY_CONVERT(datetime2, CONVERT(NVARCHAR(64), [Data de extracao])) AS data_extracao,
-                        %s AS performance_diferenca_dias_publicada,
+                        CASE WHEN prazo_reentrega.data IS NULL THEN %s END AS performance_diferenca_dias_publicada,
                         ROW_NUMBER() OVER (
                             PARTITION BY TRY_CONVERT(BIGINT, [Nº Minuta])
                             ORDER BY
@@ -1130,9 +1132,22 @@ public class PerformanceDashboardSqlRepository {
                                 TRY_CONVERT(BIGINT, [ID]) DESC
                         ) AS rn
                     FROM dbo.vw_fretes_powerbi base_raw
+                    OUTER APPLY (
+                        SELECT cal.data
+                        FROM dbo.dim_calendario cal
+                        WHERE base_raw.[Tipo Frete] = N'Redelivery'
+                          AND cal.is_dia_util = 1
+                          AND cal.data > CAST(base_raw.[CT-e Emissão] AS date)
+                        ORDER BY cal.data
+                        OFFSET 1 ROW FETCH NEXT 1 ROW ONLY
+                    ) prazo_reentrega
                     WHERE TRY_CONVERT(BIGINT, [Nº Minuta]) IS NOT NULL
-                      AND [Previsão de Entrega] >= :dataInicio
-                      AND [Previsão de Entrega] < :dataFim
+                      AND ([Tipo Frete] IS NULL OR [Tipo Frete] NOT IN (N'Substitute', N'Complementary'))
+                      AND (
+                          (prazo_reentrega.data >= :dataInicio AND prazo_reentrega.data < :dataFim)
+                          OR (([Tipo Frete] IS NULL OR [Tipo Frete] <> N'Redelivery' OR [CT-e Emissão] IS NULL)
+                              AND [Previsão de Entrega] >= :dataInicio AND [Previsão de Entrega] < :dataFim)
+                      )
                       AND (:pagadoresVazio = 1 OR base_raw.[Pagador] IN (:pagadores))
                 ),
                 entregas AS (
@@ -1295,7 +1310,9 @@ public class PerformanceDashboardSqlRepository {
 
         boolean contratoObrigatorioValido() {
             return existe("Comprovante Anexado")
-                    && existe("Responsável Região Destino Key");
+                    && existe("Responsável Região Destino Key")
+                    && existe("Tipo Frete")
+                    && existe("CT-e Emissão");
         }
     }
 

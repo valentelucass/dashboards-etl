@@ -1,3 +1,9 @@
+## 19/11/2026 — Performance por tipo de frete
+
+Na tela Performance, os fretes complementares e de substituição ficam fora da contagem. O documento original substituído continua elegível. A reentrega entra com previsão no segundo dia útil após a emissão do CT-e. Até a emissão, vale a previsão original, inclusive para reentregas com NFS-e. Esse prazo define o período em que ela aparece e sua classificação de pontualidade. A devolução mantém a previsão e o cálculo anteriores. A contagem permanece por minuta dentro da janela de previsão.
+
+No DEV, de 16 a 18/11, o total passou de 2.534 para 2.496 e a performance de 94,69% para 95,44%. O CT-e 65524, emitido em 16/11, passou de 24/11 para 18/11. O CT-e 65820, emitido em 18/11, passou de 19/11 para 23/11, após o feriado e o fim de semana. O substituto 76100 saiu da contagem e o original 74650 permaneceu.
+
 ## 19/11/2026 — Painel DEV na V2
 
 Duas atualizações automáticas chegaram ao SQL e ao painel DEV em 19/11. O intervalo do fim da primeira publicação ao início da segunda busca foi de 60 minutos e 8 segundos. As 13 fontes tinham recebimentos confirmados para as 90 datas entre 22/08 e 19/11. A fila de publicação terminou vazia em ambos os lotes.

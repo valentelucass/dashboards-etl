@@ -29,8 +29,8 @@ const trackingBase = {
 } as const;
 
 const performanceBase = {
-  tabelasOrigem: 'dbo.vw_fretes_powerbi',
-  cruzamentos: 'Nenhum JOIN; CTE fonte -> entregas com ROW_NUMBER() PARTITION BY [Nº Minuta].',
+  tabelasOrigem: 'dbo.vw_fretes_powerbi, dbo.dim_calendario',
+  cruzamentos: 'A reentrega vence no segundo dia útil após a emissão do CT-e. Sem emissão, vale a previsão original. O período considera essa previsão e conta cada minuta uma vez. Complementares e substitutos ficam fora. O original substituído e as devoluções continuam elegíveis.',
 } as const;
 
 const faturasClienteBase = {
@@ -244,10 +244,10 @@ export const chartDictionary = {
   },
   performanceAging: {
     ...performanceBase,
-    descricao: 'Classifica entregas abertas atrasadas por faixa de dias para priorizar cobranças e atuação operacional.',
+    descricao: 'Mostra quantas entregas estão em aberto e há quantos dias sua previsão venceu.',
     calculoTecnico: 'COUNT_BIG(1)',
     calculoNegocio:
-      'Conta entregas em aberto conforme a distância entre a previsão de entrega e a data atual, separando a carteira por gravidade de atraso.',
+      'A faixa de 0 a 2 dias inclui entregas com prazo em dia, além das vencidas há até dois dias. As demais faixas mostram os dias corridos após o vencimento.',
     agrupamento:
       "GROUP BY CASE WHEN DATEDIFF(day, data_previsao_entrega, :hoje) <= 2 THEN '0-2 dias' WHEN <= 5 THEN '3-5 dias' WHEN <= 10 THEN '6-10 dias' ELSE '11+ dias' END",
   },
