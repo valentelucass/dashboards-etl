@@ -53,7 +53,7 @@ interface DashboardOptions {
     formatter?: (name: string) => string;
   };
   dataZoom?: { type?: string; end?: number }[];
-  grid?: { left?: number; right?: number; top?: number; bottom?: number };
+  grid?: { containLabel?: boolean; left?: number; right?: number; top?: number; bottom?: number };
 }
 
 export function asList<T>(items: MaybeArray<T>): T[] {

@@ -57,6 +57,7 @@ class ConsultasAnaliticasWebConfigTest {
                 mvc.perform(post("/api/auth/login")).andExpect(status().isOk());
                 mvc.perform(post("/api/auth/refresh")).andExpect(status().isOk());
                 mvc.perform(get("/api/auth/me")).andExpect(status().isOk());
+                mvc.perform(get("/api/painel/home/comunicados")).andExpect(status().isOk());
                 controller.liberar.countDown();
                 for (var task : tasks) { assertThat(task.get(5, TimeUnit.SECONDS)).isEqualTo(200); }
                 mvc.perform(get("/api/dimensoes/filiais")).andExpect(status().isOk());
@@ -133,7 +134,7 @@ class ConsultasAnaliticasWebConfigTest {
         String autenticar() {
             return new JdbcTemplate(poolOperacional).queryForObject("SELECT 'ok'", String.class);
         }
-        @GetMapping("/api/auth/me")
+        @GetMapping({"/api/auth/me", "/api/painel/home/comunicados"})
         String sessao() { return autenticar(); }
     }
 

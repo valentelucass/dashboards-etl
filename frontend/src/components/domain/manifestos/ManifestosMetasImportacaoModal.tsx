@@ -1,3 +1,4 @@
+import { Badge } from '@astryxdesign/core/Badge';
 import { Dialog } from '@astryxdesign/core/Dialog';
 import { FileInput } from '@astryxdesign/core/FileInput';
 import { Text } from '@astryxdesign/core/Text';
@@ -79,20 +80,6 @@ function SummaryCard({ label, value, accent }: { label: string; value: number; a
 
 function formatStatus(status: ManifestosMetasImportacaoStatus) {
   return status === 'PRONTA' ? 'Pronta' : 'Erro de validação';
-}
-
-function statusStyle(status: ManifestosMetasImportacaoStatus) {
-  if (status === 'PRONTA') {
-    return {
-      backgroundColor: 'rgba(22, 163, 74, 0.14)',
-      color: '#15803d',
-    };
-  }
-
-  return {
-    backgroundColor: 'rgba(220, 38, 38, 0.14)',
-    color: '#dc2626',
-  };
 }
 
 export default function ManifestosMetasImportacaoModal({ open, onClose }: ManifestosMetasImportacaoModalProps) {
@@ -192,19 +179,14 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
       label: 'Status',
       largura: '160px',
       formato: (valor) => (
-        <span
-          className="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
-          style={statusStyle(valor as ManifestosMetasImportacaoStatus)}
-        >
-          {formatStatus(valor as ManifestosMetasImportacaoStatus)}
-        </span>
+        <Badge label={formatStatus(valor as ManifestosMetasImportacaoStatus)} variant={valor === 'PRONTA' ? 'success' : 'error'} />
       ),
     },
     {
       chave: 'mensagensResumo',
       label: 'Mensagens',
       largura: '360px',
-      formato: (valor) => <span className="whitespace-normal">{String(valor || '—')}</span>,
+      formato: (valor) => String(valor || '—'),
     },
   ];
 
@@ -215,7 +197,7 @@ function ManifestosMetasImportacaoModalAberto({ onClose }: Pick<ManifestosMetasI
       chave: 'motivo',
       label: 'Motivo',
       largura: '520px',
-      formato: (valor) => <span className="whitespace-normal">{String(valor)}</span>,
+      formato: (valor) => String(valor),
     },
   ];
 

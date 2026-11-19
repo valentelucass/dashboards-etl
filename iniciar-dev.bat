@@ -395,14 +395,14 @@ if errorlevel 1 exit /b 1
 exit /b 0
 
 :load_env_file
-set "ENV_FILE_TO_LOAD=%~1"
+set "ENV_FILE_TO_LOAD=%~f1"
 
 if not exist "%ENV_FILE_TO_LOAD%" (
     echo [ERRO] Arquivo de ambiente nao encontrado: %ENV_FILE_TO_LOAD%
     exit /b 1
 )
 
-for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%ENV_FILE_TO_LOAD%") do (
+for /f "eol=# tokens=1,* delims==" %%A in ('findstr /L /C:"=" "%ENV_FILE_TO_LOAD%"') do (
     if not "%%~A"=="" (
         set "%%~A=%%~B"
     )

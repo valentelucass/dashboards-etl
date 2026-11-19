@@ -25,6 +25,11 @@ function Resolve-SqlDatabase {
 }
 
 function Resolve-MssqlJdbcJar {
+    $pom = [xml][IO.File]::ReadAllText((Join-Path $PSScriptRoot '../backend/pom.xml'))
+    $version = [string]$pom.project.properties.'mssql-jdbc.version'
+    if ($version -notmatch '^\d+\.\d+\.\d+\.jre\d+$') {
+        throw 'Versao do driver SQL ausente ou invalida no backend/pom.xml.'
+    }
     $candidates = @()
     if (-not [string]::IsNullOrWhiteSpace($env:MAVEN_REPO_LOCAL)) {
         $candidates += $env:MAVEN_REPO_LOCAL
@@ -40,11 +45,9 @@ function Resolve-MssqlJdbcJar {
             continue
         }
 
-        $jar = Get-ChildItem -LiteralPath $driverRoot -Recurse -Filter 'mssql-jdbc-*.jar' -File -ErrorAction SilentlyContinue |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
-        if ($jar) {
-            return $jar.FullName
+        $jar = Join-Path $driverRoot "$version/mssql-jdbc-$version.jar"
+        if (Test-Path -LiteralPath $jar -PathType Leaf) {
+            return $jar
         }
     }
 
@@ -68,28 +71,29 @@ Write-Host "[INFO] Validando contrato via JDBC: servidor=$server banco=$database
 $query = @'
 SET NOCOUNT ON;
 
-IF DB_ID(N'ETL_SISTEMA') IS NULL
-    THROW 52100, 'Contrato invalido: database ETL_SISTEMA ausente.', 1;
+IF DB_NAME()<>N'DASHBOARDS' OR DB_ID(N'ETL_SISTEMA_V2') IS NULL
+    THROW 52100, 'O painel de producao exige DASHBOARDS e ETL_SISTEMA_V2.', 1;
 
 IF NOT EXISTS (
     SELECT 1
-    FROM ETL_SISTEMA.sys.objects o
-    JOIN ETL_SISTEMA.sys.schemas s ON s.schema_id = o.schema_id
-    WHERE s.name = N'dbo'
+    FROM ETL_SISTEMA_V2.sys.objects o
+    JOIN ETL_SISTEMA_V2.sys.schemas s ON s.schema_id = o.schema_id
+    WHERE s.name = N'pub'
       AND o.name = N'vw_localizacao_cargas_powerbi'
       AND o.type IN (N'V', N'SN')
 )
-    THROW 52101, 'Contrato invalido: ETL_SISTEMA.dbo.vw_localizacao_cargas_powerbi ausente.', 1;
+    THROW 52101, 'Relatorio de localizacao ausente em ETL_SISTEMA_V2.pub.', 1;
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.objects o
-    JOIN sys.schemas s ON s.schema_id = o.schema_id
-    WHERE s.name = N'dbo'
-      AND o.name = N'vw_localizacao_cargas_powerbi'
-      AND o.type IN (N'V', N'SN')
+    FROM sys.synonyms s
+    WHERE s.schema_id=SCHEMA_ID(N'dbo') AND s.name=N'vw_localizacao_cargas_powerbi'
+      AND PARSENAME(s.base_object_name,4) IS NULL
+      AND PARSENAME(s.base_object_name,3)=N'ETL_SISTEMA_V2'
+      AND PARSENAME(s.base_object_name,2)=N'pub'
+      AND PARSENAME(s.base_object_name,1) IN (N'vw_localizacao_cargas_powerbi',N'vw_localizacao_cargas_powerbi_preparada')
 )
-    THROW 52102, 'Contrato invalido: dbo.vw_localizacao_cargas_powerbi ausente em DASHBOARDS.', 1;
+    THROW 52102, 'O relatorio de localizacao do dashboard precisa apontar para a V2.', 1;
 
 DECLARE @esperadas TABLE (ordinal INT NOT NULL PRIMARY KEY, nome SYSNAME NOT NULL);
 INSERT INTO @esperadas (ordinal, nome)
@@ -134,7 +138,7 @@ DECLARE @etlColunas TABLE (
 INSERT INTO @etlColunas (column_ordinal, name, error_number, is_hidden)
 SELECT column_ordinal, name, error_number, is_hidden
 FROM sys.dm_exec_describe_first_result_set(
-    N'SELECT TOP (0) * FROM ETL_SISTEMA.dbo.vw_localizacao_cargas_powerbi',
+    N'SELECT TOP (0) * FROM ETL_SISTEMA_V2.pub.vw_localizacao_cargas_powerbi',
     NULL,
     0
 );
@@ -184,7 +188,7 @@ OR EXISTS (
       AND ISNULL(is_hidden, 0) = 0
 ) <> (SELECT COUNT(1) FROM @esperadas)
 BEGIN
-    THROW 52104, 'Contrato invalido: dbo.vw_localizacao_cargas_powerbi desatualizado em DASHBOARDS. Reaplique V027__substituir_wrappers_etl_por_synonyms.sql no banco DASHBOARDS.', 1;
+    THROW 52104, 'As colunas de localizacao no dashboard divergem do contrato. Verifique as migracoes da V2 e do painel.', 1;
 END;
 
 PRINT '[OK] Contrato de localizacao de cargas validado.';

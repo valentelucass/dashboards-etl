@@ -4,7 +4,7 @@
 
 O backend e uma API Spring Boot 3.2 que publica contratos de leitura para dashboards e modulos administrativos. O foco nao e CRUD generico; o foco e expor dados ja modelados no SQL Server com seguranca, filtros consistentes e mensagens de erro acionaveis.
 
-O Dashboard e consumidor das views publicadas pelo ETL. A API nao e dona estrutural do schema `ETL_SISTEMA` (`esl_cloud`) nem das views `dbo.vw_*_powerbi` / `dbo.vw_dim_*`.
+O Dashboard consome as views de `ETL_SISTEMA_V2.pub` pelos sinônimos no banco da aplicação.
 
 ## Estrutura de pacotes
 
@@ -86,7 +86,7 @@ Regra importante:
 
 ### Schema do ETL
 
-- O ETL e o unico owner estrutural de `ETL_SISTEMA` (`esl_cloud`) e das views `dbo.vw_*_powerbi` / `dbo.vw_dim_*`.
+- O ETL mantém a estrutura de `ETL_SISTEMA_V2` e das views publicadas no schema `pub`.
 - O Dashboard acessa esse schema como consumidor de leitura.
 - O Dashboard nao deve executar DDL cross-database para criar, substituir ou sincronizar views do ETL.
 

@@ -3,6 +3,7 @@ import type { EChartsOption } from 'echarts';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import AstryxDashboardChart from './AstryxDashboardChart';
+import { buildManifestosHalfDonutOption } from '../domain/manifestos/manifestosGaugeOptions';
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
@@ -68,7 +69,21 @@ it('usa o valor e a participação originais ao selecionar uma fatia', () => {
     series: [{ type: 'pie', data: [{ name: 'À vista', value: 20 }, { name: 'A prazo', value: 80 }] }],
   };
   render(<AstryxDashboardChart option={option} onEvents={{ click }} />);
-  fireEvent.click(screen.getByRole('button', { name: 'À vista, 20' }));
+  expect(screen.getByRole('table', { name: /Distribuição/ })).toBeTruthy();
+  fireEvent.keyDown(screen.getByRole('button', { name: 'À vista, 20' }), { key: 'Enter' });
 
   expect(click).toHaveBeenCalledWith(expect.objectContaining({ name: 'À vista', dataIndex: 0, value: 20, percent: 20 }));
+});
+
+it('preserva o percentual acima da escala e ignora a metade oculta no medidor', () => {
+  const click = vi.fn();
+  const option = buildManifestosHalfDonutOption(125);
+  render(<AstryxDashboardChart option={option} label="Ocupação" onEvents={{ click }} />);
+  expect(screen.getByText('125,0%')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /oculta/i })).toBeNull();
+  const filled = screen.getByRole('button', { name: 'Global, 100' });
+  fireEvent.focus(filled);
+  expect(screen.getByText(/Global: 125,0%/)).toBeTruthy();
+  fireEvent.click(filled);
+  expect(click).toHaveBeenCalledWith(expect.objectContaining({ name: 'Global', dataIndex: 0 }));
 });

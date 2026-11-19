@@ -19,6 +19,7 @@
   "dependencies": {
     "@astryxdesign/charts": "0.7.17-canary.gbe5d290",
     "@astryxdesign/core": "0.7.17-canary.gbe5d290",
+    "@astryxdesign/lab": "0.7.17-canary.gbe5d290",
     "@astryxdesign/theme-neutral": "0.7.17-canary.gbe5d290",
     "@fontsource-variable/figtree": "5.3.0",
     "@radix-ui/react-dropdown-menu": "^2.1.16",

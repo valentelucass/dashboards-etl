@@ -1,13 +1,14 @@
+import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
+import DashboardSegments from '../components/shared/DashboardSegments';
 import { Tab, TabList } from '@astryxdesign/core/TabList';
 import DashboardSelector from "../components/shared/DashboardSelector";
-import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useId, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import AstryxDashboardChart from '../components/charts/AstryxDashboardChart';
 import { Card } from '@astryxdesign/core/Card';
 import { ProgressBar } from '@astryxdesign/core/ProgressBar';
-import { Building2, ChevronDown, ChevronUp, Table2, UserRound, UsersRound } from 'lucide-react';
+import { Building2, Table2, UserRound, UsersRound } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import CotacoesKpiGrid from '../components/domain/cotacoes/CotacoesKpiGrid';
@@ -85,8 +86,8 @@ const COTACOES_VIEW_TABS: Array<{ value: CotacoesViewTab; label: string; compact
   { value: 'filial', label: 'Por Filial', compactLabel: 'Filial', icon: Building2 },
   { value: 'clientes', label: 'Top 40 Clientes', compactLabel: 'Clientes', icon: UsersRound },
 ];
-const PERIOD_LEVELS: PeriodDrillLevel[] = ['ano', 'mes', 'dia'];
-const CONVERSION_LEVELS: ConversionDrillLevel[] = ['ano', 'mes'];
+const PERIOD_LEVELS = [{ value: 'ano', label: 'Ano' }, { value: 'mes', label: 'Mês' }, { value: 'dia', label: 'Dia' }] as const;
+const CONVERSION_LEVELS = [PERIOD_LEVELS[0], PERIOD_LEVELS[1]] as const;
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const TRECHO_LEVELS: Array<{ value: TrechoDrillLevel; label: string }> = [
   { value: 'trecho', label: 'Trecho' },
@@ -165,126 +166,6 @@ function chartClickName(params: unknown): string | null {
   return typeof item.name === 'string' ? item.name : null;
 }
 
-function PeriodControls({
-  level,
-  levels = PERIOD_LEVELS,
-  onChange,
-}: {
-  level: PeriodDrillLevel | ConversionDrillLevel;
-  levels?: Array<PeriodDrillLevel | ConversionDrillLevel>;
-  onChange: (level: never) => void;
-}) {
-  const currentIndex = Math.max(levels.indexOf(level), 0);
-  const canDrillUp = currentIndex > 0;
-  const canDrillDown = currentIndex < levels.length - 1;
-
-  return (
-    <div className="flex flex-wrap items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-      <DashboardButton
-        type="button"
-        title="Drill up"
-        aria-label="Drill up"
-        disabled={!canDrillUp}
-        onClick={() => canDrillUp && onChange(levels[currentIndex - 1] as never)}
-        className="flex h-7 w-7 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-40"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <ChevronUp size={14} />
-      </DashboardButton>
-      <DashboardButton
-        type="button"
-        title="Drill down"
-        aria-label="Drill down"
-        disabled={!canDrillDown}
-        onClick={() => canDrillDown && onChange(levels[currentIndex + 1] as never)}
-        className="flex h-7 w-7 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-40"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <ChevronDown size={14} />
-      </DashboardButton>
-      <span className="mx-1 hidden sm:inline">{levels.map((item) => item[0].toUpperCase() + item.slice(1)).join(' > ')}</span>
-      {levels.map((item) => (
-        <DashboardButton
-          key={item}
-          type="button"
-          onClick={() => onChange(item as never)}
-          className="rounded-md px-2 py-1 font-semibold uppercase transition"
-          style={{
-            backgroundColor: item === level ? 'rgba(33, 71, 138, 0.12)' : 'transparent',
-            color: item === level ? 'var(--color-primary)' : 'var(--color-text-muted)',
-          }}
-        >
-          {item}
-        </DashboardButton>
-      ))}
-    </div>
-  );
-}
-
-function MetricToggle({
-  metric,
-  onChange,
-}: {
-  metric: FunnelMetric;
-  onChange: (metric: FunnelMetric) => void;
-}) {
-  return (
-    <div className="flex rounded-lg border p-0.5" style={{ borderColor: 'var(--color-border)' }}>
-      {(['quantidade', 'valor'] as FunnelMetric[]).map((item) => (
-        <DashboardButton
-          key={item}
-          type="button"
-          onClick={() => onChange(item)}
-          className="rounded-md px-2 py-1 text-[11px] font-semibold transition"
-          style={{
-            backgroundColor: item === metric ? 'rgba(33, 71, 138, 0.12)' : 'transparent',
-            color: item === metric ? 'var(--color-primary)' : 'var(--color-text-muted)',
-          }}
-        >
-          {item === 'quantidade' ? 'Quantidade' : 'Valor'}
-        </DashboardButton>
-      ))}
-    </div>
-  );
-}
-
-function SegmentedControl<T extends string>({
-  value,
-  options,
-  onChange,
-  color = CORES.primaria,
-  ariaLabel,
-}: {
-  value: T;
-  options: Array<{ value: T; label: string; title?: string }>;
-  onChange: (value: T) => void;
-  color?: string;
-  ariaLabel: string;
-}) {
-  return (
-    <div role="group" aria-label={ariaLabel} className="flex rounded-lg border p-0.5" style={{ borderColor: 'var(--color-border)' }}>
-      {options.map((item) => {
-        const active = item.value === value;
-        return (
-          <DashboardButton
-            key={item.value}
-            type="button"
-            title={item.title ?? item.label}
-            onClick={() => onChange(item.value)}
-            className="whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-semibold transition"
-            style={{
-              backgroundColor: active ? `${color}1F` : 'transparent',
-              color: active ? color : 'var(--color-text-muted)',
-            }}
-          >
-            {item.label}
-          </DashboardButton>
-        );
-      })}
-    </div>
-  );
-}
-
 function CotacoesViewTabs({
   activeView,
   onChange,
@@ -305,56 +186,6 @@ function CotacoesViewTabs({
   );
 }
 
-function DrillBreadcrumb<T extends string>({
-  levels,
-  level,
-  color,
-  onChange,
-}: {
-  levels: Array<{ value: T; label: string }>;
-  level: T;
-  color: string;
-  onChange: (level: T) => void;
-}) {
-  const currentIndex = Math.max(levels.findIndex((item) => item.value === level), 0);
-  const canGoBack = currentIndex > 0;
-
-  return (
-    <div className="flex min-w-0 flex-wrap items-center gap-1 rounded-lg border px-1 py-0.5" style={{ borderColor: 'var(--color-border)' }}>
-      <DashboardButton
-        type="button"
-        title="Drill up"
-        aria-label="Drill up"
-        disabled={!canGoBack}
-        onClick={() => canGoBack && onChange(levels[currentIndex - 1].value)}
-        className="flex h-6 w-6 items-center justify-center rounded-md transition disabled:cursor-not-allowed disabled:opacity-35"
-        style={{ color: canGoBack ? color : 'var(--color-text-muted)' }}
-      >
-        <ChevronUp size={13} />
-      </DashboardButton>
-      {levels.map((item, index) => {
-        const active = item.value === level;
-        return (
-          <span key={item.value} className="inline-flex items-center gap-1">
-            {index > 0 && <span style={{ color: 'var(--color-text-subtle)' }}>&gt;</span>}
-            <DashboardButton
-              type="button"
-              onClick={() => onChange(item.value)}
-              className="rounded-md px-1.5 py-1 text-[11px] font-semibold transition"
-              style={{
-                backgroundColor: active ? `${color}24` : 'transparent',
-                color: active ? color : 'var(--color-text-muted)',
-              }}
-            >
-              {item.label}
-            </DashboardButton>
-          </span>
-        );
-      })}
-    </div>
-  );
-}
-
 function ConversionPeriodoActions({
   periodoMeses,
   onPeriodoChange,
@@ -364,17 +195,10 @@ function ConversionPeriodoActions({
 }) {
   return (
     <div className="block">
-      <span className="sr-only">Período das taxas de conversão</span>
       <DashboardSelector
         aria-label="Período das taxas de conversão"
         value={periodoMeses}
         onValueChange={selectedValue => onPeriodoChange(normalizeConversionPeriodoMeses(selectedValue))}
-        className="h-8 rounded-md border px-2 text-xs font-semibold outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]"
-        style={{
-          backgroundColor: 'var(--color-card)',
-          borderColor: 'var(--color-border)',
-          color: 'var(--color-text)',
-        }}
       >
         {CONVERSION_PERIOD_OPTIONS.map((item) => (
           <option key={item.value} value={item.value}>
@@ -595,9 +419,7 @@ function buildConversionOption(buckets: TrendBucket[], metric: ConversionMetric,
   ));
 
   return buildBaseLineOption(isDark, {
-    grid: expanded
-      ? { left: 42, right: 30, top: 32, bottom: 30, containLabel: true }
-      : { left: 34, right: 24, top: 26, bottom: 22, containLabel: true },
+    grid: { left: 38, containLabel: false },
     tooltip: {
       trigger: 'axis',
       appendToBody: true,
@@ -752,8 +574,9 @@ function FunilComercialCard({
       chartKey="cotacoesFunil"
       actions={(
         <div className="flex flex-wrap justify-end gap-1">
-          <MetricToggle metric={metric} onChange={onMetricChange} />
-          <PeriodControls level={periodLevel} onChange={onPeriodChange as (level: never) => void} />
+          <DashboardSegments label="Métrica do funil" value={metric} onChange={onMetricChange}
+            options={[{ value: 'quantidade', label: 'Quantidade' }, { value: 'valor', label: 'Valor' }]} />
+          <DashboardSegments label="Agrupar por período" value={periodLevel} options={PERIOD_LEVELS} onChange={onPeriodChange} />
         </div>
       )}
       isLoading={isLoading}
@@ -839,67 +662,63 @@ function TaxasConversaoCard({
       actions={(
         <div className="flex flex-wrap items-center justify-end gap-2">
           <ConversionPeriodoActions periodoMeses={periodoMeses} onPeriodoChange={onPeriodoChange} />
-          <SegmentedControl
+          <DashboardSegments
             value={viewMode}
             options={CONVERSION_VIEW_OPTIONS}
             onChange={onViewModeChange}
-            ariaLabel="Modo de visualização das taxas de conversão"
+            label="Modo de visualização das taxas de conversão"
           />
-          <PeriodControls level={level} levels={CONVERSION_LEVELS} onChange={onLevelChange as (level: never) => void} />
+          <DashboardSegments label="Agrupar por período" value={level} options={CONVERSION_LEVELS} onChange={onLevelChange} />
         </div>
       )}
       isLoading={isLoading}
       erro={erro}
       isEmpty={!hasData}
       className="h-full min-h-0"
-      contentClassName="h-[350px] max-h-[350px] min-h-0 overflow-hidden"
+      contentClassName="flex flex-col"
     >
-      <div className="grid h-full max-h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-2 overflow-hidden lg:grid-cols-[minmax(0,1.2fr)_minmax(17rem,1fr)] lg:grid-rows-1">
-        <div className="flex h-full max-h-full min-h-0 flex-col gap-2 overflow-hidden">
+      <div className="grid flex-1 gap-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(17rem,1fr)]">
+        <div className="flex min-w-0 flex-col gap-2">
           {chartMetrics.map((metric) => (
-            <div key={metric} className={`flex max-h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg px-2 ${isSingleMode ? 'py-2' : 'py-1.5'}`} style={{ backgroundColor: 'var(--color-bg)' }}>
+            <div key={metric} className={`flex min-h-40 flex-1 flex-col overflow-hidden rounded-lg ${isSingleMode ? 'py-2' : 'py-1.5'}`} style={{ backgroundColor: 'var(--color-bg)' }}>
               <div className="shrink-0 px-1 text-xs font-semibold leading-tight" style={{ color: 'var(--color-text)' }}>{chartTitles[metric]}</div>
-              <div className="max-h-full min-h-[100px] flex-1 overflow-hidden pt-1">
+              <div className="min-h-0 flex-1 pt-1">
                 <AstryxDashboardChart option={conversionOptions[metric]} label={chartTitles[metric]} style={{ height: '100%', minHeight: 0 }} />
               </div>
             </div>
           ))}
         </div>
-        <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-            <div className="flex h-full max-h-full min-h-0 flex-col gap-2">
-              {blocos.map((item) => {
-                const index = blocos.findIndex((bloco) => normalizarTexto(bloco.nome) === normalizarTexto(item.nome));
-                const accent = PALETA_SERIES[Math.max(index, 0) % PALETA_SERIES.length];
-                const taxa = taxaConversao(item);
-                const metricas = [
-                  ['Potencial', formatarMoeda(item.valorPotencial)],
-                  ['Convertido', formatarMoeda(item.valorConvertido)],
-                  ['Cotadas', formatarNumero(item.cotacoes)],
-                  ['Convertidas', formatarNumero(item.convertidas)],
-                ];
+        <div className="grid auto-rows-fr gap-2">
+          {blocos.map((item, index) => {
 
-                return (
-                  <div key={item.nome} className="max-h-full min-h-0 flex-1 rounded-xl border p-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
-                    <div className="grid h-full max-h-full min-h-0 grid-cols-[4.4rem_1fr] gap-2 overflow-hidden">
-                      <div className="flex min-h-0 flex-col items-center justify-center rounded-lg px-1 text-center" style={{ backgroundColor: `${accent}18` }}>
-                        <span className="text-base font-black leading-none" style={{ color: accent }}>{item.nome}</span>
-                        <span className="mt-1 text-xl font-black leading-none" style={{ color: 'var(--color-text)' }}>{formatarPorcentagem(taxa, 0)}</span>
-                      </div>
-                      <div className="grid max-h-full min-h-0 grid-cols-2 gap-1 overflow-hidden">
-                        {metricas.map(([label, value]) => (
-                          <div key={label} className="min-w-0 rounded-md border px-1.5 py-1" style={{ borderColor: 'var(--color-border)' }}>
-                            <div className="truncate text-[9px] font-semibold uppercase leading-tight" style={{ color: 'var(--color-text-muted)' }}>{label}</div>
-                            <div className="truncate text-[11px] font-bold leading-tight" title={value} style={{ color: 'var(--color-text)' }}>{value}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+            const accent = PALETA_SERIES[index % PALETA_SERIES.length];
+            const taxa = taxaConversao(item);
+            const metricas = [
+              ['Potencial', formatarMoeda(item.valorPotencial)],
+              ['Convertido', formatarMoeda(item.valorConvertido)],
+              ['Cotadas', formatarNumero(item.cotacoes)],
+              ['Convertidas', formatarNumero(item.convertidas)],
+            ];
+
+            return (
+              <div key={item.nome} className="min-w-0 rounded-xl border p-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
+                <div className="grid h-full max-h-full min-h-0 grid-cols-[4.4rem_1fr] gap-2 overflow-hidden">
+                  <div className="flex min-h-0 flex-col items-center justify-center rounded-lg px-1 text-center" style={{ backgroundColor: `color-mix(in srgb, ${accent} 10%, transparent)` }}>
+                    <span className="text-base font-black leading-none" style={{ color: accent }}>{item.nome}</span>
+                    <span className="mt-1 text-xl font-black leading-none" style={{ color: 'var(--color-text)' }}>{formatarPorcentagem(taxa, 0)}</span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  <div className="grid max-h-full min-h-0 grid-cols-2 gap-1 overflow-hidden">
+                    {metricas.map(([label, value]) => (
+                      <div key={label} className="min-w-0 rounded-md border px-1.5 py-1" style={{ borderColor: 'var(--color-border)' }}>
+                        <div className="truncate text-[9px] font-semibold uppercase leading-tight" style={{ color: 'var(--color-text-muted)' }}>{label}</div>
+                        <div className="truncate text-[11px] font-bold leading-tight" title={value} style={{ color: 'var(--color-text)' }}>{value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </ChartCard>
@@ -907,6 +726,7 @@ function TaxasConversaoCard({
 }
 
 export default function CotacoesPage() {
+  const [carregarOpcoesDeFiltro, setCarregarOpcoesDeFiltro] = useState(false);
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
   const viewPanelId = useId();
@@ -922,8 +742,8 @@ export default function CotacoesPage() {
   const [perdaDrillLevel, setPerdaDrillLevel] = useState<PerdaDrillLevel>('motivo');
   const [selectedTrecho, setSelectedTrecho] = useState<string | null>(null);
   const [selectedPerda, setSelectedPerda] = useState<string | null>(null);
-  const filiais = useFiliais();
-  const clientes = useClientes();
+  const filiais = useFiliais(carregarOpcoesDeFiltro);
+  const clientes = useClientes(carregarOpcoesDeFiltro);
 
   const filtro: CotacoesFiltro = useMemo(() => ({
     dataInicio,
@@ -972,10 +792,10 @@ export default function CotacoesPage() {
     filtros.usuarios,
   ]);
 
-  const usuariosCotacoes = useCotacoesUsuarios(filtro);
-  const classificacoesCotacoes = useCotacoesClassificacoes(filtro);
-  const origensCotacoes = useCotacoesOrigens(filtro);
-  const destinosCotacoes = useCotacoesDestinos(filtro);
+  const usuariosCotacoes = useCotacoesUsuarios(filtro, carregarOpcoesDeFiltro);
+  const classificacoesCotacoes = useCotacoesClassificacoes(filtro, carregarOpcoesDeFiltro);
+  const origensCotacoes = useCotacoesOrigens(filtro, carregarOpcoesDeFiltro);
+  const destinosCotacoes = useCotacoesDestinos(filtro, carregarOpcoesDeFiltro);
 
   const activeFilters: ActiveFilter[] = [
     { label: 'Filiais', count: filtros.filiais?.length ?? 0, onRemove: () => setFiltro('filiais', []) },
@@ -1082,6 +902,7 @@ export default function CotacoesPage() {
   return (
     <div className="w-full">
       <FilterBar
+        onOpen={() => setCarregarOpcoesDeFiltro(true)}
         period={(
           <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
         )}
@@ -1109,6 +930,7 @@ export default function CotacoesPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de cotações.')} tipo={getTipoErro(overview.error)} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid count={8} />}
       {overview.data && <CotacoesKpiGrid overview={overview.data} />}
 
       <div role="tabpanel" id={viewPanelId} aria-labelledby={viewPanelId + '-' + activeView} className="min-w-0">
@@ -1120,7 +942,7 @@ export default function CotacoesPage() {
                   titulo="Cotações por Dia, Mês e Ano"
                   chartKey="cotacoesSerie"
                   option={serieOption}
-                  actions={<PeriodControls level={serieDrillLevel} onChange={setSerieDrillLevel as (level: never) => void} />}
+                  actions={<DashboardSegments label="Agrupar por período" value={serieDrillLevel} options={PERIOD_LEVELS} onChange={setSerieDrillLevel} />}
                   isLoading={serie.isLoading}
                   isEmpty={(serie.data ?? []).length === 0}
                   className={KPI_CARD_HEIGHT_CLASS}
@@ -1137,7 +959,7 @@ export default function CotacoesPage() {
                   onPeriodChange={setFunilDrillLevel}
                 />
               </div>
-              <div className="h-[28rem] min-h-0 2xl:col-span-5">
+              <div className="min-h-[28rem] 2xl:col-span-5">
                 <TaxasConversaoCard
                   buckets={conversionBuckets}
                   tipos={graficos.data?.conversaoPorTipoOperacao ?? []}
@@ -1158,14 +980,13 @@ export default function CotacoesPage() {
                   option={trechosOption}
                   actions={(
                     <div className="flex flex-wrap items-center justify-end gap-2">
-                      <SegmentedControl
+                      <DashboardSegments
                         value={trechoMetric}
                         options={TRECHO_METRIC_OPTIONS}
                         onChange={setTrechoMetric}
-                        color={CORES.secundaria}
-                        ariaLabel="Métrica dos trechos mais valiosos"
+                        label="Métrica dos trechos mais valiosos"
                       />
-                      <DrillBreadcrumb levels={TRECHO_LEVELS} level={trechoDrillLevel} color={CORES.secundaria} onChange={setTrechoDrillLevel} />
+                      <DashboardSegments label="Agrupamento" options={TRECHO_LEVELS} value={trechoDrillLevel} onChange={setTrechoDrillLevel} />
                     </div>
                   )}
                   onEvents={{
@@ -1186,7 +1007,7 @@ export default function CotacoesPage() {
                   titulo="Motivos de Perda"
                   chartKey="cotacoesMotivosPerda"
                   option={motivosOption}
-                  actions={<DrillBreadcrumb levels={PERDA_LEVELS} level={perdaDrillLevel} color={CORES.aviso} onChange={setPerdaDrillLevel} />}
+                  actions={<DashboardSegments label="Agrupamento" options={PERDA_LEVELS} value={perdaDrillLevel} onChange={setPerdaDrillLevel} />}
                   onEvents={{
                     click: (params) => {
                       setSelectedPerda(chartClickName(params));

@@ -1,12 +1,16 @@
+import { Spinner } from '@astryxdesign/core/Spinner';
+import DashboardLoading from './DashboardLoading';
+import { Badge } from '@astryxdesign/core/Badge';
 import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
 import { Dialog } from '@astryxdesign/core/Dialog';
 import { DashboardInput } from "./DashboardTextEntry";
 import DashboardSelector from "./DashboardSelector";
 import DashboardButton from "./DashboardButton";
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from './DashboardTable';
 import { Card } from '@astryxdesign/core/Card';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Check, Funnel, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Check, Funnel, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 import { Popover, type PopoverTriggerRenderProps } from '@astryxdesign/core/Popover';
 import type { ColunaTabela } from './DataTable';
 import TableHeaderTooltip from './TableHeaderTooltip';
@@ -120,15 +124,10 @@ function TextFilter({
     }
   }
 
-  return (
-    <div className={compact ? 'relative h-8' : 'relative h-9'}>
-      <Search
-        size={13}
-        className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2"
-        style={{ color: 'var(--color-text-muted)' }}
-        aria-hidden="true"
-      />
+  const field = (
+    <div className={compact ? 'dashboard-column-filter h-8' : 'h-9'}>
       <DashboardInput
+        startIcon={<Search size={13} aria-hidden="true" />}
         type="search"
         value={draftValue}
         onChange={(event) => setDraftValue(event.target.value)}
@@ -139,7 +138,7 @@ function TextFilter({
           }
         }}
         placeholder={placeholder}
-        className={`w-full rounded-lg border pl-7 pr-2 text-xs outline-none transition-colors focus:border-[var(--color-primary)] ${
+        className={`w-full rounded-lg border px-2 text-xs outline-none transition-colors focus:border-[var(--color-primary)] ${
           compact ? 'h-8 min-w-0' : 'h-9'
         }`}
         style={{
@@ -150,6 +149,12 @@ function TextFilter({
       />
     </div>
   );
+
+  return compact ? (
+    <Tooltip content={draftValue ? `${placeholder}: ${draftValue}` : `Filtrar por ${placeholder}`} hasHoverIndication={false} focusTrigger="never" touchTrigger="none">
+      {field}
+    </Tooltip>
+  ) : field;
 }
 
 function MultiSelectFilter({
@@ -186,9 +191,7 @@ function MultiSelectFilter({
             {label}
           </span>
           {isLoading && (
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-              Carregando...
-            </span>
+            <DashboardLoading label="Carregando..." />
           )}
           {!isLoading && selecionados.length > 0 && (
             <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
@@ -235,9 +238,7 @@ function MultiSelectFilter({
             );
           })}
           {opcoesEfetivas.length === 0 && isLoading && (
-            <p className="py-3 text-center text-xs" style={{ color: 'var(--color-text-muted)' }}>
-              Carregando...
-            </p>
+            <DashboardLoading label="Carregando..." />
           )}
           {opcoesEfetivas.length === 0 && !isLoading && (
             <p className="py-3 text-center text-xs" style={{ color: 'var(--color-text-muted)' }}>
@@ -262,7 +263,7 @@ function MultiSelectFilter({
         >
           <span className="flex min-w-0 flex-1 items-center gap-1.5">
             <Funnel size={12} aria-hidden="true" />
-            <span className="truncate">{selecionados.length > 0 ? `${selecionados.length} selecionado(s)` : label}</span>
+            <TableText>{selecionados.length > 0 ? `${selecionados.length} selecionado(s)` : label}</TableText>
           </span>
         </DashboardButton>
       )}
@@ -444,13 +445,7 @@ function AdvancedFiltersButton<T>({
       <SlidersHorizontal size={14} aria-hidden="true" />
       Filtros
       {hiddenActiveCount > 0 && (
-        <span
-          className="inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none"
-          style={{ backgroundColor: 'rgba(33, 71, 138, 0.14)', color: 'var(--color-primary)' }}
-          aria-label={`${hiddenActiveCount} filtros ativos`}
-        >
-          {hiddenActiveCount}
-        </span>
+        <Badge label={hiddenActiveCount} variant="info" aria-label={`${hiddenActiveCount} filtros ativos`} />
       )}
     </DashboardButton>
   );
@@ -561,17 +556,7 @@ export default function AnalyticalDataTable<T>({
   }
 
   if (isLoading) {
-    return (
-      <div
-        className="flex items-center justify-center rounded-[20px] border p-8 shadow-sm"
-        style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-      >
-        <div
-          className="h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
-          style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}
-        />
-      </div>
-    );
+    return <Card padding={4} className="dashboard-table-card"><DashboardLoading variant="section" label={titulo ? 'Carregando ' + titulo : 'Carregando tabela'} /></Card>;
   }
 
   return (
@@ -593,7 +578,7 @@ export default function AnalyticalDataTable<T>({
             <span>{resumoRegistros}</span>
             {isUpdating && (
               <span className="inline-flex items-center gap-1 font-medium" role="status">
-                <Loader2 size={12} className="animate-spin" aria-hidden="true" />
+                <Spinner size="sm" aria-hidden="true" />
                 Atualizando...
               </span>
             )}
@@ -674,7 +659,7 @@ export default function AnalyticalDataTable<T>({
                     }}
                   >
                     <span className="flex items-center gap-1">
-                      <span>{col.label}</span>
+                      <TableText>{col.label}</TableText>
                       {col.tooltip ? <TableHeaderTooltip label={col.label} content={col.tooltip} /> : null}
                       {colunaOrdenavel && sortField === col.chave && (
                         <span className="shrink-0">{sortDirection === 'asc' ? '↑' : '↓'}</span>

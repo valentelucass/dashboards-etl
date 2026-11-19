@@ -3,7 +3,6 @@ import { PALETA_SERIES } from './chartColors';
 
 type PlainObject = Record<string, unknown>;
 
-const DARK_PALETTE = ['#60a5fa', '#f97316', '#34d399', '#f87171', '#a78bfa', '#22d3ee', '#f472b6', '#a3e635', '#facc15', '#c4b5fd'];
 const BAR_RADIUS = [4, 4, 0, 0] as const;
 
 export function getEchartsThemeTokens(isDark: boolean) {
@@ -17,7 +16,7 @@ export function getEchartsThemeTokens(isDark: boolean) {
     tooltipBorder: isDark ? '#444449' : '#dedee2',
     tooltipText: isDark ? '#f8fafc' : '#374151',
     axisPointerBg: isDark ? '#1e293b' : '#536298',
-    palette: isDark ? DARK_PALETTE : [...PALETA_SERIES],
+    palette: PALETA_SERIES,
     softTrack: isDark ? 'rgba(148, 163, 184, 0.18)' : 'rgba(148, 163, 184, 0.24)',
   };
 }

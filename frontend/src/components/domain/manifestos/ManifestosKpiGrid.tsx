@@ -1,3 +1,4 @@
+import DashboardLoading from '../../shared/DashboardLoading';
 import KpiCard from '../../shared/KpiCard';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary, type KpiDefinition } from '../../../constants/kpiDictionary';
@@ -17,15 +18,6 @@ interface ManifestosKpiCardConfig {
   layoutClassName?: string;
 }
 
-function KpiSkeleton() {
-  return (
-    <div className="min-h-[92px] animate-pulse rounded-[20px] border p-3" style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}>
-      <div className="mb-4 h-3 w-24 rounded bg-slate-200" />
-      <div className="h-7 w-32 rounded bg-slate-100" />
-    </div>
-  );
-}
-
 export default function ManifestosKpiGrid({ kpis, isLoading }: ManifestosKpiGridProps) {
   const cards: ManifestosKpiCardConfig[] = kpis
     ? [
@@ -43,9 +35,9 @@ export default function ManifestosKpiGrid({ kpis, isLoading }: ManifestosKpiGrid
     : [];
 
   return (
-    <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-12">
+    <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-12" aria-busy={isLoading}>
       {isLoading
-        ? Array.from({ length: 10 }, (_, index) => <KpiSkeleton key={index} />)
+        ? Array.from({ length: 10 }, (_, index) => <DashboardLoading key={index} label="" variant="card" />)
         : cards.map((card) => {
           const compact = card.size === 'compact';
           const className = card.size === 'wide'

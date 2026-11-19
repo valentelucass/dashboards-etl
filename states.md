@@ -1,3 +1,37 @@
+## 19/11/2026 — Painel DEV na V2
+
+Duas atualizações automáticas chegaram ao SQL e ao painel DEV em 19/11. O intervalo do fim da primeira publicação ao início da segunda busca foi de 60 minutos e 8 segundos. As 13 fontes tinham recebimentos confirmados para as 90 datas entre 22/08 e 19/11. A fila de publicação terminou vazia em ambos os lotes.
+
+O navegador confirmou os dois lotes na Saúde do ETL. Com o segundo recebimento em curso, Coletas, Manifestos, Faturamento, Cotações, Executivo e Integrações foram abertos em dois grupos de três abas. As 27 consultas responderam na primeira tentativa. A verificação geral havia aprovado 772 testes do servidor e 408 da interface.
+
+## 18/11/2026 — Exportação de Coletas no DEV
+
+A exportação de 21/08 a 18/11 excedeu 30 segundos em duas tentativas. O SQL registrou espera entre tarefas paralelas. A consulta de exportação de Coletas passou a usar um único processador por consulta e a preparar o plano para os filtros recebidos. Uma leitura independente conferiu as 14.174 linhas nos 42 campos. O arquivo baixou pelo botão do DEV em 16,7 segundos e incluiu os dez registros da primeira página. Passaram os 46 testes focados de exportação, tabelas e filtros. A API passou a devolver a causa de banco ao tratamento de erros já usado pelos demais relatórios.
+
+Na conferência geral após o ajuste de Coletas, passaram 772 testes do servidor, 405 da interface e a compilação. As 15 páginas abriram com dados na porta 5174 entre 21h17 e 21h20 durante o recebimento da V2. O último dado chegou em até 7,3 segundos por página nessa rodada.
+
+O iniciador do DEV exibia cinco mensagens de sintaxe ao carregar cinco linhas que continham apenas espaço. O leitor de configuração passou a processar as linhas com sinal de igual. A conferência dos 16 valores reais, o teste com quatro valores de exemplo e o ensaio do comando de inicialização passaram.
+
+Na mesma sessão, três abas simultâneas de Cotações, Executivo e Integrações receberam oito respostas de servidor ocupado antes de mostrar os dados. A fila do navegador passou a compartilhar as três vagas entre abas da mesma origem pela Web Locks API. A fila por página continua disponível quando o navegador restringe esse recurso. Os testes verificaram concorrência entre abas, cancelamento antes do envio e restrição de acesso à API. Em dois grupos de três abas do DEV, as 27 respostas dos seis relatórios chegaram com HTTP 200 durante a extração.
+
+## 18/11/2026 — Leitura de textos longos nas tabelas do Dashboard
+
+As tabelas analíticas, rankings, telas administrativas e prévias de importação usam o texto do Astryx com reticências conforme o espaço da coluna. O mouse ou um toque abre o conteúdo integral no tema da tela. O Faturamento Analítico reserva mais largura para Filial e Pagador. A matriz de regiões da Localização de Cargas organiza as colunas pela largura do cartão e permite consultar nomes e valores extensos.
+
+No DEV com dados de exemplo, os cabeçalhos foram conferidos em 14 telas, inclusive nas tabelas expansíveis de Gestão à Vista. O texto completo foi verificado nas três abas de ranking de Cotações, no Faturamento, na matriz de regiões e no cadastro de usuários e setores. A verificação incluiu os temas claro e escuro, toque a 390 px e chaves sem espaços. Build, análise estática e 405 testes aprovados. Mapa de código atualizado.
+
+## 18/11/2026 — Alinhamento dos gráficos de conversão em Cotações
+
+Taxas de Conversão acompanha a altura de Trechos Mais Valiosos quando ambos ocupam a mesma linha. Os gráficos de valor e quantidade usam uma margem menor para o eixo percentual. No DEV com dados de exemplo, a 1660 px, os cartões mediram 473 px de altura e cada área de plotagem ganhou 36 px de largura. Os três modos foram conferidos no desktop e o empilhamento foi verificado no celular. Build aprovado, 405 testes aprovados e mapa de código atualizado.
+
+## 18/11/2026 — Badges e carregamento do Dashboard no DEV
+
+Os badges de usuários, setores, importações, integrações, metas e tabelas usam o componente Astryx apresentado nos comunicados da Home. O carregamento inicial de rotas, indicadores, gráficos, tabelas e campos usa o mesmo Skeleton e respeita a preferência por movimento reduzido. Na prévia com dados de exemplo, os badges Inativo, Offline e Segura tiveram os mesmos 24 px de altura e 10 px de margem interna lateral do Fixado nos temas claro e escuro. Os 12 painéis conferidos usaram a mesma animação. A transição do carregamento para o conteúdo foi conferida também em Início, Setores e Usuários, totalizando 15 telas. Build do frontend e 404 testes aprovados. A atualização do mapa de código ficou pendente porque as duas vagas do executor permaneceram ocupadas.
+
+## 18/11/2026 — Publicação dos relatórios e validação na porta 5174
+
+A migração V072 passou cinco consultas do DEV a usar as projeções de leitura da V2. O cliente repete as leituras quando recebe um prazo de espera do servidor e conserva o cancelamento da navegação. Comunicados da página inicial usam o acesso operacional, inclusive quando as vagas de relatórios estão ocupadas. A migração V073 verifica a publicação dos relatórios de Manifestos, Faturas, Localização, Contas a Pagar, Performance e Coletores antes da troca. A V073 foi aplicada somente no DEV após a publicação. A V074 usa as listas já preparadas de filiais, motoristas e veículos. A consulta de clientes de Faturas e Fretes visita cada origem uma vez e o resumo de horários de corte calcula a última importação na própria agregação. A V075 consulta a leitura preparada das viagens e paradas Raster. Quando o Raster recebe dados entre ciclos, a leitura acompanha a captura nova imediatamente. As listas de filtros são buscadas quando usadas e exibem mais opções sob demanda. Continua pendente a confirmação final das 15 páginas e dos dois ciclos sucessivos.
+
 ## 18/11/2026 — Coletas no DEV com a V2 compartilhada
 
 O painel DEV na porta 5174 e o painel de produção apontam as 27 consultas para ETL_SISTEMA_V2. As dez consultas antigas de produção autorizadas para cancelamento foram encerradas e o monitor confirmou zero restantes. A tabela paginada de Coletas no DEV passou a ler uma vez os campos exibidos, preservando os filtros antes da escolha de uma linha por ID e a ordenação da página. Os 41 testes focados passaram. Duas chamadas autenticadas para 16/08 a 13/11 com Cotações e Faturas simultâneas devolveram 200 nas três rotas, também no login e perfil. Conferiram os IDs e sua ordem na primeira página de 10 e segunda de 100. Os nove gráficos de Cotações devolveram 77 pontos e Faturas devolveu 76 itens. Os três gráficos de Coletas também responderam no teste da V2. A alteração do código foi iniciada e validada somente no DEV. O aceite global, a publicação dos dias novos e a ativação do ETL automático continuam pendentes.
@@ -681,3 +715,13 @@ O pacote local atual abriu na porta 5012. Com três consultas solicitadas, o seg
 Quatro consultas de evolução mensal deram HTTP 504 antes da correção. O agrupamento esperou por memória no SQL durante quase todos os 24 segundos medidos em três formas de execução. O leitor de evolução agora recebe período e situação e acumula dois contadores por período. O mesmo filtro de datas, filiais e clientes continua na consulta ao banco. Na API da cópia, mês a mês, pagador deu 6.187 registros em 5,49 s, CNPJ deu 805 em 9,70 s, os filtros juntos deram 805 em 5,08 s e o período completo deu 53.561 em 1,19 s. Os quatro resultados coincidiram com a referência independente. O teste de login com três leituras e três recebimentos simultâneos também completou login, perfil, presença, renovação e saída. A matriz completa de relatórios permanece aberta.
 
 Na repetição sob carga com o pacote corrigido houve 22 recebimentos confirmados entre o login e a saída. Login, perfil, presença, renovação e saída responderam, com login em 4,55 s e renovação em 7,06 s. A evolução mensal de Faturas retornou 200. A paginação de Coletas e os gráficos de Cotações deram 504. Passaram 53 testes focados do backend, os dois da tela de cobertura e a compilação TypeScript. Nos 90 dias, o resultado de Coletas bateu nos 41 campos dos 14.461 registros finais. Cotações conferiu 17.058 linhas em 54 campos e Contas a Pagar, 15.020 linhas em 31 campos. A confirmação independente por minuta resultou em 52.558 vencedoras para 90 dias, 19.187 para 30 dias e 3.761 para sete dias. A fila e as quatro rotinas de publicação permaneciam indisponíveis para a identidade de consulta nos dois bancos DEV. Checklist com 12 de 21 itens confirmados. A evidência está em docs/catalogos/revisao-incremental-2026-11-18.json.
+
+### 18/11/2026 — Controles Astryx nos gráficos e rankings de Cotações
+
+Coletas, Cotações, Faturamento, Integrações e Performance usam o seletor segmentado Astryx para escolhas exclusivas. Localização de Cargas usa botões de seleção independente para combinar status. Os títulos dos gráficos e seus controles quebram linha conforme o espaço do cartão. Os três rankings de Cotações reservam uma largura limitada aos nomes, centralizam as contagens e alinham valores numéricos com seus cabeçalhos. A ordenação e o indicador de conversão também usam componentes Astryx. Compilação TypeScript, lint focado e 11 testes aprovados. A prévia com dados de exemplo confirmou a ordenação, a multisseleção e a rolagem da tabela contida no celular.
+
+### 18/11/2026 — Renderização Astryx nos gráficos dos 12 dashboards
+
+A auditoria das rotas e componentes identificou desenho manual de fatias em cima de um Chart vazio. As roscas, pizzas e os três medidores semicirculares de Manifestos agora usam RadialChart e RadialSlice do Astryx Lab na mesma versão dos pacotes instalados. A seleção continua usando o índice do registro de origem. Os percentuais dos medidores mantêm o valor real, mesmo acima de 100%. As cores compartilhadas de séries e as de Coletas e Localização usam os tokens de dados do Astryx. Linhas, áreas, barras e indicadores de progresso já usavam os componentes oficiais.
+
+Conferidas as 12 rotas na prévia com dados de exemplo, incluindo a legenda, a seleção por teclado e a rosca no celular em tema claro. Doze testes focados aprovados e build local concluído.

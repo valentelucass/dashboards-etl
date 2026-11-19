@@ -6,7 +6,7 @@ import { createDashboardRequestAdapter } from './dashboardRequestQueue';
 
 const config = (url: string, signal?: AbortSignal): InternalAxiosRequestConfig => ({ url, method: 'get', signal, headers: new AxiosHeaders() });
 const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
-afterEach(() => { document.body.replaceChildren(); vi.restoreAllMocks(); });
+afterEach(() => { document.body.replaceChildren(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 function region(key: string, top: number) {
   const element = document.createElement('div');
   if (key === 'table') element.dataset.dashboardTable = 'true';
@@ -23,6 +23,82 @@ function controlled() {
     const entry = running[index]; entry.resolve({ config: entry.config, data: index, status: 200, statusText: 'OK', headers: {} });
   } };
 }
+
+it('compartilha três vagas entre adaptadores de abas diferentes', async () => {
+  const occupied = new Map<string, Promise<void>>();
+  const locks = {
+    async request<T>(name: string, options: LockOptions, granted: (lock: {name: string} | null) => T): Promise<T> {
+      const previous = occupied.get(name);
+      if (previous && options.ifAvailable) return granted(null);
+      let release!: () => void;
+      const gate = new Promise<void>(resolve => { release = resolve; });
+      const turn = Promise.resolve(previous).then(() => gate);
+      occupied.set(name, turn);
+      await previous;
+      try { return await granted({ name }); }
+      finally {
+        release();
+        if (occupied.get(name) === turn) occupied.delete(name);
+      }
+    },
+  };
+  vi.stubGlobal('navigator', { locks });
+  let active = 0;
+  let peak = 0;
+  const transport: AxiosAdapter = async request => {
+    peak = Math.max(peak, ++active);
+    await new Promise(resolve => setTimeout(resolve, 10));
+    active--;
+    return { data: request.url, status: 200, statusText: 'OK', headers: {}, config: request };
+  };
+  const tabs = Array.from({ length: 3 }, () => createDashboardRequestAdapter(transport));
+  const results = await Promise.all(tabs.flatMap(tab => Array.from({ length: 4 }, () => tab(config('/api/painel/executivo')))));
+  expect(results).toHaveLength(12);
+  expect(peak).toBe(3);
+  expect(occupied.size).toBe(0);
+});
+
+it('cancela a espera por uma vaga de outra aba sem chamar o servidor', async () => {
+  const controller = new AbortController();
+  const locks = { request: vi.fn((_name: string, options: LockOptions, work: (lock: null) => unknown) => {
+    if (options.ifAvailable) return Promise.resolve(work(null));
+    return new Promise((_resolve, reject) => {
+      options.signal!.addEventListener('abort', () => reject(new DOMException('Cancelado', 'AbortError')), { once: true });
+    });
+  }) };
+  vi.stubGlobal('navigator', { locks });
+  const transport = vi.fn<AxiosAdapter>(async c => ({ data: 'ok', status: 200, statusText: 'OK', headers: {}, config: c }));
+  const result = createDashboardRequestAdapter(transport)(config('/api/painel/cotacoes', controller.signal)).catch((e: unknown) => e);
+  await flush();
+  controller.abort();
+  expect(axios.isCancel(await result)).toBe(true);
+  expect(transport).not.toHaveBeenCalled();
+});
+
+it('preserva a fila local quando o navegador impede o compartilhamento', async () => {
+  const locks = { request: vi.fn().mockRejectedValue(new DOMException('Contexto restrito', 'SecurityError')) };
+  vi.stubGlobal('navigator', { locks });
+  const transport = vi.fn<AxiosAdapter>(async c => ({ data: 'ok', status: 200, statusText: 'OK', headers: {}, config: c }));
+  const response = await createDashboardRequestAdapter(transport)(config('/api/painel/coletas'));
+  expect(response.data).toBe('ok');
+  expect(locks.request).toHaveBeenCalled();
+  expect(transport).toHaveBeenCalledTimes(1);
+});
+
+it.each(['/api/painel/performance/status', '/api/painel/gestao-vista/cubagem/clientes'])('aguarda Retry-After antes de reenviar a leitura %s', async (url) => {
+  vi.useFakeTimers();
+  try {
+    const transport = vi.fn<AxiosAdapter>()
+      .mockRejectedValueOnce({ isAxiosError: true, response: { status: 503, headers: { 'retry-after': '2' } } })
+      .mockImplementation(async c => ({ config: c, data: [12], status: 200, statusText: 'OK', headers: {} }));
+    const response = createDashboardRequestAdapter(transport)(config(url));
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(transport).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect((await response).data).toEqual([12]);
+    expect(transport).toHaveBeenCalledTimes(2);
+  } finally { vi.useRealTimers(); }
+});
 
 describe('fila HTTP dos dashboards', () => {
   it('distingue séries da primeira e segunda linha que compartilham o endpoint de Cotações', async () => {

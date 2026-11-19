@@ -9,7 +9,7 @@ export function DashboardInput({
   type, value, onChange, className, style, title, label, required, placeholder, disabled,
   'aria-label': ariaLabel, ...props
 }: Pick<ComponentPropsWithRef<'input'>, EntryAttributes | 'autoComplete'> &
-  Pick<TextInputProps, 'inputMode' | 'type'> & { label?: string }) {
+  Pick<TextInputProps, 'inputMode' | 'type' | 'startIcon'> & { label?: string }) {
   const name = ariaLabel ?? label ?? title ?? placeholder ?? 'Valor';
   return <TextInput {...props} {...{ required, disabled }} type={type} label={name} aria-label={name} isLabelHidden isDisabled={disabled}
     value={value == null ? '' : String(value)}

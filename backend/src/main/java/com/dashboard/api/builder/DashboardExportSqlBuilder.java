@@ -64,6 +64,10 @@ public class DashboardExportSqlBuilder {
                 ) exportacao
                 WHERE [__rn] = 1%s
                 """.formatted(dedup.partitionBy(), dedupOrderBy, parts.sourceSql(), parts.where(), orderBy);
+        if (definition == DashboardExportDefinition.COLETAS) {
+            // A exportação inclui todas as colunas e o período pode variar entre um dia e o histórico completo.
+            sql += " OPTION (MAXDOP 1, RECOMPILE)";
+        }
         return new ExportSql(Objects.requireNonNull(sql, "sql"), parts.params());
     }
 

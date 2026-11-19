@@ -19,6 +19,7 @@ interface FilterBarProps {
   period?: ReactNode;
   children?: ReactNode;
   onClear?: () => void;
+  onOpen?: () => void;
   activeFilters?: ActiveFilter[];
   actions?: ReactNode;
   actionsOnMobileRow?: boolean;
@@ -66,6 +67,7 @@ export default function FilterBar({
   period,
   children,
   onClear,
+  onOpen,
   activeFilters,
   actions,
   actionsOnMobileRow = false,
@@ -146,7 +148,10 @@ export default function FilterBar({
           label="Filtros"
           variant={isPresentationMode ? 'ghost' : 'secondary'}
           size={isPresentationMode ? 'sm' : 'md'}
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => {
+            if (!open) onOpen?.();
+            setOpen(!open);
+          }}
           aria-expanded={open}
           data-dashboard-filters-open={open ? 'true' : undefined}
           aria-controls={panelId}

@@ -1,3 +1,5 @@
+import DashboardLoading from '../shared/DashboardLoading';
+import { Badge } from '@astryxdesign/core/Badge';
 import { NumberInput } from '@astryxdesign/core/NumberInput';
 import { Selector } from '@astryxdesign/core/Selector';
 import DashboardSelector from "../shared/DashboardSelector";
@@ -287,9 +289,7 @@ export default function KpiGoalsManagerPanel({
             onChange={year => onCompetenciaChange(normalizarCompetenciaApi(year + '-' + competenciaParaMonthInput(competencia).slice(5)))} />
         </div>
         {isLoading ? (
-          <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: 'rgba(37, 99, 235, 0.12)', color: '#1d4ed8' }}>
-            Carregando metas
-          </span>
+          <DashboardLoading label="Carregando metas" />
         ) : null}
       </div>
 
@@ -312,9 +312,7 @@ export default function KpiGoalsManagerPanel({
               <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
                 Meta Global (aplica em todas as filiais)
               </h3>
-              <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" style={{ backgroundColor: 'rgba(33, 71, 138, 0.12)', color: 'var(--color-primary)' }}>
-                {competenciaLabel}
-              </span>
+              <Badge label={competenciaLabel} variant="info" />
             </div>
             <DashboardButton
               type="submit"
@@ -336,10 +334,7 @@ export default function KpiGoalsManagerPanel({
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {branchSpecificBranches.map((branch) => (
-                  <span key={branch.branchId} className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs" style={{ borderColor: '#f59e0b', color: '#92400e' }}>
-                    {branch.branchId}
-                    <strong>Meta específica</strong>
-                  </span>
+                  <Badge label={branch.branchId + ' · Meta específica'} variant="warning" key={branch.branchId} />
                 ))}
               </div>
             </div>
@@ -352,18 +347,8 @@ export default function KpiGoalsManagerPanel({
               <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
                 Meta Específica por Filial
               </h3>
-              <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" style={{ backgroundColor: 'rgba(33, 71, 138, 0.12)', color: 'var(--color-primary)' }}>
-                {competenciaLabel}
-              </span>
-              <span
-                className="rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide"
-                style={{
-                  backgroundColor: branchOverride ? 'rgba(37, 99, 235, 0.12)' : 'rgba(22, 163, 74, 0.12)',
-                  color: branchOverride ? '#1d4ed8' : '#15803d',
-                }}
-              >
-                {branchOverride ? 'Meta Específica' : 'Herdando Global'}
-              </span>
+              <Badge label={competenciaLabel} variant="info" />
+              <Badge label={branchOverride ? 'Meta Específica' : 'Herdando Global'} variant={branchOverride ? 'info' : 'success'} />
             </div>
             <div className="kpi-goals-branch-selector">
               <div className="block space-y-1">
@@ -437,7 +422,7 @@ export default function KpiGoalsManagerPanel({
             </div>
             <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2 2xl:grid-cols-3">
               {isHistoryLoading ? (
-                <p className="text-sm lg:col-span-2 2xl:col-span-3" style={{ color: 'var(--color-text-muted)' }}>Carregando histórico...</p>
+                <DashboardLoading label="Carregando histórico..." />
               ) : historyItems.length === 0 ? (
                 <p className="text-sm lg:col-span-2 2xl:col-span-3" style={{ color: 'var(--color-text-muted)' }}>Sem histórico para esta filial.</p>
               ) : (
@@ -450,18 +435,14 @@ export default function KpiGoalsManagerPanel({
                     <span className="shrink-0 font-semibold" style={{ color: 'var(--color-text)' }}>
                       {item.updatedAt ? formatarDataHora(item.updatedAt) : '—'}
                     </span>
-                    <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ backgroundColor: 'rgba(33, 71, 138, 0.10)', color: 'var(--color-primary)' }}>
-                      {formatarCompetenciaMeta(item.competencia)}
-                    </span>
+                    <Badge label={formatarCompetenciaMeta(item.competencia)} variant="info" />
                     <span className="min-w-0 flex-1 truncate" title={`${item.updatedBy?.name ?? 'Usuário não identificado'} · ${GOAL_LABELS[item.indicatorKey]} · ${formatarCompetenciaMeta(item.competencia)}`}>
                       {item.updatedBy?.name ?? 'Usuário não identificado'} · {GOAL_LABELS[item.indicatorKey]}
                     </span>
                     <span className="shrink-0 font-semibold" style={{ color: 'var(--color-text)' }}>
                       {formatGoal(item.oldValue)} → {formatGoal(item.newValue)}
                     </span>
-                    <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ backgroundColor: 'rgba(33, 71, 138, 0.12)', color: 'var(--color-primary)' }}>
-                      {ACTION_LABELS[item.action]}
-                    </span>
+                    <Badge label={ACTION_LABELS[item.action]} variant="info" />
                   </div>
                 ))
               )}
@@ -503,9 +484,7 @@ export default function KpiGoalsManagerPanel({
             <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
               Filiais com Meta Específica
             </h3>
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" style={{ backgroundColor: 'rgba(33, 71, 138, 0.12)', color: 'var(--color-primary)' }}>
-              {competenciaLabel}
-            </span>
+            <Badge label={competenciaLabel} variant="info" />
           </div>
           <div className="mt-3 space-y-2">
             {branchSpecificBranches.length === 0 ? (
@@ -524,28 +503,14 @@ export default function KpiGoalsManagerPanel({
                       <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
                         {branch.branchId}
                       </span>
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" style={{ backgroundColor: 'rgba(37, 99, 235, 0.12)', color: '#1d4ed8' }}>
-                        Meta específica
-                      </span>
+                      <Badge label="Meta específica" variant="info" />
                       {hasDifferences(branch.goals, globalGoals) ? (
-                        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" style={{ backgroundColor: 'rgba(245, 158, 11, 0.14)', color: '#92400e' }}>
-                          Diverge da global
-                        </span>
+                        <Badge label="Diverge da global" variant="warning" />
                       ) : null}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {goalItems(branch, globalGoals).map((item) => (
-                        <span
-                          key={item.indicatorKey}
-                          className="rounded-full border px-2 py-1 text-[11px] font-semibold"
-                          style={{
-                            borderColor: item.isDifferent ? '#f59e0b' : 'var(--color-border)',
-                            backgroundColor: item.isDifferent ? 'rgba(245, 158, 11, 0.10)' : 'var(--color-card)',
-                            color: item.isDifferent ? '#92400e' : 'var(--color-text-muted)',
-                          }}
-                        >
-                          {item.label}
-                        </span>
+                        <Badge label={item.label} variant={item.isDifferent ? 'warning' : 'neutral'} key={item.indicatorKey} />
                       ))}
                     </div>
                     <p className="mt-1 text-xs" style={{ color: 'var(--color-text-subtle)' }}>

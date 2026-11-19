@@ -1,3 +1,4 @@
+import { Badge } from '@astryxdesign/core/Badge';
 import DashboardButton from "../shared/DashboardButton";
 import { SlidersHorizontal, X } from 'lucide-react';
 import type {
@@ -56,13 +57,7 @@ export default function BranchGoalOverridesBanner({
       style={{ backgroundColor: 'rgba(33, 71, 138, 0.08)', borderColor: 'rgba(33, 71, 138, 0.22)' }}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span
-          className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wide"
-          style={{ backgroundColor: 'rgba(33, 71, 138, 0.14)', color: 'var(--color-primary)' }}
-        >
-          <SlidersHorizontal size={12} />
-          Metas específicas cadastradas
-        </span>
+        <Badge label="Metas específicas cadastradas" variant="info" icon={<SlidersHorizontal size={12} />} />
         <span className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
           {branchOverrides.length} filiais possuem meta específica para este indicador
         </span>

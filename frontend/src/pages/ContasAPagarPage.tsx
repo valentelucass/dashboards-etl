@@ -1,3 +1,4 @@
+import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSelector from "../components/shared/DashboardSelector";
 import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
@@ -61,6 +62,7 @@ function labelNivel(nivel: ContasAPagarDrilldownNivel) {
 }
 
 export default function ContasAPagarPage() {
+  const [carregarOpcoesDeFiltro, setCarregarOpcoesDeFiltro] = useState(false);
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
   const [granularidade, setGranularidade] = useState<ContasAPagarGranularidade>('dia');
@@ -75,8 +77,8 @@ export default function ContasAPagarPage() {
   const [centroNivel, setCentroNivel] = useState<ContasAPagarDrilldownNivel>('raiz');
   const [centroSelecionado, setCentroSelecionado] = useState<string | null>(null);
   const [centroClassificacao, setCentroClassificacao] = useState<string | null>(null);
-  const filiais = useFiliais();
-  const planoContas = usePlanoContas();
+  const filiais = useFiliais(carregarOpcoesDeFiltro);
+  const planoContas = usePlanoContas(carregarOpcoesDeFiltro);
 
   const filtro: ContasAPagarFiltro = useMemo(() => ({
     dataInicio,
@@ -265,6 +267,7 @@ export default function ContasAPagarPage() {
   return (
     <div className="w-full">
       <FilterBar
+        onOpen={() => setCarregarOpcoesDeFiltro(true)}
         period={(
           <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
         )}
@@ -275,6 +278,7 @@ export default function ContasAPagarPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de contas a pagar.')} tipo={getTipoErro(overview.error)} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid count={6} />}
       {overview.data && <ContasAPagarKpiGrid overview={overview.data} />}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

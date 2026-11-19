@@ -1,6 +1,6 @@
 import { Card } from '@astryxdesign/core/Card';
 import { Collapsible } from '@astryxdesign/core/Collapsible';
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '../../shared/DashboardTable';
 import type { IndicadoresOperacionais } from '../../../api/endpoints/integracoesOperacionais';
 import { formatarNumero } from '../../../utils/formatadores';
 import TooltipKpi from '../../shared/TooltipKpi';

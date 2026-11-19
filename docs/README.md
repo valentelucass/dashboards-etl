@@ -62,7 +62,7 @@ docs/
 
 O Dashboard e uma camada consumidora e de apresentacao. Ele valida filtros, aplica seguranca, expoe contratos HTTP e entrega DTOs para o frontend.
 
-O ETL e o owner estrutural do schema `ETL_SISTEMA` (`esl_cloud`) e das views consumidas pelo Dashboard. Ajustes em tabelas/views analiticas devem nascer no projeto `etl-extracao-dados`, nao em migrations, inicializadores ou SQL avulso do Dashboard.
+O projeto `etl-extracao-dados-v2` mantém as tabelas e as views analíticas publicadas em `ETL_SISTEMA_V2.pub`. O Dashboard mantém os sinônimos locais de leitura.
 
 No banco proprio do Dashboard, a unica fonte de verdade estrutural e o Flyway. DDL em runtime Java e proibido; validadores podem detectar drift e falhar cedo, mas nao corrigir schema automaticamente.
 

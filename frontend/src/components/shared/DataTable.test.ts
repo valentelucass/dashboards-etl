@@ -62,7 +62,7 @@ describe('DataTable', () => {
     expect(html).toContain('504');
   });
 
-  it('permite scroll lateral com conteudo largo completo', () => {
+  it('mantém o texto inteiro na célula com reticências e permite rolagem horizontal', () => {
     type Row = { id: number; cliente: string; documento: string };
     const Tabela = DataTable<Row>;
     const html = renderToStaticMarkup(
@@ -80,8 +80,7 @@ describe('DataTable', () => {
     expect(html).toContain('overflow-x-auto');
     expect(html).toContain('w-max');
     expect(html).toContain('whitespace-nowrap');
-    expect(html).toContain('Cliente com nome muito comprido');
-    expect(html).not.toContain('min-w-0 truncate');
+    expect(html).toMatch(/<span\b[^>]*\bdashboard-cell-text\b[^>]*>Cliente com nome muito comprido<\/span>/);
   });
 
   it('usa tooltip acessivel sem atributo title nativo', () => {

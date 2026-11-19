@@ -1,6 +1,7 @@
 package com.dashboard.api.service;
 
 import com.dashboard.api.builder.DashboardExportSqlBuilder;
+import com.dashboard.api.definition.DashboardExportDefinition;
 import com.dashboard.api.dto.dimensoes.DimensaoOpcaoDTO;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.service.acesso.EscopoFilialService;
@@ -14,13 +15,16 @@ import java.util.Map;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DashboardExportServiceTest {
 
@@ -137,6 +141,19 @@ class DashboardExportServiceTest {
         assertThat(jdbcTemplate.ultimoParamSource.hasValue("filtro_origens")).isTrue();
     }
 
+    @Test
+    void exportacaoPreservaTempoLimiteDoBanco() {
+        var timeout = new QueryTimeoutException("tempo limite");
+        var jdbc = new NamedParameterJdbcTemplate(new JdbcTemplate()) {
+            @Override
+            public <T> T query(String sql, SqlParameterSource params, ResultSetExtractor<T> resultSet) {
+                throw timeout;
+            }
+        };
+        assertThatThrownBy(() -> serviceComJdbc(jdbc).exportar(DashboardExportDefinition.COLETAS, filtro()))
+                .isSameAs(timeout);
+    }
+
     private record LinhaCsv(String filial, int total) {
     }
 
@@ -160,7 +177,7 @@ class DashboardExportServiceTest {
         }
     }
 
-    private static DashboardExportService serviceComJdbc(CapturandoJdbcTemplate jdbcTemplate) {
+    private static DashboardExportService serviceComJdbc(NamedParameterJdbcTemplate jdbcTemplate) {
         return new DashboardExportService(
                 jdbcTemplate,
                 new DashboardExportSqlBuilder(PeriodoOffsetDateTimeHelper.padrao()),

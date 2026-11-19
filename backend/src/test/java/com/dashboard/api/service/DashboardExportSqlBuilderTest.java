@@ -69,6 +69,7 @@ class DashboardExportSqlBuilderTest {
 
         assertThat(query.sql()).contains("ROW_NUMBER() OVER (PARTITION BY [ID]");
         assertThat(query.sql()).contains("WHERE [__rn] = 1");
+        assertThat(query.sql()).endsWith("OPTION (MAXDOP 1, RECOMPILE)");
         assertThat(query.sql()).doesNotContain("N'excluída'");
     }
 

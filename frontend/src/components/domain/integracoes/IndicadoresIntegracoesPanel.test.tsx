@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { EChartsOption } from 'echarts';
 import IndicadoresIntegracoesPanel from './IndicadoresIntegracoesPanel';
@@ -121,7 +121,8 @@ it('trocar integração oculta detalhes e indicadores anteriores enquanto carreg
   fireEvent.click(screen.getByRole('button', { name: 'Ver Aguardando origem de VEDACIT · XML/Dados' }));
   view.rerender(<QueryClientProvider client={client}><IndicadoresIntegracoesPanel
     inicio="2026-09-01" fim="2026-09-03" destinos={['PPG']} /></QueryClientProvider>);
-  await waitFor(() => expect(screen.getAllByText('—')).toHaveLength(4));
+  const loading = await screen.findByRole('status', { name: 'Carregando indicadores' });
+  expect(loading.querySelectorAll('.dashboard-loading--card')).toHaveLength(4);
   expect(screen.queryByRole('table')).toBeNull();
   expect(screen.queryByText('Fechar documentos')).toBeNull();
 });

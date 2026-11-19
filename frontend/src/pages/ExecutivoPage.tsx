@@ -1,5 +1,5 @@
+import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { Spinner } from '@astryxdesign/core/Spinner';
 import { Card } from '@astryxdesign/core/Card';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useMemo } from 'react';
@@ -139,7 +139,7 @@ function ResumoFinanceiroTable({
       largura: '160px',
       alinhamento: 'right',
       tooltip: KpiDictionary.executivo.resumoFinanceiro.totalFaturado.calculo,
-      formato: (valor) => <span className="block text-right tabular-nums">{formatarMoeda(Number(valor ?? 0))}</span>,
+      formato: (valor) => formatarMoeda(Number(valor ?? 0)),
     },
     {
       chave: 'fretePeso',
@@ -147,7 +147,7 @@ function ResumoFinanceiroTable({
       largura: '150px',
       alinhamento: 'right',
       tooltip: KpiDictionary.executivo.resumoFinanceiro.fretePeso.calculo,
-      formato: (valor) => <span className="block text-right tabular-nums">{formatarPeso(Number(valor ?? 0))}</span>,
+      formato: (valor) => formatarPeso(Number(valor ?? 0)),
     },
     {
       chave: 'freteValor',
@@ -155,7 +155,7 @@ function ResumoFinanceiroTable({
       largura: '150px',
       alinhamento: 'right',
       tooltip: KpiDictionary.executivo.resumoFinanceiro.freteValor.calculo,
-      formato: (valor) => <span className="block text-right tabular-nums">{formatarMoeda(Number(valor ?? 0))}</span>,
+      formato: (valor) => formatarMoeda(Number(valor ?? 0)),
     },
     {
       chave: 'ticketMedio',
@@ -163,7 +163,7 @@ function ResumoFinanceiroTable({
       largura: '150px',
       alinhamento: 'right',
       tooltip: KpiDictionary.executivo.resumoFinanceiro.ticketMedio.calculo,
-      formato: (valor) => <span className="block text-right tabular-nums">{formatarMoeda(Number(valor ?? 0))}</span>,
+      formato: (valor) => formatarMoeda(Number(valor ?? 0)),
     },
   ];
 
@@ -343,12 +343,8 @@ export default function ExecutivoPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar visão executiva.')} tipo={getTipoErro(overview.error)} />}
-      {overview.isLoading && (
-        <div className="mb-6 flex h-24 items-center justify-center">
-          <Spinner label="Carregando visão executiva" />
-        </div>
-      )}
-      {!overview.isLoading && overview.data && <ExecutivoKpiGrid overview={overview.data} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid count={7} singleRowDesktop intermediateRows={[3, 4]} />}
+      {overview.data && <ExecutivoKpiGrid overview={overview.data} />}
       {!overview.isLoading && !overview.data && !overview.isError && (
         <Card padding={3} className="mb-6">
           <EmptyState title="Nenhum dado disponível para o período selecionado." isCompact />

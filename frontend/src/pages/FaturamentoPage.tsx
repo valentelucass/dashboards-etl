@@ -1,10 +1,12 @@
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
+import DashboardSegments from '../components/shared/DashboardSegments';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from '../components/shared/DashboardTable';
 import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useMemo, useRef, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import AstryxDashboardChart from '../components/charts/AstryxDashboardChart';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Info, Minus, Settings } from 'lucide-react';
+import { ArrowDown, ArrowUp, Info, Minus, Settings } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import FaturamentoGoalsManagerPanel from '../components/domain/faturamento/FaturamentoGoalsManagerPanel';
@@ -65,7 +67,8 @@ interface ChartDatum {
   fretes: number;
 }
 
-const DRILL_LEVELS: PeriodDrillLevel[] = ['ano', 'mes', 'dia'];
+const PERIOD_LEVELS = [{ value: 'ano', label: 'Ano' }, { value: 'mes', label: 'Mês' }, { value: 'dia', label: 'Dia' }] as const;
+const METRIC_OPTIONS = [{ value: 'receita', label: 'Faturamento' }, { value: 'fretes', label: 'Minutas' }] as const;
 const ROUTE_DRILL_LEVELS: Array<{ value: RouteDrillLevel; label: string }> = [
   { value: 'rota', label: 'Rota' },
   { value: 'origem', label: 'UF origem' },
@@ -174,61 +177,6 @@ function getMetricValue(item: ChartDatum, metric: FaturamentoMetric): number {
   return metric === 'receita' ? item.receita : item.fretes;
 }
 
-function DrillControls({
-  level,
-  onChange,
-}: {
-  level: PeriodDrillLevel;
-  onChange: (level: PeriodDrillLevel) => void;
-}) {
-  const currentIndex = DRILL_LEVELS.indexOf(level);
-  const canDrillUp = currentIndex > 0;
-  const canDrillDown = currentIndex < DRILL_LEVELS.length - 1;
-
-  return (
-    <div className="flex flex-wrap items-center gap-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-      <DashboardButton
-        type="button"
-        title="Drill up"
-        aria-label="Drill up"
-        disabled={!canDrillUp}
-        onClick={() => canDrillUp && onChange(DRILL_LEVELS[currentIndex - 1])}
-        className="flex h-7 w-7 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-40"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <ChevronUp size={14} />
-      </DashboardButton>
-      <DashboardButton
-        type="button"
-        title="Drill down"
-        aria-label="Drill down"
-        disabled={!canDrillDown}
-        onClick={() => canDrillDown && onChange(DRILL_LEVELS[currentIndex + 1])}
-        className="flex h-7 w-7 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-40"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <ChevronDown size={14} />
-      </DashboardButton>
-
-      <span className="mx-1 hidden sm:inline">Ano &gt; Mês &gt; Dia</span>
-      {DRILL_LEVELS.map((item) => (
-        <DashboardButton
-          key={item}
-          type="button"
-          onClick={() => onChange(item)}
-          className="rounded-md px-2 py-1 font-semibold uppercase transition"
-          style={{
-            backgroundColor: item === level ? 'rgba(33, 71, 138, 0.12)' : 'transparent',
-            color: item === level ? 'var(--color-primary)' : 'var(--color-text-muted)',
-          }}
-        >
-          {item}
-        </DashboardButton>
-      ))}
-    </div>
-  );
-}
-
 function RouteDrillControls({
   level,
   metric,
@@ -242,90 +190,12 @@ function RouteDrillControls({
 }) {
   return (
     <div className="flex flex-wrap justify-end gap-1">
-      <MetricToggle metric={metric} onChange={onMetricChange} />
-      <DrillBreadcrumb
-        levels={ROUTE_DRILL_LEVELS}
-        level={level}
-        color={CORES.secundaria}
+      <DashboardSegments label="Métrica" options={METRIC_OPTIONS} value={metric} onChange={onMetricChange} />
+      <DashboardSegments label="Agrupamento"
+        options={ROUTE_DRILL_LEVELS}
+        value={level}
         onChange={onChange}
       />
-    </div>
-  );
-}
-
-function MetricToggle({
-  metric,
-  onChange,
-}: {
-  metric: FaturamentoMetric;
-  onChange: (metric: FaturamentoMetric) => void;
-}) {
-  return (
-    <div className="flex rounded-lg border p-0.5" style={{ borderColor: 'var(--color-border)' }}>
-      {(['receita', 'fretes'] as FaturamentoMetric[]).map((item) => (
-        <DashboardButton
-          key={item}
-          type="button"
-          onClick={() => onChange(item)}
-          className="rounded-md px-2 py-1 text-[11px] font-semibold transition"
-          style={{
-            backgroundColor: item === metric ? 'rgba(33, 71, 138, 0.12)' : 'transparent',
-            color: item === metric ? 'var(--color-primary)' : 'var(--color-text-muted)',
-          }}
-        >
-          {item === 'receita' ? 'Faturamento' : 'Minutas'}
-        </DashboardButton>
-      ))}
-    </div>
-  );
-}
-
-function DrillBreadcrumb<T extends string>({
-  levels,
-  level,
-  color,
-  onChange,
-}: {
-  levels: Array<{ value: T; label: string }>;
-  level: T;
-  color: string;
-  onChange: (level: T) => void;
-}) {
-  const currentIndex = Math.max(levels.findIndex((item) => item.value === level), 0);
-  const canGoBack = currentIndex > 0;
-
-  return (
-    <div className="flex min-w-0 flex-wrap items-center gap-1 rounded-lg border px-1 py-0.5" style={{ borderColor: 'var(--color-border)' }}>
-      <DashboardButton
-        type="button"
-        title="Drill up"
-        aria-label="Drill up"
-        disabled={!canGoBack}
-        onClick={() => canGoBack && onChange(levels[currentIndex - 1].value)}
-        className="flex h-6 w-6 items-center justify-center rounded-md transition disabled:cursor-not-allowed disabled:opacity-35"
-        style={{ color: canGoBack ? color : 'var(--color-text-muted)' }}
-      >
-        <ChevronUp size={13} />
-      </DashboardButton>
-      {levels.map((item, index) => {
-        const active = item.value === level;
-        return (
-          <span key={item.value} className="inline-flex items-center gap-1">
-            {index > 0 && <span style={{ color: 'var(--color-text-subtle)' }}>&gt;</span>}
-            <DashboardButton
-              type="button"
-              onClick={() => onChange(item.value)}
-              className="rounded-md px-1.5 py-1 text-[11px] font-semibold transition"
-              style={{
-                backgroundColor: active ? `${color}24` : 'transparent',
-                color: active ? color : 'var(--color-text-muted)',
-              }}
-            >
-              {item.label}
-            </DashboardButton>
-          </span>
-        );
-      })}
     </div>
   );
 }
@@ -343,11 +213,10 @@ function ResponsavelActions({
 }) {
   return (
     <div className="flex flex-wrap justify-end gap-1">
-      <MetricToggle metric={metric} onChange={onMetricChange} />
-      <DrillBreadcrumb
-        levels={RESPONSAVEL_DRILL_LEVELS}
-        level={drillLevel}
-        color={CORES.sucesso}
+      <DashboardSegments label="Métrica" options={METRIC_OPTIONS} value={metric} onChange={onMetricChange} />
+      <DashboardSegments label="Agrupamento"
+        options={RESPONSAVEL_DRILL_LEVELS}
+        value={drillLevel}
         onChange={onDrillChange}
       />
     </div>
@@ -663,7 +532,7 @@ function FaturamentoEvolutionCard({
     <ChartCard
       titulo="Evolução do Faturamento"
       chartKey={chartKey}
-      actions={<DrillControls level={drillLevel} onChange={onDrillLevelChange} />}
+      actions={<DashboardSegments label="Agrupar por período" options={PERIOD_LEVELS} value={drillLevel} onChange={onDrillLevelChange} />}
       isLoading={isLoading}
       isEmpty={dados.length === 0}
       className="h-full"
@@ -743,10 +612,10 @@ function TopClientesTableCard({
 
   function renderVariacao(value: number) {
     if (value > 0) {
-      return <span className="inline-flex items-center gap-1 font-semibold text-emerald-600"><ArrowUp size={16} />{formatarPorcentagem(value, 0)}</span>;
+      return <span className="inline-flex max-w-full items-center gap-1 font-semibold text-emerald-600"><ArrowUp className="shrink-0" size={16} /><TableText>{formatarPorcentagem(value, 0)}</TableText></span>;
     }
     if (value < 0) {
-      return <span className="inline-flex items-center gap-1 font-semibold text-red-600"><ArrowDown size={16} />{formatarPorcentagem(value, 0)}</span>;
+      return <span className="inline-flex max-w-full items-center gap-1 font-semibold text-red-600"><ArrowDown className="shrink-0" size={16} /><TableText>{formatarPorcentagem(value, 0)}</TableText></span>;
     }
     return <span className="inline-flex items-center gap-1 font-semibold" style={{ color: 'var(--color-text-muted)' }}><Minus size={16} />0%</span>;
   }
@@ -793,8 +662,8 @@ function TopClientesTableCard({
               <TableBody>
                 {rows.map((row, index) => (
                   <TableRow key={`${row.clienteKey}-${index}`} className="border-b last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
-                    <TableCell className="px-2 py-1.5 text-center" style={{ color: 'var(--color-text)' }}>{row.ranking}º</TableCell>
-                    <TableCell className="truncate px-2 py-1.5" {...{ title: row.cliente }} style={{ color: 'var(--color-text)' }}>{row.cliente}</TableCell>
+                    <TableCell className="px-2 py-1.5 text-center" style={{ color: 'var(--color-text)' }}>{`${row.ranking}º`}</TableCell>
+                    <TableCell className="px-2 py-1.5" style={{ color: 'var(--color-text)' }}>{row.cliente}</TableCell>
                     <TableCell className="px-2 py-1.5 text-right" style={{ color: 'var(--color-text)' }}>{formatarMoeda(row.mesAnterior)}</TableCell>
                     <TableCell className="px-2 py-1.5 text-right" style={{ color: 'var(--color-text)' }}>{formatarMoeda(row.mesAtual)}</TableCell>
                     <TableCell className="px-2 py-1.5 text-center">{renderVariacao(row.variacao)}</TableCell>
@@ -829,6 +698,7 @@ function TopClientesTableCard({
 }
 
 export default function FaturamentoPage() {
+  const [carregarOpcoesDeFiltro, setCarregarOpcoesDeFiltro] = useState(false);
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, setFiltros, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
   const [periodDrillLevel, setPeriodDrillLevel] = useState<PeriodDrillLevel>('dia');
@@ -846,7 +716,7 @@ export default function FaturamentoPage() {
   const faturamentoTableRef = useRef<HTMLDivElement>(null);
   const { canAccess } = usePermissions();
   const filiais = useFiliais();
-  const clientes = useClientes();
+  const clientes = useClientes(carregarOpcoesDeFiltro);
 
   const filtro: FaturamentoFiltro = useMemo(() => ({
     dataInicio,
@@ -902,7 +772,7 @@ export default function FaturamentoPage() {
     responsaveis: filtros.responsaveis,
   };
   const statusFaturamento = useFaturamentoStatus(filtroParaStatus);
-  const responsaveis = useFaturamentoResponsaveis(filtroSemResponsaveis);
+  const responsaveis = useFaturamentoResponsaveis(filtroSemResponsaveis, carregarOpcoesDeFiltro);
 
   usePageHeader({
     title: 'Faturamento',
@@ -1048,16 +918,18 @@ export default function FaturamentoPage() {
     if (!Number.isFinite(numberValue) || numberValue <= 0) {
       return <span style={{ color: 'var(--color-text-muted)' }}>—</span>;
     }
-    return <span className={numberValue >= 100 ? 'font-semibold text-emerald-600' : 'font-semibold text-red-600'}>{formatarPorcentagem(numberValue, 1)}</span>;
+    return <span className={numberValue >= 100 ? 'font-semibold text-emerald-600' : 'font-semibold text-red-600'}><TableText>{formatarPorcentagem(numberValue, 1)}</TableText></span>;
   }
 
   function renderDataFaturamentoTabela(valor: unknown, row: FaturamentoResumoRow) {
     const texto = valor ? formatarDataHoraMinuto(String(valor)) : '—';
     const origem = row.dataFaturamentoOrigem ?? 'Origem não informada';
     return (
-      <span className="inline-flex items-center gap-1" title={`Origem desta data: ${origem}`}>
-        <span>{texto}</span>
-        <Info size={12} className="shrink-0" style={{ color: 'var(--color-text-muted)' }} aria-hidden="true" />
+      <span className="inline-flex max-w-full items-center gap-1">
+        <TableText>{texto}</TableText>
+        <span className="shrink-0" title={`Origem desta data: ${origem}`}>
+          <Info size={12} style={{ color: 'var(--color-text-muted)' }} aria-label={`Origem desta data: ${origem}`} />
+        </span>
       </span>
     );
   }
@@ -1068,12 +940,12 @@ export default function FaturamentoPage() {
   }
 
   const colunas: ColunaTabelaAnalitica<FaturamentoResumoRow>[] = [
-    { chave: 'numeroMinuta', label: 'Nº Minuta', fixo: true, filtroTabela: 'codigo' },
-    { chave: 'dataFrete', label: 'Data Faturamento', largura: '170px', tooltip: FATURAMENTO_DATE_HELP, formato: renderDataFaturamentoTabela },
+    { chave: 'numeroMinuta', label: 'Nº Minuta', largura: '136px', fixo: true, filtroTabela: 'codigo' },
+    { chave: 'dataFrete', label: 'Data Faturamento', largura: '184px', tooltip: FATURAMENTO_DATE_HELP, formato: renderDataFaturamentoTabela },
     { chave: 'status', label: 'Status', filtroTabela: 'status', formato: renderStatusFaturamentoTabela },
-    { chave: 'filial', label: 'Filial' },
-    { chave: 'pagador', label: 'Pagador', largura: '220px', filtroTabela: 'razaoSocial' },
-    { chave: 'documentoTipo', label: 'Documento' },
+    { chave: 'filial', label: 'Filial', largura: '206px' },
+    { chave: 'pagador', label: 'Pagador', largura: '280px', filtroTabela: 'razaoSocial' },
+    { chave: 'documentoTipo', label: 'Documento', largura: '138px' },
     { chave: 'valorFrete', label: 'Faturamento Líquido', formato: (valor) => formatarMoeda(Number(valor ?? 0)) },
     { chave: 'valorTotalServico', label: 'Faturamento', formato: (valor) => formatarMoeda(Number(valor ?? 0)) },
     { chave: 'metaFaturamento', label: 'Meta Faturamento', formato: (valor) => Number(valor ?? 0) > 0 ? formatarMoeda(Number(valor ?? 0)) : '—' },
@@ -1082,16 +954,17 @@ export default function FaturamentoPage() {
       label: '% Ating. Fat.',
       formato: renderMetaPercentualTabela,
     },
-    { chave: 'pesoTaxado', label: 'Peso', formato: (valor) => formatarPeso(Number(valor ?? 0)) },
-    { chave: 'volumes', label: 'Volumes' },
-    { chave: 'origemUf', label: 'UF Origem', filtroTabela: 'origem' },
-    { chave: 'destinoUf', label: 'UF Destino', filtroTabela: 'destino' },
+    { chave: 'pesoTaxado', label: 'Peso', largura: '110px', formato: (valor) => formatarPeso(Number(valor ?? 0)) },
+    { chave: 'volumes', label: 'Volumes', largura: '106px' },
+    { chave: 'origemUf', label: 'UF Origem', largura: '125px', filtroTabela: 'origem' },
+    { chave: 'destinoUf', label: 'UF Destino', largura: '125px', filtroTabela: 'destino' },
     { chave: 'previsaoEntrega', label: 'Previsao' },
   ];
 
   return (
     <div className="w-full">
       <FilterBar
+        onOpen={() => setCarregarOpcoesDeFiltro(true)}
         period={(
           <DateRangePicker
             dataInicio={dataInicio}
@@ -1192,6 +1065,7 @@ export default function FaturamentoPage() {
       ) : null}
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de faturamento.')} tipo={getTipoErro(overview.error)} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid count={8} className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-[0.8fr_2fr_2fr_1fr_1.1fr_1fr_2fr_1.25fr]" />}
       {overview.data && (
         <FaturamentoKpiGrid
           overview={overview.data}

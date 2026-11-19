@@ -1,10 +1,7 @@
-import { Spinner } from '@astryxdesign/core/Spinner';
+import DashboardLoading from '../shared/DashboardLoading';
 
 export default function DashboardRouteLoading() {
   return (
-    <div className="dashboard-route-loading" role="status">
-      <Spinner size="xl" aria-hidden="true" />
-      <span className="sr-only">Carregando</span>
-    </div>
+    <div className="dashboard-route-loading"><DashboardLoading variant="section" label="Carregando página" /></div>
   );
 }

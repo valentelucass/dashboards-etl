@@ -1,6 +1,8 @@
+import DashboardLoading from '../../shared/DashboardLoading';
+import { Badge } from '@astryxdesign/core/Badge';
 import { Collapsible } from '@astryxdesign/core/Collapsible';
 import DashboardSelector from "../../shared/DashboardSelector";
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from '../../shared/DashboardTable';
 import DashboardButton from "../../shared/DashboardButton";
 import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -52,14 +54,23 @@ function TituloMetrica({ children }: { children: ReactNode }) {
   return <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={muted}>{children}<Info size={13} aria-hidden="true" /></span>;
 }
 
+function CabecalhoMetrica({ label, definition }: { label: string; definition: KpiDefinition }) {
+  return (
+    <TableHeaderCell scope="col" className="px-3 py-3">
+      <div className="flex min-w-0 items-center gap-1.5 text-xs font-semibold" style={muted}>
+        <TableText>{label}</TableText>
+        <Explicacao definition={definition}><Info size={13} aria-label={`Detalhes de ${label}`} /></Explicacao>
+      </div>
+    </TableHeaderCell>
+  );
+}
+
 function Origem({ ciclo, rotulo = false }: { ciclo: WorkSftpClienteStatus; rotulo?: boolean }) {
   const label = ciclo.origemComprovantes === 'SFTP' ? 'SFTP'
     : ciclo.origemComprovantes === 'API_ESL' ? 'API ESL' : 'Não informada';
   return (
     <Explicacao definition={definitions.origemComprovantesCiclo}>
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-1 text-xs font-semibold" style={surface}>
-        {rotulo && <span className="font-normal" style={muted}>Origem:</span>}{label}<Info size={12} aria-hidden="true" />
-      </span>
+      <Badge label={rotulo ? 'Origem: ' + label : label} variant="neutral" icon={<Info size={12} aria-hidden="true" />} />
     </Explicacao>
   );
 }
@@ -211,7 +222,7 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim, cliente = '
         </div>
       </div>
       {recentes.isError && <p role="alert" className="text-sm text-negative">{getApiErrorMessage(recentes.error, 'Não foi possível carregar a última execução.')}</p>}
-      {recentes.isLoading && <p role="status" className="text-sm" style={muted}>Carregando última execução…</p>}
+      {recentes.isLoading && <DashboardLoading label="Carregando última execução…" />}
       {!recentes.isError && semContratoProgresso && <p role="status" className="rounded-lg border px-3 py-2 text-sm" style={surface}>A fonte ainda não informa o progresso dos ciclos em andamento. Os quadros abaixo mostram o último ciclo registrado, mesmo que novos documentos estejam sendo processados.</p>}
       {!recentes.isError && cards.map((ciclo) => (
         <article key={ciclo.cliente} className="rounded-xl border" style={surface} aria-label={`Último ciclo de ${ciclo.cliente}`}>
@@ -252,20 +263,20 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim, cliente = '
           </div>
         </div>
         {erroHistorico ? <p role="alert" className="px-4 py-3 text-sm text-negative">{erroHistorico}</p>
-          : historico.isLoading ? <p role="status" className="px-4 py-3 text-sm" style={muted}>Carregando histórico…</p>
+          : historico.isLoading ? <DashboardLoading label="Carregando histórico…" />
             : ciclos.length === 0 ? <p className="px-4 py-4 text-center text-sm" style={muted}>{origem === 'API_ESL' ? 'Nenhum ciclo da API ESL disponível para estes filtros. Este histórico atualmente audita o processo SFTP; isso não significa ausência de consumo da API em outros processos.' : 'Nenhuma execução encontrada para o período e filtros selecionados.'}</p>
               : <>
                 <div className="overflow-x-auto">
                   <Table className="w-full min-w-[1120px] text-left text-sm">
                     <TableHeader className="border-b text-xs" style={{ ...muted, borderColor: 'var(--color-border)' }}><TableRow isHeaderRow>
                       <TableHeaderCell scope="col" className="px-4 py-3">Cliente</TableHeaderCell><TableHeaderCell scope="col" className="px-3 py-3">Finalização / atualização</TableHeaderCell><TableHeaderCell scope="col" className="px-3 py-3">Execução</TableHeaderCell>
-                      <TableHeaderCell scope="col" className="px-3 py-3"><Explicacao definition={definitions.origemComprovantesCiclo}><TituloMetrica>Origem dos comprovantes</TituloMetrica></Explicacao></TableHeaderCell>
-                      <TableHeaderCell scope="col" className="px-3 py-3"><Explicacao definition={definitions.arquivosOrigemCiclo}><TituloMetrica>Arquivos na origem</TituloMetrica></Explicacao></TableHeaderCell>
-                      <TableHeaderCell scope="col" className="px-3 py-3"><Explicacao definition={definitions.processamentoComprovantesCiclo}><TituloMetrica>Neste ciclo</TituloMetrica></Explicacao></TableHeaderCell>
-                      <TableHeaderCell scope="col" className="px-4 py-3"><Explicacao definition={definitions.filaComprovantesCiclo}><TituloMetrica>Pendências apuradas</TituloMetrica></Explicacao></TableHeaderCell>
+                      <CabecalhoMetrica label="Origem dos comprovantes" definition={definitions.origemComprovantesCiclo} />
+                      <CabecalhoMetrica label="Arquivos na origem" definition={definitions.arquivosOrigemCiclo} />
+                      <CabecalhoMetrica label="Neste ciclo" definition={definitions.processamentoComprovantesCiclo} />
+                      <CabecalhoMetrica label="Pendências apuradas" definition={definitions.filaComprovantesCiclo} />
                     </TableRow></TableHeader>
                     <TableBody>{ciclos.map((ciclo) => <TableRow key={`${ciclo.cliente}:${ciclo.inicioUltimoCiclo}:${ciclo.fimUltimoCiclo}`} className="border-b align-top last:border-b-0" style={{ borderColor: 'var(--color-border)' }}>
-                      <TableCell className="px-4 py-3 font-semibold">{ciclo.cliente}</TableCell><TableCell className="whitespace-nowrap px-3 py-3">{ciclo.statusCiclo === 'EM_EXECUCAO' ? <><p>Em andamento · parcial</p><p className="text-xs" style={muted}>{dataHora(ciclo.atualizadoEm ?? null)}</p></> : dataHora(ciclo.fimUltimoCiclo)}</TableCell><TableCell className="px-3 py-3"><Resultado ciclo={ciclo} verificadoEm={historico.dataUpdatedAt} /></TableCell>
+                      <TableCell className="px-4 py-3 font-semibold">{ciclo.cliente}</TableCell><TableCell className="whitespace-nowrap px-3 py-3">{ciclo.statusCiclo === 'EM_EXECUCAO' ? <><TableText>Em andamento · parcial</TableText><p className="text-xs" style={muted}><TableText>{dataHora(ciclo.atualizadoEm ?? null)}</TableText></p></> : dataHora(ciclo.fimUltimoCiclo)}</TableCell><TableCell className="px-3 py-3"><Resultado ciclo={ciclo} verificadoEm={historico.dataUpdatedAt} /></TableCell>
                       <TableCell className="px-3 py-3"><Origem ciclo={ciclo} /></TableCell><TableCell className="px-3 py-3"><Metricas ciclo={ciclo} grupo="arquivos" /></TableCell><TableCell className="px-3 py-3"><Metricas ciclo={ciclo} grupo="processamento" /></TableCell><TableCell className="px-4 py-3"><Metricas ciclo={ciclo} grupo="fila" /></TableCell>
                     </TableRow>)}</TableBody>
                   </Table>

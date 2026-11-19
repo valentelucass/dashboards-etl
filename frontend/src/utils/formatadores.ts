@@ -64,9 +64,13 @@ export function formatarDataHoraMinuto(dataISO: string): string {
   return DATA_HORA_MINUTO_FORMATTER.format(data).replace(',', '').replace(/\s+/g, ' ').trim();
 }
 
+function dataParaExibicao(dataISO: string): Date {
+  // Uma data de calendário já vem no dia correto, sem fuso horário a converter.
+  return new Date(/^\d{4}-\d{2}-\d{2}$/.test(dataISO) ? dataISO + 'T12:00:00' : dataISO);
+}
+
 export function formatarData(dataISO: string): string {
-  const data = new Date(dataISO);
-  return data.toLocaleDateString('pt-BR');
+  return dataParaExibicao(dataISO).toLocaleDateString('pt-BR');
 }
 
 export function formatarDataHora(dataISO: string): string {
@@ -79,6 +83,5 @@ export function formatarDataHora(dataISO: string): string {
 }
 
 export function formatarDataCurta(dataISO: string): string {
-  const data = new Date(dataISO);
-  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  return dataParaExibicao(dataISO).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }

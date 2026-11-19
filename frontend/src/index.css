@@ -72,29 +72,6 @@
     grid-column: span 2;
   }
 
-  .cotacoes-resumo-table {
-    width: 100%;
-    min-width: 0;
-    table-layout: fixed;
-  }
-  .cotacoes-col-entidade { width: 25%; }
-  .cotacoes-col-total, .cotacoes-col-ganhas { width: 6%; }
-  .cotacoes-col-emAberto { width: 7%; }
-  .cotacoes-col-conversao { width: 14%; }
-  .cotacoes-col-freteCotado, .cotacoes-col-freteGanho { width: 15%; }
-  .cotacoes-col-volumeM3 { width: 12%; }
-  .cotacoes-resumo-table th,
-  .cotacoes-resumo-table td {
-    padding-inline: 8px;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  .cotacoes-resumo-table td:first-child > div { gap: 8px; }
-  .cotacoes-resumo-table td:first-child .truncate {
-    white-space: normal;
-    overflow: visible;
-  }
-
   .resumo-integracoes,
   .resumo-etl {
     display: grid;

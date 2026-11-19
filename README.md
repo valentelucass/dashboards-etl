@@ -18,7 +18,7 @@ graph TD
     Cloudflare <-->|Porta 5173 / Localhost| ReactUI[React 19 Frontend]
     Cloudflare <-->|Porta 5010 / Localhost| SpringBoot[Spring Boot 3.2 Backend]
     SpringBoot <-->|JDBC / Objetos próprios| DashboardDB[(SQL Server - DASHBOARDS)]
-    SpringBoot -->|SELECT read-only| ETLViews[(SQL Server - ETL_SISTEMA / esl_cloud - dbo.vw_*_powerbi)]
+    SpringBoot -->|SELECT pelos sinônimos do painel| ETLViews[(SQL Server - ETL_SISTEMA_V2.pub)]
 ```
 
 ---
@@ -29,7 +29,7 @@ O **Flyway** em `database/migrations` é a **única fonte de verdade estrutural*
 
 DDL em runtime via Java é proibido. O backend roda com `spring.jpa.hibernate.ddl-auto=none`; classes de validação de schema podem apenas verificar contratos e falhar de forma explícita quando uma migration obrigatória não foi aplicada. Elas não devem executar `CREATE`, `ALTER`, `DROP` ou sincronizações estruturais.
 
-O banco `DASHBOARDS` concentra os objetos próprios da aplicação, especialmente o schema `acesso` e estruturas administrativas. As views analíticas `dbo.vw_*_powerbi` e `dbo.vw_dim_*` são contrato publicado pelo projeto **ETL Extração de Dados** no banco/schema `ETL_SISTEMA` (`esl_cloud`) e devem ser consumidas em modo somente leitura.
+O banco `DASHBOARDS` concentra os objetos próprios da aplicação, especialmente o schema `acesso` e as estruturas administrativas. Em produção e no DEV, os sinônimos locais apontam para os relatórios publicados em `ETL_SISTEMA_V2.pub`. A API consulta esses dados em modo de leitura.
 
 O usuário de runtime da API deve operar com privilégio mínimo. Permissões DDL são reservadas à execução controlada de migrations, nunca ao fluxo normal da aplicação.
 
@@ -37,7 +37,7 @@ O usuário de runtime da API deve operar com privilégio mínimo. Permissões DD
 
 ## 🔌 Integração com ETL e Performance
 
-O Dashboard é estritamente **consumidor** das views do ETL. Alterações em tabelas base, views `vw_*_powerbi`, views dimensionais, materializações ou regras estruturais de BI pertencem ao projeto `etl-extracao-dados`.
+O Dashboard é **consumidor** das views do ETL. Alterações em tabelas base, views `vw_*_powerbi`, views dimensionais, materializações ou regras estruturais de BI pertencem ao projeto `etl-extracao-dados-v2`.
 
 O processamento de dados para painéis recorrentes deve acontecer no banco, por meio de projeções SQL, views, queries agregadas e paginação SQL. Agregações, filtros, rankings, `DISTINCT`, somatórios e recortes de período não devem ser feitos carregando grandes volumes na memória da JVM.
 

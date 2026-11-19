@@ -1,6 +1,7 @@
+import DashboardLoading from './DashboardLoading';
 import DashboardSelector from "./DashboardSelector";
 import DashboardButton from "./DashboardButton";
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from './DashboardTable';
 import { Card } from '@astryxdesign/core/Card';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -188,17 +189,7 @@ export default function DataTable<T>({
   }, [paginaSegura, totalPaginas]);
 
   if (isLoading) {
-    return (
-      <div
-        className="flex items-center justify-center rounded-[20px] border p-8 shadow-sm"
-        style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-      >
-        <div
-          className="h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
-          style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}
-        />
-      </div>
-    );
+    return <Card padding={4} className="dashboard-table-card"><DashboardLoading variant="section" label={titulo ? 'Carregando ' + titulo : 'Carregando tabela'} /></Card>;
   }
 
   return (
@@ -268,7 +259,7 @@ export default function DataTable<T>({
                   }}
                 >
                   <span className={`flex w-full items-center gap-1 ${getHeaderJustifyClass(col.alinhamento)}`}>
-                    <span>{col.label}</span>
+                    <TableText>{col.label}</TableText>
                     {col.tooltip ? <TableHeaderTooltip label={col.label} content={col.tooltip} /> : null}
                     {col.ordenavel !== false && ordenarPor === col.chave && (
                       <span className="shrink-0">{direcao === 'asc' ? '↑' : '↓'}</span>

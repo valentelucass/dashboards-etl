@@ -63,6 +63,27 @@ textarea {
   letter-spacing: -.025em;
 }
 
+.dashboard-cell-text.astryx-text {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+}
+
+.dashboard-column-filter .dashboard-inline-input {
+  gap: .25rem;
+  padding-inline: .375rem;
+}
+
+.dashboard-column-filter input[type="search"]:placeholder-shown::-webkit-search-cancel-button {
+  display: none;
+}
+
+.dashboard-column-filter input:not(:focus) {
+  text-overflow: ellipsis;
+}
+
 .dashboard-table-card :is(th, td) {
   font-variant-numeric: tabular-nums;
 }
@@ -113,17 +134,10 @@ textarea {
 }
 
 :root {
-  --coletas-chart-volume: #185fb6;
-  --coletas-chart-finalizadas: #087d60;
-  --coletas-chart-weight: #9b4a0a;
-  --coletas-chart-tratativa: #6d42b2;
-}
-
-.dark {
-  --coletas-chart-volume: #65a9fa;
-  --coletas-chart-finalizadas: #59c9a6;
-  --coletas-chart-weight: #ffab61;
-  --coletas-chart-tratativa: #ac91f6;
+  --coletas-chart-volume: var(--color-data-categorical-blue);
+  --coletas-chart-finalizadas: var(--color-data-categorical-green);
+  --coletas-chart-weight: var(--color-data-categorical-orange);
+  --coletas-chart-tratativa: var(--color-data-categorical-purple);
 }
 
 .dashboard-coletas-status {
@@ -249,6 +263,12 @@ textarea {
 
 .dashboard-plot-radial {
   position: relative;
+}
+
+/* A semicircle uses an invisible half for geometry. The card supplies the
+   actual global percentage to screen readers, including values above 100%. */
+.dashboard-radial-gauge table {
+  display: none;
 }
 
 .dashboard-radial-legend {
@@ -482,14 +502,9 @@ textarea {
 
 
 /* Custom sections and native controls reuse the same visual system. */
-.dashboard-shell .dashboard-status-badge {
-  min-height: 22px;
-  padding-inline: .625rem;
-  max-width: 100%;
-}
-
 .astryx-badge {
-  min-height: 22px;
+  min-block-size: 24px;
+  max-inline-size: 100%;
   padding-inline: .625rem;
   gap: .25rem;
 }
@@ -599,6 +614,42 @@ textarea {
   place-items: center;
   min-height: 100dvh;
   background: var(--color-bg);
+}
+
+.dashboard-loading {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  width: 100%;
+  min-width: 0;
+  gap: .625rem;
+}
+
+.dashboard-loading--field {
+  width: min(8rem, 100%);
+  min-height: 1.5rem;
+}
+
+.dashboard-loading--section {
+  max-width: 34rem;
+  padding-block: .75rem;
+}
+
+.dashboard-loading-card {
+  flex: 1 1 110px;
+  min-width: 0;
+}
+
+.dashboard-loading--card {
+  min-height: 3.75rem;
+}
+
+.dashboard-route-loading > .dashboard-loading {
+  width: min(18rem, 80vw);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-loading .astryx-skeleton { animation: none; }
 }
 
 .dashboard-auth-brand {
@@ -799,6 +850,8 @@ textarea {
   font-family: inherit;
 }
 
+.tracking-region-matrix .astryx-tooltip[role="tooltip"],
+.astryx-table-scroll-wrapper .astryx-tooltip[role="tooltip"],
 .astryx-tooltip[role="tooltip"]:has(.dashboard-info-tooltip) {
   background-color: var(--color-background-surface, var(--color-card));
   color: var(--color-text);
@@ -844,4 +897,28 @@ textarea {
   .dashboard-chart-tooltip-details {
     grid-template-columns: max-content minmax(0, 1fr);
   }
+}
+
+/* A tabela ocupa o painel, com espaço reservado ao conteúdo de cada métrica. */
+table.cotacoes-resumo-table {
+  width: 100%;
+  min-width: 54rem;
+  table-layout: fixed;
+}
+.cotacoes-col-entidade { width: 14rem; }
+.cotacoes-col-conversao { width: 15%; }
+.cotacoes-col-freteCotado, .cotacoes-col-freteGanho { width: 14%; }
+.cotacoes-col-volumeM3 { width: 11%; }
+.cotacoes-resumo-table :is(th, td) { padding-inline: clamp(.5rem, 1vw, 1rem); }
+.cotacoes-resumo-table :is(th, td):not(:first-child) { text-align: end; font-variant-numeric: tabular-nums; }
+.cotacoes-resumo-table th { white-space: normal; }
+
+.cotacoes-resumo-table :is(th, td):nth-child(n+2):nth-child(-n+4) { text-align: center; }
+.dashboard-chart-heading .dashboard-core-selector {
+  min-height: var(--size-element-sm, 28px);
+  height: var(--size-element-sm, 28px);
+  padding-inline: .65rem;
+}
+.dashboard-chart-heading [role="radio"][aria-disabled="true"] {
+  color: color-mix(in srgb, var(--color-text-muted) 80%, var(--color-card));
 }

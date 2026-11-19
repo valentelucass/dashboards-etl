@@ -1,3 +1,4 @@
+import { Badge } from '@astryxdesign/core/Badge';
 import { Dialog } from '@astryxdesign/core/Dialog';
 import { FileInput } from '@astryxdesign/core/FileInput';
 import { Text } from '@astryxdesign/core/Text';
@@ -75,20 +76,6 @@ function SummaryCard({ label, value, accent }: { label: string; value: number; a
 
 function formatStatus(status: CubagemClientesImportacaoStatus) {
   return status === 'PRONTA' ? 'Pronta' : 'Erro de validação';
-}
-
-function statusStyle(status: CubagemClientesImportacaoStatus) {
-  if (status === 'PRONTA') {
-    return {
-      backgroundColor: 'rgba(22, 163, 74, 0.14)',
-      color: '#15803d',
-    };
-  }
-
-  return {
-    backgroundColor: 'rgba(220, 38, 38, 0.14)',
-    color: '#dc2626',
-  };
 }
 
 function formatarCnpj(cnpj: string | null | undefined) {
@@ -184,19 +171,14 @@ function CubagemClientesImportacaoModalAberto({ onClose }: Pick<CubagemClientesI
       label: 'Status',
       largura: '160px',
       formato: (valor) => (
-        <span
-          className="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
-          style={statusStyle(valor as CubagemClientesImportacaoStatus)}
-        >
-          {formatStatus(valor as CubagemClientesImportacaoStatus)}
-        </span>
+        <Badge label={formatStatus(valor as CubagemClientesImportacaoStatus)} variant={valor === 'PRONTA' ? 'success' : 'error'} />
       ),
     },
     {
       chave: 'mensagensResumo',
       label: 'Mensagens',
       largura: '360px',
-      formato: (valor) => <span className="whitespace-normal">{String(valor || '—')}</span>,
+      formato: (valor) => String(valor || '—'),
     },
   ];
 
@@ -207,7 +189,7 @@ function CubagemClientesImportacaoModalAberto({ onClose }: Pick<CubagemClientesI
       chave: 'motivo',
       label: 'Motivo',
       largura: '520px',
-      formato: (valor) => <span className="whitespace-normal">{String(valor)}</span>,
+      formato: (valor) => String(valor),
     },
   ];
 

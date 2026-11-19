@@ -1,3 +1,4 @@
+import { Badge } from '@astryxdesign/core/Badge';
 import { DashboardInput } from "../components/shared/DashboardTextEntry";
 import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
@@ -47,7 +48,6 @@ const CORES_GAUGE_MANIFESTOS = {
   efetividade: 'var(--color-warning-fill)',
 } as const;
 const EMPTY_ARRAY: never[] = [];
-const KPI_BADGE_BASE_CLASS = 'inline-flex min-w-[68px] items-center justify-center rounded-md px-2 py-1 text-xs font-semibold tabular-nums';
 const TIPOS_CONTRATO_OPTIONS = ['Agregado', 'Terceiro', 'Frota', 'Frota + PX'];
 
 type ManifestoTabelaRow = ManifestoResumoRow & {
@@ -143,34 +143,32 @@ function calcularPercentualRemuneracao(
   return (custo / receita) * 100;
 }
 
-function renderPercentualBadge(percentual: number | null, classeCor: string) {
+function renderPercentualBadge(percentual: number | null, variant: 'success' | 'warning' | 'error' | 'neutral') {
   if (percentual == null) {
     return '—';
   }
 
   return (
-    <span className={`${KPI_BADGE_BASE_CLASS} ${classeCor}`}>
-      {formatarNumero(percentual, 1)}%
-    </span>
+    <Badge label={`${formatarNumero(percentual, 1)}%`} variant={variant} />
   );
 }
 
-function classeRemuneracao(percentual: number): string {
-  if (percentual <= 20) return 'bg-green-500/10 text-green-500';
-  if (percentual <= 30) return 'bg-yellow-500/10 text-yellow-600';
-  return 'bg-red-500/10 text-red-500';
+function classeRemuneracao(percentual: number) {
+  if (percentual <= 20) return 'success';
+  if (percentual <= 30) return 'warning';
+  return 'error';
 }
 
-function classeAproveitamento(percentual: number): string {
-  if (percentual > 80) return 'bg-green-500/10 text-green-500';
-  if (percentual >= 40) return 'bg-yellow-500/10 text-yellow-600';
-  return 'bg-red-500/10 text-red-500';
+function classeAproveitamento(percentual: number) {
+  if (percentual > 80) return 'success';
+  if (percentual >= 40) return 'warning';
+  return 'error';
 }
 
-function classeEfetividade(percentual: number): string {
-  if (percentual > 70) return 'bg-green-500/10 text-green-500';
-  if (percentual >= 60) return 'bg-yellow-500/10 text-yellow-600';
-  return 'bg-red-500/10 text-red-500';
+function classeEfetividade(percentual: number) {
+  if (percentual > 70) return 'success';
+  if (percentual >= 60) return 'warning';
+  return 'error';
 }
 
 function normalizarNivel(valor: string | null): ManifestosTempoNivel {
@@ -188,15 +186,16 @@ function normalizarNumeroManifestoInput(valor: string): string {
 }
 
 export default function ManifestosPage() {
+  const [carregarOpcoesDeFiltro, setCarregarOpcoesDeFiltro] = useState(false);
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const [isMetasPanelOpen, setIsMetasPanelOpen] = useState(false);
   const [tableSort, setTableSort] = useState<ManifestosTableSort | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const { isDark } = useEchartsTheme();
   const { canAccess } = usePermissions();
-  const filiais = useFiliais();
-  const motoristas = useMotoristas();
-  const veiculos = useVeiculos();
+  const filiais = useFiliais(carregarOpcoesDeFiltro);
+  const motoristas = useMotoristas(carregarOpcoesDeFiltro);
+  const veiculos = useVeiculos(carregarOpcoesDeFiltro);
   const nivelTemporal = normalizarNivel(searchParams.get(NIVEL_PARAM));
   const anoTemporal = numeroParam(searchParams.get(ANO_PARAM));
   const mesTemporal = numeroParam(searchParams.get(MES_PARAM));
@@ -240,7 +239,7 @@ export default function ManifestosPage() {
     { label: 'Tipos de contrato', count: filtros.tiposContrato?.length ?? 0, onRemove: () => setFiltro('tiposContrato', []) },
   ], [filtros.classificacoes, filtros.filiais, filtros.motoristas, filtros.parceirosLogisticos, filtros.tiposContrato, filtros.veiculos, numeroManifestoFiltro, setFiltro]);
 
-  const classificacoes = useManifestosClassificacoes(filtro);
+  const classificacoes = useManifestosClassificacoes(filtro, carregarOpcoesDeFiltro);
   const performance = useManifestosPerformance(filtro, nivelTemporal, anoTemporal, mesTemporal);
   const filtrosTabela = useAnalyticalTableFilters();
   const paginacaoResetKey = useMemo(() => JSON.stringify({ filtro, tabela: filtrosTabela.resetKey }), [filtro, filtrosTabela.resetKey]);
@@ -382,7 +381,7 @@ export default function ManifestosPage() {
       tooltip: KpiDictionary.manifestos.remuneracao.tabela.calculo,
       formato: (_, row) => {
         const percentual = calcularPercentualRemuneracao(row.custoTotal, row.receitaTotalTransportada);
-        return renderPercentualBadge(percentual, percentual == null ? '' : classeRemuneracao(percentual));
+        return renderPercentualBadge(percentual, percentual == null ? 'neutral' : classeRemuneracao(percentual));
       },
     },
     {
@@ -391,7 +390,7 @@ export default function ManifestosPage() {
       tooltip: KpiDictionary.manifestos.aproveitamento.geral.calculo,
       formato: (_, row) => {
         const percentual = calcularPercentual(row.totalPesoTaxado, row.capacidadeKg);
-        return renderPercentualBadge(percentual, percentual == null ? '' : classeAproveitamento(percentual));
+        return renderPercentualBadge(percentual, percentual == null ? 'neutral' : classeAproveitamento(percentual));
       },
     },
     {
@@ -400,7 +399,7 @@ export default function ManifestosPage() {
       tooltip: KpiDictionary.manifestos.efetividade.geral.calculo,
       formato: (_, row) => {
         const percentual = calcularPercentual(row.itensFinalizados, row.itensTotal);
-        return renderPercentualBadge(percentual, percentual == null ? '' : classeEfetividade(percentual));
+        return renderPercentualBadge(percentual, percentual == null ? 'neutral' : classeEfetividade(percentual));
       },
     },
   ], []);
@@ -408,6 +407,7 @@ export default function ManifestosPage() {
   return (
     <div className="w-full">
       <FilterBar
+        onOpen={() => setCarregarOpcoesDeFiltro(true)}
         period={(
           <DateRangePicker
             dataInicio={dataInicio}

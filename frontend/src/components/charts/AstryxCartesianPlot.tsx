@@ -114,8 +114,10 @@ export default function AstryxCartesianPlot({ model, series, rows, height, label
     }
   }
   const categoryFormat = (id: unknown) => formatAxis(category, categoryById.get(String(id))?.name ?? '');
+  const leftInset = config.grid?.containLabel === false && typeof config.grid.left === 'number'
+    ? config.grid.left : axisInset(yAxis, primaryDomain);
   const margin = {
-    left: horizontal ? Math.min(154, Math.max(82, category.axisLabel?.width ?? config.grid?.left ?? 92)) : axisInset(yAxis, primaryDomain),
+    left: horizontal ? Math.min(154, Math.max(82, category.axisLabel?.width ?? config.grid?.left ?? 92)) : leftInset,
     right: rightAxis && secondaryDomain ? axisInset(rightAxis, secondaryDomain)
       : horizontal ? Math.max(42, Math.ceil(axisInset(axis, primaryDomain) / 2)) : 16,
     bottom: horizontal ? 32 : 35,

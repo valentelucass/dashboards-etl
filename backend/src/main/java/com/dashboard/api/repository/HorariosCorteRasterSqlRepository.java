@@ -84,8 +84,6 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     p.cod_solicitacao,
                     MAX(p.data_extracao) AS parada_data_extracao
                 FROM dbo.raster_viagem_paradas p
-                INNER JOIN viagens_base vb
-                    ON vb.cod_solicitacao = p.cod_solicitacao
                 GROUP BY p.cod_solicitacao
             ),
             viagens AS (
@@ -301,21 +299,13 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
             """;
 
     private static final String SQL_OVERVIEW = SQL_INDICADOR_CTE + """
-            , ultima_importacao AS (
-                SELECT TOP (1)
-                    data_extracao_at,
-                    nome_arquivo
-                FROM indicador
-                WHERE data_extracao_at IS NOT NULL
-                ORDER BY data_extracao_at DESC
-            )
             SELECT
                 CONVERT(NVARCHAR(30), MAX(data_extracao_at), 126) AS updated_at,
                 COUNT_BIG(1) AS total_programado,
                 COALESCE(SUM(CASE WHEN saiu_no_horario = 1 THEN 1 ELSE 0 END), 0) AS saidas_no_horario,
                 COALESCE(SUM(CASE WHEN saiu_no_horario = 0 THEN 1 ELSE 0 END), 0) AS saidas_fora_horario,
-                (SELECT CONVERT(NVARCHAR(30), data_extracao_at, 126) FROM ultima_importacao) AS ultima_importacao_em,
-                (SELECT nome_arquivo FROM ultima_importacao) AS ultima_importacao_arquivo
+                CONVERT(NVARCHAR(30), MAX(data_extracao_at), 126) AS ultima_importacao_em,
+                MAX(CASE WHEN data_extracao_at IS NOT NULL THEN nome_arquivo END) AS ultima_importacao_arquivo
             FROM indicador
             """;
 

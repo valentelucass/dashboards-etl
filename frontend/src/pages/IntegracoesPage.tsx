@@ -1,5 +1,5 @@
+import DashboardSegments from '../components/shared/DashboardSegments';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
-import DashboardButton from "../components/shared/DashboardButton";
 import IndicadoresIntegracoesPanel from '../components/domain/integracoes/IndicadoresIntegracoesPanel';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -77,11 +77,7 @@ function criarColunas(selia: boolean): ColunaTabelaAnalitica<IntegracaoPendencia
       chave: 'chaveNfe',
       label: 'Chave NF-e',
       largura: '360px',
-      formato: (valor) => (
-        <span className="block max-w-[360px] truncate" title={typeof valor === 'string' ? valor : undefined}>
-          {typeof valor === 'string' && valor.trim() ? valor : '-'}
-        </span>
-      ),
+      formato: (valor) => typeof valor === 'string' && valor.trim() ? valor : '-',
     },
     { chave: 'statusDados', label: 'Status Dados/Evento', largura: '160px', filtroTabela: 'status', formato: renderStatus },
     { chave: 'statusCanhoto', label: 'Status Comprovante/POD', largura: '190px', filtroTabela: 'status', formato: renderStatus },
@@ -201,7 +197,7 @@ export default function IntegracoesPage() {
 
   return (
     <div className="w-full">
-      <FilterBar
+      <FilterBar actionsOnMobileRow
         period={(
           <DateRangePicker
             dataInicio={dataInicio}
@@ -218,29 +214,11 @@ export default function IntegracoesPage() {
           : []}
         onClear={() => setDestinoSelecionado('')}
         actions={(
-          <div className="flex items-center gap-1" role="group" aria-label="Filtrar por integração">
-            {[{ valor: '', label: 'Todos' }, ...OPCOES_DESTINO_INTEGRACAO.map((destino) => ({
-              valor: destino,
-              label: destino === 'VEDACIT' ? 'Vedacit' : destino,
-            }))].map((opcao) => {
-              const ativo = destinoSelecionado === opcao.valor;
-              return (
-                <DashboardButton
-                  key={opcao.label}
-                  type="button"
-                  aria-pressed={ativo}
-                  onClick={() => setDestinoSelecionado(opcao.valor)}
-                  className="h-8 cursor-pointer border-b-2 px-2 text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                  style={{
-                    color: ativo ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                    borderBottomColor: ativo ? 'var(--color-primary)' : 'transparent',
-                  }}
-                >
-                  {opcao.label}
-                </DashboardButton>
-              );
-            })}
-          </div>
+          <DashboardSegments label="Filtrar por integração" value={destinoSelecionado || 'todos'}
+            options={[{ value: 'todos', label: 'Todos' }, ...OPCOES_DESTINO_INTEGRACAO.map(value => ({
+              value, label: value === 'VEDACIT' ? 'Vedacit' : value,
+            }))]}
+            onChange={value => setDestinoSelecionado(value === 'todos' ? '' : value)} />
         )}
       >
       </FilterBar>

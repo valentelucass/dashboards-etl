@@ -4,7 +4,7 @@
 
 O monorepo `dashboards` entrega uma plataforma de dashboards operacionais, financeiros, executivos e de saude do ETL. O backend expoe contratos HTTP protegidos por JWT e ACL. O frontend consome esses contratos com React Query, mantendo filtros compartilhados na URL e renderizacao progressiva.
 
-Este projeto e consumidor dos dados publicados pelo ETL. Ele nao e dono estrutural das tabelas, views ou modelos analiticos do schema `ETL_SISTEMA` (`esl_cloud`).
+Este projeto consome os dados que o ETL publica em `ETL_SISTEMA_V2.pub`.
 
 ## Topologia do monorepo
 
@@ -61,7 +61,7 @@ Modulos de apoio:
 
 ### 1. O ETL e o banco sao a fonte estrutural dos dados
 
-O ETL e o unico owner estrutural das views `dbo.vw_*_powerbi` e `dbo.vw_dim_*` no schema `ETL_SISTEMA` (`esl_cloud`). O Dashboard consome essas views em modo leitura e nao executa DDL cross-database para cria-las, corrigir colunas ou manter wrappers locais.
+O ETL mantém as views em `ETL_SISTEMA_V2.pub`. O Dashboard consulta essas views em modo de leitura por meio dos sinônimos no banco do painel.
 
 No schema proprio do Dashboard, a fonte de verdade estrutural e o Flyway em `database/migrations`. DDL em runtime dentro de Java e proibido; inicializadores ou validadores podem conferir pre-condicoes, mas nao criar estrutura automaticamente em producao.
 

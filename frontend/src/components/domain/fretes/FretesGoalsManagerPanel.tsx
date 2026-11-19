@@ -1,3 +1,5 @@
+import DashboardLoading from '../../shared/DashboardLoading';
+import { Badge } from '@astryxdesign/core/Badge';
 import { NumberInput } from '@astryxdesign/core/NumberInput';
 import DashboardSelector from "../../shared/DashboardSelector";
 import DashboardButton from "../../shared/DashboardButton";
@@ -168,9 +170,7 @@ export default function FretesGoalsManagerPanel({
           </p>
         </div>
         {isLoading ? (
-          <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: 'rgba(37, 99, 235, 0.12)', color: '#1d4ed8' }}>
-            Carregando metas
-          </span>
+          <DashboardLoading label="Carregando metas" />
         ) : null}
       </div>
 
@@ -299,9 +299,7 @@ export default function FretesGoalsManagerPanel({
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{config.branchId}</span>
-                    <span className="rounded-full border px-2 py-0.5 text-[11px] font-semibold" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
-                      Fat. {formatarMoeda(config.metaFaturamento)}
-                    </span>
+                    <Badge label={'Fat. ' + formatarMoeda(config.metaFaturamento)} variant="neutral" />
                   </div>
                   <p className="mt-1 text-xs" style={{ color: 'var(--color-text-subtle)' }}>
                     Última atualização: {config.updatedAt ? formatarDataHora(config.updatedAt) : '—'} · {config.updatedByName ?? 'Usuário não identificado'}

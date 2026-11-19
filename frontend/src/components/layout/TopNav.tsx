@@ -1,3 +1,4 @@
+import { Badge } from '@astryxdesign/core/Badge';
 import DashboardButton from "../shared/DashboardButton";
 import { Button } from '@astryxdesign/core/Button';
 import { getDashboardNavSections, getNavIcon } from './dashboardNavItems';
@@ -91,12 +92,7 @@ function DrawerNavSection({
                     <span className="flex items-center justify-between gap-3">
                       <span className="truncate text-sm font-semibold">{item.label}</span>
                       {isActive && (
-                        <span
-                          className="rounded-full px-2 py-0.5 text-[10px] font-bold leading-none"
-                          style={{ backgroundColor: 'rgba(33, 71, 138, 0.14)', color: 'var(--color-primary)' }}
-                        >
-                          Atual
-                        </span>
+                        <Badge label="Atual" variant="info" />
                       )}
                     </span>
                     {item.description && (

@@ -1,3 +1,5 @@
+import { Spinner } from '@astryxdesign/core/Spinner';
+import DashboardLoading from '../shared/DashboardLoading';
 import { AlertDialog } from '@astryxdesign/core/AlertDialog';
 import { Card } from '@astryxdesign/core/Card';
 import DashboardButton from "../shared/DashboardButton";
@@ -113,7 +115,7 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
             aria-label={`Remover ${row.clienteCnpjLabel} da whitelist de cubagem`}
           >
             {isDeleting ? (
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <Spinner size="sm" aria-hidden="true" />
             ) : (
               <Trash2 size={15} aria-hidden="true" />
             )}
@@ -147,7 +149,7 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
             className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING_CLASS}`}
             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)', backgroundColor: 'var(--color-card)' }}
           >
-            <RefreshCw size={14} aria-hidden="true" className={clientes.isFetching ? 'animate-spin' : ''} />
+            {clientes.isFetching ? <Spinner size="sm" aria-hidden="true" /> : <RefreshCw size={14} aria-hidden="true" />}
             Atualizar
           </DashboardButton>
           <DashboardButton
@@ -175,24 +177,20 @@ export default function CubagemClientesExcecaoPanel({ onImportClick }: CubagemCl
       {!isExpanded ? (
         <div className="grid gap-3 text-xs md:grid-cols-3" aria-label="Resumo da whitelist de cubagem">
           <div className="rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
-            <span className="block font-semibold" style={{ color: 'var(--color-text)' }}>
-              {clientes.isLoading ? 'Carregando...' : `${resumo.total} cliente${resumo.total === 1 ? '' : 's'} ativo${resumo.total === 1 ? '' : 's'}`}
-            </span>
+            <div className="block font-semibold" style={{ color: 'var(--color-text)' }}>{clientes.isLoading ? <DashboardLoading label="Carregando clientes" /> : `${resumo.total} cliente${resumo.total === 1 ? '' : 's'} ativo${resumo.total === 1 ? '' : 's'}`}</div>
             <span style={{ color: 'var(--color-text-subtle)' }}>CNPJs dispensados do indicador.</span>
           </div>
           <div className="rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
             <span className="block font-semibold" style={{ color: 'var(--color-text)' }}>
               Última atualização
             </span>
-            <span style={{ color: 'var(--color-text-subtle)' }}>{clientes.isLoading ? 'Carregando...' : resumo.ultimaAtualizacao}</span>
+            <div style={{ color: 'var(--color-text-subtle)' }}>{clientes.isLoading ? <DashboardLoading label="Carregando clientes" /> : resumo.ultimaAtualizacao}</div>
           </div>
           <div className="min-w-0 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
             <span className="block font-semibold" style={{ color: 'var(--color-text)' }}>
               Dentro da lista
             </span>
-            <span className="block max-w-full truncate" style={{ color: 'var(--color-text-subtle)' }} title={clientes.isLoading ? undefined : resumo.exemplos}>
-              {clientes.isLoading ? 'Carregando...' : resumo.exemplos}
-            </span>
+            <div className="block max-w-full truncate" style={{ color: 'var(--color-text-subtle)' }} title={clientes.isLoading ? undefined : resumo.exemplos}>{clientes.isLoading ? <DashboardLoading label="Carregando clientes" /> : resumo.exemplos}</div>
           </div>
         </div>
       ) : null}

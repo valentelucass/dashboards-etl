@@ -1,7 +1,8 @@
+import { Badge } from '@astryxdesign/core/Badge';
 import { Dialog } from '@astryxdesign/core/Dialog';
 import { FileInput } from '@astryxdesign/core/FileInput';
 import { Text } from '@astryxdesign/core/Text';
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '../shared/DashboardTable';
 import DashboardButton from "../shared/DashboardButton";
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
@@ -97,28 +98,12 @@ function formatPreviewStatus(status: UserImportPreviewRow['status']): string {
   }
 }
 
-function previewStatusStyle(status: UserImportPreviewRow['status']) {
+function previewStatusVariant(status: UserImportPreviewRow['status']) {
   switch (status) {
-    case 'PRONTA':
-      return {
-        backgroundColor: 'rgba(22, 163, 74, 0.14)',
-        color: '#15803d',
-      };
-    case 'CONFLITO_EMAIL_EXISTENTE':
-      return {
-        backgroundColor: 'rgba(249, 115, 22, 0.16)',
-        color: '#ea580c',
-      };
-    case 'SETOR_INEXISTENTE':
-      return {
-        backgroundColor: 'rgba(220, 38, 38, 0.14)',
-        color: '#dc2626',
-      };
-    default:
-      return {
-        backgroundColor: 'rgba(71, 85, 105, 0.14)',
-        color: '#475569',
-      };
+    case 'PRONTA': return 'success';
+    case 'CONFLITO_EMAIL_EXISTENTE': return 'warning';
+    case 'SETOR_INEXISTENTE': return 'error';
+    default: return 'neutral';
   }
 }
 
@@ -392,19 +377,14 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
       label: 'Status',
       largura: '180px',
       formato: (valor) => (
-        <span
-          className="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
-          style={previewStatusStyle(valor as UserImportPreviewRow['status'])}
-        >
-          {formatPreviewStatus(valor as UserImportPreviewRow['status'])}
-        </span>
+        <Badge label={formatPreviewStatus(valor as UserImportPreviewRow['status'])} variant={previewStatusVariant(valor as UserImportPreviewRow['status'])} />
       ),
     },
     {
       chave: 'mensagensResumo',
       label: 'Mensagens',
       largura: '340px',
-      formato: (valor) => <span className="whitespace-normal">{String(valor || '—')}</span>,
+      formato: (valor) => String(valor || '—'),
     },
   ];
 
@@ -416,7 +396,7 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
       chave: 'motivo',
       label: 'Motivo',
       largura: '420px',
-      formato: (valor) => <span className="whitespace-normal">{String(valor)}</span>,
+      formato: (valor) => String(valor),
     },
   ];
 

@@ -1,8 +1,12 @@
+import { Spinner } from '@astryxdesign/core/Spinner';
+import DashboardLoading from '../../shared/DashboardLoading';
+import { Badge } from '@astryxdesign/core/Badge';
+import { ProgressBar } from '@astryxdesign/core/ProgressBar';
 import { DashboardInput } from "../../shared/DashboardTextEntry";
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
-import DashboardButton from "../../shared/DashboardButton";
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from '../../shared/DashboardTable';
+import DashboardSegments from '../../shared/DashboardSegments';
 import { useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, Coins, Loader2, Search, Trophy } from 'lucide-react';
+import { AlertTriangle, BarChart3, Coins, Search, Trophy } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { CotacoesResumoAgregado } from '../../../types/cotacoes';
 import { formatarMoeda, formatarNumero, formatarPorcentagem } from '../../../utils/formatadores';
@@ -60,14 +64,12 @@ const VIEW_CONFIGS: Record<CotacoesResumoVisualView, ViewConfig> = {
   },
 };
 
-const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
-  { key: 'cotacoes', label: 'Mais cotações' },
-  { key: 'conversao', label: 'Maior conversão' },
-  { key: 'frete', label: 'Maior frete ganho' },
+const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: 'cotacoes', label: 'Mais cotações' },
+  { value: 'conversao', label: 'Maior conversão' },
+  { value: 'frete', label: 'Maior frete ganho' },
 ];
 
-const COLUMN_BODY_TINT = 'color-mix(in srgb, var(--color-primary) 4%, transparent)';
-const COLUMN_HEADER_TINT = 'color-mix(in srgb, var(--color-primary) 7%, var(--color-bg))';
 const RESUMO_COLUMNS: Array<{ key: ResumoColumnKey; label: string; align: TableAlignClass }> = [
   { key: 'entidade', label: 'Entidade', align: 'text-left' },
   { key: 'total', label: 'Total Cot.', align: 'text-right' },
@@ -78,14 +80,6 @@ const RESUMO_COLUMNS: Array<{ key: ResumoColumnKey; label: string; align: TableA
   { key: 'freteGanho', label: 'Frete Ganho', align: 'text-right' },
   { key: 'volumeM3', label: 'Volume (m³)', align: 'text-right' },
 ];
-
-function getColumnBodyBackground(index: number): string | undefined {
-  return index % 2 === 1 ? COLUMN_BODY_TINT : undefined;
-}
-
-function getColumnHeaderBackground(index: number): string | undefined {
-  return index % 2 === 1 ? COLUMN_HEADER_TINT : undefined;
-}
 
 function taxaConversao(row: CotacoesResumoAgregado): number {
   if (Number.isFinite(row.taxaConversao)) return row.taxaConversao;
@@ -120,30 +114,6 @@ function getInsightToneColor(tone: InsightTone): string {
   if (tone === 'warning') return 'var(--color-warning-text)';
   if (tone === 'danger') return 'var(--color-negative-text)';
   return 'var(--color-primary)';
-}
-
-function getConversionTone(conversao: number) {
-  if (conversao >= 60) {
-    return {
-      fill: 'var(--color-positive-fill)',
-      badgeBg: 'var(--color-positive-badge-bg)',
-      badgeText: 'var(--color-positive-badge-text)',
-    };
-  }
-
-  if (conversao >= 35) {
-    return {
-      fill: 'var(--color-warning-fill)',
-      badgeBg: 'var(--color-warning-badge-bg)',
-      badgeText: 'var(--color-warning-badge-text)',
-    };
-  }
-
-  return {
-    fill: 'var(--color-negative-fill)',
-    badgeBg: 'var(--color-negative-badge-bg)',
-    badgeText: 'var(--color-negative-badge-text)',
-  };
 }
 
 function escolherMaior(
@@ -216,46 +186,14 @@ function montarInsights(rows: CotacoesResumoAgregado[]): InsightConfig[] {
 }
 
 function ConversionProgress({ value }: { value: number }) {
-  const tone = getConversionTone(value);
-  const largura = Math.max(3, Math.min(100, value));
-
+  const variant = value >= 60 ? 'success' : value >= 35 ? 'warning' : 'error';
   return (
-    <div className="flex min-w-[14rem] items-center justify-end gap-3 lg:max-2xl:min-w-0 lg:max-2xl:gap-1.5">
-      <div className="h-2 w-36 overflow-hidden rounded-full lg:max-2xl:min-w-0 lg:max-2xl:flex-1" style={{ backgroundColor: 'var(--color-border)' }} role="presentation">
-        <div className="h-full rounded-full" style={{ width: `${largura}%`, backgroundColor: tone.fill }} />
+    <div className="flex min-w-0 items-center justify-end gap-2">
+      <div className="min-w-0 max-w-32 flex-1">
+        <ProgressBar value={value} label="Conversão" isLabelHidden variant={variant} />
       </div>
-      <span
-        className="inline-flex min-w-14 justify-center rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums"
-        style={{ backgroundColor: tone.badgeBg, color: tone.badgeText }}
-      >
-        {formatarTaxaConversao(value)}
-      </span>
+      <Badge label={formatarTaxaConversao(value)} variant={variant} />
     </div>
-  );
-}
-
-function ResumoSortButton({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <DashboardButton
-      type="button"
-      onClick={onClick}
-      className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border px-4 text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-      style={{
-        backgroundColor: active ? 'var(--color-bg)' : 'var(--color-card)',
-        borderColor: active ? 'var(--color-primary)' : 'var(--color-border)',
-        color: active ? 'var(--color-primary)' : 'var(--color-text)',
-      }}
-    >
-      {label}
-    </DashboardButton>
   );
 }
 
@@ -298,11 +236,7 @@ function LoadingInsightsBar() {
     >
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-7 w-full animate-pulse rounded-lg border"
-            style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-          />
+          <DashboardLoading key={index} label="" />
         ))}
       </div>
     </div>
@@ -352,7 +286,7 @@ export default function CotacoesResumoVisualTable({
           </div>
           {isLoading && sourceRows.length > 0 && (
             <div className="inline-flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }} aria-live="polite">
-              <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+              <Spinner size="sm" aria-hidden="true" />
               Atualizando...
             </div>
           )}
@@ -384,35 +318,26 @@ export default function CotacoesResumoVisualTable({
             />
           </div>
 
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {SORT_OPTIONS.map((option) => (
-              <ResumoSortButton
-                key={option.key}
-                active={sortKey === option.key}
-                label={option.label}
-                onClick={() => setSortKey(option.key)}
-              />
-            ))}
-          </div>
+          <DashboardSegments label="Ordenar ranking" options={SORT_OPTIONS} value={sortKey} onChange={setSortKey} />
         </div>
       </div>
 
       <div className="overflow-x-auto px-4 pb-4 sm:px-5">
-        <Table className="cotacoes-resumo-table w-max min-w-[max(100%,1080px)] text-sm">
+        <Table density="compact" hasHover isStriped aria-label={config.titlePrefix + ' ' + config.titleHighlight} className="cotacoes-resumo-table text-sm">
           <colgroup>
-            {RESUMO_COLUMNS.map((column, index) => (
-              <col key={column.key} className={`cotacoes-col-${column.key}`} style={{ backgroundColor: getColumnBodyBackground(index) }} />
+            {RESUMO_COLUMNS.map((column) => (
+              <col key={column.key} className={`cotacoes-col-${column.key}`} />
             ))}
           </colgroup>
           <TableHeader>
             <TableRow isHeaderRow className="h-10 border-b" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
-              {RESUMO_COLUMNS.map((column, index) => (
+              {RESUMO_COLUMNS.map((column) => (
                 <TableHeaderCell
                   key={column.key}
                   className={`h-10 whitespace-nowrap px-3 py-2.5 text-xs font-medium uppercase tracking-wider ${column.align}`}
-                  style={{ color: 'var(--color-text-muted)', backgroundColor: getColumnHeaderBackground(index) }}
+                  style={{ color: 'var(--color-text-muted)' }}
                 >
-                  {column.label}
+                  {column.key === 'entidade' ? { usuario: 'Usuário', filial: 'Filial', clientes: 'Cliente' }[view] : column.label}
                 </TableHeaderCell>
               ))}
             </TableRow>
@@ -421,10 +346,7 @@ export default function CotacoesResumoVisualTable({
             {isInitialLoading && (
               <TableRow>
                 <TableCell colSpan={8} className="px-3 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                  <span className="inline-flex items-center justify-center gap-2 font-semibold" aria-live="polite">
-                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-                    {config.loadingMessage}
-                  </span>
+                  <DashboardLoading variant="section" label={config.loadingMessage} />
                 </TableCell>
               </TableRow>
             )}
@@ -446,20 +368,11 @@ export default function CotacoesResumoVisualTable({
                   className="border-b transition-colors hover:bg-[var(--color-bg)]"
                   style={{ borderColor: 'var(--color-border)' }}
                 >
-                  <TableCell className={`max-w-[26rem] px-3 py-3 align-middle ${RESUMO_COLUMNS[0].align}`}>
+                  <TableCell className={`px-3 py-3 align-middle ${RESUMO_COLUMNS[0].align}`}>
                     <div className="flex min-w-0 items-center gap-3">
-                      <span
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black tabular-nums"
-                        style={{
-                          backgroundColor: 'var(--color-bg)',
-                          border: '1px solid var(--color-border)',
-                          color: 'var(--color-primary)',
-                        }}
-                      >
-                        {index + 1}
-                      </span>
-                      <span className="truncate font-semibold" style={{ color: 'var(--color-text)' }} title={row.entidade}>
-                        {row.entidade}
+                      <Badge label={index + 1} variant="neutral" />
+                      <span className="min-w-0 font-semibold" style={{ color: 'var(--color-text)' }}>
+                        <TableText>{row.entidade}</TableText>
                       </span>
                     </div>
                   </TableCell>

@@ -244,10 +244,6 @@
   }
 }
 
-.home-notice-tags .astryx-badge {
-  min-block-size: 24px;
-}
-
 .home-notice-chevron {
   margin-block-start: 3px;
   color: var(--color-text-secondary);

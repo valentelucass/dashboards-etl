@@ -1,11 +1,12 @@
-import { Skeleton } from '@astryxdesign/core/Skeleton';
+import DashboardLoading from '../components/shared/DashboardLoading';
+import DashboardSegments from '../components/shared/DashboardSegments';
 import { Card } from '@astryxdesign/core/Card';
 import DashboardSelector from "../components/shared/DashboardSelector";
 import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import { ArrowLeft, ChevronRight, ChevronUp } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
@@ -53,7 +54,6 @@ import type {
 } from '../types/performance';
 import type { TableApiFilters } from '../types/tableFilters';
 import { getApiErrorMessage, getTipoErro } from '../utils/apiError';
-import { CORES } from '../utils/chartColors';
 import { dataHojeLocal, primeiroDiaMesesAtrasLocal } from '../utils/dateUtils';
 import { buildBaseBarOption, buildBaseLineOption, getEchartsThemeTokens } from '../utils/echartsBuilders';
 import { formatarNumero, formatarPorcentagem } from '../utils/formatadores';
@@ -469,14 +469,12 @@ function PerformanceKpiSkeleton() {
   return (
     <div
       className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6 2xl:grid-cols-12"
-      aria-hidden="true"
+      role="status" aria-label="Carregando indicadores"
     >
       {Array.from({ length: 9 }).map((_, index) => (
         <Card key={index} padding={3}
           className={`${index === 8 ? 'sm:col-span-2 lg:col-span-2' : index >= 6 ? 'lg:col-span-2' : 'lg:col-span-1'} h-[102px] grid gap-2`}>
-          <Skeleton height={12} width="66%" />
-          <Skeleton height={28} width="50%" />
-          <Skeleton height={8} width="75%" />
+          <DashboardLoading label="" variant="section" />
         </Card>
       ))}
     </div>
@@ -571,80 +569,15 @@ function DrilldownActions({
   regiao: string | null;
   onNivelClick: (nivel: PerformanceDrilldownNivel) => void;
 }) {
-  const levelButtonClassName = 'max-w-32 truncate rounded px-1.5 py-1 transition hover:bg-[var(--color-primary)]/10 hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]';
-  const disabledButtonClassName = 'cursor-not-allowed opacity-45 hover:bg-transparent hover:no-underline';
-  const drillUpDesabilitado = nivel === 'responsavel';
-  const regiaoDesabilitada = !responsavel;
-  const cidadeDesabilitada = !responsavel || !regiao;
-  const resolveButtonClassName = (disabled: boolean) => `${levelButtonClassName} ${disabled ? disabledButtonClassName : ''}`;
-  const resolveButtonColor = (ativo: boolean, disabled = false) => {
-    if (disabled) {
-      return 'var(--color-text-subtle)';
-    }
-    return ativo ? CORES.primaria : 'var(--color-text-muted)';
-  };
-
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-end gap-1 text-[11px] font-semibold">
-      <DashboardButton
-        type="button"
-        title="Drill up"
-        aria-label="Drill up"
-        disabled={drillUpDesabilitado}
-        aria-disabled={drillUpDesabilitado}
-        onClick={() => {
-          if (!drillUpDesabilitado) {
-            onNivelClick('responsavel');
-          }
-        }}
-        className={`flex h-7 w-7 items-center justify-center rounded-md border transition focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
-          drillUpDesabilitado ? 'cursor-not-allowed opacity-45' : 'cursor-pointer hover:border-[var(--color-primary)]'
-        }`}
-        style={{ borderColor: 'var(--color-border)', color: resolveButtonColor(true, drillUpDesabilitado) }}
-      >
-        <ChevronUp size={14} />
-      </DashboardButton>
-      <DashboardButton
-        type="button"
-        onClick={() => onNivelClick('responsavel')}
-        className={levelButtonClassName}
-        style={{ color: nivel === 'responsavel' ? CORES.primaria : 'var(--color-text-muted)' }}
-      >
-        Responsável
-      </DashboardButton>
-      <ChevronRight size={12} style={{ color: 'var(--color-text-subtle)' }} />
-      <DashboardButton
-        type="button"
-        disabled={regiaoDesabilitada}
-        aria-disabled={regiaoDesabilitada}
-        onClick={() => {
-          if (!regiaoDesabilitada) {
-            onNivelClick('regiao');
-          }
-        }}
-        className={resolveButtonClassName(regiaoDesabilitada)}
-        title={responsavel ? `Responsável: ${responsavel}` : 'Clique em um responsável no gráfico para habilitar regiões'}
-        style={{ color: resolveButtonColor(nivel === 'regiao', regiaoDesabilitada) }}
-      >
-        Região
-      </DashboardButton>
-      <ChevronRight size={12} style={{ color: 'var(--color-text-subtle)' }} />
-      <DashboardButton
-        type="button"
-        disabled={cidadeDesabilitada}
-        aria-disabled={cidadeDesabilitada}
-        onClick={() => {
-          if (!cidadeDesabilitada) {
-            onNivelClick('cidade');
-          }
-        }}
-        className={resolveButtonClassName(cidadeDesabilitada)}
-        title={regiao ? `Região: ${regiao}` : 'Clique em uma região no gráfico para habilitar cidades'}
-        style={{ color: resolveButtonColor(nivel === 'cidade', cidadeDesabilitada) }}
-      >
-        Cidade
-      </DashboardButton>
-    </div>
+    <DashboardSegments label="Detalhamento da performance" value={nivel} onChange={onNivelClick}
+      options={[
+        { value: 'responsavel', label: 'Responsável' },
+        { value: 'regiao', label: 'Região', disabled: !responsavel,
+          title: responsavel ?? 'Selecione um responsável no gráfico para ver as regiões' },
+        { value: 'cidade', label: 'Cidade', disabled: !responsavel || !regiao,
+          title: regiao ?? 'Selecione uma região no gráfico para ver as cidades' },
+      ]} />
   );
 }
 
@@ -751,14 +684,15 @@ function HistoricoPeriodoActions({
 }
 
 export default function PerformancePage() {
+  const [carregarOpcoesDeFiltro, setCarregarOpcoesDeFiltro] = useState(false);
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const [historicoPeriodoMeses, setHistoricoPeriodoMeses] = useState<HistoricoPeriodoMeses>(3);
   const [pagadorBusca, setPagadorBusca] = useState('');
   const pagadorBuscaDiferida = useDeferredValue(pagadorBusca);
-  const filiais = useFiliais();
-  const pagadores = usePagadores(pagadorBuscaDiferida);
+  const filiais = useFiliais(carregarOpcoesDeFiltro);
+  const pagadores = usePagadores(pagadorBuscaDiferida, carregarOpcoesDeFiltro || Boolean(filtros.pagadores?.length));
 
   const drillNivel = normalizeDrillNivel(searchParams.get('drillNivel'));
   const drillResponsavel = normalizarDrillTexto(searchParams.get('drillResponsavel'));
@@ -836,9 +770,9 @@ export default function PerformancePage() {
   ];
 
   const overview = usePerformanceOverview(filtro);
-  const responsaveis = usePerformanceResponsaveis(filtroSemResponsaveis);
-  const regioesDestino = usePerformanceRegioesDestino(filtroSemRegioesDestino);
-  const cidadesDestino = usePerformanceCidadesDestino(filtroSemCidadesDestino);
+  const responsaveis = usePerformanceResponsaveis(filtroSemResponsaveis, carregarOpcoesDeFiltro);
+  const regioesDestino = usePerformanceRegioesDestino(filtroSemRegioesDestino, carregarOpcoesDeFiltro);
+  const cidadesDestino = usePerformanceCidadesDestino(filtroSemCidadesDestino, carregarOpcoesDeFiltro);
   const serieTemporal = usePerformanceSerieTemporal(filtro, nivelTemporal, anoTemporal, mesTemporal);
   const status = usePerformanceStatus(filtro);
   const historico = usePerformanceHistorico(historicoFiltro, historicoPeriodoMeses);
@@ -1003,6 +937,7 @@ export default function PerformancePage() {
   return (
     <div className="w-full">
       <FilterBar
+        onOpen={() => setCarregarOpcoesDeFiltro(true)}
         period={(
           <DateRangePicker
             dataInicio={dataInicio}

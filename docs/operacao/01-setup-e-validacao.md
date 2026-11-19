@@ -69,15 +69,15 @@ VITE_ACESSO_USUARIO_SUPREMO_PAPEL=desenvolvedor
 CORS_ORIGENS_PERMITIDAS=https://analytics.rodogarcia.com.br
 ```
 
-O backend de produção deve rodar em `prod` na porta `5010`, e o frontend de produção não deve ser servido por `vite dev`. Na VM, use o lançador único:
+O backend de produção usa o perfil `prod` na porta `5010`. A interface estática usa a porta `5173`. Para gerar o pacote de produção na VM, execute o comando abaixo.
 
 ```powershell
 .\iniciar-prod.bat
 ```
 
-Ele valida o ambiente, avisa quando o checkout não está na branch principal ou tem alterações locais, valida o contrato publicado pelo ETL, libera apenas as portas de produção, gera `frontend/dist-prod` atualizado, bloqueia starts concorrentes, abre o backend em um terminal externo, espera o healthcheck ficar `UP`, valida o preflight CORS da API local e abre o frontend estático em outro terminal externo. As portas DEV `5011/5174` não são encerradas por esse fluxo.
+O comando exige a branch `main` limpa, confere a leitura do relatório de Localização de Cargas e gera o servidor, a interface e o manifesto em `.tmp/production/<build-id>`. Na publicação, o operador instala o pacote nos dois processos do painel no PM2 e confere a versão em `/build-info.json`, o login e os relatórios no endereço público.
 
-Antes de subir produção, aplique no banco `DASHBOARDS` apenas as migrations próprias do Dashboard. As views `dbo.vw_*_powerbi` pertencem ao ETL e devem estar publicadas e validadas pelo owner do banco `ETL_SISTEMA` (`esl_cloud`) antes do deploy do Dashboard. A API do Dashboard deve consumir esse contrato em leitura, sem criar wrappers locais nem executar DDL cross-database.
+Antes da publicação, confirme que o ETL concluiu o lote e que a fila de relatórios na V2 está vazia. Aplique as migrações do portal no banco `DASHBOARDS` com Flyway. As migrações V072 a V076 usam os relatórios preparados em `ETL_SISTEMA_V2.pub`. A API acessa esses relatórios pelos sinônimos locais.
 
 O Cloudflare Tunnel deve apontar `analytics.rodogarcia.com.br` para `http://127.0.0.1:5173` e `api-analytics.rodogarcia.com.br` para `http://127.0.0.1:5010`.
 

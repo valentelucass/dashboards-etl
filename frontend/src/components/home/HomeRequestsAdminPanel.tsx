@@ -1,3 +1,4 @@
+import DashboardLoading from '../shared/DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Button } from '@astryxdesign/core/Button';
@@ -5,7 +6,6 @@ import { Card } from '@astryxdesign/core/Card';
 import { Dialog } from '@astryxdesign/core/Dialog';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Heading } from '@astryxdesign/core/Heading';
-import { Spinner } from '@astryxdesign/core/Spinner';
 import { Tab, TabList } from '@astryxdesign/core/TabList';
 import { Text } from '@astryxdesign/core/Text';
 import { useId, useState } from 'react';
@@ -73,7 +73,7 @@ export default function HomeRequestsAdminPanel({
         </TabList>
         <div className="home-fields" role="tabpanel" id={sectionId + '-panel'} aria-labelledby={sectionId + '-' + view}>
           {error && <Banner status="error" title={error} />}
-          {isLoading && <Spinner label="Carregando solicitações" size="sm" />}
+          {isLoading && <DashboardLoading variant="section" label="Carregando solicitações" />}
           {!isLoading && visible.length === 0 && <EmptyState title="Nenhuma solicitação nesta situação" icon={<ClipboardList size={24} />} isCompact />}
           {visible.length > 0 && <div className="home-request-list">
             {visible.map(request => (

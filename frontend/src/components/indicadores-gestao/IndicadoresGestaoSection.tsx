@@ -1,3 +1,5 @@
+import DashboardLoading, { LoadingKpiGrid } from '../shared/DashboardLoading';
+import { Badge } from '@astryxdesign/core/Badge';
 import DashboardButton from "../shared/DashboardButton";
 import { useId, type ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -14,7 +16,7 @@ import type { ChartDictionaryKey } from '../../constants/chartDictionary';
 import type { KpiDefinition } from '../../constants/kpiDictionary';
 import type { TableFilters } from '../../types/tableFilters';
 import { getApiErrorMessage, getTipoErro } from '../../utils/apiError';
-import { getGoalToneStyle, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
+import { goalProgressVariant, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
 
 interface GoalBadgeProps {
   label: string;
@@ -22,15 +24,8 @@ interface GoalBadgeProps {
 }
 
 function GoalBadge({ label, tone = 'neutral' }: GoalBadgeProps) {
-  const style = getGoalToneStyle(tone);
-
   return (
-    <span
-      className="inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide"
-      style={{ backgroundColor: style.badgeBg, color: style.badgeText }}
-    >
-      {label}
-    </span>
+    <Badge label={label} variant={goalProgressVariant[tone]} />
   );
 }
 
@@ -163,7 +158,7 @@ export default function IndicadoresGestaoSection<T>({
             <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
               {title}
             </h2>
-            <GoalBadge label={goalLabel} tone={goalTone} />
+            {goalTone === 'loading' ? <DashboardLoading label="Carregando meta" /> : <GoalBadge label={goalLabel} tone={goalTone} />}
           </div>
           <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>
             {description}
@@ -180,7 +175,7 @@ export default function IndicadoresGestaoSection<T>({
       {extra}
 
       <div className="mb-5">
-        <KpiGrid count={4}>
+        {goalTone === 'loading' ? <LoadingKpiGrid count={kpis.length} /> : <KpiGrid count={4}>
           {kpis.map((kpi) => (
             <TooltipKpi key={kpi.label} definition={kpi.definition}>
               <KpiCard
@@ -192,7 +187,7 @@ export default function IndicadoresGestaoSection<T>({
               />
             </TooltipKpi>
           ))}
-        </KpiGrid>
+        </KpiGrid>}
       </div>
 
       <div className="mb-4">

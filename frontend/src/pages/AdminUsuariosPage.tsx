@@ -1,3 +1,6 @@
+import { TableText } from '../components/shared/DashboardTable';
+import DashboardLoading from '../components/shared/DashboardLoading';
+import { Badge } from '@astryxdesign/core/Badge';
 import DashboardButton from "../components/shared/DashboardButton";
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -117,39 +120,10 @@ const SECONDARY_BUTTON_STYLE = {
 
 const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
 
-const ACTIVE_BADGE_STYLE = {
-  backgroundColor: 'rgba(22, 163, 74, 0.14)',
-  color: '#15803d',
-};
-
-const INACTIVE_BADGE_STYLE = {
-  backgroundColor: 'rgba(220, 38, 38, 0.14)',
-  color: '#dc2626',
-};
-
-const ONLINE_BADGE_STYLE = {
-  backgroundColor: 'rgba(22, 163, 74, 0.14)',
-  color: '#15803d',
-};
-
-const OFFLINE_BADGE_STYLE = {
-  backgroundColor: 'rgba(100, 116, 139, 0.14)',
-  color: 'var(--color-text-muted)',
-};
-
-const PASSWORD_STATUS_STYLE = {
-  segura: {
-    backgroundColor: 'rgba(22, 163, 74, 0.14)',
-    color: '#15803d',
-  },
-  migrar_no_login: {
-    backgroundColor: 'rgba(249, 115, 22, 0.16)',
-    color: '#ea580c',
-  },
-  reset_obrigatorio: {
-    backgroundColor: 'rgba(220, 38, 38, 0.14)',
-    color: '#dc2626',
-  },
+const passwordVariant = {
+  segura: 'success',
+  migrar_no_login: 'warning',
+  reset_obrigatorio: 'error',
 } as const;
 
 function formatPasswordStatus(status: UsuarioAdmin['statusSenha']): string {
@@ -166,20 +140,14 @@ function formatPasswordStatus(status: UsuarioAdmin['statusSenha']): string {
 }
 
 function renderPasswordStatusBadge(status: UsuarioAdmin['statusSenha'], algoritmo: string, passwordResetRequestedAt: string | null) {
-  const style = PASSWORD_STATUS_STYLE[status];
-
   return (
     <div className="flex flex-col gap-1">
-      <span className="inline-flex w-fit rounded-full px-2 py-1 text-xs font-medium" style={style}>
-        {formatPasswordStatus(status)}
-      </span>
+      <Badge label={formatPasswordStatus(status)} variant={passwordVariant[status]} />
       <span className="text-[11px]" style={{ color: 'var(--color-text-subtle)' }}>
-        Hash: {algoritmo}
+        <TableText>Hash: {algoritmo}</TableText>
       </span>
       {passwordResetRequestedAt && (
-        <span className="inline-flex w-fit rounded-full px-2 py-1 text-[11px] font-medium" style={{ backgroundColor: 'var(--color-warning-badge-bg)', color: 'var(--color-warning-badge-text)' }}>
-          Redefinição solicitada
-        </span>
+        <Badge label="Redefinição solicitada" variant="warning" />
       )}
     </div>
   );
@@ -373,9 +341,9 @@ function OnlineUsersCard({
         {isError ? <p role="alert" className="p-5 text-sm">Não foi possível atualizar a presença. Aguardando nova consulta.</p> :
         <div className="grid gap-0 md:grid-cols-2">
           <section className="p-4 md:border-r" style={{ borderColor: 'var(--color-border)' }}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><span className="rounded-full px-2 py-0.5 text-xs font-bold" style={ONLINE_BADGE_STYLE}>{isLoading ? '—' : totalOnline}</span></div>
+            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><Badge label={isLoading ? '—' : totalOnline} variant="success" /></div>
             <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-              {isLoading ? <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Carregando presença...</p> : usuarios.length > 0 ? usuarios.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online podeVerTrilha={podeVerTrilha} onSelect={() => setSelecionado(usuario)} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhuma outra pessoa com presença confirmada agora.</p>}
+              {isLoading ? <DashboardLoading label="Carregando presença..." /> : usuarios.length > 0 ? usuarios.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online podeVerTrilha={podeVerTrilha} onSelect={() => setSelecionado(usuario)} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhuma outra pessoa com presença confirmada agora.</p>}
             </div>
           </section>
           <section className="border-t p-4 md:border-l-0 md:border-t-0" style={{ borderColor: 'var(--color-border)' }}>
@@ -393,10 +361,10 @@ function OnlineUsersCard({
         </div>
         <div className="min-w-0">
           <TooltipKpi kpiName="administracao.usuariosOnline"><div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold leading-none" style={{ color: '#10b981' }}>{isError || isLoading ? '—' : totalOnline}</span>
+            {isLoading ? <DashboardLoading label="Consultando presença..." className="max-w-10" /> : <span className="text-2xl font-bold leading-none" style={{ color: '#10b981' }}>{isError ? '—' : totalOnline}</span>}
             <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>Online agora</span>
           </div></TooltipKpi>
-          <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>{isError ? 'Presença indisponível' : isLoading ? 'Consultando presença...' : 'Outras pessoas com a página em foco'}</div>
+          <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>{isError ? 'Presença indisponível' : isLoading ? null : 'Outras pessoas com a página em foco'}</div>
         </div>
         <DashboardButton {...trigger} type="button" aria-label="Ver detalhes de presença" title="Ver detalhes de presença" className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
             <CircleHelp size={16} aria-hidden="true" />
@@ -484,12 +452,7 @@ function useIsMobileUsersTable() {
 
 function renderStatusBadge(ativo: boolean) {
   return (
-    <span
-      className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-medium"
-      style={ativo ? ACTIVE_BADGE_STYLE : INACTIVE_BADGE_STYLE}
-    >
-      {ativo ? 'Ativo' : 'Inativo'}
-    </span>
+    <Badge label={ativo ? 'Ativo' : 'Inativo'} variant={ativo ? 'success' : 'error'} />
   );
 }
 
@@ -497,13 +460,7 @@ function renderOnlineBadge(isOnline: boolean | null, propriaConta: boolean) {
   if (propriaConta) return <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Sua conta</span>;
   if (isOnline === null) return <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Presença indisponível</span>;
   return (
-    <span
-      className="inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
-      style={isOnline ? ONLINE_BADGE_STYLE : OFFLINE_BADGE_STYLE}
-    >
-      {isOnline && <span className="h-1.5 w-1.5 rounded-full bg-[#10b981] motion-safe:animate-pulse" aria-hidden="true" />}
-      {isOnline ? 'Online' : 'Offline'}
-    </span>
+    <Badge label={isOnline ? 'Online' : 'Offline'} variant={isOnline ? 'success' : 'neutral'} />
   );
 }
 
@@ -511,34 +468,21 @@ function formatUltimaAtividade(valor: string | null): string {
   return valor ? formatarDataHoraMinuto(valor) : 'Sem atividade registrada';
 }
 
-function renderMobileUsuarioCell(row: UsuarioRow) {
-  return (
-    <div className="min-w-[11rem] whitespace-normal">
-      <p className="text-sm font-semibold leading-tight" style={{ color: 'var(--color-text)' }}>
-        {row.nome}
-      </p>
-      <p className="mt-1 break-all text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
-        {row.email}
-      </p>
-    </div>
-  );
-}
-
 function renderMobileAccessCell(row: UsuarioRow) {
   return (
-    <div className="min-w-[14rem] space-y-2 whitespace-normal text-xs leading-relaxed">
+    <div className="min-w-0 space-y-2 text-xs leading-relaxed">
       <div className="flex flex-wrap items-center gap-2">
         {renderStatusBadge(row.ativo)}
-        <span className="font-medium" style={{ color: 'var(--color-text)' }}>
-          {row.setorNome}
+        <span className="min-w-0 font-medium" style={{ color: 'var(--color-text)' }}>
+          <TableText>{row.setorNome}</TableText>
         </span>
       </div>
 
       <div className="space-y-1 break-words">
-        <p style={{ color: 'var(--color-text)' }}>{row.papelResumo || 'Sem papel'}</p>
-        <p style={{ color: 'var(--color-text-muted)' }}>{row.senhaResumo}</p>
+        <p style={{ color: 'var(--color-text)' }}><TableText>{row.papelResumo || 'Sem papel'}</TableText></p>
+        <p style={{ color: 'var(--color-text-muted)' }}><TableText>{row.senhaResumo}</TableText></p>
         <p style={{ color: 'var(--color-text-muted)' }}>
-          Última tela: {row.ultimaRotaAcessada ?? 'Sem registro'}
+          <TableText>Última tela: {row.ultimaRotaAcessada ?? 'Sem registro'}</TableText>
         </p>
       </div>
     </div>
@@ -593,12 +537,12 @@ function DetailTextBlock({ label, value, fallback }: { label: string; value: str
 
 function renderUsuarioIdentityCell(row: UsuarioRow) {
   return (
-    <div className="min-w-[12rem] whitespace-normal">
+    <div className="min-w-0">
       <p className="text-sm font-semibold leading-tight" style={{ color: 'var(--color-text)' }}>
-        {row.nome}
+        <TableText>{row.nome}</TableText>
       </p>
-      <p className="mt-1 break-all text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
-        {row.email}
+      <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+        <TableText>{row.email}</TableText>
       </p>
     </div>
   );
@@ -606,8 +550,8 @@ function renderUsuarioIdentityCell(row: UsuarioRow) {
 
 function renderPapelCell(row: UsuarioRow) {
   return (
-    <div className="max-w-[12rem] whitespace-normal text-sm leading-relaxed" style={{ color: 'var(--color-text)' }}>
-      {row.papelResumo || 'Sem papel'}
+    <div className="text-sm leading-relaxed" style={{ color: 'var(--color-text)' }}>
+      <TableText>{row.papelResumo || 'Sem papel'}</TableText>
     </div>
   );
 }
@@ -616,15 +560,15 @@ function renderUltimaTelaCell(row: UsuarioRow) {
   const atividade = formatUltimaAtividade(row.ultimaAtividade);
 
   return (
-    <div className="min-w-[10rem] max-w-[12rem] space-y-1 whitespace-normal">
+    <div className="min-w-0 space-y-1">
       <div className="flex flex-wrap items-center gap-2">
         {renderOnlineBadge(row.presencaAtual, row.propriaConta)}
-        <span className="truncate text-sm font-medium" style={{ color: 'var(--color-text)' }} title={row.ultimaRotaAcessada ?? undefined}>
-          {row.ultimaRotaAcessada ?? 'Sem registro'}
+        <span className="min-w-0 text-sm font-medium" style={{ color: 'var(--color-text)' }}>
+          <TableText>{row.ultimaRotaAcessada ?? 'Sem registro'}</TableText>
         </span>
       </div>
-      <p className="truncate text-xs" style={{ color: 'var(--color-text-muted)' }} title={atividade}>
-        {atividade}
+      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+        <TableText>{atividade}</TableText>
       </p>
     </div>
   );
@@ -1096,7 +1040,7 @@ export default function AdminUsuariosPage() {
       chave: 'nome',
       label: 'Usuário',
       largura: '220px',
-      formato: (_, row) => renderMobileUsuarioCell(row),
+      formato: (_, row) => renderUsuarioIdentityCell(row),
     },
     {
       chave: 'setorNome',

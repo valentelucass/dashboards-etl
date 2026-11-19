@@ -1,3 +1,4 @@
+import DashboardLoading from '../components/shared/DashboardLoading';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { isAxiosError } from 'axios';
@@ -160,7 +161,7 @@ export default function LoginPage() {
   return (
     <DashboardAuthLayout title={title} description={description}>
       <form onSubmit={trocaObrigatoria ? handleNovaSenhaObrigatoria : solicitandoRedefinicao ? handleSolicitarRedefinicao : handleLogin} className="dashboard-auth-form">
-        {carregandoSessao && <p role="status" className="dashboard-form-hint">Validando sessão salva…</p>}
+        {carregandoSessao && <DashboardLoading label="Validando sessão salva…" />}
         {erro && <Banner status="error" title={erro} role="alert" />}
         {mensagemRedefinicao && <Banner status="success" title={mensagemRedefinicao} role="status" />}
 

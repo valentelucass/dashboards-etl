@@ -1,11 +1,11 @@
+import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
+import DashboardSegments from '../components/shared/DashboardSegments';
 import DashboardSelector from "../components/shared/DashboardSelector";
-import DashboardButton from "../components/shared/DashboardButton";
 import ColetasBars from '../components/domain/coletas/ColetasBars';
 import { ColetasRegionChart, ColetasStatusChart } from '../components/domain/coletas/ColetasOperationalCharts';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 import ColetasKpiGrid from '../components/domain/coletas/ColetasKpiGrid';
 import ColetasTrend from '../components/domain/coletas/ColetasTrend';
 import ChartWrapper from '../components/charts/ChartWrapper';
@@ -26,7 +26,6 @@ import { useColetasCidadesOrigem, useColetasOperacao, useColetasStatus, useColet
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import type { ColetaResumoRow, ColetasFiltro, ColetasHistoricoPerformance, ColetasHistoricoPeriodo } from '../types/coletas';
-import { CORES } from '../utils/chartColors';
 import { formatarMoeda, formatarPeso, formatarPorcentagem } from '../utils/formatadores';
 import { combinarStatusOptions } from '../utils/tableStatusOptions';
 
@@ -104,14 +103,15 @@ function HistoricoPeriodoActions({
 }
 
 export default function ColetasPage() {
+  const [carregarOpcoesDeFiltro, setCarregarOpcoesDeFiltro] = useState(false);
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
   const [regiaoLogisticaSelecionada, setRegiaoLogisticaSelecionada] = useState<string | null>(null);
   const [regiaoLogisticaEmFoco, setRegiaoLogisticaEmFoco] = useState<string | null>(null);
   const [origemLimite, setOrigemLimite] = useState<(typeof ORIGEM_LIMITES)[number]>(10);
   const [historicoPeriodo, setHistoricoPeriodo] = useState<ColetasHistoricoPeriodo>('dias');
-  const filiais = useFiliais();
-  const clientes = useClientes();
-  const usuarios = useUsuarios();
+  const filiais = useFiliais(carregarOpcoesDeFiltro);
+  const clientes = useClientes(carregarOpcoesDeFiltro);
+  const usuarios = useUsuarios(carregarOpcoesDeFiltro);
 
   const filtro: ColetasFiltro = useMemo(() => ({
     dataInicio,
@@ -318,8 +318,6 @@ export default function ColetasPage() {
         aria-label="Quantidade exibida"
         value={origemLimite}
         onValueChange={selectedValue => setOrigemLimite(Number(selectedValue) as (typeof ORIGEM_LIMITES)[number])}
-        className="h-8 rounded-md border bg-transparent px-2 text-[11px] font-semibold outline-none"
-        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
       >
         {ORIGEM_LIMITES.map((limite) => (
           <option key={limite} value={limite}>
@@ -327,59 +325,16 @@ export default function ColetasPage() {
           </option>
         ))}
       </DashboardSelector>
-      <div className="flex min-w-0 items-center gap-1 rounded-lg border px-1 py-0.5" style={{ borderColor: 'var(--color-border)' }}>
-        <DashboardButton
-          type="button"
-          title="Drill up"
-          aria-label="Drill up para regiões"
-          disabled={!regiaoLogisticaSelecionada}
-          onClick={fazerDrillUpOrigem}
-          className="flex h-7 w-7 items-center justify-center rounded-md transition disabled:cursor-not-allowed disabled:opacity-35"
-          style={{ color: regiaoLogisticaSelecionada ? CORES.primaria : 'var(--color-text-muted)' }}
-        >
-          <ChevronUp size={14} />
-        </DashboardButton>
-        <DashboardButton
-          type="button"
-          onClick={fazerDrillUpOrigem}
-          className="rounded-md px-2 py-1 text-[11px] font-semibold transition"
-          style={{
-            backgroundColor: !regiaoLogisticaSelecionada ? `${CORES.primaria}1F` : 'transparent',
-            color: !regiaoLogisticaSelecionada ? CORES.primaria : 'var(--color-text-muted)',
-          }}
-        >
-          Regiões logísticas
-        </DashboardButton>
-        <ChevronRight size={12} style={{ color: 'var(--color-text-subtle)' }} />
-        <DashboardButton
-          type="button"
-          title={regiaoLogisticaSelecionada ? `Cidades de ${regiaoLogisticaSelecionada}` : regiaoLogisticaDrilldown ? `Drill down para ${regiaoLogisticaDrilldown}` : 'Sem regiões para drill down'}
-          disabled={!podeDrillDownOrigem && !regiaoLogisticaSelecionada}
-          onClick={() => {
-            if (!regiaoLogisticaSelecionada) {
-              fazerDrillDownOrigem();
-            }
-          }}
-          className="max-w-36 truncate rounded-md px-2 py-1 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-55"
-          style={{
-            backgroundColor: regiaoLogisticaSelecionada ? `${CORES.sucesso}1F` : 'transparent',
-            color: regiaoLogisticaSelecionada || podeDrillDownOrigem ? CORES.sucesso : 'var(--color-text-muted)',
-          }}
-        >
-          Cidades
-        </DashboardButton>
-        <DashboardButton
-          type="button"
-          title={regiaoLogisticaDrilldown ? `Drill down para ${regiaoLogisticaDrilldown}` : 'Sem regiões para drill down'}
-          aria-label="Drill down para cidades"
-          disabled={!podeDrillDownOrigem}
-          onClick={fazerDrillDownOrigem}
-          className="flex h-7 w-7 items-center justify-center rounded-md transition disabled:cursor-not-allowed disabled:opacity-35"
-          style={{ color: podeDrillDownOrigem ? CORES.sucesso : 'var(--color-text-muted)' }}
-        >
-          <ChevronDown size={14} />
-        </DashboardButton>
-      </div>
+      <DashboardSegments label="Detalhamento das coletas" value={regiaoLogisticaSelecionada ? 'cidade' : 'regiao'}
+        options={[
+          { value: 'regiao', label: 'Regiões logísticas' },
+          { value: 'cidade', label: 'Cidades', disabled: !podeDrillDownOrigem && !regiaoLogisticaSelecionada,
+            title: regiaoLogisticaSelecionada ?? regiaoLogisticaDrilldown ?? 'Selecione uma região para ver as cidades' },
+        ]}
+        onChange={nivel => {
+          if (nivel === 'regiao') fazerDrillUpOrigem();
+          else if (!regiaoLogisticaSelecionada) fazerDrillDownOrigem();
+        }} />
     </div>
   ), [fazerDrillDownOrigem, fazerDrillUpOrigem, origemLimite, podeDrillDownOrigem, regiaoLogisticaDrilldown, regiaoLogisticaSelecionada]);
 
@@ -402,6 +357,7 @@ export default function ColetasPage() {
   return (
     <div className="w-full">
       <FilterBar
+        onOpen={() => setCarregarOpcoesDeFiltro(true)}
         period={(
           <DateRangePicker
             dataInicio={dataInicio}
@@ -437,6 +393,7 @@ export default function ColetasPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de coletas.')} tipo={getTipoErro(overview.error)} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid count={9} intermediateRows={[5, 4]} />}
       {overview.data && <ColetasKpiGrid overview={overview.data} />}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-6">

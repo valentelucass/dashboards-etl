@@ -1,6 +1,7 @@
+import DashboardLoading from '../../shared/DashboardLoading';
 import { DashboardInput } from "../../shared/DashboardTextEntry";
 import DashboardSelector from "../../shared/DashboardSelector";
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from '../../shared/DashboardTable';
 import DashboardButton from "../../shared/DashboardButton";
 import { useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -432,9 +433,7 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
             {baixarTemplate.isPending ? 'Baixando...' : 'Baixar Planilha Modelo'}
           </DashboardButton>
           {isLoading ? (
-            <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: 'rgba(37, 99, 235, 0.12)', color: '#1d4ed8' }}>
-              Carregando metas
-            </span>
+            <DashboardLoading label="Carregando metas" />
           ) : null}
         </div>
       </div>
@@ -603,9 +602,9 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
                         <TableCell className="px-3 py-3 text-right font-semibold tabular-nums">{formatGoalCurrency(config.costGoal)}</TableCell>
                         <TableCell className="px-3 py-3">
                           <div className="flex items-center justify-between gap-3">
-                            <span className="min-w-0 truncate" title={config.updatedByName ?? undefined}>
+                            <TableText>
                               {config.updatedAt ? formatarDataHora(config.updatedAt) : '—'} · {config.updatedByName ?? 'Usuário não identificado'}
-                            </span>
+                            </TableText>
                             <DashboardButton
                               type="button"
                               disabled={isSaving}

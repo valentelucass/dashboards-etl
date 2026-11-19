@@ -1,3 +1,4 @@
+import DashboardLoading from './DashboardLoading';
 import { useId, useMemo, useState } from 'react';
 import { Check, ChevronDown, X } from 'lucide-react';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -11,6 +12,8 @@ export interface AsyncMultiSelectOpcao {
   label: string;
   description?: string | null;
 }
+
+const OPCOES_POR_PAGINA = 100;
 
 type AsyncMultiSelectOpcaoEntrada = string | AsyncMultiSelectOpcao;
 
@@ -37,6 +40,8 @@ export default function AsyncMultiSelect({
 }: AsyncMultiSelectProps) {
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState('');
+  const [limite, setLimite] = useState(OPCOES_POR_PAGINA);
+  const selecao = useMemo(() => new Set(selecionados), [selecionados]);
   const labelId = useId();
   const valueId = useId();
 
@@ -65,6 +70,7 @@ export default function AsyncMultiSelect({
 
   function handleOpenChange(next: boolean) {
     setAberto(next);
+    if (!next) setLimite(OPCOES_POR_PAGINA);
     if (!next) {
       limparBusca();
     }
@@ -72,6 +78,7 @@ export default function AsyncMultiSelect({
 
   function handleBuscaChange(valor: string) {
     setBusca(valor);
+    setLimite(OPCOES_POR_PAGINA);
     onSearchChange?.(valor);
   }
 
@@ -93,7 +100,7 @@ export default function AsyncMultiSelect({
   const valoresDisponiveis = useMemo(() => opcoesFiltradas.map((opcao) => opcao.value), [opcoesFiltradas]);
   const temOpcoesDisponiveis = valoresDisponiveis.length > 0;
   const todasDisponiveisSelecionadas = temOpcoesDisponiveis
-    && valoresDisponiveis.every((valor) => selecionados.includes(valor));
+    && valoresDisponiveis.every((valor) => selecao.has(valor));
 
   function selecionarTodosDisponiveis() {
     if (!temOpcoesDisponiveis || todasDisponiveisSelecionadas) return;
@@ -101,7 +108,7 @@ export default function AsyncMultiSelect({
   }
 
   function alternar(valor: string) {
-    const proximos = selecionados.includes(valor)
+    const proximos = selecao.has(valor)
       ? selecionados.filter((v) => v !== valor)
       : [...selecionados, valor];
 
@@ -118,7 +125,7 @@ export default function AsyncMultiSelect({
 
   return (
     <Popover label={label} isOpen={aberto} onOpenChange={handleOpenChange} alignment="start" width="min(22rem, calc(100vw - 24px))" padding={3}
-      content={<div className="dashboard-filter-select-panel">
+      content={aberto && <div className="dashboard-filter-select-panel">
         <FormTextField label={`Buscar ${label.toLowerCase()}`} isLabelHidden type="search" hasClear hasAutoFocus
           value={busca} onChange={handleBuscaChange} placeholder={`Buscar ${label.toLowerCase()}…`} />
         <div className="dashboard-filter-select-actions">
@@ -129,11 +136,14 @@ export default function AsyncMultiSelect({
         </div>
 
         <div className="max-h-56 space-y-1 overflow-y-auto">
-          {opcoesFiltradas.map(opcao => (
+          {opcoesFiltradas.slice(0, limite).map(opcao => (
             <CheckboxInput key={opcao.value} label={opcao.label} description={opcao.description ?? undefined}
-              value={selecionados.includes(opcao.value)} onChange={() => alternar(opcao.value)} />
+              value={selecao.has(opcao.value)} onChange={() => alternar(opcao.value)} />
           ))}
-          {isLoading && <p role="status" className="dashboard-form-hint">Carregando…</p>}
+          {opcoesFiltradas.length > limite && (
+            <Button label="Mostrar mais opções" variant="ghost" size="sm" onClick={() => setLimite(valor => valor + OPCOES_POR_PAGINA)} />
+          )}
+          {isLoading && <DashboardLoading label="Carregando…" />}
           {erro && <p role="alert" className="dashboard-form-hint">{erro}</p>}
           {!isLoading && !erro && opcoesFiltradas.length === 0 && <p className="dashboard-form-hint">Nenhuma opção encontrada.</p>}
         </div>

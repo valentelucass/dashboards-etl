@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { RadialChart, RadialSlice, useRadial } from '@astryxdesign/lab';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import { Chart, ChartLegend, ChartSwatch, useChart, useChartColors } from '@astryxdesign/charts';
+import { ChartLegend, ChartSwatch, useChartColors } from '@astryxdesign/charts';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
 import type { ChartEvents } from './AstryxDashboardChart';
 import { asList, readDashboardChart, tooltipLines, valueOf } from './dashboardChartData';
 
-interface RadialSlice {
+interface SliceDatum extends Record<string, unknown> {
   name: string;
   value: number;
   color: string;
@@ -22,7 +23,6 @@ interface RadialPlotProps {
 }
 
 const numberFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
-const fullTurn = Math.PI * 2;
 
 export default function AstryxRadialPlot({ option, height, label, onEvents }: RadialPlotProps) {
   const { series: [spec], config } = readDashboardChart(option);
@@ -30,7 +30,7 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
   const palette = useChartColors().categorical(Math.max(data.length, 1));
   const colors = Array.isArray(option.color) ? option.color.filter((color): color is string => typeof color === 'string') : palette;
   const gauge = data.some(item => typeof item === 'object' && item?.itemStyle?.color === 'transparent');
-  const slices = data.flatMap((datum, index): RadialSlice[] => {
+  const slices = data.flatMap((datum, index): SliceDatum[] => {
     const value = valueOf(datum);
     if (value == null || value < 0) return [];
     const item = typeof datum === 'object' ? datum : null;
@@ -46,6 +46,11 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const visibleSlices = slices.filter(slice => !hidden.has(slice.name) && config.legend?.selected?.[slice.name] !== false);
   const total = visibleSlices.reduce((sum, slice) => sum + slice.value, 0);
+  const segments = visibleSlices.filter(slice => slice.value > 0);
+  // The transparent half completes the circle for the semicircular gauge.
+  const radialData = gauge && total > 0
+    ? [...segments, { name: 'Metade oculta', value: total, color: 'transparent', index: -1, opacity: 0 }]
+    : segments;
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const visible = visibleSlices.find(slice => slice.index === hoveredIndex);
   const legend = !gauge && config.legend?.show !== false;
@@ -56,7 +61,7 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
   });
   const [centerCaption] = asList(option.title);
   const legendLabel = (name: string) => config.legend?.formatter?.(name) ?? name;
-  const point = (slice: RadialSlice) => ({
+  const point = (slice: SliceDatum) => ({
     name: slice.name,
     value: slice.value,
     percent: total ? slice.value / total * 100 : 0,
@@ -68,7 +73,7 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
     componentType: 'series',
     marker: '',
   });
-  const tooltip = (slice: RadialSlice) => {
+  const tooltip = (slice: SliceDatum) => {
     const details = point(slice);
     const formatter = config.tooltip?.formatter;
     if (typeof formatter === 'function') return tooltipLines(formatter(details));
@@ -81,26 +86,20 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
 
   return (
     <div className="dashboard-plot-radial">
-      <Chart
-        aria-label={label}
-        data={[]}
-        xKey="name"
-        series={[]}
-        height={Math.max(40, height - legendHeight)}
-        margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
-        interactions={<RadialSegments
-          slices={visibleSlices} total={total} label={label} active={hoveredIndex} gauge={gauge} labels={labels}
-          centerTitle={centerCaption?.text}
-          centerSubtitle={centerCaption?.subtext}
-          innerRatio={radiusRatio(spec.radius, gauge)}
-          showLabels={!gauge && spec.label?.show !== false && !legend}
-          onHover={slice => {
-            setHoveredIndex(slice?.index ?? null);
-            if (slice) onEvents?.mouseover?.(point(slice));
-          }}
-          onClick={onEvents?.click ? slice => onEvents.click(point(slice)) : undefined}
-        />}
-      />
+      <div className={gauge ? 'dashboard-radial-gauge' : undefined} style={gauge ? { height, overflow: 'clip' } : undefined}>
+        <RadialChart data={radialData} label={label ?? spec.name ?? 'Distribuição'} labelKey="name" valueKey="value"
+          innerRadius={radiusRatio(spec.radius, gauge)} padAngle={gauge ? 0 : Math.min(0.02, 0.5 / Math.max(1, segments.length))}
+          height={gauge ? Math.round(height * 1.54) : Math.max(40, height - legendHeight)}>
+          <SliceMarks data={radialData} gauge={gauge} active={hoveredIndex} labels={labels}
+            centerTitle={centerCaption?.text} centerSubtitle={centerCaption?.subtext}
+            showLabels={!gauge && spec.label?.show !== false && !legend}
+            onHover={slice => {
+              setHoveredIndex(slice?.index ?? null);
+              if (slice) onEvents?.mouseover?.(point(slice));
+            }}
+            onSelect={onEvents?.click ? slice => onEvents.click(point(slice)) : undefined} />
+        </RadialChart>
+      </div>
       {legend && <div className="dashboard-radial-legend dashboard-plot-legend" style={{ maxHeight: legendHeight }}>
         {config.legend?.selectedMode === false
           ? <ChartLegend alignment="center" items={slices.map(slice => ({ label: legendLabel(slice.name), color: slice.color, type: 'bar' }))} />
@@ -133,83 +132,83 @@ function radiusRatio(radius: (string | number)[] | string | number | undefined, 
   return outer > 0 && inner >= 0 && inner < outer ? inner / outer : gauge ? 0.72 : 0.57;
 }
 
-function ringSegment(cx: number, cy: number, outer: number, inner: number, from: number, to: number) {
-  const end = Math.min(to, from + fullTurn - 0.00001);
-  const x = (r: number, angle: number) => cx + Math.cos(angle) * r;
-  const y = (r: number, angle: number) => cy + Math.sin(angle) * r;
-  const large = end - from > Math.PI ? 1 : 0;
-  const outside = `M${x(outer, from)},${y(outer, from)} A${outer},${outer} 0 ${large} 1 ${x(outer, end)},${y(outer, end)}`;
-  if (inner <= 0) return `${outside} L${cx},${cy} Z`;
-  return `${outside} L${x(inner, end)},${y(inner, end)} A${inner},${inner} 0 ${large} 0 ${x(inner, from)},${y(inner, from)} Z`;
-}
-
-function RadialSegments({ slices, total, active, gauge, innerRatio, showLabels, labels, label, centerTitle, centerSubtitle, onHover, onClick }: {
-  slices: RadialSlice[];
-  total: number;
-  active: number | null;
+function SliceMarks({ data, gauge, active, labels, centerTitle, centerSubtitle, showLabels, onHover, onSelect }: {
+  data: SliceDatum[];
   gauge: boolean;
-  innerRatio: number;
-  showLabels: boolean;
+  active: number | null;
   labels: string[];
-  label?: string;
   centerTitle?: string;
   centerSubtitle?: string;
-  onHover: (slice: RadialSlice | null) => void;
-  onClick?: (slice: RadialSlice) => void;
+  showLabels: boolean;
+  onHover: (slice: SliceDatum | null) => void;
+  onSelect?: (slice: SliceDatum) => void;
 }) {
-  const { width, height } = useChart();
-  const centerX = width / 2;
-  const centerY = gauge ? height * 0.78 : height / 2;
-  const outer = Math.max(0, Math.min(width * (showLabels ? 0.32 : 0.43), height * (gauge ? 0.65 : 0.45)));
-  if (outer === 0) return null;
-  let start = gauge ? Math.PI : -Math.PI / 2;
+  const { cx, cy, radius, slices } = useRadial();
+  const marks = useRef<SVGGElement>(null);
+  // RadialSlice owns the geometry. Attach the dashboard's drill-down semantics
+  // to its visible marks so pointer and keyboard select the same original row.
+  useLayoutEffect(() => {
+    marks.current?.querySelectorAll('path').forEach((path, position) => {
+      const item = data[position];
+      if (!item || item.index < 0) {
+        path.setAttribute('aria-hidden', 'true');
+        path.style.pointerEvents = 'none';
+        return;
+      }
+      path.dataset.position = String(position);
+      path.setAttribute('tabindex', '0');
+      path.setAttribute('role', onSelect ? 'button' : 'img');
+      path.setAttribute('aria-label', item.name + ', ' + numberFormat.format(item.value));
+    });
+  }, [data, onSelect]);
+
+  function datum(target: EventTarget | null) {
+    if (!(target instanceof Element)) return null;
+    const position = target.getAttribute('data-position');
+    return position == null ? null : data[Number(position)];
+  }
+
+  const colors = data.map(item => {
+    const opacity = item.opacity * (active !== null && item.index !== active ? 0.72 : 1);
+    return opacity === 1 ? item.color : `color-mix(in srgb, ${item.color} ${opacity * 100}%, transparent)`;
+  });
   return (
-    <g role="group" aria-label={label} onPointerLeave={() => onHover(null)}>
-      {total > 0 && slices.map(slice => {
-        const angle = slice.value / total * (gauge ? Math.PI : fullTurn);
-        const from = start;
-        start += angle;
-        if (angle <= 0) return null;
-        const middle = from + angle / 2;
-        const leadX = centerX + Math.cos(middle) * (outer + 9);
-        const leadY = centerY + Math.sin(middle) * (outer + 11);
-        const anchor = Math.cos(middle) < 0 ? 'end' : 'start';
-        return (
-          <g key={slice.index}>
-            <path
-              d={ringSegment(centerX, centerY, outer, outer * innerRatio, from, start)}
-              fill={slice.color} opacity={active !== null && active !== slice.index ? slice.opacity * 0.72 : slice.opacity}
-              stroke="var(--color-background-surface, var(--color-card))" strokeWidth={gauge ? 0 : 2}
-              aria-label={`${slice.name}, ${numberFormat.format(slice.value)}`}
-              role={onClick ? 'button' : undefined} tabIndex={0}
-              className={onClick ? 'cursor-pointer' : undefined}
-              onPointerEnter={() => onHover(slice)} onFocus={() => onHover(slice)} onBlur={() => onHover(null)}
-              onClick={onClick ? () => onClick(slice) : undefined}
-              onKeyDown={onClick ? event => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  onClick(slice);
-                }
-              } : undefined}
-            />
-            {showLabels && slice.value / total >= 0.08 && (
-              <text className="dashboard-plot-annotation" x={leadX} y={leadY} textAnchor={anchor} pointerEvents="none">
-                {slice.name.length > 13 ? `${slice.name.slice(0, 12)}…` : slice.name}
-                <tspan x={leadX} dy={14}>{numberFormat.format(slice.value / total * 100)}%</tspan>
-              </text>
-            )}
-          </g>
-        );
-      })}
-      {gauge && <g pointerEvents="none" className="dashboard-plot-annotation">
-        <text x={centerX} y={centerY - 9} textAnchor="middle" className="dashboard-gauge-value">{labels[0]}</text>
-        <text x={centerX - outer} y={centerY + 20} textAnchor="start">{labels[1]}</text>
-        <text x={centerX + outer} y={centerY + 20} textAnchor="end">{labels[2]}</text>
-      </g>}
-      {!gauge && centerTitle && <g pointerEvents="none" className="dashboard-plot-annotation" textAnchor="middle">
-        <text x={centerX} y={centerY} className="dashboard-gauge-value">{centerTitle}</text>
-        {centerSubtitle && <text x={centerX} y={centerY + 18}>{centerSubtitle}</text>}
-      </g>}
-    </g>
+    <>
+      <g ref={marks} transform={gauge ? `rotate(-90 ${cx} ${cy})` : undefined}
+        className={onSelect ? 'cursor-pointer' : undefined}
+        onPointerOver={event => onHover(datum(event.target))} onPointerLeave={() => onHover(null)}
+        onFocus={event => onHover(datum(event.target))} onBlur={() => onHover(null)}
+        onClick={event => { const item = datum(event.target); if (item) onSelect?.(item); }}
+        onKeyDown={event => {
+          const item = datum(event.target);
+          if (item && onSelect && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            onSelect(item);
+          }
+        }}>
+        <RadialSlice colors={colors} labels={false} cornerRadius={gauge ? 1 : 0} />
+      </g>
+      <g pointerEvents="none" className="dashboard-plot-annotation" textAnchor="middle">
+        {showLabels && slices?.map((slice, i) => {
+          if (slice.percentage < 0.08) return null;
+          const angle = (slice.startAngle + slice.endAngle) / 2;
+          const x = cx + Math.cos(angle) * (radius + 8);
+          const y = cy + Math.sin(angle) * (radius + 8);
+          // Keep each label inside the SVG, even in a narrow dashboard card.
+          const edge = Math.min(55, cx / 2);
+          const labelX = Math.max(edge, Math.min(cx * 2 - edge, x));
+          const name = data[i].name;
+          return <text key={data[i].index} x={labelX} y={y}>
+            {name.length > 13 ? name.slice(0, 12) + '…' : name}
+            <tspan x={labelX} dy={14}>{numberFormat.format(slice.percentage * 100)}%</tspan>
+          </text>;
+        })}
+        {(gauge || centerTitle) && <text x={cx} y={cy - (gauge ? 9 : 0)} className="dashboard-gauge-value">{gauge ? labels[0] : centerTitle}</text>}
+        {gauge ? <>
+          <text x={cx - radius} y={cy + 20} textAnchor="start">{labels[1]}</text>
+          <text x={cx + radius} y={cy + 20} textAnchor="end">{labels[2]}</text>
+        </> : centerSubtitle && <text x={cx} y={cy + 18}>{centerSubtitle}</text>}
+      </g>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import DashboardLoading from '../../shared/DashboardLoading';
 import KpiCard from '../../shared/KpiCard';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary, type KpiDefinition } from '../../../constants/kpiDictionary';
@@ -16,18 +17,6 @@ interface CustoCard {
   label: string;
   valor: string;
   tone: GoalTone;
-}
-
-function KpiSkeleton() {
-  return (
-    <div
-      className="min-h-[82px] animate-pulse rounded-[20px] border p-3"
-      style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-    >
-      <div className="mb-4 h-3 w-24 rounded bg-slate-200/80" />
-      <div className="h-7 w-28 rounded bg-slate-100/80" />
-    </div>
-  );
 }
 
 function montarCards(dados: ManifestosCustosEvolucao): CustoCard[] {
@@ -116,9 +105,9 @@ export default function ManifestosCustoKpis({
         </div>
       )}
 
-      <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-2">
+      <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-2" aria-busy={isLoading}>
         {isLoading
-          ? Array.from({ length: 8 }, (_, index) => <KpiSkeleton key={index} />)
+          ? Array.from({ length: 8 }, (_, index) => <DashboardLoading key={index} label="" variant="card" />)
           : cards.map((card) => (
             <TooltipKpi key={card.label} definition={card.definition}>
               <KpiCard

@@ -34,6 +34,7 @@ public class EtlSaudeSqlRepository {
     private static final String LOG_STATUS_NORMALIZADO_SQL =
             "COALESCE(NULLIF(UPPER(LTRIM(RTRIM(CONVERT(NVARCHAR(40), log.status_final)))), N''), N'')";
     private static final String LOG_STATUS_SUCESSO_LISTA_SQL = "N'COMPLETO', N'SUCCESS', N'SUCESSO'";
+    private static final String LOG_STATUS_SEM_ERRO_LISTA_SQL = LOG_STATUS_SUCESSO_LISTA_SQL + ", N'ADIADO'";
 
     private final NamedParameterJdbcOperations jdbcTemplate;
     private final DashboardExportSqlBuilder sqlBuilder;
@@ -62,8 +63,9 @@ public class EtlSaudeSqlRepository {
                 agregado AS (
                     SELECT
                         MAX(timestamp_fim) AS updated_at,
-                        COUNT(1) AS total_execucoes,
+                        COUNT(CASE WHEN status_normalizado <> N'ADIADO' THEN 1 END) AS total_execucoes,
                         AVG(CAST(CASE
+                            WHEN status_normalizado = N'ADIADO' THEN NULL
                             WHEN timestamp_fim >= timestamp_inicio THEN DATEDIFF_BIG(SECOND, timestamp_inicio, timestamp_fim)
                             ELSE 0
                         END AS FLOAT)) AS tempo_medio_execucao_segundos,
@@ -82,7 +84,7 @@ public class EtlSaudeSqlRepository {
                 FROM agregado
                 """.formatted(
                 LOG_STATUS_NORMALIZADO_SQL,
-                LOG_STATUS_SUCESSO_LISTA_SQL,
+                LOG_STATUS_SEM_ERRO_LISTA_SQL,
                 LOG_STATUS_SUCESSO_LISTA_SQL
         );
 
@@ -119,7 +121,7 @@ public class EtlSaudeSqlRepository {
                 """.formatted(
                 LOG_STATUS_NORMALIZADO_SQL,
                 LOG_STATUS_SUCESSO_LISTA_SQL,
-                LOG_STATUS_SUCESSO_LISTA_SQL
+                LOG_STATUS_SEM_ERRO_LISTA_SQL
         );
 
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -268,7 +270,7 @@ public class EtlSaudeSqlRepository {
                 )
                 SELECT
                     base_log.target_entity,
-                    COUNT_BIG(1) AS total_extracoes,
+                    COUNT_BIG(CASE WHEN base_log.status_normalizado <> N'ADIADO' THEN 1 END) AS total_extracoes,
                     SUM(CASE WHEN base_log.status_normalizado IN (%s) THEN 1 ELSE 0 END) AS total_sucessos,
                     SUM(CASE WHEN base_log.status_normalizado NOT IN (%s) THEN 1 ELSE 0 END) AS total_falhas,
                     SUM(base_log.registros_gravados) AS total_registros_gravados,
@@ -284,7 +286,7 @@ public class EtlSaudeSqlRepository {
                 """.formatted(
                 LOG_STATUS_NORMALIZADO_SQL,
                 LOG_STATUS_SUCESSO_LISTA_SQL,
-                LOG_STATUS_SUCESSO_LISTA_SQL
+                LOG_STATUS_SEM_ERRO_LISTA_SQL
         );
 
         MapSqlParameterSource params = new MapSqlParameterSource()

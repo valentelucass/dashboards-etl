@@ -1,3 +1,4 @@
+import { LoadingKpiGrid } from '../../shared/DashboardLoading';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { EChartsOption } from 'echarts';
@@ -88,7 +89,7 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
   return (
     <section aria-label="Indicadores separados por etapa" className="mb-6">
       {erro && <p role="alert" className="mb-4 rounded-lg border p-3 text-sm text-negative">{erro}</p>}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {query.isPending ? <LoadingKpiGrid count={periodos.length} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" /> : <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {periodos.map(item => (
           <TooltipKpi key={item.key} kpiName={item.kpi}
             definition={item.key === 'pod' ? detalhesComprovantes : undefined}>
@@ -96,7 +97,7 @@ export default function IndicadoresIntegracoesPanel({ inicio, fim, destinos }: {
               valorStyle={disponivel ? { color: getGoalToneStyle(item.tone).text } : undefined} />
           </TooltipKpi>
         ))}
-      </div>
+      </div>}
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartWrapper titulo={selia ? 'Eventos AddEvents por dia' : 'XML / dados por dia'} option={options.dados} altura={350}
           chartKey="integracoesDadosPorDia" isLoading={query.isPending} erro={erro} isEmpty={!disponivel} />

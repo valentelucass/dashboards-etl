@@ -1,3 +1,4 @@
+import DashboardLoading from '../shared/DashboardLoading';
 import './home.css';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -6,7 +7,6 @@ import { ClickableCard } from '@astryxdesign/core/ClickableCard';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Popover } from '@astryxdesign/core/Popover';
-import { Spinner } from '@astryxdesign/core/Spinner';
 import { Text } from '@astryxdesign/core/Text';
 import { useState } from 'react';
 import { Bell, ChevronDown, X } from 'lucide-react';
@@ -35,7 +35,7 @@ export default function CommunicationsBell({ className }: { className?: string }
               icon={<X size={16} />} onClick={() => setOpen(false)} />
           </div>
           <div aria-label="Lista de comunicações" className="home-fields max-h-[min(24rem,60dvh)] overflow-y-auto">
-            {query.isPending && <Spinner size="sm" label="Carregando comunicações" />}
+            {query.isPending && <DashboardLoading variant="section" label="Carregando comunicações" />}
             {query.isError && (
               <Banner role="alert" status="error" title="Não foi possível atualizar as comunicações."
                 endContent={<Button label="Tentar novamente" variant="ghost" size="sm" onClick={() => void query.refetch()} />} />

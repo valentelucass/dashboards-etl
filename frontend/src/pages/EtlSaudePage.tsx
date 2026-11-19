@@ -1,3 +1,4 @@
+import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
@@ -55,7 +56,7 @@ function numeroSeguro(valor: unknown): number {
 }
 
 function textoMensagemAuditoria(valor: unknown): string {
-  return typeof valor === 'string' && valor.trim() ? valor.replace(/\s+/g, ' ').trim() : '—';
+  return typeof valor === 'string' && valor.trim() ? valor.trim() : '—';
 }
 
 function normalizarTooltipParams(params: unknown): TooltipParam[] {
@@ -451,16 +452,7 @@ export default function EtlSaudePage() {
       chave: 'mensagem',
       label: 'Mensagem',
       largura: '520px',
-      formato: (valor) => {
-        const mensagem = textoMensagemAuditoria(valor);
-        const titulo = typeof valor === 'string' && valor.trim() ? valor : undefined;
-
-        return (
-          <span className="block max-w-[520px] truncate leading-relaxed" title={titulo}>
-            {mensagem}
-          </span>
-        );
-      },
+      formato: textoMensagemAuditoria,
     },
   ];
 
@@ -475,6 +467,7 @@ export default function EtlSaudePage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores do ETL.')} tipo={getTipoErro(overview.error)} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid count={5} className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5" />}
       {overview.data && <EtlSaudeKpiGrid overview={overview.data} />}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

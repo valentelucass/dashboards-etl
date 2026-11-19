@@ -1,4 +1,6 @@
-import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@astryxdesign/core/Table';
+import { Badge } from '@astryxdesign/core/Badge';
+import DashboardLoading from '../../shared/DashboardLoading';
+import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '../../shared/DashboardTable';
 import DashboardButton from "../../shared/DashboardButton";
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +15,10 @@ const campos: Record<AcaoEtapa, keyof Pick<EtapaOperacional, 'aguardandoProcessa
   AGUARDANDO_PROCESSAMENTO: 'aguardandoProcessamento', NOVA_TENTATIVA: 'novaTentativa', AGUARDANDO_ORIGEM: 'aguardandoOrigem',
   AGUARDANDO_CONFIRMACAO: 'aguardandoConfirmacao', INTERVENCAO: 'intervencao', A_CONFERIR: 'semConfirmacaoDatada',
 };
+const tonsAcao = {
+  AGUARDANDO_PROCESSAMENTO: 'info', NOVA_TENTATIVA: 'info', AGUARDANDO_ORIGEM: 'warning',
+  AGUARDANDO_CONFIRMACAO: 'warning', INTERVENCAO: 'error', A_CONFERIR: 'info',
+} as const satisfies Record<AcaoEtapa, string>;
 const motivos: Record<string, string> = { ACESSO_ORIGEM_RECUSADO: 'A origem recusou o acesso ao XML', ESPERA_ACESSO_ORIGEM: 'Aguardando liberação do acesso',
   METADADO_ENTREGA: 'Aguardando data de entrega válida', DOCUMENTO_AUSENTE: 'Documento ausente na origem', ...ACOES_ETAPA };
 const dataHora = (v: string | null) => v ? `${v.slice(0, 10).split('-').reverse().join('/')} ${v.slice(11, 16)}` : 'Não registrada';
@@ -33,7 +39,7 @@ export default function PendenciasEtapasPanel({ etapas, estado }: { etapas: Etap
   return <section aria-label="Pendências atuais por etapa" className="mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
     <TooltipKpi kpiName="integracoes.saldoPorEtapa"><h2 className="text-sm font-semibold">Pendências atuais por etapa</h2></TooltipKpi>
     <p className="mb-3 mt-1 text-xs text-[var(--color-text-muted)]">Todas as datas, respeitando a integração selecionada. Selecione uma quantidade para consultar os documentos.</p>
-    {estado !== 'disponivel' ? <p className="text-sm text-[var(--color-text-muted)]">{estado === 'carregando' ? 'Carregando…' : 'Indicadores indisponíveis.'}</p>
+    {estado === 'carregando' ? <DashboardLoading label="Carregando pendências" /> : estado === 'indisponivel' ? <p className="text-sm text-[var(--color-text-muted)]">Indicadores indisponíveis.</p>
       : grupos.length === 0 ? <p className="text-sm text-[var(--color-text-muted)]">Nenhuma etapa registrada para a seleção.</p>
         : <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
           {grupos.map(g => <div key={g.nome} className="min-w-0 rounded-xl border border-[var(--color-border)] p-3">
@@ -47,9 +53,8 @@ export default function PendenciasEtapasPanel({ etapas, estado }: { etapas: Etap
                 {g.itens.map(e => <TableCell key={e.etapa} className="px-1 text-center"><DashboardButton type="button" disabled={e[campos[acao]] === 0}
                   aria-label={`Ver ${ACOES_ETAPA[acao]} de ${g.nome} · ${rotuloEtapa(e)}`}
                   onClick={() => setSelecao({ destino: g.nome, etapa: e.etapa, acao, pagina: 0 })}
-                  className={`min-w-9 rounded-md px-2 py-1 tabular-nums disabled:text-[var(--color-text-muted)] enabled:font-semibold enabled:underline enabled:decoration-dotted enabled:underline-offset-4 ${
-                    e[campos[acao]] === 0 ? '' : acao === 'INTERVENCAO' ? 'text-negative bg-[var(--color-negative-badge-bg)]' : acao === 'AGUARDANDO_ORIGEM' || acao === 'AGUARDANDO_CONFIRMACAO' ? 'text-[var(--color-warning-badge-text)] bg-[var(--color-warning-badge-bg)]' : 'text-blue-700 dark:text-blue-300 bg-blue-500/10'}`}>
-                  {formatarNumero(e[campos[acao]])}
+                  className="tabular-nums">
+                  <Badge label={formatarNumero(e[campos[acao]])} variant={e[campos[acao]] === 0 ? 'neutral' : tonsAcao[acao]} />
                 </DashboardButton></TableCell>)}
               </TableRow>)}</TableBody>
             </Table>
@@ -60,7 +65,7 @@ export default function PendenciasEtapasPanel({ etapas, estado }: { etapas: Etap
       <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">{selecaoVisivel.destino} · {ACOES_ETAPA[selecaoVisivel.acao]}</h3>
         <DashboardButton type="button" onClick={() => setSelecao(null)} className="text-xs underline">Fechar documentos</DashboardButton></div>
       {detalhes.isError ? <p role="alert" className="mt-3 text-sm text-negative">Não foi possível carregar os documentos desta seleção.</p>
-        : detalhes.isPending ? <p role="status" className="mt-3 text-sm">Carregando documentos…</p>
+        : detalhes.isPending ? <DashboardLoading label="Carregando documentos…" />
           : <><div className="mt-3 overflow-x-auto"><Table className="w-full min-w-[650px] text-left text-xs"><caption className="sr-only">Documentos da pendência selecionada</caption>
             <TableHeader><TableRow isHeaderRow>{['Documento', 'Motivo', 'Acompanhada desde', 'Última avaliação', 'Nova avaliação a partir de'].map(h => <TableHeaderCell key={h} scope="col" className="p-2">{h}</TableHeaderCell>)}</TableRow></TableHeader>
             <TableBody>{detalhes.data.itens.map(i => <TableRow key={`${i.id}:${i.etapa}`} className="border-t border-[var(--color-border)]">

@@ -65,7 +65,7 @@ export function dashboardRequestPath(config: InternalAxiosRequestConfig): string
     || config.responseType === 'blob' || config.responseType === 'arraybuffer') return null;
   const path = new URL(config.url ?? '', 'http://dashboard.invalid').pathname;
   if (/\/(exportacao|importacao|template)(\/|$)/.test(path)) return null;
-  if (path.startsWith('/api/dimensoes/')) return path;
+  if (path.startsWith('/api/dimensoes/') || path === '/api/painel/gestao-vista/cubagem/clientes') return path;
   const domain = path.match(/^\/api\/painel\/([^/]+)/)?.[1];
   return domain && DASHBOARD_DOMAINS.has(domain) ? path : null;
 }

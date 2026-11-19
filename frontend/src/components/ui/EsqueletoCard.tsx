@@ -1,5 +1,6 @@
+import DashboardLoading from '../shared/DashboardLoading';
 export default function EsqueletoCard() {
   return (
-    <div className="bg-gray-200 animate-pulse rounded-lg h-64 w-full" />
+    <DashboardLoading variant="card" className="h-64" />
   );
 }

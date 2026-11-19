@@ -18,6 +18,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -215,6 +216,8 @@ public class DashboardExportService {
             return arquivo;
         } catch (IOException ex) {
             throw new UncheckedIOException("Nao foi possivel gerar arquivo CSV temporario", ex);
+        } catch (DataAccessException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new IllegalStateException("Nao foi possivel gerar arquivo CSV", ex);
         }

@@ -1,3 +1,5 @@
+import { TableText } from '../components/shared/DashboardTable';
+import { Badge } from '@astryxdesign/core/Badge';
 import DashboardButton from "../components/shared/DashboardButton";
 import { useEffect, useMemo, useState } from 'react';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
@@ -49,16 +51,6 @@ const SOFT_PANEL_STYLE = {
   borderColor: 'var(--color-border)',
 };
 
-const ACTIVE_BADGE_STYLE = {
-  backgroundColor: 'rgba(33, 71, 138, 0.14)',
-  color: 'var(--color-primary)',
-};
-
-const INACTIVE_BADGE_STYLE = {
-  backgroundColor: 'rgba(71, 85, 105, 0.12)',
-  color: 'var(--color-text-subtle)',
-};
-
 const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
 
 function useIsMobileSetoresTable() {
@@ -88,12 +80,7 @@ function useIsMobileSetoresTable() {
 
 function renderSistemaBadge(sistema: boolean) {
   return (
-    <span
-      className="inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-medium"
-      style={sistema ? ACTIVE_BADGE_STYLE : INACTIVE_BADGE_STYLE}
-    >
-      {sistema ? 'Sistema' : 'Manual'}
-    </span>
+    <Badge label={sistema ? 'Sistema' : 'Manual'} variant={sistema ? 'info' : 'neutral'} />
   );
 }
 
@@ -132,15 +119,15 @@ function DetailTextBlock({ label, value, fallback }: { label: string; value: str
 
 function renderSetorIdentityCell(row: SetorRow) {
   return (
-    <div className="min-w-[14rem] whitespace-normal">
+    <div className="min-w-0 whitespace-normal">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-semibold leading-tight" style={{ color: 'var(--color-text)' }}>
-          {row.nome}
+        <p className="min-w-0 text-sm font-semibold leading-tight" style={{ color: 'var(--color-text)' }}>
+          <TableText>{row.nome}</TableText>
         </p>
         {renderSistemaBadge(row.sistema)}
       </div>
-      <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
-        {row.descricao || 'Sem descrição'}
+      <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+        <TableText maxLines={2}>{row.descricao || 'Sem descrição'}</TableText>
       </p>
     </div>
   );
@@ -148,17 +135,17 @@ function renderSetorIdentityCell(row: SetorRow) {
 
 function renderSetorAccessCell(row: SetorRow) {
   return (
-    <div className="min-w-[13rem] whitespace-normal text-xs leading-relaxed">
+    <div className="min-w-0 whitespace-normal text-xs leading-relaxed">
       <p className="font-semibold" style={{ color: 'var(--color-text)' }}>
-        {row.totalUsuarios} usuário(s)
+        <TableText>{row.totalUsuarios} usuário(s)</TableText>
       </p>
-      <p className="mt-1 line-clamp-1" style={{ color: 'var(--color-text-muted)' }}>
-        {row.filiaisPermitidas.length > 0
+      <p className="mt-1" style={{ color: 'var(--color-text-muted)' }}>
+        <TableText>{row.filiaisPermitidas.length > 0
           ? `${row.filiaisPermitidas.length} filial(is)`
-          : 'Nenhuma filial'}
+          : 'Nenhuma filial'}</TableText>
       </p>
-      <p className="line-clamp-1" style={{ color: 'var(--color-text-muted)' }}>
-        {row.permissoesResumo || 'Sem permissões'}
+      <p style={{ color: 'var(--color-text-muted)' }}>
+        <TableText>{row.permissoesResumo || 'Sem permissões'}</TableText>
       </p>
     </div>
   );

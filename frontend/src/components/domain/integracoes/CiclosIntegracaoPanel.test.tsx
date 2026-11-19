@@ -185,7 +185,7 @@ describe('CiclosIntegracaoPanel', () => {
     responderCom(legado);
     abrir();
     await screen.findByRole('table');
-    expect(screen.getByRole('article').textContent).toContain('Origem:SFTP');
+    expect(screen.getByRole('article').textContent).toMatch(/Origem:\s*SFTP/);
     expect(screen.getByRole('table').textContent).toContain('SFTP');
     expect(screen.queryByText('Não informada')).toBeNull();
     fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
@@ -214,7 +214,7 @@ describe('CiclosIntegracaoPanel', () => {
     responderCom({ ...ciclo, origemComprovantes: 'API_ESL' });
     abrir();
     await screen.findByRole('table');
-    expect(screen.getByRole('article').textContent).toContain('Origem:API ESL');
+    expect(screen.getByRole('article').textContent).toMatch(/Origem:\s*API ESL/);
     expect(screen.getByRole('table').textContent).toContain('API ESL');
     expect(screen.queryByText('Não informada')).toBeNull();
     fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
@@ -239,7 +239,8 @@ describe('CiclosIntegracaoPanel', () => {
   it('preserva origem explicitamente desconhecida e recusa página incompatível com o filtro', async () => {
     responderCom({ ...ciclo, origemComprovantes: null });
     abrir();
-    expect((await screen.findAllByText('Não informada')).length).toBe(2);
+    expect((await screen.findByRole('article')).textContent).toMatch(/Origem:\s*Não informada/);
+    expect((await screen.findByRole('table')).textContent).toContain('Não informada');
     fireEvent.click(screen.getByRole('combobox', { name: /Origem dos comprovantes/ }));
     fireEvent.click(screen.getByRole('option', { name: 'SFTP' }));
     expect((await screen.findByRole('alert')).textContent).toContain('Não foi possível aplicar o filtro');

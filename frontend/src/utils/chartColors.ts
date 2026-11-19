@@ -1,27 +1,28 @@
-export const CORES = {
-  primaria: '#21478A',
-  secundaria: '#7c3aed',
-  sucesso: '#10b981',
-  perigo: '#ef4444',
-  aviso: '#f97316',
-  alerta: '#f97316',
-  info: '#06b6d4',
-  cinza: '#6b7280',
-  cinzaClaro: '#d1d5db',
-} as const;
-
+// Preserve the established series order and the meaning of success and failure.
 export const PALETA_SERIES = [
-  '#21478A',
-  '#f97316',
-  '#10b981',
-  '#ef4444',
-  '#7c3aed',
-  '#06b6d4',
-  '#ec4899',
-  '#84cc16',
-  '#eab308',
-  '#8b5cf6',
-] as const;
+  'var(--color-data-categorical-blue)',
+  'var(--color-data-categorical-orange)',
+  'var(--color-data-categorical-green)',
+  'var(--color-data-categorical-red)',
+  'var(--color-data-categorical-purple)',
+  'var(--color-data-categorical-cyan)',
+  'var(--color-data-categorical-pink)',
+  'var(--color-data-categorical-teal)',
+  'var(--color-data-yellow-4)',
+  'var(--color-data-categorical-indigo)',
+];
+
+export const CORES = {
+  primaria: PALETA_SERIES[0],
+  secundaria: PALETA_SERIES[4],
+  sucesso: PALETA_SERIES[2],
+  perigo: PALETA_SERIES[3],
+  aviso: PALETA_SERIES[1],
+  alerta: PALETA_SERIES[1],
+  info: PALETA_SERIES[5],
+  cinza: 'var(--color-data-neutral)',
+  cinzaClaro: 'var(--color-data-gray-2)',
+} as const;
 
 export const CORES_STATUS: Record<string, string> = {
   pendente: '#f97316',

@@ -41,7 +41,8 @@ public final class LimiteConsultasAnaliticasInterceptor implements HandlerInterc
         boolean leitura = "GET".equals(request.getMethod()) || "HEAD".equals(request.getMethod());
         boolean analitica = path.equals("/api/painel") || path.startsWith("/api/painel/") || path.equals("/api/dimensoes")
                 || path.startsWith("/api/dimensoes/");
-        if (!leitura || !analitica || request.getAttribute(PERMISSAO) != null) {
+        if (!leitura || !analitica || path.startsWith("/api/painel/home/")
+                || request.getAttribute(PERMISSAO) != null) {
             return true;
         }
         if (!vagas.tryAcquire()) {

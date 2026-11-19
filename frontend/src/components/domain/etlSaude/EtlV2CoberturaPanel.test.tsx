@@ -35,6 +35,7 @@ it('exibe a cobertura confirmada e distingue ausência de dado de uma carga vazi
   abrir();
   const coleta = await screen.findByRole('row', { name: /Coletas/ });
   expect(within(coleta).getByText('0')).toBeTruthy();
+  expect(within(coleta).getByText('02/11/2026 a 02/11/2026')).toBeTruthy();
   expect(within(coleta).getByText('Último dia coberto há 15 dias')).toBeTruthy();
   expect(within(coleta).getByText(/09\/11\/2026/)).toBeTruthy();
   const ocorrencias = screen.getByRole('row', { name: /Ocorrências/ });

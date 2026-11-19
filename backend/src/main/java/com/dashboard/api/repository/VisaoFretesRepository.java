@@ -515,51 +515,22 @@ public interface VisaoFretesRepository extends JpaRepository<VisaoFretesEntity, 
             @Param("limite") int limite
     );
 
-    @Query(value = """
-            SELECT DISTINCT cliente
-            FROM (
-                SELECT NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), pagador_nome))), '') AS cliente
-                FROM dbo.fato_fretes_faturamento
-                WHERE excluido_na_origem = 0
-                UNION ALL
-                SELECT NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), remetente_nome))), '') AS cliente
-                FROM dbo.fato_fretes_faturamento
-                WHERE excluido_na_origem = 0
-                UNION ALL
-                SELECT NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), destinatario_nome))), '') AS cliente
-                FROM dbo.fato_fretes_faturamento
-                WHERE excluido_na_origem = 0
-            ) clientes
-            WHERE cliente IS NOT NULL
-            ORDER BY cliente
-            """, nativeQuery = true)
+    String CLIENTES_ATIVOS = """
+            SELECT DISTINCT c.cliente
+            FROM dbo.fato_fretes_faturamento f
+            CROSS APPLY (VALUES
+                (NULLIF(TRIM(CONVERT(NVARCHAR(255), f.pagador_nome)), '')),
+                (NULLIF(TRIM(CONVERT(NVARCHAR(255), f.remetente_nome)), '')),
+                (NULLIF(TRIM(CONVERT(NVARCHAR(255), f.destinatario_nome)), ''))
+            ) c(cliente)
+            WHERE f.excluido_na_origem = 0 AND c.cliente IS NOT NULL
+            """;
+
+    @Query(value = CLIENTES_ATIVOS + " ORDER BY c.cliente", nativeQuery = true)
     List<String> findDistinctClientes();
 
-    @Query(value = """
-            SELECT DISTINCT cliente
-            FROM (
-                SELECT
-                    NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), pagador_nome))), '') AS cliente,
-                    LOWER(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), filial_nome))), '')) AS filial
-                FROM dbo.fato_fretes_faturamento
-                WHERE excluido_na_origem = 0
-                UNION ALL
-                SELECT
-                    NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), remetente_nome))), '') AS cliente,
-                    LOWER(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), filial_nome))), '')) AS filial
-                FROM dbo.fato_fretes_faturamento
-                WHERE excluido_na_origem = 0
-                UNION ALL
-                SELECT
-                    NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), destinatario_nome))), '') AS cliente,
-                    LOWER(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), filial_nome))), '')) AS filial
-                FROM dbo.fato_fretes_faturamento
-                WHERE excluido_na_origem = 0
-            ) clientes
-            WHERE cliente IS NOT NULL
-              AND filial IN (:filiais)
-            ORDER BY cliente
-            """, nativeQuery = true)
+    @Query(value = CLIENTES_ATIVOS + " AND LOWER(NULLIF(TRIM(CONVERT(NVARCHAR(255), f.filial_nome)), '')) IN (:filiais) ORDER BY c.cliente",
+            nativeQuery = true)
     List<String> findDistinctClientesByFilialIn(@Param("filiais") List<String> filiais);
 
     interface PeriodoDiasProjection {

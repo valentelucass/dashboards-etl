@@ -25,7 +25,6 @@
 .gestao-scorecard-icon { display: none; flex-shrink: 0; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9px; }
 .gestao-scorecard-value { grid-area: value; align-self: center; font-size: 32px; line-height: 1.1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .gestao-scorecard-state { grid-area: state; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
-.gestao-goal-badge { display: inline-flex; align-items: center; border-radius: 6px; padding: 4px 7px; font-size: 10px; line-height: 14px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
 .gestao-scorecard-goal { font-size: 12px; font-weight: 600; white-space: nowrap; }
 .gestao-scorecard-detail { grid-area: detail; color: var(--color-text-muted); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
 .gestao-scorecard-coverage { grid-area: coverage; align-self: end; }
@@ -48,7 +47,6 @@
 .gestao-lane-heading h4 > span { flex-shrink: 0; }
 .gestao-lane-heading strong { font-size: 22px; line-height: 26px; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; white-space: nowrap; }
 .gestao-lane-detail { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; color: var(--color-text-muted); font-size: 11px; line-height: 16px; }
-.gestao-lane-status { font-weight: 600; white-space: nowrap; }
 .gestao-attention { display: flex; flex-direction: column; min-width: 0; padding-top: 18px; border-top: 1px solid var(--color-border); }
 .gestao-attention-heading { margin-bottom: 12px; }
 .gestao-attention-heading h3 { font-size: 15px; line-height: 22px; font-weight: 600; }
@@ -96,7 +94,6 @@
   .gestao-scorecard-heading h3 { font-size: 16px; line-height: 20px; }
   .gestao-scorecard-value { font-size: 48px; }
   .gestao-scorecard-state { gap: 8px; }
-  .gestao-goal-badge { font-size: 11px; }
   .gestao-scorecard-detail { font-size: 13px; line-height: 18px; }
   .gestao-panorama { padding: 20px 24px; }
   .gestao-panorama-body { grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr); gap: 32px; }

@@ -1,3 +1,5 @@
+import DashboardLoading from '../shared/DashboardLoading';
+import { Badge } from '@astryxdesign/core/Badge';
 import type { ReactNode } from 'react';
 import { ProgressBar } from '@astryxdesign/core/ProgressBar';
 import { CircleCheck } from 'lucide-react';
@@ -66,6 +68,7 @@ export default function IndicadoresGestaoPanoramaSection({
           </div>
           <div className="gestao-comparison-lanes">
             {items.map((item) => {
+              if (item.tone === 'loading') return <DashboardLoading key={item.id} variant="section" label={`Carregando ${item.title}`} />;
               const style = getGoalToneStyle(item.tone);
               const progressPct = Math.max(0, Math.min(item.progressPct ?? 0, 100));
 
@@ -84,7 +87,7 @@ export default function IndicadoresGestaoPanoramaSection({
                     ) : null}
                     <div className="gestao-lane-detail">
                       <span>{item.detail}</span>
-                      <span className="gestao-lane-status" style={{ color: style.text }}>{item.statusLabel}</span>
+                      <Badge label={item.statusLabel} variant={goalProgressVariant[item.tone]} />
                     </div>
                     <span className="sr-only">Resultado atual: {item.value}</span>
                   </article>
@@ -109,9 +112,7 @@ export default function IndicadoresGestaoPanoramaSection({
                       <span className="gestao-attention-rank" aria-label={'Prioridade ' + (index + 1)} style={{ color: style.text }}>
                         {String(index + 1).padStart(2, '0')}
                       </span>
-                      <span className="gestao-goal-badge" style={{ backgroundColor: style.badgeBg, color: style.badgeText }}>
-                        {item.statusLabel}
-                      </span>
+                      <Badge label={item.statusLabel} variant={goalProgressVariant[item.tone]} />
                     </div>
                     <h4>{item.title}</h4>
                     <p>{item.alertDetail ?? item.detail}</p>
@@ -119,6 +120,8 @@ export default function IndicadoresGestaoPanoramaSection({
                 );
               })}
             </ol>
+          ) : items.some(item => item.tone === 'loading') ? (
+            <DashboardLoading variant="section" label="Carregando alertas do período" />
           ) : (
             <div className="gestao-attention-empty">
               {allGoalsMet ? (

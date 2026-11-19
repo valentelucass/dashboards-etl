@@ -1,3 +1,6 @@
+import { TableText } from '../components/shared/DashboardTable';
+import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
+import { ToggleButton } from '@astryxdesign/core/ToggleButton';
 import { Card } from '@astryxdesign/core/Card';
 import DashboardButton from "../components/shared/DashboardButton";
 import { useEffect, useMemo, useState } from 'react';
@@ -82,15 +85,15 @@ function rotuloCurtoRegiao(valor: string): string {
 function corStatusRosca(status: string, index: number, isDark: boolean): string {
   const tokens = getEchartsThemeTokens(isDark);
   const statusColors: Record<string, string> = {
-    'no armazém': '#3bf6b8',       // blue-500    (Estático/Padrão)
-    'manifestado': '#ff0000',      // cyan-500    (Preparado)
-    'em transferência': '#8b5cf6', // violet-500  (Movimentação interna)
-    'em entrega': '#f59e0b',       // amber-500   (Na rua/Atenção)
-    'entregue': '#10b981',         // emerald-500 (Sucesso)
-    'cancelado': '#f43f5e',        // rose-500    (Erro/Exceção)
-    'canceled': '#f43f5e',         // rose-500
-    'cancelled': '#f43f5e',        // rose-500
-    'sem status': tokens.mutedTextColor || '#64748b', // slate-500 (Neutro)
+    'no armazém': 'var(--color-data-categorical-teal)',
+    manifestado: 'var(--color-data-categorical-blue)',
+    'em transferência': 'var(--color-data-categorical-purple)',
+    'em entrega': 'var(--color-data-categorical-orange)',
+    entregue: 'var(--color-data-categorical-green)',
+    cancelado: 'var(--color-data-categorical-red)',
+    canceled: 'var(--color-data-categorical-red)',
+    cancelled: 'var(--color-data-categorical-red)',
+    'sem status': 'var(--color-data-neutral)',
   };
 
   return statusColors[status.toLowerCase()] ?? tokens.palette[index % tokens.palette.length];
@@ -123,48 +126,26 @@ function MatrizRegiaoDestino({
   const linhasReserva = linhas.length > 0 ? Math.max(0, REGIOES_POR_PAGINA - linhasVisiveis.length) : 0;
 
   return (
-    <Card padding={4} className="mb-6 flex h-full min-h-0 flex-col">
+    <Card padding={4} className="tracking-region-matrix @container/regioes mb-6 flex h-full min-h-0 min-w-0 flex-col">
       <div className="mb-3 flex shrink-0 flex-col flex-wrap gap-2 border-b pb-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--color-border)' }}>
         <div className="min-w-0">
-          <h2 className="truncate text-sm font-bold" style={{ color: 'var(--color-text)' }}>
-            Responsável pela Região de Destino
+          <h2 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>
+            <TableText>Responsável pela Região de Destino</TableText>
           </h2>
           <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-subtle)' }}>
             {linhas.length} regiões
           </span>
         </div>
-        <div
-          className="flex max-w-full flex-wrap items-center gap-2 rounded-xl border p-1"
-          style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
-          aria-label="Filtro rápido de status"
-        >
-          {STATUS_RAPIDOS.map((status) => {
-            const ativo = statusSelecionados.includes(status);
-            return (
-              <DashboardButton
-                key={status}
-                type="button"
-                onClick={() => onToggleStatus(status)}
-                className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-[11px] font-semibold transition"
-                style={{
-                  backgroundColor: ativo ? 'var(--color-card)' : 'transparent',
-                  borderColor: ativo ? 'var(--color-primary)' : 'transparent',
-                  color: ativo ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                }}
-              >
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: ativo ? 'var(--color-primary)' : 'var(--color-border)' }}
-                />
-                {status}
-              </DashboardButton>
-            );
-          })}
+        <div className="flex max-w-full flex-wrap gap-1.5" role="group" aria-label="Filtro rápido de status">
+          {STATUS_RAPIDOS.map(status => (
+            <ToggleButton key={status} label={status === 'NO ARMAZÉM' ? 'No armazém' : status}
+              size="sm" isPressed={statusSelecionados.includes(status)} onPressedChange={() => onToggleStatus(status)} />
+          ))}
         </div>
       </div>
 
       <div className="min-h-0 flex-1">
-        <div className="hidden grid-cols-[5.75rem_minmax(5.8rem,1fr)_minmax(6.1rem,1fr)_minmax(6.1rem,1fr)_minmax(4.25rem,0.74fr)_minmax(4.75rem,0.74fr)] gap-2 px-3 pb-2 text-[10px] font-semibold uppercase md:grid" style={{ color: 'var(--color-text-subtle)' }}>
+        <div className="hidden grid-cols-[5.75rem_minmax(5.8rem,1fr)_minmax(6.1rem,1fr)_minmax(6.1rem,1fr)_minmax(4.25rem,0.74fr)_minmax(4.75rem,0.74fr)] gap-2 px-3 pb-2 text-[10px] font-semibold uppercase @min-[38rem]/regioes:grid" style={{ color: 'var(--color-text-subtle)' }}>
           <span>Região</span>
           <span className="text-right">Peso Taxado</span>
           <span className="text-right">Valor Frete</span>
@@ -187,20 +168,20 @@ function MatrizRegiaoDestino({
                   backgroundColor: index % 2 === 0 ? 'var(--color-bg)' : 'transparent',
                 }}
               >
-                <div className="grid grid-cols-2 gap-x-3 gap-y-2 md:grid-cols-[5.75rem_minmax(5.8rem,1fr)_minmax(6.1rem,1fr)_minmax(6.1rem,1fr)_minmax(4.25rem,0.74fr)_minmax(4.75rem,0.74fr)] md:items-center md:gap-2">
-                  <div className="col-span-2 min-w-0 md:col-span-1" title={`${codigo} - ${descricao}`}>
-                    <div className="truncate text-2xl font-extrabold leading-none md:text-[23px]" style={{ color: 'var(--color-text)' }}>
-                      {codigo}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2 @min-[38rem]/regioes:grid-cols-[5.75rem_minmax(5.8rem,1fr)_minmax(6.1rem,1fr)_minmax(6.1rem,1fr)_minmax(4.25rem,0.74fr)_minmax(4.75rem,0.74fr)] @min-[38rem]/regioes:items-center @min-[38rem]/regioes:gap-2">
+                  <div className="col-span-2 min-w-0 @min-[38rem]/regioes:col-span-1">
+                    <div className="text-2xl font-extrabold leading-none @min-[38rem]/regioes:text-[23px]" style={{ color: 'var(--color-text)' }}>
+                      <TableText>{codigo}</TableText>
                     </div>
-                    <div className="mt-0.5 truncate text-[11px] font-medium" style={{ color: 'var(--color-text-subtle)' }}>
-                      {descricao}
+                    <div className="mt-0.5 text-[11px] font-medium" style={{ color: 'var(--color-text-subtle)' }}>
+                      <TableText>{descricao}</TableText>
                     </div>
                   </div>
                   <MetricCell label="Peso Taxado" value={formatarPeso(linha.pesoTaxado)} />
                   <MetricCell label="Valor Frete" value={formatarMoeda(linha.valorFrete)} />
                   <MetricCell label="Valor NF" value={formatarMoeda(linha.valorNota)} />
                   <MetricCell label="Volumes" value={numeroCurto(linha.volumes)} />
-                  <MetricCell label="Fora do Prazo" value={numeroCurto(linha.foraDoPrazo)} danger={linha.foraDoPrazo > 0} className="col-span-2 text-center md:col-span-1 md:text-right" />
+                  <MetricCell label="Fora do Prazo" value={numeroCurto(linha.foraDoPrazo)} danger={linha.foraDoPrazo > 0} className="col-span-2 text-center @min-[38rem]/regioes:col-span-1 @min-[38rem]/regioes:text-right" />
                 </div>
               </div>
             );
@@ -209,7 +190,7 @@ function MatrizRegiaoDestino({
             <div
               key={`reserva-matriz-${index}`}
               aria-hidden="true"
-              className="pointer-events-none invisible hidden rounded-lg border px-3 py-2.5 md:block"
+              className="pointer-events-none invisible hidden rounded-lg border px-3 py-2.5 @min-[38rem]/regioes:block"
               style={{ borderColor: 'var(--color-border)' }}
             >
               <div className="grid grid-cols-[5.75rem_minmax(5.8rem,1fr)_minmax(6.1rem,1fr)_minmax(6.1rem,1fr)_minmax(4.25rem,0.74fr)_minmax(4.75rem,0.74fr)] items-center gap-2">
@@ -269,12 +250,12 @@ function MatrizRegiaoDestino({
 
 function MetricCell({ label, value, danger = false, className = '' }: { label: string; value: string; danger?: boolean; className?: string }) {
   return (
-    <div className={`min-w-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-2 text-center md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-right ${className}`}>
-      <div className="truncate text-[17px] font-bold leading-tight tabular-nums md:text-lg" style={{ color: danger ? 'var(--color-negative-text)' : 'var(--color-text)' }}>
-        {value}
+    <div className={`min-w-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-2 text-center @min-[38rem]/regioes:rounded-none @min-[38rem]/regioes:border-0 @min-[38rem]/regioes:bg-transparent @min-[38rem]/regioes:px-0 @min-[38rem]/regioes:py-0 @min-[38rem]/regioes:text-right ${className}`}>
+      <div className="text-[17px] font-bold leading-tight tabular-nums @min-[38rem]/regioes:text-lg" style={{ color: danger ? 'var(--color-negative-text)' : 'var(--color-text)' }}>
+        <TableText>{value}</TableText>
       </div>
-      <div className="mt-0.5 truncate text-[11px] font-medium" style={{ color: 'var(--color-text-subtle)' }}>
-        {label}
+      <div className="mt-0.5 text-[11px] font-medium" style={{ color: 'var(--color-text-subtle)' }}>
+        <TableText>{label}</TableText>
       </div>
     </div>
   );
@@ -468,6 +449,7 @@ export default function TrackingPage() {
       </FilterBar>
 
       {dashboard.isError && <MensagemErro mensagem={getApiErrorMessage(dashboard.error, 'Erro ao carregar localização de cargas.')} tipo={getTipoErro(dashboard.error)} />}
+      {dashboard.isLoading && !dashboard.data && <LoadingKpiGrid count={6} className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6" />}
       {dashboard.data && <TrackingKpiGrid overview={dashboard.data.overview} />}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)]">

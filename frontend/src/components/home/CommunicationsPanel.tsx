@@ -1,3 +1,4 @@
+import DashboardLoading from '../shared/DashboardLoading';
 import { ClickableCard } from '@astryxdesign/core/ClickableCard';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -7,7 +8,6 @@ import { Dialog } from '@astryxdesign/core/Dialog';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Selector } from '@astryxdesign/core/Selector';
-import { Spinner } from '@astryxdesign/core/Spinner';
 import { Tab, TabList } from '@astryxdesign/core/TabList';
 import { Text } from '@astryxdesign/core/Text';
 import { TextArea } from '@astryxdesign/core/TextArea';
@@ -108,7 +108,7 @@ function NoticeComments({
 
   return (
     <section className="home-fields home-notice-comments" aria-label={'Comentários de ' + notice.title}>
-      {commentsLoading && <Spinner size="sm" label="Carregando comentários" />}
+      {commentsLoading && <DashboardLoading variant="section" label="Carregando comentários" />}
       {!commentsLoading && comments.length === 0 && (
         <Text as="p" size="xsm" color="secondary">Seja a primeira pessoa a comentar.</Text>
       )}
@@ -180,7 +180,7 @@ export default function CommunicationsPanel(props: CommunicationsPanelProps) {
         <div className="home-fields home-notice-list" role="tabpanel" id={sectionId + '-panel'} aria-labelledby={sectionId + '-' + tab}>
           {error && !showForm && <Banner status="error" title={error} />}
           {leitura.isError && <Banner status="error" title="Não foi possível registrar a leitura. Abra o comunicado novamente para tentar." />}
-          {isLoading && <Spinner size="sm" label="Carregando comunicações" />}
+          {isLoading && <DashboardLoading variant="section" label="Carregando comunicações" />}
           {!isLoading && visible.length === 0 && (
             <EmptyState title="Nenhum comunicado nesta aba" icon={<Megaphone size={24} />} isCompact />
           )}

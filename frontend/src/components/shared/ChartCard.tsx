@@ -1,7 +1,7 @@
+import DashboardLoading from './DashboardLoading';
 import { Banner } from '@astryxdesign/core/Banner';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { Skeleton } from '@astryxdesign/core/Skeleton';
-import DashboardButton from "./DashboardButton";
+import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
 import { useRef, useState, type ReactNode } from 'react';
 import { Info } from 'lucide-react';
@@ -21,24 +21,6 @@ interface ChartCardProps {
   chartKey?: ChartDictionaryKey;
 }
 
-function ChartSkeleton() {
-  return (
-    <div className="flex h-full min-h-[350px] flex-col justify-end gap-3" aria-hidden="true">
-      <div className="flex h-44 items-end gap-3">
-        {[52, 88, 64, 112, 76, 132, 96].map((height, index) => (
-          <Skeleton key={index} className="flex-1" height={height} />
-        ))}
-      </div>
-      <Skeleton height={12} width="100%" />
-      <div className="flex gap-2">
-        <Skeleton height={8} width={96} />
-        <Skeleton height={8} width={80} />
-        <Skeleton height={8} width={112} />
-      </div>
-    </div>
-  );
-}
-
 function ChartTitle({
   titulo,
   chartKey,
@@ -55,7 +37,7 @@ function ChartTitle({
 
   if (!definition) {
     return (
-      <h3 className="min-w-0 flex-1 truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+      <h3 className="min-w-0 text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
         {titulo}
       </h3>
     );
@@ -65,18 +47,18 @@ function ChartTitle({
     <>
       <div
         ref={anchorRef}
-        className="flex min-w-0 flex-1 cursor-help items-center gap-1.5 rounded-md"
+        className="flex min-w-0 max-w-full cursor-help items-center gap-1.5 rounded-md"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <h3 className="min-w-0 flex-1 truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+        <h3 className="min-w-0 text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
           {titulo}
         </h3>
-        <DashboardButton
-          type="button"
+        <Button
+          variant="ghost" size="sm" isIconOnly icon={<Info size={15} />}
           aria-expanded={isPinned}
-          aria-label={`Fixar detalhes do gráfico ${titulo}`}
-          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+          label={`Fixar detalhes do gráfico ${titulo}`}
+          className="shrink-0"
           onBlur={() => setIsIconFocused(false)}
           onClick={(event) => {
             event.stopPropagation();
@@ -101,9 +83,7 @@ function ChartTitle({
             }
           }}
           style={{ color: 'var(--color-text-muted)' }}
-        >
-          <Info size={14} aria-hidden="true" />
-        </DashboardButton>
+        />
       </div>
       {open && (
         <Tooltip anchorRef={anchorRef} isOpen placement="below"
@@ -154,14 +134,14 @@ export default function ChartCard({
       className={`dashboard-chart-card flex h-full min-h-0 flex-col border p-4 ${className}`}
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
     >
-      <div className="mb-3 flex shrink-0 items-center justify-between gap-3 border-b pb-3" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="dashboard-chart-heading mb-3 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b pb-3" style={{ borderColor: 'var(--color-border)' }}>
         <ChartTitle titulo={titulo} chartKey={chartKey} />
-        {actions ? <div className="shrink-0">{actions}</div> : null}
+        {actions ? <div className="ms-auto min-w-0 max-w-full">{actions}</div> : null}
       </div>
 
       <div className={`min-h-0 flex-1 overflow-hidden ${contentClassName}`}>
         {isLoading ? (
-          <ChartSkeleton />
+          <DashboardLoading variant="section" label={'Carregando gráfico: ' + titulo} className="min-h-[350px]" />
         ) : erro ? (
           <div className="flex h-full min-h-[350px] items-center justify-center">
             <Banner status="error" title={erro} />

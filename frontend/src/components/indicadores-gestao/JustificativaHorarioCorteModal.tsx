@@ -1,9 +1,10 @@
+import { Spinner } from '@astryxdesign/core/Spinner';
 import { DashboardTextArea } from "../shared/DashboardTextEntry";
 import DashboardButton from "../shared/DashboardButton";
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Dialog } from '@astryxdesign/core/Dialog';
-import { Clock3, Loader2, Save, Trash2, X } from 'lucide-react';
+import { Clock3, Save, Trash2, X } from 'lucide-react';
 import type { ViagemJustificativaPayload } from '../../types/indicadoresGestaoAVista';
 import { getApiErrorMessage } from '../../utils/apiError';
 
@@ -167,7 +168,7 @@ function JustificativaHorarioCorteModalAberto({
                 className="inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ borderColor: '#dc2626', color: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.08)' }}
               >
-                {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                {isDeleting ? <Spinner size="sm" aria-hidden="true" /> : <Trash2 size={16} />}
                 Excluir Justificativa
               </DashboardButton>
             ) : <span />}
@@ -187,7 +188,7 @@ function JustificativaHorarioCorteModalAberto({
                 className="inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 style={{ backgroundColor: 'var(--color-primary)' }}
               >
-                {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                {isSubmitting ? <Spinner size="sm" aria-hidden="true" /> : <Save size={16} />}
                 Salvar
               </DashboardButton>
             </div>

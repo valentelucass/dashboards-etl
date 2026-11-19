@@ -1,3 +1,4 @@
+import DashboardLoading from '../shared/DashboardLoading';
 import DashboardButton from "../shared/DashboardButton";
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
@@ -64,7 +65,7 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
     <h3 className="text-base font-bold">Acessos de hoje</h3>
     <p className="mt-1 break-words text-sm font-medium">{nome}</p>
     <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>Uma linha por página, da mais recente para a mais antiga. Horários de Brasília.</p>
-    {query.isPending && <p className="py-5 text-sm" role="status">Carregando acessos...</p>}
+    {query.isPending && <DashboardLoading label="Carregando acessos..." />}
     {query.isError && <div className="py-5 text-sm" role="alert">Não foi possível atualizar os acessos. <DashboardButton type="button" className="underline" onClick={() => void query.refetch()}>Tentar novamente</DashboardButton></div>}
     {!query.isPending && !query.isError && !compativel && <p className="py-5 text-sm" role="status">O resumo por página ainda não está disponível. Aguarde a atualização do serviço.</p>}
     {!query.isPending && !query.isError && compativel && !dados?.visitas.length && <p className="py-5 text-sm">Nenhum acesso registrado hoje.</p>}
