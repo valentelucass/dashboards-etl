@@ -1,3 +1,11 @@
+## 19/11/2026 — Responsividade do Dashboard e fichas de presença
+
+As telas do painel usam a navegação móvel do Astryx com as permissões das rotas do desktop. No celular, os filtros e formulários de diálogo abrem em folhas. O rodapé organiza identificação e versão acima dos contatos de desenvolvimento e suporte. Gráficos, indicadores, paginação e filtros se adaptam à largura disponível. As tabelas administrativas mostram os dados e as ações de cada registro juntos nas telas estreitas.
+
+Em Gestão de usuários, a presença apresenta fichas em camadas para escolher uma pessoa e consultar os detalhes. O acesso ao histórico segue a permissão já existente. O painel acompanha a altura do conteúdo e se reposiciona quando falta espaço junto ao botão. As listas vazias couberam sem barra em 1158 × 425 px. Para um histórico longo, as fichas e as visitas compartilham uma única área de rolagem. No Início, a janela de solicitações passa de três para duas ou uma coluna conforme o espaço. O login, a solicitação de senha, a troca obrigatória e o aviso de acesso negado também foram conferidos.
+
+Na prévia DEV, as 15 rotas autenticadas foram verificadas com dados de exemplo nas larguras de 320, 360, 390, 430, 768 e 1280 px. Nessas medidas a página e o conteúdo principal ficaram dentro da largura disponível. O exemplo de Localização de Cargas inclui o total de cargas por responsável. A compilação e os 410 testes da interface passaram.
+
 ## 19/11/2026 — Performance por tipo de frete
 
 Na tela Performance, os fretes complementares e de substituição ficam fora da contagem. O documento original substituído continua elegível. A reentrega entra com previsão no segundo dia útil após a emissão do CT-e. Até a emissão, vale a previsão original, inclusive para reentregas com NFS-e. Esse prazo define o período em que ela aparece e sua classificação de pontualidade. A devolução mantém a previsão e o cálculo anteriores. A contagem permanece por minuta dentro da janela de previsão.

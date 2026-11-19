@@ -27,7 +27,7 @@ export default function DashboardSelector({
     return [{ label: text, value: optionValue(String(child.props.value ?? text)), disabled: child.props.disabled }];
   });
   return (
-    <Selector id={id} label={ariaLabel ?? label ?? 'Selecionar opção'} aria-labelledby={ariaLabelledBy} isLabelHidden
+    <Selector presentation="adaptive" id={id} label={ariaLabel ?? label ?? 'Selecionar opção'} aria-labelledby={ariaLabelledBy} isLabelHidden
       value={value == null ? undefined : optionValue(String(value))}
       onChange={next => onValueChange(next === 'dashboard-option-empty' ? '' : next)}
       options={options} size="sm" isDisabled={disabled} isRequired={required}

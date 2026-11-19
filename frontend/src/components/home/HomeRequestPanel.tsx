@@ -92,7 +92,7 @@ export default function HomeRequestPanel({
       </div>
       <form className="home-fields home-request-form" onSubmit={event => void submit(event)}>
         <div className="home-form-columns">
-          <Selector label="Tipo de melhoria" value={form.type} options={REQUEST_TYPES} width="100%"
+          <Selector presentation="adaptive" label="Tipo de melhoria" value={form.type} options={REQUEST_TYPES} width="100%"
             onChange={type => setForm({ ...form, type: type as HomeRequestType })} />
           <FormTextField label="O que você precisa?" value={form.title} onChange={title => setForm({ ...form, title })}
             placeholder="Ex.: automatizar conferência diária" maxLength={140} required />

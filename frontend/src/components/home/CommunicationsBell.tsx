@@ -23,7 +23,7 @@ export default function CommunicationsBell({ className }: { className?: string }
   const label = unreadCount ? 'Comunicações: ' + unreadLabel : 'Comunicações';
 
   return (
-    <Popover isOpen={open} onOpenChange={setOpen} label="Comunicados" alignment="end" width="min(25rem, calc(100vw - 24px))"
+    <Popover presentation="adaptive" isOpen={open} onOpenChange={setOpen} label="Comunicados" alignment="end" width="min(25rem, calc(100vw - 24px))"
       content={
         <div className="home-fields min-w-0">
           <div className="home-communications-heading">

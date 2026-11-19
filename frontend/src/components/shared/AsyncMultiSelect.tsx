@@ -124,7 +124,7 @@ export default function AsyncMultiSelect({
   const selectedLabel = temSelecao ? `${selecionados.length} selecionado(s)` : placeholder;
 
   return (
-    <Popover label={label} isOpen={aberto} onOpenChange={handleOpenChange} alignment="start" width="min(22rem, calc(100vw - 24px))" padding={3}
+    <Popover presentation="adaptive" label={label} isOpen={aberto} onOpenChange={handleOpenChange} alignment="start" width="min(22rem, calc(100vw - 24px))" padding={3}
       content={aberto && <div className="dashboard-filter-select-panel">
         <FormTextField label={`Buscar ${label.toLowerCase()}`} isLabelHidden type="search" hasClear hasAutoFocus
           value={busca} onChange={handleBuscaChange} placeholder={`Buscar ${label.toLowerCase()}…`} />

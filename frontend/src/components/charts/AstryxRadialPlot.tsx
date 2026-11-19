@@ -54,7 +54,15 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const visible = visibleSlices.find(slice => slice.index === hoveredIndex);
   const legend = !gauge && config.legend?.show !== false;
-  const legendHeight = legend ? Math.min(92, Math.max(30, Math.ceil(slices.length / 4) * 22)) : 0;
+  const legendRef = useRef<HTMLDivElement>(null);
+  const [legendHeight, setLegendHeight] = useState(0);
+  useLayoutEffect(() => {
+    const element = legendRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setLegendHeight(Math.ceil(entry.contentRect.height)));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [legend]);
   const labels = asList(option.graphic).flatMap(graphic => {
     const config = graphic as { style?: { text?: string } };
     return config.style?.text === undefined ? [] : [String(config.style.text)];
@@ -89,7 +97,7 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
       <div className={gauge ? 'dashboard-radial-gauge' : undefined} style={gauge ? { height, overflow: 'clip' } : undefined}>
         <RadialChart data={radialData} label={label ?? spec.name ?? 'Distribuição'} labelKey="name" valueKey="value"
           innerRadius={radiusRatio(spec.radius, gauge)} padAngle={gauge ? 0 : Math.min(0.02, 0.5 / Math.max(1, segments.length))}
-          height={gauge ? Math.round(height * 1.54) : Math.max(40, height - legendHeight)}>
+          height={gauge ? Math.round(height * 1.54) : Math.max(40, height - (legend ? legendHeight : 0))}>
           <SliceMarks data={radialData} gauge={gauge} active={hoveredIndex} labels={labels}
             centerTitle={centerCaption?.text} centerSubtitle={centerCaption?.subtext}
             showLabels={!gauge && spec.label?.show !== false && !legend}
@@ -100,7 +108,7 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
             onSelect={onEvents?.click ? slice => onEvents.click(point(slice)) : undefined} />
         </RadialChart>
       </div>
-      {legend && <div className="dashboard-radial-legend dashboard-plot-legend" style={{ maxHeight: legendHeight }}>
+      {legend && <div ref={legendRef} className="dashboard-radial-legend dashboard-plot-legend" style={{ maxHeight: Math.max(48, height - 112) }}>
         {config.legend?.selectedMode === false
           ? <ChartLegend alignment="center" items={slices.map(slice => ({ label: legendLabel(slice.name), color: slice.color, type: 'bar' }))} />
           : slices.map(slice => <Button key={slice.index} label={legendLabel(slice.name)} variant="ghost" size="sm"

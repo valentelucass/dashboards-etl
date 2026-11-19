@@ -4,7 +4,7 @@ import { Banner } from '@astryxdesign/core/Banner';
 import { Badge } from '@astryxdesign/core/Badge';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
-import { Dialog } from '@astryxdesign/core/Dialog';
+import DashboardAdaptiveDialog from '../shared/DashboardAdaptiveDialog';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Selector } from '@astryxdesign/core/Selector';
@@ -67,7 +67,7 @@ function NoticeEditor({
   const headingId = useId();
 
   return (
-    <Dialog isOpen purpose="form" aria-labelledby={headingId} width={520}
+    <DashboardAdaptiveDialog label={editingNoticeId ? 'Editar comunicado' : 'Novo comunicado'} isOpen purpose="form" aria-labelledby={headingId} width={520}
       onOpenChange={open => { if (!open) onCancelForm(); }}>
       <form onSubmit={onSubmit} className="home-fields">
         <Heading level={2} id={headingId}>{editingNoticeId ? 'Editar comunicado' : 'Novo comunicado'}</Heading>
@@ -75,7 +75,7 @@ function NoticeEditor({
         <FormTextField label="Título" value={form.title} onChange={title => onFormChange({ ...form, title })}
           maxLength={140} required />
         <div className="home-form-columns">
-          <Selector label="Tipo" value={form.tag} options={NOTICE_TYPES}
+          <Selector presentation="adaptive" label="Tipo" value={form.tag} options={NOTICE_TYPES}
             onChange={tag => onFormChange({ ...form, tag: tag as HomeNoticeTag })} />
           <FormTextField label="Público" value={form.audience}
             onChange={audience => onFormChange({ ...form, audience })} maxLength={140} required />
@@ -88,7 +88,7 @@ function NoticeEditor({
           <Button type="submit" variant="primary" label={editingNoticeId ? 'Salvar' : 'Publicar'} isDisabled={saving} />
         </div>
       </form>
-    </Dialog>
+    </DashboardAdaptiveDialog>
   );
 }
 

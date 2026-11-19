@@ -1,5 +1,5 @@
 import { Badge } from '@astryxdesign/core/Badge';
-import { Dialog } from '@astryxdesign/core/Dialog';
+import DashboardAdaptiveDialog from '../shared/DashboardAdaptiveDialog';
 import { FileInput } from '@astryxdesign/core/FileInput';
 import { Text } from '@astryxdesign/core/Text';
 import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '../shared/DashboardTable';
@@ -113,7 +113,7 @@ function SummaryCard({ label, value, accent }: { label: string; value: number; a
       <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>
         {label}
       </div>
-      <div className="mt-1 text-2xl font-bold" style={{ color: accent }}>
+      <div className="mt-1 text-lg font-bold sm:text-2xl" style={{ color: accent }}>
         {value}
       </div>
     </Card>
@@ -158,7 +158,7 @@ function CriarSetorInlineModal({
   }
 
   return (
-    <Dialog isOpen purpose="form" aria-labelledby="inline-setor-title" width={840} className="dashboard-admin"
+    <DashboardAdaptiveDialog label="Criar setor agora" isOpen purpose="form" aria-labelledby="inline-setor-title" width={840} className="dashboard-admin"
       onOpenChange={open => { if (!open) onClose(); }}>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -228,7 +228,7 @@ function CriarSetorInlineModal({
             <Button label="Cancelar" variant="secondary" className="dashboard-form-secondary" onClick={onClose} />
           </div>
         </form>
-    </Dialog>
+    </DashboardAdaptiveDialog>
   );
 }
 
@@ -404,10 +404,10 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
 
   return (
     <>
-    <Dialog isOpen purpose="info" aria-labelledby="admin-user-import-title" width="min(80rem, calc(100vw - 1.5rem))" maxHeight="calc(100dvh - 1.5rem)" padding={0}
+    <DashboardAdaptiveDialog label="Importação em massa de usuários" isOpen purpose="info" aria-labelledby="admin-user-import-title" width="min(80rem, calc(100vw - 1.5rem))" maxHeight="calc(100dvh - 1.5rem)" padding={0}
       onOpenChange={open => { if (!open) onClose(); }} className="dashboard-admin">
       <ToastStack items={toasts} />
-          <div className="flex items-start justify-between gap-4 border-b px-6 py-5" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="flex items-start justify-between gap-4 border-b px-3 py-4 sm:px-6 sm:py-5" style={{ borderColor: 'var(--color-border)' }}>
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>
                 <FileSpreadsheet size={18} />
@@ -424,9 +424,9 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
             <Button label="Fechar importação" isIconOnly icon={<X size={18} />} variant="secondary" className="dashboard-form-secondary" onClick={onClose} />
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5">
             <div className="space-y-6">
-              <section className="rounded-3xl border p-5" style={SOFT_PANEL_STYLE}>
+              <section className="rounded-3xl border p-3 sm:p-5" style={SOFT_PANEL_STYLE}>
                 <div className="grid gap-4 lg:grid-cols-[1.6fr_auto]">
                   <div>
                     <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text)' }}>
@@ -467,7 +467,7 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
                   </section>
 
                   {preview.setoresInexistentes.length > 0 && (
-                    <section className="rounded-3xl border p-5" style={SOFT_PANEL_STYLE}>
+                    <section className="rounded-3xl border p-3 sm:p-5" style={SOFT_PANEL_STYLE}>
                       <div className="flex items-start gap-3">
                         <AlertCircle size={18} style={{ color: '#f97316' }} />
                         <div>
@@ -491,12 +491,12 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
                                 </div>
                               </div>
 
-                              <div className="flex flex-wrap items-center gap-3">
-                                <Selector label="Setor existente" placeholder="Mapear para setor existente" hasClear
+                              <div className="flex min-w-0 max-w-full flex-wrap items-center gap-3">
+                                <Selector presentation="adaptive" label="Setor existente" placeholder="Mapear para setor existente" hasClear
                                   value={resolucoesSetor[setor] || null}
                                   onChange={setorId => setResolucoesSetor(current => ({ ...current, [setor]: setorId ?? '' }))}
                                   options={(setores.data ?? []).map(item => ({ value: item.id, label: item.nome }))}
-                                  width={240} controlClassName="dashboard-admin-selector" />
+                                  width="min(15rem, 100%)" controlClassName="dashboard-admin-selector" />
 
                                 <Button label="Criar setor agora" variant="secondary" className="dashboard-form-secondary" onClick={() => setSetorCriacaoAberto(setor)} />
                               </div>
@@ -528,7 +528,7 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
               )}
 
               {resultado && (
-                <section className="space-y-5 rounded-3xl border p-5" style={SOFT_PANEL_STYLE}>
+                <section className="space-y-5 rounded-3xl border p-3 sm:p-5" style={SOFT_PANEL_STYLE}>
                   <div>
                     <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
                       Resultado final da importação
@@ -582,7 +582,7 @@ function UsuariosImportacaoModalAberto({ onClose }: Pick<UsuariosImportacaoModal
               )}
             </div>
           </div>
-    </Dialog>
+    </DashboardAdaptiveDialog>
         {setorCriacaoAberto && (
           <CriarSetorInlineModal
             key={setorCriacaoAberto}

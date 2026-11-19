@@ -1,7 +1,9 @@
+import { useMediaQuery } from '@astryxdesign/core/hooks';
+import '../components/admin/admin-directory.css';
 import { TableText } from '../components/shared/DashboardTable';
 import { Badge } from '@astryxdesign/core/Badge';
 import DashboardButton from "../components/shared/DashboardButton";
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Button } from '@astryxdesign/core/Button';
@@ -52,31 +54,6 @@ const SOFT_PANEL_STYLE = {
 };
 
 const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
-
-function useIsMobileSetoresTable() {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 860px)').matches : false,
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(max-width: 860px)');
-
-    function handleChange(event: MediaQueryListEvent) {
-      setIsMobile(event.matches);
-    }
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-
-  return isMobile;
-}
 
 function renderSistemaBadge(sistema: boolean) {
   return (
@@ -153,7 +130,7 @@ function renderSetorAccessCell(row: SetorRow) {
 
 function renderSetorDetailsPopover(row: SetorRow) {
   return (
-    <Popover label={"Detalhes de " + row.nome} alignment="end" width="min(30rem, calc(100vw - 24px))" padding={3}
+    <Popover presentation="adaptive" label={"Detalhes de " + row.nome} alignment="end" width="min(30rem, calc(100vw - 24px))" padding={3}
       content={<div className="max-h-[min(34rem,70dvh)] overflow-y-auto">
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-3">
@@ -205,7 +182,7 @@ export default function AdminSetoresPage() {
   const [form, setForm] = useState<SetorPayload>(FORM_INICIAL);
   const [erro, setErro] = useState('');
   const [exclusao, setExclusao] = useState<SetorAdmin | null>(null);
-  const isMobileSetoresTable = useIsMobileSetoresTable();
+  const isMobileSetoresTable = useMediaQuery('(max-width: 860px)');
   const filiaisDisponiveis = filiais.data ?? [];
 
   usePageHeader({
@@ -314,32 +291,21 @@ export default function AdminSetoresPage() {
     {
       chave: 'nome',
       label: 'Setor',
-      largura: '240px',
-      formato: (_, row) => renderSetorIdentityCell(row),
-    },
-    {
-      chave: 'totalUsuarios',
-      label: 'Acesso',
-      largura: '220px',
-      ordenavel: false,
-      formato: (_, row) => renderSetorAccessCell(row),
-    },
-    {
-      chave: 'acoes',
-      label: 'Ações',
-      largura: '180px',
-      ordenavel: false,
       formato: (_, row) => (
-        <div className="flex items-center gap-2">
-          {renderSetorDetailsPopover(row)}
-          {renderActionMenu(row)}
+        <div className="grid min-w-0 gap-2 whitespace-normal py-1">
+          {renderSetorIdentityCell(row)}
+          {renderSetorAccessCell(row)}
+          <div className="flex flex-wrap items-center gap-2">
+            {renderSetorDetailsPopover(row)}
+            {renderActionMenu(row)}
+          </div>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="dashboard-admin space-y-5">
+    <div className="dashboard-admin admin-directory-page space-y-5">
       <Card padding={0} className="dashboard-admin-card">
         <form onSubmit={handleSubmit} className="space-y-4">
           <h2>{editing ? 'Editar setor' : 'Cadastro de setor'}</h2>

@@ -72,11 +72,12 @@ interface CartesianPlotProps {
   series: PlotSeries[];
   rows: ChartCategory[];
   height: number;
+  width: number;
   label?: string;
   onEvents?: ChartEvents;
 }
 
-export default function AstryxCartesianPlot({ model, series, rows, height, label, onEvents }: CartesianPlotProps) {
+export default function AstryxCartesianPlot({ model, series, rows, width, height, label, onEvents }: CartesianPlotProps) {
   const { category, horizontal, xAxis, yAxis, rightAxis, config } = model;
   const [hover, setHover] = useState<{ row: ChartCategory; x: number; y: number } | null>(null);
   const axis = horizontal ? xAxis : yAxis;
@@ -116,8 +117,9 @@ export default function AstryxCartesianPlot({ model, series, rows, height, label
   const categoryFormat = (id: unknown) => formatAxis(category, categoryById.get(String(id))?.name ?? '');
   const leftInset = config.grid?.containLabel === false && typeof config.grid.left === 'number'
     ? config.grid.left : axisInset(yAxis, primaryDomain);
+  const categoryInset = Math.min(154, Math.max(82, category.axisLabel?.width ?? config.grid?.left ?? 92));
   const margin = {
-    left: horizontal ? Math.min(154, Math.max(82, category.axisLabel?.width ?? config.grid?.left ?? 92)) : leftInset,
+    left: horizontal ? Math.min(categoryInset, Math.round(width * 0.35)) : leftInset,
     right: rightAxis && secondaryDomain ? axisInset(rightAxis, secondaryDomain)
       : horizontal ? Math.max(42, Math.ceil(axisInset(axis, primaryDomain) / 2)) : 16,
     bottom: horizontal ? 32 : 35,
@@ -157,7 +159,7 @@ export default function AstryxCartesianPlot({ model, series, rows, height, label
         <PlotLabels series={series} rows={categoryById} horizontal={horizontal} />
       </Chart>
       {horizontal && hover && series.length > 0 && (
-        <Card className="dashboard-plot-hover" style={{ top: Math.min(Math.max(4, hover.y), Math.max(4, height - 112)), left: hover.x }}>
+        <Card className="dashboard-plot-hover" style={{ top: Math.min(Math.max(4, hover.y), Math.max(4, height - 112)), left: Math.max(4, Math.min(hover.x, width - 248)), maxWidth: 'calc(100% - 8px)', overflowWrap: 'anywhere' }}>
           <ChartTooltipBody model={model} row={hover.row} series={series} />
         </Card>
       )}
@@ -203,20 +205,24 @@ function AxisNames({ left, right }: { left?: string; right?: string }) {
 }
 
 function HorizontalAxes({ rows, axis, category }: { rows: ChartCategory[]; axis: DashboardAxis; category: DashboardAxis }) {
-  const { xScale, yScale, width, height } = useChart();
+  const { xScale, yScale, width, height, margin } = useChart();
   const band = xScale.copy().range([0, height]);
   const scale = yScale.copy().range([0, width]);
+  const ticks: number[] = scale.ticks(4);
+  const labelWidth = Math.max(1, ...ticks.map(value => formatAxis(axis, value).length * 7)) + 12;
+  const tickSpacing = ticks.length < 2 ? width : Math.abs(scale(ticks[1]) - scale(ticks[0]));
+  const labelStride = Math.max(1, Math.ceil(labelWidth / Math.max(1, tickSpacing)));
+  const maxLength = Math.max(3, Math.floor((margin.left - 10) / 7));
   return (
     <g className="dashboard-plot-annotation" pointerEvents="none">
-      {scale.ticks(4).map((value: number) => (
+      {ticks.map((value: number, index: number) => (
         <g key={value} transform={`translate(${scale(value)},0)`}>
           <line y2={height} stroke="var(--color-border)" />
-          <text y={height + 18} textAnchor="middle">{formatAxis(axis, value)}</text>
+          {index % labelStride === 0 && <text y={height + 18} textAnchor="middle">{formatAxis(axis, value)}</text>}
         </g>
       ))}
       {rows.map(row => {
         const name = formatAxis(category, row.name);
-        const maxLength = category.axisLabel?.width ? 25 : 18;
         return <text key={row.id} x={-8} y={xPixel(row, 'id', band)} textAnchor="end" dominantBaseline="middle">
           {name.length > maxLength ? `${name.slice(0, maxLength - 1)}…` : name}
           <title>{name}</title>

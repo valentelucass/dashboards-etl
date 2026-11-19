@@ -74,7 +74,7 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
         <div><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Páginas acessadas</p><strong className="text-lg tabular-nums">{dados.total}</strong></div>
         <TooltipKpi kpiName="administracao.navegacaoHoje"><div><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Tempo registrado em foco</p><strong className="text-lg tabular-nums">{duracao(dados.segundosTotal)}</strong></div></TooltipKpi>
       </div>
-      <ol className="max-h-72 space-y-2 overflow-y-auto pr-1" aria-label="Páginas acessadas hoje">
+      <ol className="space-y-2" aria-label="Páginas acessadas hoje">
         {dados.visitas.map(visita => <li key={visita.rota} className="rounded-lg border p-3" style={{ borderColor: 'var(--color-border)' }}>
           <div className="flex items-start justify-between gap-3 text-sm"><span className="min-w-0 break-words font-semibold">{paginaNome(visita.rota)}</span><strong className="shrink-0 tabular-nums">{duracao(visita.segundos)}</strong></div>
           <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums" style={{ color: 'var(--color-text-muted)' }}>
@@ -95,8 +95,8 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
 
 export default function PresenceHistory({ usuarioId, nome, children }: { usuarioId: string; nome: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  return <Popover label={"Acessos de hoje de " + nome} isOpen={open} onOpenChange={setOpen} alignment="start" width="min(27.5rem, calc(100vw - 24px))" padding={0}
-      content={<div className="max-h-[70dvh] overflow-y-auto">
+  return <Popover presentation="adaptive" label={"Acessos de hoje de " + nome} isOpen={open} onOpenChange={setOpen} alignment="start" width="min(27.5rem, calc(100vw - 24px))" padding={0}
+      content={<div className="admin-presence-panel">
       {open && <PresenceHistoryContent usuarioId={usuarioId} nome={nome} onClose={() => setOpen(false)} />}
         </div>}>
       {trigger => (

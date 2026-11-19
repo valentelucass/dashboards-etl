@@ -1,4 +1,6 @@
-import { Dialog } from '@astryxdesign/core/Dialog';
+import { useMediaQuery } from '@astryxdesign/core/hooks';
+import './filter-bar.css';
+import { BottomSheet } from '@astryxdesign/core/BottomSheet';
 import DashboardButton from "./DashboardButton";
 import { Button } from '@astryxdesign/core/Button';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -37,18 +39,6 @@ function fmtData(iso: string): string {
   return `${dia}/${mes}/${ano.slice(2)}`;
 }
 
-function useIsMobile() {
-  const [mobile, setMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false,
-  );
-  useEffect(() => {
-    const fn = () => setMobile(window.innerWidth < 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
-  return mobile;
-}
-
 // ── sub-components ────────────────────────────────────────────────────
 function FilterBadge({ label, count, valueLabel, onRemove }: ActiveFilter) {
   const displayValue = valueLabel?.trim() ? valueLabel : String(count);
@@ -76,9 +66,10 @@ export default function FilterBar({
   dateAccessory,
 }: FilterBarProps) {
   const [open, setOpen] = useState(false);
-  const isMobile = useIsMobile();
+  const isMobile = useMediaQuery('(width < 48rem)');
   const [isPresentationMode, setIsPresentationMode] = useState(() => document.body.dataset.presentationMode === 'true');
   const panelId = useId();
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
   const presentationAnchorRef = useRef<HTMLDivElement>(null);
   const [presentationPanelTop, setPresentationPanelTop] = useState(0);
 
@@ -101,15 +92,6 @@ export default function FilterBar({
     return () => window.removeEventListener('resize', atualizarPosicao);
   }, [isMobile, isPresentationMode, open]);
 
-  // Scroll lock quando drawer mobile está aberto
-  useEffect(() => {
-    if (open && isMobile) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = originalOverflow; };
-    }
-  }, [open, isMobile]);
-
   const filtersWithValues = activeFilters?.filter((f) => f.count > 0) ?? [];
   const hasActive = filtersWithValues.length > 0;
   const totalActive = filtersWithValues.reduce((s, f) => s + f.count, 0);
@@ -120,18 +102,18 @@ export default function FilterBar({
   // ── barra recolhida (sempre visível) ──────────────────────────────
   const collapsedBar = (
     <div
-      className={`dashboard-filter-card flex items-center border ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : actionsOnMobileRow ? 'min-h-12 flex-wrap gap-x-3 gap-y-1 rounded-[20px] px-4 py-1.5 md:h-12 md:flex-nowrap md:py-0' : 'h-12 gap-3 rounded-[20px] px-4'}`}
+      className={`dashboard-filter-card flex items-center border ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : actionsOnMobileRow ? 'min-h-12 flex-wrap gap-x-3 gap-y-1 rounded-[20px] px-4 py-1.5 md:h-12 md:flex-nowrap md:py-0' : 'min-h-12 flex-wrap gap-x-3 gap-y-2 rounded-[20px] px-4 py-2 md:h-12 md:flex-nowrap md:py-0'}`}
       style={{ backgroundColor: isPresentationMode ? 'transparent' : 'var(--color-card)', borderColor: 'var(--color-border)' }}
     >
       {/* Data compacta */}
       {showDate && (
         <>
-          <div className="hidden items-center gap-1.5 text-xs sm:flex" style={{ color: 'var(--color-text-muted)' }}>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>
             <Calendar size={13} className="shrink-0" aria-hidden="true" />
             <span className="font-medium tabular-nums" style={{ color: 'var(--color-text)' }}>{fmtData(dataInicio)}</span>
             <span aria-hidden="true">→</span>
             <span className="font-medium tabular-nums" style={{ color: 'var(--color-text)' }}>{fmtData(dataFim)}</span>
-            {dateAccessory ? (
+            {dateAccessory && !isMobile ? (
               <>
                 <span className="mx-1 h-4 w-px" style={{ backgroundColor: 'var(--color-border)' }} aria-hidden="true" />
                 {dateAccessory}
@@ -145,6 +127,7 @@ export default function FilterBar({
       {/* Botão Filtros */}
       {hasFilterControls && (
         <Button
+          ref={filterButtonRef}
           label="Filtros"
           variant={isPresentationMode ? 'ghost' : 'secondary'}
           size={isPresentationMode ? 'sm' : 'md'}
@@ -281,9 +264,10 @@ export default function FilterBar({
     </AnimatePresence>
   );
 
-  const mobileDrawer = open && isMobile && hasFilterControls ? (
-    <Dialog isOpen purpose="info" id={panelId} aria-label="Filtros" position={{ bottom: 0 }}
-      width="100%" maxHeight="min(48rem,85dvh)" onOpenChange={next => { if (!next) setOpen(false); }}>
+  // Below md the filters move out of the content column into a touch sheet.
+  const mobileDrawer = isMobile && hasFilterControls ? (
+    <BottomSheet isOpen={open} id={panelId} label="Filtros" height="tall" padding={4}
+      finalFocusRef={filterButtonRef} onOpenChange={setOpen}>
       <div className="grid gap-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -292,14 +276,15 @@ export default function FilterBar({
           </div>
           <Button label="Fechar filtros" isIconOnly icon={<X size={16} />} variant="ghost" onClick={() => setOpen(false)} />
         </div>
-        <div role="group" aria-label="Opções de filtro" className="flex min-w-0 flex-col gap-4">
-          {period}
+        <div role="group" aria-label="Opções de filtro" className="dashboard-mobile-filter-fields grid min-w-0 gap-4">
+          {period && <div className="dashboard-filter-period">{period}</div>}
+          {dateAccessory && <div className="text-xs">{dateAccessory}</div>}
           {children}
         </div>
         {hasActive && <div className="flex flex-wrap gap-2">{filtersWithValues.map(item => <FilterBadge key={item.label} {...item} />)}</div>}
         {onClear && <Button label="Limpar filtros" onClick={() => { onClear(); setOpen(false); }} />}
       </div>
-    </Dialog>
+    </BottomSheet>
   ) : null;
 
   const presentationBackdrop = isPresentationMode && open && !isMobile && typeof document !== 'undefined'

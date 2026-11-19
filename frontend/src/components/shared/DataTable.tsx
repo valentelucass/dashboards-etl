@@ -270,69 +270,60 @@ export default function DataTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {hasError ? (
-              <TableRow>
-                <TableCell colSpan={colunas.length} className="px-3 py-6">
-                  <MensagemErro mensagem={getApiErrorMessage(error, errorFallbackMessage)} tipo={getTipoErro(error)} />
-                </TableCell>
-              </TableRow>
-            ) : dadosPaginados.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={colunas.length}
-                  className="px-3 py-8 text-center"
-                  style={{ color: 'var(--color-text-muted)' }}
-                >
-                  Nenhum registro encontrado.
-                </TableCell>
-              </TableRow>
-            ) : (
-              dadosPaginados.map((row) => (
-                <TableRow
-                  key={String(row[chaveLinha])}
-                  className="border-b transition-colors"
-                  style={{ borderColor: 'var(--color-border)' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-bg)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ''; }}
-                >
-                  {colunas.map((col) => {
-                    const valor = row[col.chave];
-                    const conteudo = col.formato ? col.formato(valor, row) : String(valor ?? '—');
+            {!hasError && dadosPaginados.map((row) => (
+              <TableRow
+                key={String(row[chaveLinha])}
+                className="border-b transition-colors"
+                style={{ borderColor: 'var(--color-border)' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-bg)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ''; }}
+              >
+                {colunas.map((col) => {
+                  const valor = row[col.chave];
+                  const conteudo = col.formato ? col.formato(valor, row) : String(valor ?? '—');
 
-                    return (
-                      <TableCell
-                        key={col.chave}
-                        className={`px-3 py-2 ${getTextAlignClass(col.alinhamento)} align-middle whitespace-nowrap ${
-                          col.fixo ? 'sticky left-0' : ''
-                        }`}
-                        style={{
-                          color: 'var(--color-text)',
-                          backgroundColor: col.fixo ? 'var(--color-card)' : undefined,
-                          fontWeight: col.fixo ? 500 : undefined,
-                          ...getColumnSizingStyle(col.largura),
-                        }}
-                      >
-                        {conteudo}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
-            )}
+                  return (
+                    <TableCell
+                      key={col.chave}
+                      className={`px-3 py-2 ${getTextAlignClass(col.alinhamento)} align-middle whitespace-nowrap ${
+                        col.fixo ? 'sticky left-0' : ''
+                      }`}
+                      style={{
+                        color: 'var(--color-text)',
+                        backgroundColor: col.fixo ? 'var(--color-card)' : undefined,
+                        fontWeight: col.fixo ? 500 : undefined,
+                        ...getColumnSizingStyle(col.largura),
+                      }}
+                    >
+                      {conteudo}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
+      {hasError ? (
+        <div className="px-3 py-6">
+          <MensagemErro mensagem={getApiErrorMessage(error, errorFallbackMessage)} tipo={getTipoErro(error)} />
+        </div>
+      ) : dadosPaginados.length === 0 && (
+        <p role="status" className="px-3 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          Nenhum registro encontrado.
+        </p>
+      )}
 
       {!hasError && paginacaoAtiva && (
         <div
-          className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-xs"
+          className="dashboard-table-footer flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-xs"
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
         >
           <span>
             Mostrando {formatarInteiro(dadosPaginados.length === 0 ? 0 : inicio + 1)} a{' '}
             {formatarInteiro(fimExibido)} de {formatarInteiro(paginacaoRemota ? totalReal : dados.length)}
           </span>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="dashboard-table-pager flex flex-wrap items-center justify-end gap-2">
             <DashboardButton
               type="button"
               onClick={() => alterarPagina(Math.max(1, paginaSegura - 1))}
@@ -342,7 +333,7 @@ export default function DataTable<T>({
             >
               Anterior
             </DashboardButton>
-            <div className="flex flex-wrap items-center justify-center gap-1" aria-label="Páginas da tabela">
+            <div className="dashboard-table-pages flex flex-wrap items-center justify-center gap-1" aria-label="Páginas da tabela">
               {itensPaginacao.map((item) => {
                 if (typeof item !== 'number') {
                   return (

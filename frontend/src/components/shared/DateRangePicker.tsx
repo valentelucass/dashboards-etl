@@ -91,12 +91,14 @@ export default function DateRangePicker({
       {/* Bloco: campos De / Até */}
       <div className="date-range-inputs flex flex-wrap items-end gap-2">
         <DateInput
+          presentation="adaptive-bottom-sheet"
           label="De"
           format={formatarDataDoFiltro}
           value={dataInicio ? dataInicio as ISODateString : undefined}
           onChange={(value) => atualizarInicio(value ?? '')}
         />
         <DateInput
+          presentation="adaptive-bottom-sheet"
           label="Até"
           format={formatarDataDoFiltro}
           value={dataFim ? dataFim as ISODateString : undefined}

@@ -24,13 +24,14 @@ export default function AstryxDashboardChart({ option, label, onEvents, style }:
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const [page, setPage] = useState(0);
   const plotRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(0);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const { width, height } = size;
 
   useLayoutEffect(() => {
     const el = plotRef.current;
     if (!el) return;
     const observer = new ResizeObserver(([entry]) => {
-      setHeight(Math.floor(entry.contentRect.height));
+      setSize({ width: Math.floor(entry.contentRect.width), height: Math.floor(entry.contentRect.height) });
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -78,6 +79,7 @@ export default function AstryxDashboardChart({ option, label, onEvents, style }:
           ? <AstryxRadialPlot option={option} height={height} label={label} onEvents={onEvents} />
           : <AstryxCartesianPlot
               model={model}
+              width={width}
               height={height}
               label={label}
               onEvents={onEvents}

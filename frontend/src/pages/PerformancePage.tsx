@@ -1022,7 +1022,7 @@ export default function PerformancePage() {
       )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-6">
-        <div className="col-span-full h-[28rem] min-h-0 2xl:col-span-2">
+        <div className="col-span-full min-h-0 lg:h-[28rem] 2xl:col-span-2">
           <ChartWrapper
             titulo="Entregas por dia, mês e ano"
             chartKey="performanceSerieTemporal"
@@ -1042,7 +1042,7 @@ export default function PerformancePage() {
             className="h-full"
           />
         </div>
-        <div className="h-[28rem] min-h-0 2xl:col-span-2">
+        <div className="min-h-0 lg:h-[28rem] 2xl:col-span-2">
           <ChartWrapper
             titulo="Distribuição por Status"
             chartKey="performanceStatus"
@@ -1055,7 +1055,7 @@ export default function PerformancePage() {
             className="h-full"
           />
         </div>
-        <div className="h-[28rem] min-h-0 2xl:col-span-2">
+        <div className="min-h-0 lg:h-[28rem] 2xl:col-span-2">
           <ChartWrapper
             titulo="Histórico de Performance"
             chartKey="performanceHistorico"

@@ -18,7 +18,7 @@ export default function PermissionMatrix({ catalogo, valor, onChange, disabled }
         return (
           <Card padding={0}
             key={item.chave}
-            className={`flex min-h-[122px] min-w-0 items-start gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${disabled ? 'opacity-60' : ''}`}
+            className={`flex min-w-0 max-sm:flex-col sm:min-h-[122px] items-start gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${disabled ? 'opacity-60' : ''}`}
             style={
               ativo
                 ? {

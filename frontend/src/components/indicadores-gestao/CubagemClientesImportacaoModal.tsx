@@ -1,5 +1,6 @@
+import { Grid } from '@astryxdesign/core/Grid';
 import { Badge } from '@astryxdesign/core/Badge';
-import { Dialog } from '@astryxdesign/core/Dialog';
+import DashboardAdaptiveDialog from '../shared/DashboardAdaptiveDialog';
 import { FileInput } from '@astryxdesign/core/FileInput';
 import { Text } from '@astryxdesign/core/Text';
 import DashboardButton from "../shared/DashboardButton";
@@ -194,9 +195,9 @@ function CubagemClientesImportacaoModalAberto({ onClose }: Pick<CubagemClientesI
   ];
 
   return (
-    <Dialog isOpen purpose="info" aria-labelledby="cubagem-import-title" width="min(80rem, calc(100vw - 1.5rem))" maxHeight="calc(100dvh - 1.5rem)" padding={0}
+    <DashboardAdaptiveDialog label="Importação de clientes sem cubagem" isOpen purpose="info" aria-labelledby="cubagem-import-title" width="min(80rem, calc(100vw - 1.5rem))" maxHeight="calc(100dvh - 1.5rem)" padding={0}
       onOpenChange={open => { if (!open) onClose(); }}>
-        <div className="flex items-start justify-between gap-4 border-b px-6 py-5" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex items-start justify-between gap-4 border-b px-4 py-3 sm:px-6 sm:py-5" style={{ borderColor: 'var(--color-border)' }}>
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>
               <FileSpreadsheet size={18} />
@@ -221,10 +222,10 @@ function CubagemClientesImportacaoModalAberto({ onClose }: Pick<CubagemClientesI
           </DashboardButton>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="flex-1 min-w-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           <div className="space-y-6">
-            <section className="rounded-3xl border p-5" style={SOFT_PANEL_STYLE}>
-              <div className="grid gap-4 lg:grid-cols-[1.6fr_auto]">
+            <section className="min-w-0 rounded-3xl border p-3 sm:p-5" style={SOFT_PANEL_STYLE}>
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.6fr)_auto]">
                 <div>
                   <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text)' }}>
                     Arquivo de entrada
@@ -252,11 +253,11 @@ function CubagemClientesImportacaoModalAberto({ onClose }: Pick<CubagemClientesI
 
             {preview && (
               <>
-                <section className="grid gap-4 md:grid-cols-3">
+                <Grid columns={{ minWidth: 180, max: 3 }} gap={4}>
                   <SummaryCard label="Total de linhas" value={preview.totais.totalLinhas} accent="var(--color-text)" />
                   <SummaryCard label="Válidas para importação" value={preview.totais.validas} accent="#10b981" />
                   <SummaryCard label="Com problemas" value={preview.totais.invalidas} accent="#ef4444" />
-                </section>
+                </Grid>
 
                 <DataTable
                   titulo="Preview da importação"
@@ -281,7 +282,7 @@ function CubagemClientesImportacaoModalAberto({ onClose }: Pick<CubagemClientesI
             )}
 
             {resultado && (
-              <section className="space-y-5 rounded-3xl border p-5" style={SOFT_PANEL_STYLE}>
+              <section className="min-w-0 space-y-5 rounded-3xl border p-3 sm:p-5" style={SOFT_PANEL_STYLE}>
                 <div>
                   <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
                     Resultado final da importação
@@ -291,11 +292,11 @@ function CubagemClientesImportacaoModalAberto({ onClose }: Pick<CubagemClientesI
                   </p>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <Grid columns={{ minWidth: 180, max: 3 }} gap={4}>
                   <SummaryCard label="Processadas" value={resultado.totalProcessados} accent="var(--color-text)" />
                   <SummaryCard label="Importadas" value={resultado.totalImportados} accent="#10b981" />
                   <SummaryCard label="Rejeitadas" value={resultado.totalErros} accent="#ef4444" />
-                </div>
+                </Grid>
 
                 <DataTable
                   titulo="Erros e motivos"
@@ -308,6 +309,6 @@ function CubagemClientesImportacaoModalAberto({ onClose }: Pick<CubagemClientesI
             )}
           </div>
         </div>
-    </Dialog>
+    </DashboardAdaptiveDialog>
   );
 }

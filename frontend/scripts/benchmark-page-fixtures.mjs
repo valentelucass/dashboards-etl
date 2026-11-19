@@ -104,7 +104,7 @@ export function pageFixture(path, params = new URLSearchParams()) {
     overview: { updatedAt: '2026-09-10T00:00:00Z', totalCargas: 100, emTransito: 30, previsaoVencida: 5,
       valorFreteEmCarteira: 50000, pesoTaxadoTotal: 10000, pctFinalizado: 20 },
     matrizRegiaoDestino: [{ siglaRegiaoDestino: 'SUL - Região Sul', responsavelRegiaoDestino: 'Operador sintético',
-      pesoTaxado: 10000, valorFrete: 50000, valorNota: 200000, volumes: 300, foraDoPrazo: 5 }],
+      totalCargas: 100, pesoTaxado: 10000, valorFrete: 50000, valorNota: 200000, volumes: 300, foraDoPrazo: 5 }],
     graficos: { statusDistribuicao: [
       { status: 'NO ARMAZÉM', total: 50, valorFrete: 25000 },
       { status: 'Em entrega', total: 30, valorFrete: 15000 },

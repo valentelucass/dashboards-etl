@@ -2,7 +2,7 @@ import { Link } from '@astryxdesign/core/Link';
 import DashboardRouteLoading from './DashboardRouteLoading';
 import DashboardSideNav from './DashboardSideNav';
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, Code2, Mail } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import TopNav from './TopNav';
 import usePresencaNavegacao from '../../hooks/usePresencaNavegacao';
@@ -85,13 +85,13 @@ function BuildInfoFooter() {
 
   return (
     <div
-      className="flex min-w-0 items-center gap-2.5 border-l pl-5 text-xs"
+      className="dashboard-footer-build flex min-w-0 items-center gap-2 text-xs"
       style={{ color: 'var(--color-text-muted)', borderColor: 'var(--color-border)' }}
       title={!isDevBuild ? `Versão ${buildId}` : undefined}
     >
       <CalendarClock size={16} className="shrink-0" aria-hidden="true" />
-      <div className="space-y-1">
-        <p>{dataPrincipal ? rotuloPrincipal : 'Versão publicada'}</p>
+      <div className="dashboard-footer-build-time">
+        <p className="text-xs">{dataPrincipal ? rotuloPrincipal : 'Versão publicada'}</p>
         {dataPrincipal && (
           <time
             dateTime={dataDeploy ? buildInfo.deployedAt : buildInfo.builtAt}
@@ -110,7 +110,7 @@ function BuildInfoFooter() {
 export default function LayoutPainel() {
   usePresencaNavegacao();
   return (
-    <div className="dashboard-shell dashboard-shell-with-sidebar flex min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="dashboard-shell dashboard-shell-with-sidebar flex min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
       <DashboardSideNav />
       <div className="dashboard-main-column flex min-w-0 flex-1 flex-col">
         <TopNav />
@@ -119,28 +119,22 @@ export default function LayoutPainel() {
             <Outlet />
           </Suspense>
         </main>
-        <footer className="mt-auto border-t px-4 py-4 sm:px-6" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
-          <div className="flex w-full flex-wrap items-center justify-between gap-x-8 gap-y-4">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3">
-            <div className="min-w-0 space-y-1">
-              <p className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
-                Rodogarcia <span aria-hidden="true" className="mx-1 opacity-40">·</span> Dashboards
-              </p>
-              <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-                © {new Date().getFullYear()} Rodogarcia. Todos os direitos reservados.
-              </p>
+        <footer className="dashboard-footer mt-auto border-t" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
+          <div className="dashboard-footer-content">
+            <div className="dashboard-footer-about">
+              <div>
+                <p className="dashboard-footer-title">Rodogarcia <span aria-hidden="true">·</span> Dashboards</p>
+                <p className="dashboard-footer-copyright">© {new Date().getFullYear()} Rodogarcia. Todos os direitos reservados.</p>
+              </div>
+              <BuildInfoFooter />
             </div>
-            <BuildInfoFooter />
-            </div>
-            <div className="flex flex-col gap-1 text-left sm:items-end sm:text-right">
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                Desenvolvido por{' '}
-                <Link href="https://www.linkedin.com/in/dev-lucasandrade/" target="_blank" rel="noopener noreferrer">Lucas Andrade</Link>
-              </p>
-              <p className="text-xs" style={{ color: 'var(--color-text-subtle)' }}>
-                Suporte:{' '}
-                <Link href="mailto:lucasmac.dev@gmail.com">lucasmac.dev@gmail.com</Link>
-              </p>
+            <div className="dashboard-footer-contact">
+              <Link type="inherit" href="https://www.linkedin.com/in/dev-lucasandrade/" target="_blank" rel="noopener noreferrer">
+                <span className="dashboard-footer-link"><Code2 size={16} aria-hidden="true" /><span>Desenvolvedor</span><strong>Lucas Andrade</strong></span>
+              </Link>
+              <Link type="inherit" href="mailto:lucasmac.dev@gmail.com">
+                <span className="dashboard-footer-link"><Mail size={16} aria-hidden="true" /><span>Suporte</span><strong>lucasmac.dev@gmail.com</strong></span>
+              </Link>
             </div>
           </div>
         </footer>

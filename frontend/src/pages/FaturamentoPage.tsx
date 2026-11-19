@@ -81,7 +81,7 @@ const RESPONSAVEL_DRILL_LEVELS: Array<{ value: ResponsavelDrillLevel; label: str
 ];
 const FATURAMENTO_DATE_HELP = 'Usa a emissão do CT-e quando existir; se não existir, usa a data operacional.';
 const MIN_CUSTOM_CHART_HEIGHT = 350;
-const KPI_CARD_HEIGHT_CLASS = 'h-[28rem] min-h-0';
+const KPI_CARD_HEIGHT_CLASS = 'min-h-0 lg:h-[28rem]';
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const DAY_MS = 24 * 60 * 60 * 1000;
 

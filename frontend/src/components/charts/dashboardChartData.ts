@@ -104,12 +104,13 @@ export function dataForPoint(series: DashboardSeries, category: ChartCategory, s
   };
 }
 
+const tickFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 const numberFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2, notation: 'compact' });
 
 export function formatAxis(axis: DashboardAxis | undefined, value: string | number): string {
   const formatter = axis?.axisLabel?.formatter;
   if (typeof formatter === 'function') return String(formatter(value as never));
-  if (typeof formatter === 'string') return formatter.replace('{value}', String(value));
+  if (typeof formatter === 'string') return formatter.replace('{value}', typeof value === 'number' ? tickFormat.format(value) : value);
   return typeof value === 'number' ? numberFormat.format(value) : value;
 }
 

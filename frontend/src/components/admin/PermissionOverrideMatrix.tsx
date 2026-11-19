@@ -72,12 +72,12 @@ export default function PermissionOverrideMatrix({
         return (
           <Card padding={0}
             key={item.chave}
-            className={`flex h-[156px] min-w-0 flex-[1_1_17rem] flex-col rounded-xl border p-3.5 ${disabled ? 'opacity-60' : ''}`}
+            className={`flex min-w-0 max-sm:gap-2 sm:h-[156px] flex-[1_1_17rem] flex-col rounded-xl border p-3.5 ${disabled ? 'opacity-60' : ''}`}
             style={cardStyle}
           >
-            <div className="min-h-[61px] min-w-0">
+            <div className="min-w-0 sm:min-h-[61px]">
               <div className="truncate text-[15px] font-semibold leading-5" title={item.nome} style={{ color: 'var(--color-text)' }}>{item.nome}</div>
-              <div className="mt-0.5 truncate text-xs leading-4" title={item.descricao} style={{ color: 'var(--color-text-subtle)' }}>{item.descricao}</div>
+              <div className="mt-0.5 wrap-anywhere sm:truncate text-xs leading-4" title={item.descricao} style={{ color: 'var(--color-text-subtle)' }}>{item.descricao}</div>
               {item.rota && <div className="mt-1 truncate text-xs leading-4" title={item.rota} style={{ color: 'var(--color-text-muted)' }}>{item.rota}</div>}
             </div>
 

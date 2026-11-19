@@ -1,0 +1,146 @@
+.admin-presence-panel {
+  min-inline-size: 0;
+  container: admin-presence / inline-size;
+}
+
+/* Mantém a âncora quando há espaço e usa a janela inteira para fichas longas. */
+@position-try --presence-viewport {
+  position-area: span-all;
+  place-self: center;
+  margin: 0;
+}
+
+[data-layer-anchored]:popover-open:has(.admin-presence-panel) {
+  /* O Astryx define os fallbacks da âncora diretamente no elemento. */
+  position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline, --presence-viewport !important;
+}
+
+.astryx-popover .admin-presence-title {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--color-card);
+}
+
+.admin-presence-sections > section {
+  min-inline-size: 0;
+  padding: 1rem;
+}
+
+.admin-presence-sections > section + section {
+  border-block-start: 1px solid var(--color-border);
+}
+
+@container admin-presence (min-width: 48rem) {
+  .admin-presence-sections[data-both="true"] > section + section {
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--color-border);
+  }
+}
+
+.admin-presence-stack {
+  --sheet-edge: color-mix(in srgb, var(--color-text) 24%, var(--color-card));
+  --sheet-layer: color-mix(in srgb, var(--color-text) 8%, var(--color-card));
+  display: grid;
+  isolation: isolate;
+  padding: .25rem .375rem .75rem;
+}
+
+.admin-presence-stack .admin-presence-sheet {
+  position: relative;
+  min-inline-size: 0;
+  margin-block-start: -.625rem;
+  padding-block-end: 1rem;
+  border-color: var(--sheet-edge);
+  background: var(--color-card);
+  box-shadow: 0 -2px 6px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.admin-presence-sheet:first-child {
+  margin-block-start: 0;
+  margin-inline: .75rem;
+}
+
+.admin-presence-sheet:nth-child(2) { margin-inline: .5rem; }
+.admin-presence-sheet:nth-child(3) { margin-inline: .25rem; }
+
+.admin-presence-stack .admin-presence-sheet:last-child {
+  padding-block-end: 0;
+  box-shadow: 0 4px 0 -1px var(--sheet-layer), 0 5px 0 -1px var(--sheet-edge),
+    0 8px 0 -2px var(--sheet-layer), 0 9px 0 -2px var(--sheet-edge);
+}
+
+.admin-presence-stack .admin-presence-sheet[data-open="true"] {
+  border-color: color-mix(in srgb, var(--color-primary) 65%, var(--sheet-edge));
+}
+
+.admin-presence-sheet[data-open="true"] .astryx-collapsible-trigger {
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--color-card));
+}
+
+.admin-presence-sheet .astryx-collapsible-trigger {
+  min-block-size: 3.125rem;
+  gap: .75rem;
+  padding: .5rem .875rem;
+}
+
+.admin-presence-sheet .astryx-collapsible-trigger > span:first-child {
+  min-inline-size: 0;
+}
+
+.admin-presence-identity {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-size: .875rem;
+  line-height: 1.35;
+}
+
+.admin-presence-avatar {
+  display: grid;
+  flex: 0 0 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--color-text-subtle);
+  background: var(--sheet-layer);
+}
+
+.admin-presence-avatar[data-online="true"] {
+  color: var(--color-success, var(--color-primary));
+  background: color-mix(in srgb, currentColor 12%, var(--color-card));
+}
+
+.admin-presence-details {
+  display: grid;
+  justify-items: start;
+  gap: .625rem;
+  margin-inline: .875rem;
+  padding-block: .75rem .875rem;
+  border-block-start: 1px solid var(--color-border);
+  color: var(--color-text-subtle);
+  font-size: .8125rem;
+  line-height: 1.45;
+}
+
+@container admin-presence (min-width: 48rem) {
+  .admin-presence-sections[data-both="false"] .admin-presence-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .75rem 1.5rem;
+  }
+
+  .admin-presence-sections[data-both="false"] .admin-presence-details > button {
+    margin-inline-start: auto;
+  }
+}
+
+@media (max-width: 860px) {
+  .admin-directory-page > .dashboard-table-card table {
+    /* A lista compacta tem uma coluna com os dados e as ações de cada registro. */
+    min-width: 100% !important;
+    width: 100%;
+    table-layout: fixed;
+  }
+}

@@ -1,3 +1,4 @@
+import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSegments from '../components/shared/DashboardSegments';
 import { Tab, TabList } from '@astryxdesign/core/TabList';
@@ -175,12 +176,14 @@ function CotacoesViewTabs({
   panelId: string;
   onChange: (view: CotacoesViewTab) => void;
 }) {
+  const compact = useMediaQuery('(width < 48rem)');
   return (
     <TabList role="tablist" aria-label="Visões de cotações" value={activeView} size="sm" hasDivider
       onChange={value => { const next = COTACOES_VIEW_TABS.find(item => item.value === value); if (next) onChange(next.value); }}>
-      {COTACOES_VIEW_TABS.map(({ value, label, icon: Icon }) => (
+      {COTACOES_VIEW_TABS.map(({ value, label, compactLabel, icon: Icon }) => (
         <Tab key={value} id={panelId + '-' + value} panelId={panelId}
-          value={value} label={label} icon={<Icon size={15} />} />
+          value={value} aria-label={label} label={compact ? compactLabel : label} icon={compact ? undefined : <Icon size={15} />}
+          className="max-md:min-h-10 max-md:px-1.5" />
       ))}
     </TabList>
   );

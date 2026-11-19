@@ -3,7 +3,7 @@ import { DashboardTextArea } from "../shared/DashboardTextEntry";
 import DashboardButton from "../shared/DashboardButton";
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Dialog } from '@astryxdesign/core/Dialog';
+import DashboardAdaptiveDialog from '../shared/DashboardAdaptiveDialog';
 import { Clock3, Save, Trash2, X } from 'lucide-react';
 import type { ViagemJustificativaPayload } from '../../types/indicadoresGestaoAVista';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -112,7 +112,7 @@ function JustificativaHorarioCorteModalAberto({
   }
 
   return (
-    <Dialog isOpen purpose={isBusy ? 'required' : 'info'} aria-label="Justificativa de Horário de Corte"
+    <DashboardAdaptiveDialog label="Justificativa de Horário de Corte" isOpen purpose={isBusy ? 'required' : 'info'}
       width={580} padding={0} onOpenChange={open => { if (!open && !isBusy) onClose(); }}>
         <div className="flex items-start justify-between gap-4 border-b px-5 py-4" style={{ borderColor: 'var(--color-border)' }}>
           <div className="min-w-0">
@@ -194,6 +194,6 @@ function JustificativaHorarioCorteModalAberto({
             </div>
           </div>
         </form>
-    </Dialog>
+    </DashboardAdaptiveDialog>
   );
 }

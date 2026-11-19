@@ -48,7 +48,7 @@ export default function KpiCard({
   const iconNode = icone ?? createElement(resolveKpiIcon(label), { size: 16, 'aria-hidden': 'true' });
   const widthPct = Math.max(0, Math.min(progressPct ?? 0, 100));
   const cardClassName = `dashboard-kpi-card flex min-w-0 flex-col border cursor-default ${compact ? 'gap-0 p-2' : 'gap-1 p-3'} ${className}`;
-  const labelClassName = 'text-xs font-medium truncate';
+  const labelClassName = 'min-w-0 text-xs font-medium leading-snug md:truncate';
   const defaultValueClassName = 'dashboard-kpi-value font-bold';
 
   return (

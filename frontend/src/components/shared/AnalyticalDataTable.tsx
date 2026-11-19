@@ -2,7 +2,6 @@ import { Spinner } from '@astryxdesign/core/Spinner';
 import DashboardLoading from './DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
 import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
-import { Dialog } from '@astryxdesign/core/Dialog';
 import { DashboardInput } from "./DashboardTextEntry";
 import DashboardSelector from "./DashboardSelector";
 import DashboardButton from "./DashboardButton";
@@ -59,20 +58,6 @@ interface AnalyticalDataTableProps<T> {
   error?: unknown;
   errorFallbackMessage?: string;
   acoesCabecalho?: ReactNode;
-}
-
-function useIsMobile() {
-  const [mobile, setMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false,
-  );
-
-  useEffect(() => {
-    const fn = () => setMobile(window.innerWidth < 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
-
-  return mobile;
 }
 
 function toggleValue(valores: string[], valor: string): string[] {
@@ -184,7 +169,7 @@ function MultiSelectFilter({
   }
 
   return (
-    <Popover label={label} alignment="start" width="min(16rem, calc(100vw - 24px))" padding={3}
+    <Popover presentation="adaptive" label={label} alignment="start" width="min(16rem, calc(100vw - 24px))" padding={3}
       content={<div aria-labelledby={labelId}>
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>
@@ -411,7 +396,6 @@ function AdvancedFiltersButton<T>({
   'colunas' | 'filtros' | 'hiddenActiveCount' | 'statusOptions' | 'statusOptionsLoading' | 'onTextFilterChange' | 'onMultiFilterChange'
 >) {
   const [open, setOpen] = useState(false);
-  const isMobile = useIsMobile();
   const campos = useMemo(
     () => Array.from(new Set(colunas.map((coluna) => coluna.filtroTabela).filter(Boolean))) as TableFilterField[],
     [colunas],
@@ -429,11 +413,10 @@ function AdvancedFiltersButton<T>({
     />
   );
 
-  const renderButton = (withManualToggle: boolean, trigger?: PopoverTriggerRenderProps) => (
+  const renderButton = (trigger: PopoverTriggerRenderProps) => (
     <DashboardButton
       {...trigger}
       type="button"
-      onClick={trigger?.onClick ?? (withManualToggle ? () => setOpen((atual) => !atual) : undefined)}
       className="relative inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors hover:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
       style={{
         backgroundColor: 'var(--color-bg)',
@@ -450,30 +433,16 @@ function AdvancedFiltersButton<T>({
     </DashboardButton>
   );
 
-  if (isMobile) {
-    return (
-      <>
-        {renderButton(true)}
-        {open && (
-          <Dialog isOpen purpose="info" aria-label="Filtros da tabela"
-            position={{ bottom: 0 }} width="100%" onOpenChange={next => { if (!next) setOpen(false); }}>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold">Filtros da tabela</span>
-              <DashboardButton type="button" aria-label="Fechar filtros" onClick={() => setOpen(false)}><X size={16} /></DashboardButton>
-            </div>
-            {content}
-          </Dialog>
-        )}
-      </>
-    );
-  }
-
   return (
-    <Popover label="Filtros da tabela" isOpen={open} onOpenChange={setOpen} alignment="end" width="min(21.25rem, calc(100vw - 24px))" padding={3}
-      content={<div>
+    <Popover presentation="adaptive" label="Filtros da tabela" isOpen={open} onOpenChange={setOpen} alignment="end" width="min(21.25rem, calc(100vw - 24px))" padding={3}
+      content={<>
+        <div className="dashboard-filter-sheet-heading">
+          <span className="font-semibold">Filtros da tabela</span>
+          <DashboardButton aria-label="Fechar filtros" onClick={() => setOpen(false)}><X size={18} /></DashboardButton>
+        </div>
         {content}
-        </div>}>
-      {trigger => renderButton(false, trigger)}
+      </>}>
+      {renderButton}
     </Popover>
   );
 }
@@ -697,68 +666,59 @@ export default function AnalyticalDataTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {hasError ? (
-              <TableRow>
-                <TableCell colSpan={colunas.length} className="px-3 py-6">
-                  <MensagemErro mensagem={getApiErrorMessage(error, errorFallbackMessage)} tipo={getTipoErro(error)} />
-                </TableCell>
-              </TableRow>
-            ) : dados.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={colunas.length}
-                  className="px-3 py-8 text-center"
-                  style={{ color: 'var(--color-text-muted)' }}
-                >
-                  Nenhum registro encontrado.
-                </TableCell>
-              </TableRow>
-            ) : (
-              dados.map((row, index) => (
-                <TableRow
-                  key={`${String(row[chaveLinha])}-${index}`}
-                  className="border-b transition-colors"
-                  style={{ borderColor: 'var(--color-border)' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-bg)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ''; }}
-                >
-                  {colunas.map((col) => {
-                    const valor = row[col.chave];
-                    const conteudo = col.formato ? col.formato(valor, row) : String(valor ?? '—');
+            {!hasError && dados.map((row, index) => (
+              <TableRow
+                key={`${String(row[chaveLinha])}-${index}`}
+                className="border-b transition-colors"
+                style={{ borderColor: 'var(--color-border)' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-bg)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ''; }}
+              >
+                {colunas.map((col) => {
+                  const valor = row[col.chave];
+                  const conteudo = col.formato ? col.formato(valor, row) : String(valor ?? '—');
 
-                    return (
-                      <TableCell
-                        key={col.chave}
-                        className={`px-3 py-2 align-middle whitespace-nowrap ${
-                          col.fixo ? 'sticky left-0' : ''
-                        }`}
-                        style={{
-                          color: 'var(--color-text)',
-                          backgroundColor: col.fixo ? 'var(--color-card)' : undefined,
-                          fontWeight: col.fixo ? 500 : undefined,
-                          ...getColumnSizingStyle(col.largura),
-                        }}
-                      >
-                        {conteudo}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
-            )}
+                  return (
+                    <TableCell
+                      key={col.chave}
+                      className={`px-3 py-2 align-middle whitespace-nowrap ${
+                        col.fixo ? 'sticky left-0' : ''
+                      }`}
+                      style={{
+                        color: 'var(--color-text)',
+                        backgroundColor: col.fixo ? 'var(--color-card)' : undefined,
+                        fontWeight: col.fixo ? 500 : undefined,
+                        ...getColumnSizingStyle(col.largura),
+                      }}
+                    >
+                      {conteudo}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
+      {hasError ? (
+        <div className="px-3 py-6">
+          <MensagemErro mensagem={getApiErrorMessage(error, errorFallbackMessage)} tipo={getTipoErro(error)} />
+        </div>
+      ) : dados.length === 0 && (
+        <p role="status" className="px-3 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          Nenhum registro encontrado.
+        </p>
+      )}
 
       {!hasError && (
         <div
-          className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-xs"
+          className="dashboard-table-footer flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-xs"
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
         >
           <span>
             Mostrando {formatarInteiro(dados.length === 0 ? 0 : inicio + 1)} a {formatarInteiro(fimExibido)} de {formatarInteiro(totalReal)}
           </span>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="dashboard-table-pager flex flex-wrap items-center justify-end gap-2">
             <DashboardButton
               type="button"
               onClick={() => onPaginaChange(Math.max(1, paginaSegura - 1))}
@@ -768,7 +728,7 @@ export default function AnalyticalDataTable<T>({
             >
               Anterior
             </DashboardButton>
-            <div className="flex flex-wrap items-center justify-center gap-1" aria-label="Paginas da tabela">
+            <div className="dashboard-table-pages flex flex-wrap items-center justify-center gap-1" aria-label="Paginas da tabela">
               {itensPaginacao.map((item) => {
                 if (typeof item !== 'number') {
                   return (

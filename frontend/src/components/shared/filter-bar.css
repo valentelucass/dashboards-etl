@@ -1,0 +1,17 @@
+.dashboard-mobile-filter-fields .date-range-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dashboard-mobile-filter-fields .date-range-presets > div {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.dashboard-mobile-filter-fields .date-range-presets button {
+  grid-column: span 2;
+}
+
+.dashboard-mobile-filter-fields .date-range-presets button:nth-last-child(-n + 2) {
+  grid-column: span 3;
+}

@@ -1,3 +1,7 @@
+import { useMediaQuery } from '@astryxdesign/core/hooks';
+import '../components/admin/admin-directory.css';
+import { Grid } from '@astryxdesign/core/Grid';
+import { Collapsible } from '@astryxdesign/core/Collapsible';
 import { TableText } from '../components/shared/DashboardTable';
 import DashboardLoading from '../components/shared/DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -8,7 +12,7 @@ import { Banner } from '@astryxdesign/core/Banner';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
 import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
-import { Dialog } from '@astryxdesign/core/Dialog';
+import DashboardAdaptiveDialog from '../components/shared/DashboardAdaptiveDialog';
 import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList';
 import { Selector } from '@astryxdesign/core/Selector';
 import { FormPasswordField, FormTextField } from '../components/shared/FormTextField';
@@ -173,7 +177,7 @@ function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, li
   const [open, setOpen] = useState(false);
 
   return (
-    <Popover label={listTitle} isOpen={open} onOpenChange={setOpen} alignment="start" width="min(22rem, calc(100vw - 24px))" padding={0}
+    <Popover presentation="adaptive" label={listTitle} isOpen={open} onOpenChange={setOpen} alignment="start" width="min(22rem, calc(100vw - 24px))" padding={0}
       content={<div>
         <div className="border-b px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
           <h2 className="text-sm font-bold">{listTitle}</h2>
@@ -184,7 +188,7 @@ function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, li
             <div key={usuario.id} className="flex items-center gap-3 rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--color-bg)' }}>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold" title={usuario.nome}>{usuario.nome}</p>
-                <p className="truncate text-xs" title={usuario.email} style={{ color: 'var(--color-text-subtle)' }}>{usuario.email}</p>
+                <p className="text-xs wrap-anywhere" title={usuario.email} style={{ color: 'var(--color-text-subtle)' }}>{usuario.email}</p>
               </div>
               {acaoUsuario && (
                 <DashboardButton
@@ -204,7 +208,7 @@ function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, li
         </div>
         </div>}>
       {trigger => (
-        <div className="grid min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
+        <div className="grid sm:min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconSurface, color: accent }}>
           <Icon size={19} strokeWidth={2.2} aria-hidden="true" />
         </div>
@@ -245,28 +249,39 @@ function formatTempoUltimoPulso(valor: string | null): string {
   return `Último sinal há ${horas}h ${minutos % 60}min`;
 }
 
-function PresenceUserRow({ usuario, online, podeVerTrilha, onSelect }: {
-  onSelect: () => void;
-  podeVerTrilha: boolean;
-  usuario: Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>;
-  online: boolean;
-}) {
-  const initial = usuario.nome.trim().charAt(0).toUpperCase() || '?';
+type PessoaPresente = Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>;
 
-  const conteudo = (
-    <div className="flex gap-3 rounded-xl border p-3" style={SOFT_PANEL_STYLE}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: online ? 'rgba(16, 185, 129, 0.16)' : 'rgba(100, 116, 139, 0.14)', color: online ? '#059669' : 'var(--color-text-subtle)' }} aria-hidden="true">{initial}</div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2"><p className="truncate text-sm font-semibold" title={usuario.nome} style={{ color: 'var(--color-text)' }}>{usuario.nome}</p>{online && <span className="h-2 w-2 shrink-0 rounded-full bg-[#10b981] motion-safe:animate-pulse" aria-label="Online agora" />}</div>
-        <p className="truncate text-xs" title={usuario.email} style={{ color: 'var(--color-text-subtle)' }}>{usuario.email}</p>
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-          <span className="inline-flex items-center gap-1"><Clock3 size={12} aria-hidden="true" />{online ? formatTempoUltimoPulso(usuario.ultimaAtividade) : usuario.ultimaAtividade ? formatarDataHoraMinuto(usuario.ultimaAtividade) : 'Sem atividade registrada'}</span>
-          {usuario.ultimaRotaAcessada && <span className="inline-flex min-w-0 items-center gap-1"><MapPin size={12} aria-hidden="true" /><span className="max-w-36 truncate" title={usuario.ultimaRotaAcessada}>{usuario.ultimaRotaAcessada}</span></span>}
-        </div>
-      </div>
+function PresencePeopleStack({ pessoas, online, aberta, onOpen, onHistory }: {
+  pessoas: PessoaPresente[];
+  online: boolean;
+  aberta: string | null;
+  onOpen: (id: string | null) => void;
+  onHistory?: (pessoa: PessoaPresente) => void;
+}) {
+  return (
+    <div className="admin-presence-stack">
+      {pessoas.map(pessoa => (
+        <Card key={pessoa.id} padding={0} className="admin-presence-sheet" data-open={aberta === pessoa.id}>
+          <Collapsible isOpen={aberta === pessoa.id} onOpenChange={open => onOpen(open ? pessoa.id : null)}
+            id={`presenca-pessoa-${pessoa.id}`}
+            trigger={<span className="admin-presence-identity">
+              <span aria-hidden="true" className="admin-presence-avatar" data-online={online}>{pessoa.nome.trim().charAt(0).toUpperCase() || '?'}</span>
+              <span className="wrap-anywhere">{pessoa.nome}</span>
+            </span>}>
+            <div className="admin-presence-details">
+              <p className="min-w-0 wrap-anywhere">{pessoa.email}</p>
+              <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-2">
+                <span className="inline-flex items-center gap-1.5"><Clock3 size={14} aria-hidden="true" />{online ? formatTempoUltimoPulso(pessoa.ultimaAtividade) : pessoa.ultimaAtividade ? formatarDataHoraMinuto(pessoa.ultimaAtividade) : 'Sem atividade registrada'}</span>
+                {pessoa.ultimaRotaAcessada && <span className="inline-flex min-w-0 items-center gap-1.5"><MapPin size={14} className="shrink-0" aria-hidden="true" /><span className="wrap-anywhere">{pessoa.ultimaRotaAcessada}</span></span>}
+              </div>
+              {onHistory && <Button variant="secondary" size="sm" id={`presenca-historico-${pessoa.id}`}
+                label="Ver acessos de hoje" onClick={() => onHistory(pessoa)} />}
+            </div>
+          </Collapsible>
+        </Card>
+      ))}
     </div>
   );
-  return podeVerTrilha ? <DashboardButton type="button" id={`presenca-pessoa-${usuario.id}`} onClick={onSelect} aria-label={`Ver acessos de hoje de ${usuario.nome}`} className={`block w-full rounded-xl text-left ${FOCUS_RING_CLASS}`}>{conteudo}</DashboardButton> : conteudo;
 }
 
 function AccessSummaryItem({
@@ -288,7 +303,7 @@ function AccessSummaryItem({
       <div className="mt-1 flex min-w-0 items-center gap-1.5">
         <span className="min-w-0 flex-1 truncate text-sm font-medium" title={value} style={{ color: 'var(--color-text)' }}>{value}</span>
         {canExpand && (
-          <Popover label={label} alignment="start" width="min(28rem, calc(100vw - 24px))" padding={3}
+          <Popover presentation="adaptive" label={label} alignment="start" width="min(28rem, calc(100vw - 24px))" padding={3}
       content={<div>
               <h4 className="text-sm font-bold">{label}</h4>
               <p className="mt-2 text-sm leading-6" style={{ color: 'var(--color-text-subtle)' }}>{value}</p>
@@ -323,39 +338,40 @@ function OnlineUsersCard({
   atualizadoEm: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [folhaAberta, setFolhaAberta] = useState<string | null>();
+  const folhaAtual = folhaAberta === null || [...usuarios, ...recentes].some(pessoa => pessoa.id === folhaAberta)
+    ? folhaAberta ?? null : usuarios[0]?.id ?? recentes[0]?.id ?? null;
   const [selecionado, setSelecionado] = useState<{ id: string; nome: string } | null>(null);
 
   return (
-    <Popover label="Acessos recentes" isOpen={open} onOpenChange={(aberto) => { setOpen(aberto); setSelecionado(null); }} alignment="end" width="min(48rem, calc(100vw - 24px))" padding={0}
-      content={<div className="max-h-[min(40rem,70dvh)] overflow-y-auto">
+    <Popover presentation="adaptive" label="Acessos recentes" isOpen={open} onOpenChange={(aberto) => { setOpen(aberto); setSelecionado(null); setFolhaAberta(undefined); }} alignment="end" width="min(68rem, calc(100dvw - 2rem))" padding={0}
+      content={<div className="admin-presence-panel">
         {selecionado && podeVerTrilha ? <PresenceHistoryContent key={selecionado.id} usuarioId={selecionado.id} nome={selecionado.nome} onClose={() => {
           const pessoaId = selecionado.id;
           setSelecionado(null);
-          requestAnimationFrame(() => document.getElementById(`presenca-pessoa-${pessoaId}`)?.focus());
+          requestAnimationFrame(() => document.getElementById(`presenca-historico-${pessoaId}`)?.focus({ preventScroll: true }));
         }} /> : <>
-        <div className="border-b px-5 py-4" style={{ borderColor: 'var(--color-border)' }}>
-          <div className="flex items-center gap-2"><Users size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" /><h2 className="text-base font-bold">Presença de usuários</h2></div>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-subtle)' }}>Outras pessoas com a página em foco e sinal nos últimos 75 segundos. Sua conta não entra nesta lista.</p>
+        <div className="admin-presence-title flex items-center gap-2 px-5 pt-4 pb-1"><Users size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" /><h2 className="text-base font-bold">Presença de usuários</h2></div>
+          <div className="border-b px-5 pb-4" style={{ borderColor: 'var(--color-border)' }}>
+          <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Outras pessoas com a página em foco e sinal nos últimos 75 segundos. Sua conta não entra nesta lista.</p>
           <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>{!isError && atualizadoEm > 0 ? `Consulta realizada às ${new Date(atualizadoEm).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' })}. ` : ''}Atualização a cada 15 segundos.</p>
         </div>
         {isError ? <p role="alert" className="p-5 text-sm">Não foi possível atualizar a presença. Aguardando nova consulta.</p> :
-        <div className="grid gap-0 md:grid-cols-2">
-          <section className="p-4 md:border-r" style={{ borderColor: 'var(--color-border)' }}>
+        <Grid className="admin-presence-sections" gap={0} align="start"
+          columns={usuarios.length > 0 && recentes.length > 0 ? { minWidth: 384, max: 2 } : 1}
+          data-both={usuarios.length > 0 && recentes.length > 0}>
+          <section>
             <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><Badge label={isLoading ? '—' : totalOnline} variant="success" /></div>
-            <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-              {isLoading ? <DashboardLoading label="Carregando presença..." /> : usuarios.length > 0 ? usuarios.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online podeVerTrilha={podeVerTrilha} onSelect={() => setSelecionado(usuario)} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhuma outra pessoa com presença confirmada agora.</p>}
-            </div>
+            {isLoading ? <DashboardLoading label="Carregando presença..." /> : usuarios.length > 0 ? <PresencePeopleStack pessoas={usuarios} online aberta={folhaAtual} onOpen={setFolhaAberta} onHistory={podeVerTrilha ? setSelecionado : undefined} /> : <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhuma outra pessoa com presença confirmada agora.</p>}
           </section>
-          <section className="border-t p-4 md:border-l-0 md:border-t-0" style={{ borderColor: 'var(--color-border)' }}>
+          <section>
             <div className="mb-3"><h3 className="text-sm font-bold">Vistos recentemente</h3><p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>Sinais de foco das últimas 24 horas, sem presença confirmada agora.</p></div>
-            <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
-              {recentes.length > 0 ? recentes.map((usuario) => <PresenceUserRow key={usuario.id} usuario={usuario} online={false} podeVerTrilha={podeVerTrilha} onSelect={() => setSelecionado(usuario)} />) : <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
-            </div>
+            {recentes.length > 0 ? <PresencePeopleStack pessoas={recentes} online={false} aberta={folhaAtual} onOpen={setFolhaAberta} onHistory={podeVerTrilha ? setSelecionado : undefined} /> : <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
           </section>
-        </div>}</>}
+        </Grid>}</>}
         </div>}>
       {trigger => (
-        <div className="grid min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
+        <div className="grid sm:min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
           <Users size={19} strokeWidth={2.2} aria-hidden="true" />
         </div>
@@ -423,31 +439,6 @@ function buildUsuarioPayload(usuario: UsuarioAdmin, permissoesNegadas: Permissio
     filiaisPermitidasUsuario: [...usuario.filiaisPermitidasUsuario],
     ativo: usuario.ativo,
   };
-}
-
-function useIsMobileUsersTable() {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 860px)').matches : false,
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(max-width: 860px)');
-
-    function handleChange(event: MediaQueryListEvent) {
-      setIsMobile(event.matches);
-    }
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-
-  return isMobile;
 }
 
 function renderStatusBadge(ativo: boolean) {
@@ -576,7 +567,7 @@ function renderUltimaTelaCell(row: UsuarioRow) {
 
 function renderUsuarioDetailsPopover(row: UsuarioRow) {
   return (
-    <Popover label={"Detalhes de " + row.nome} alignment="end" width="min(30rem, calc(100vw - 24px))" padding={3}
+    <Popover presentation="adaptive" label={"Detalhes de " + row.nome} alignment="end" width="min(30rem, calc(100vw - 24px))" padding={3}
       content={<div className="max-h-[min(34rem,70dvh)] overflow-y-auto">
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-3">
@@ -652,7 +643,7 @@ export default function AdminUsuariosPage() {
   const [erroRedefinicaoSenha, setErroRedefinicaoSenha] = useState('');
   const [overrideState, setOverrideState] = useState<PermissionOverrideStateMap>(createEmptyPermissionOverrideState());
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const isMobileUsersTable = useIsMobileUsersTable();
+  const isMobileUsersTable = useMediaQuery('(max-width: 860px)');
   const podeOperarPapelElevado = isAdminPlataforma || isDesenvolvedor;
   const filiaisDisponiveis = filiais.data ?? [];
   const senhaEmEdicao = form.senha ?? '';
@@ -1039,36 +1030,25 @@ export default function AdminUsuariosPage() {
     {
       chave: 'nome',
       label: 'Usuário',
-      largura: '220px',
-      formato: (_, row) => renderUsuarioIdentityCell(row),
-    },
-    {
-      chave: 'setorNome',
-      label: 'Acesso',
-      largura: '320px',
-      ordenavel: false,
-      formato: (_, row) => renderMobileAccessCell(row),
-    },
-    {
-      chave: 'acoes',
-      label: 'Ações',
-      largura: '180px',
-      ordenavel: false,
       formato: (_, row) => (
-        <div className="flex items-center gap-2">
-          {renderOnlineBadge(row.presencaAtual, row.propriaConta)}
-          {renderUsuarioDetailsPopover(row)}
-          {renderActionMenu(row)}
+        <div className="grid min-w-0 gap-2 whitespace-normal py-1">
+          {renderUsuarioIdentityCell(row)}
+          {renderMobileAccessCell(row)}
+          <div className="flex flex-wrap items-center gap-2">
+            {renderOnlineBadge(row.presencaAtual, row.propriaConta)}
+            {renderUsuarioDetailsPopover(row)}
+            {renderActionMenu(row)}
+          </div>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="dashboard-admin space-y-5">
+    <div className="dashboard-admin admin-directory-page space-y-5">
       {sucesso && <ToastStack items={[{ id: 'redefinicao-senha', message: sucesso, tone: 'success' }]} />}
       {usuarioParaRedefinirSenha && (
-        <Dialog isOpen purpose="form" aria-labelledby="redefinir-senha-titulo"
+        <DashboardAdaptiveDialog label="Redefinir senha" isOpen purpose="form" aria-labelledby="redefinir-senha-titulo"
           onOpenChange={open => { if (!open && !redefinirSenhaUsuario.isPending) fecharRedefinicaoSenha(); }}
           width="min(92vw, 30rem)" className="dashboard-admin">
           <form onSubmit={handleRedefinirSenha} className="space-y-4">
@@ -1091,11 +1071,11 @@ export default function AdminUsuariosPage() {
                 isLoading={redefinirSenhaUsuario.isPending} />
             </div>
           </form>
-        </Dialog>
+        </DashboardAdaptiveDialog>
       )}
       <Card padding={0} className="dashboard-admin-card">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-4 md:gap-4">
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 min-[560px]:grid-cols-2 xl:grid-cols-4 xl:gap-4">
             <SummaryCard label="Total" detail="usuários cadastrados" value={resumoUsuarios.totalUsuarios} accent="var(--color-primary)" iconSurface="rgba(33, 71, 138, 0.14)" icon={Users} listTitle="Todos os usuários" usuarios={usuariosOrdenadosPorNome} emptyMessage="Nenhum usuário cadastrado." />
             <SummaryCard label="Ativos" detail="com acesso liberado" value={resumoUsuarios.usuariosAtivos} accent="#10b981" iconSurface="rgba(16, 185, 129, 0.14)" icon={UserCheck} listTitle="Usuários ativos" usuarios={usuariosAtivos} emptyMessage="Nenhum usuário ativo." />
             <SummaryCard
@@ -1136,7 +1116,7 @@ export default function AdminUsuariosPage() {
             <FormPasswordField label="Confirmar senha" value={form.confirmacaoSenha ?? ''} required={!editing} isOptional={Boolean(editing)}
               autoComplete="new-password" minLength={12} visible={mostrarSenhaFormulario}
               onChange={confirmacaoSenha => setForm(atual => ({ ...atual, confirmacaoSenha }))} />
-            <Selector label="Setor" placeholder="Selecione" value={form.setorId || undefined} isRequired
+            <Selector presentation="adaptive" label="Setor" placeholder="Selecione" value={form.setorId || undefined} isRequired
               options={(setores.data ?? []).map(setor => ({ value: setor.id, label: setor.nome }))}
               onChange={setorId => setForm(atual => ({ ...atual, setorId }))} width="100%" controlClassName="dashboard-admin-selector" />
             <fieldset className="dashboard-admin-status">

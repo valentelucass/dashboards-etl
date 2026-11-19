@@ -1,3 +1,5 @@
+import { Grid } from '@astryxdesign/core/Grid';
+import { useMediaQuery } from '@astryxdesign/core/hooks';
 import React from 'react';
 import type { ReactNode } from 'react';
 
@@ -25,6 +27,11 @@ function getSingleRowDesktopColumns(count: number) {
 }
 
 export default function KpiGrid({ children, count = 4, singleRowDesktop = false, intermediateRows }: KpiGridProps) {
+  const narrow = useMediaQuery('(width < 48rem)');
+  // Mobile tracks follow the available region. Desktop keeps its configured KPI rows.
+  if (narrow || (!singleRowDesktop && count <= 4)) {
+    return <Grid columns={{ minWidth: 152, max: count, repeat: 'fit' }} gap={3} className="mb-4">{children}</Grid>;
+  }
   if (intermediateRows) {
     const cards = React.Children.toArray(children);
     return <KpiGrid count={count} singleRowDesktop={singleRowDesktop}>
@@ -56,9 +63,9 @@ export default function KpiGrid({ children, count = 4, singleRowDesktop = false,
   if (count === 5) {
     const cards = React.Children.toArray(children);
     return (
-      <div className="grid grid-cols-6 gap-3 mb-4">
+      <div className="mb-4 grid grid-cols-6 gap-3">
         {cards.map((card, i) => (
-          <div key={i} className={i < 3 ? 'col-span-2' : i === 3 ? 'col-span-2' : 'col-span-4'}>
+          <div key={i} className={i === 4 ? 'col-span-4' : 'col-span-2'}>
             {card}
           </div>
         ))}
@@ -66,22 +73,5 @@ export default function KpiGrid({ children, count = 4, singleRowDesktop = false,
     );
   }
 
-  // count >= 6: flex-wrap, content-aware widths via KpiCard flex-basis
-  if (count >= 6) {
-    return (
-      <div className="flex flex-wrap gap-3 mb-4">
-        {children}
-      </div>
-    );
-  }
-
-  // count <= 4: single-row CSS grid, equal-width columns
-  return (
-    <div
-      className="grid gap-3 mb-4"
-      style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
-    >
-      {children}
-    </div>
-  );
+  return <div className="mb-4 flex flex-wrap gap-3">{children}</div>;
 }

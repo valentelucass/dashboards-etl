@@ -1,17 +1,15 @@
-import { Badge } from '@astryxdesign/core/Badge';
+import DashboardMobileNav from './DashboardMobileNav';
+import './dashboard-mobile-nav.css';
 import DashboardButton from "../shared/DashboardButton";
 import { Button } from '@astryxdesign/core/Button';
-import { getDashboardNavSections, getNavIcon } from './dashboardNavItems';
+import { getDashboardNavSections } from './dashboardNavItems';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { Dialog } from '@astryxdesign/core/Dialog';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useFiltro } from '../../contexts/FiltroContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import {
   ChevronLeft,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
+  Clock3,
   LogOut,
   Menu,
   Moon,
@@ -31,86 +29,6 @@ import CommunicationsBell from '../home/CommunicationsBell';
 
 const focusRingClass = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
 
-function DrawerNavSection({
-  title,
-  items,
-  onNavigate,
-}: {
-  title: string;
-  items: NavItem[];
-  onNavigate: () => void;
-}) {
-  const headingId = `${title.toLowerCase().replace(/\s+/g, '-')}-heading`;
-  const { obterLinkPainel } = useFiltro();
-
-  return (
-    <section aria-labelledby={headingId}>
-      <h2
-        id={headingId}
-        className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.16em]"
-        style={{ color: 'var(--color-text-muted)' }}
-      >
-        {title}
-      </h2>
-
-      <div className="space-y-1.5">
-        {items.map((item) => {
-          const Icon = getNavIcon(item);
-
-          return (
-            <NavLink
-              key={item.path}
-              to={obterLinkPainel(item.path)}
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                `group flex items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-all duration-150 ${focusRingClass} ${
-                  isActive ? 'shadow-sm' : 'hover:-translate-y-px hover:bg-[var(--color-bg)]'
-                }`
-              }
-              style={({ isActive }) => ({
-                backgroundColor: isActive
-                  ? 'var(--color-bg)'
-                  : 'transparent',
-                borderColor: isActive
-                  ? 'var(--color-primary)'
-                  : 'transparent',
-                color: isActive ? 'var(--color-primary)' : 'var(--color-text)',
-              })}
-            >
-              {({ isActive }) => (
-                <>
-                  <span
-                    className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-150"
-                    style={{
-                      backgroundColor: isActive ? 'var(--color-primary)' : 'var(--color-bg)',
-                      color: isActive ? '#FFFFFF' : 'var(--color-text-muted)',
-                    }}
-                  >
-                    <Icon size={16} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-3">
-                      <span className="truncate text-sm font-semibold">{item.label}</span>
-                      {isActive && (
-                        <Badge label="Atual" variant="info" />
-                      )}
-                    </span>
-                    {item.description && (
-                      <span className="mt-0.5 block text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
-                        {item.description}
-                      </span>
-                    )}
-                  </span>
-                </>
-              )}
-            </NavLink>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 export default function TopNav() {
   const { usuario, logout } = useAutenticacao();
   const navigate = useNavigate();
@@ -121,21 +39,16 @@ export default function TopNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [apresentacao, setApresentacao] = useState<{ paginas: NavItem[]; indice: number } | null>(null);
   const [isPresentationManagerOpen, setIsPresentationManagerOpen] = useState(false);
-  const [drawerScrollState, setDrawerScrollState] = useState({ canScrollUp: false, canScrollDown: false });
-  const hamburgerButtonRef = useRef<HTMLButtonElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const drawerNavRef = useRef<HTMLElement>(null);
-  const wasMenuOpenRef = useRef(false);
   const previousPathnameRef = useRef(currentLocation.pathname);
   const panelId = useId();
-  const drawerTitleId = `${panelId}-title`;
 
   const navSections = getDashboardNavSections(canAccess, isAdminAcesso);
 
   const isDarkTheme = theme === 'dark';
   const themeToggleLabel = isDarkTheme ? 'Alternar para modo claro' : 'Alternar para modo escuro';
   const hamburgerLabel = isMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação';
-  const updatedAtLabel = pageHeader.updatedAt ? `Atualizado em ${formatarDataHoraMinuto(pageHeader.updatedAt)}` : null;
+  const updatedAt = pageHeader.updatedAt ? formatarDataHoraMinuto(pageHeader.updatedAt) : null;
+  const updatedAtLabel = updatedAt ? `Atualizado em ${updatedAt}` : null;
 
   const paginasApresentacao = filterPresentationPages(canAccess);
 
@@ -202,31 +115,6 @@ export default function TopNav() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, [apresentacao]);
 
-  const updateDrawerScrollState = useCallback(() => {
-    const element = drawerNavRef.current;
-    if (!element) {
-      setDrawerScrollState({ canScrollUp: false, canScrollDown: false });
-      return;
-    }
-
-    const maxScroll = element.scrollHeight - element.clientHeight;
-    setDrawerScrollState({
-      canScrollUp: element.scrollTop > 4,
-      canScrollDown: maxScroll > 4 && element.scrollTop < maxScroll - 4,
-    });
-  }, []);
-
-  const scrollDrawerNavigation = useCallback((direction: 'up' | 'down') => {
-    const element = drawerNavRef.current;
-    if (!element) return;
-
-    const distance = Math.max(180, Math.floor(element.clientHeight * 0.65));
-    element.scrollBy({
-      top: direction === 'up' ? -distance : distance,
-      behavior: 'smooth',
-    });
-  }, []);
-
   useEffect(() => {
     const previousPathname = previousPathnameRef.current;
     previousPathnameRef.current = currentLocation.pathname;
@@ -245,66 +133,12 @@ export default function TopNav() {
   }, [currentLocation.pathname, isMenuOpen]);
 
   useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [isMenuOpen, updateDrawerScrollState]);
-
-  useEffect(() => {
-    if (isMenuOpen) {
-      wasMenuOpenRef.current = true;
-      const frame = window.requestAnimationFrame(() => {
-        closeButtonRef.current?.focus();
-        updateDrawerScrollState();
-      });
-
-      return () => {
-        window.cancelAnimationFrame(frame);
-      };
-    }
-
-    if (wasMenuOpenRef.current) {
-      hamburgerButtonRef.current?.focus();
-      wasMenuOpenRef.current = false;
-    }
-  }, [isMenuOpen, updateDrawerScrollState]);
-
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const element = drawerNavRef.current;
-    if (!element) return;
-
-    let frame = 0;
-    const scheduleUpdate = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(updateDrawerScrollState);
-    };
-
-    scheduleUpdate();
-
-    const observer = new ResizeObserver(scheduleUpdate);
-    observer.observe(element);
-    if (element.firstElementChild) {
-      observer.observe(element.firstElementChild);
-    }
-    window.addEventListener('resize', scheduleUpdate);
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      observer.disconnect();
-      window.removeEventListener('resize', scheduleUpdate);
-    };
-  }, [isMenuOpen, navSections.length, updateDrawerScrollState]);
+    if (!isMenuOpen || apresentacao) return;
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => { if (desktop.matches) setIsMenuOpen(false); };
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, [isMenuOpen, apresentacao]);
 
   async function handleLogout() {
     setIsMenuOpen(false);
@@ -316,99 +150,6 @@ export default function TopNav() {
     setTheme(isDarkTheme ? 'light' : 'dark');
   }
 
-  const drawer = isMenuOpen ? (
-    <Dialog id={panelId} purpose="info" isOpen aria-labelledby={drawerTitleId} padding={0}
-      position={{ start: 0, top: 0, bottom: 0 }} width="min(22rem, calc(100vw - 8px))" maxHeight="100dvh"
-      onOpenChange={open => { if (!open) setIsMenuOpen(false); }}>
-      <aside className="top-nav__drawer-panel flex min-w-0 flex-col overflow-hidden">
-                <div
-                  className="flex shrink-0 items-center gap-3 border-b px-5 py-4"
-                  style={{ borderColor: 'var(--color-border)' }}
-                >
-                  <h2 id={drawerTitleId} className="sr-only">Navegação</h2>
-                  <div className="min-w-0 flex-1">
-                    <NavLink to="/" onClick={() => setIsMenuOpen(false)} aria-label="Rodogarcia, página inicial" className="mb-3 inline-flex">
-                      <span className="dashboard-brand-wordmark w-full max-w-[220px]">
-                        <img src="/logo.png" alt="" className="dark:brightness-0 dark:invert" />
-                      </span>
-                    </NavLink>
-                    <p className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }} title={usuario?.nome}>
-                      {usuario?.nome}
-                    </p>
-                    <p className="mt-1 truncate text-xs" style={{ color: 'var(--color-text-muted)' }} title={usuario?.email}>
-                      {usuario?.email}
-                    </p>
-                  </div>
-                  <DashboardButton
-                    ref={closeButtonRef}
-                    type="button"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[var(--color-bg)] ${focusRingClass}`}
-                    style={{ color: 'var(--color-text-muted)' }}
-                    aria-label="Fechar menu de navegação"
-                  >
-                    <X size={18} />
-                  </DashboardButton>
-                </div>
-
-                <div className="relative flex flex-1 overflow-hidden">
-                  <nav
-                    ref={drawerNavRef}
-                    className="top-nav__drawer-nav flex-1 px-5 py-5"
-                    aria-label="Navegação principal do painel"
-                    onScroll={updateDrawerScrollState}
-                  >
-                    <div className="space-y-6 pr-1">
-                      {navSections.map((section) => (
-                        <DrawerNavSection
-                          key={section.title}
-                          title={section.title}
-                          items={section.items}
-                          onNavigate={() => setIsMenuOpen(false)}
-                        />
-                      ))}
-
-                      <section aria-labelledby={`${panelId}-account-heading`}>
-                        <h2
-                          id={`${panelId}-account-heading`}
-                          className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.16em]"
-                          style={{ color: 'var(--color-text-muted)' }}
-                        >
-                          Conta
-                        </h2>
-                        <DashboardButton
-                          type="button"
-                          onClick={() => void handleLogout()}
-                          className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold text-red-500 transition-all duration-150 hover:-translate-y-px hover:bg-red-500 hover:text-white ${focusRingClass}`}
-                          style={{
-                            borderColor: '#dc2626',
-                          }}
-                        >
-                          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-600 bg-red-50 text-red-600">
-                            <LogOut size={16} />
-                          </span>
-                          Sair
-                        </DashboardButton>
-                      </section>
-                    </div>
-                  </nav>
-
-                  {drawerScrollState.canScrollUp && (
-                    <Button label="Subir a navegação do menu" variant="ghost" isIconOnly
-                      icon={<ChevronUp size={18} />} onClick={() => scrollDrawerNavigation('up')}
-                      className="top-nav__drawer-scroll-indicator top-nav__drawer-scroll-indicator--top absolute top-2 end-4 z-10" />
-                  )}
-
-                  {drawerScrollState.canScrollDown && (
-                    <Button label="Descer a navegação do menu" variant="ghost" isIconOnly
-                      icon={<ChevronDown size={18} />} onClick={() => scrollDrawerNavigation('down')}
-                      className="top-nav__drawer-scroll-indicator top-nav__drawer-scroll-indicator--bottom absolute bottom-2 end-4 z-10" />
-                  )}
-                </div>
-      </aside>
-    </Dialog>
-  ) : null;
-
   return (
     <>
       <header
@@ -418,8 +159,12 @@ export default function TopNav() {
           borderColor: 'var(--color-border)',
         }}
       >
-        <div className={`flex w-full items-center justify-between ${apresentacao ? 'gap-0' : 'gap-4'}`}>
-          <div className={`flex min-w-0 items-center ${apresentacao ? 'max-w-[16rem] shrink gap-2' : 'flex-1 gap-4'}`}>
+        <div className={`top-nav__bar flex w-full items-center justify-between ${apresentacao ? 'gap-0' : 'gap-4'}`}>
+          <div className={`top-nav__identity flex min-w-0 items-center ${apresentacao ? 'max-w-[16rem] shrink gap-2' : 'flex-1 gap-4'}`}>
+            <Button label={hamburgerLabel} variant="ghost" isIconOnly
+              icon={<span className="dashboard-menu-mark"><img src="/favicon.svg" alt="" /><Menu size={12} aria-hidden="true" /></span>}
+              onClick={() => setIsMenuOpen(true)} aria-expanded={isMenuOpen}
+              aria-haspopup="dialog" aria-controls={panelId} className="top-nav__menu-button" />
             <div className={`top-nav__page-copy min-w-0 ${apresentacao ? 'border-r pr-3' : ''}`} style={apresentacao ? { borderColor: 'var(--color-border)' } : undefined}>
               {!apresentacao && <span className="dashboard-nav-kicker">Dashboards Rodogarcia</span>}
               <h1 className={`truncate font-bold leading-tight ${apresentacao ? 'text-sm' : 'text-lg sm:text-xl'}`} style={{ color: 'var(--color-text)' }}>
@@ -431,8 +176,9 @@ export default function TopNav() {
                 </p>
               )}
               {!apresentacao && updatedAtLabel && (
-                <p className="mt-1 text-[11px] sm:hidden" style={{ color: 'var(--color-text-subtle)' }}>
-                  {updatedAtLabel}
+                <p className="top-nav__mobile-updated mt-1 text-[11px] sm:hidden" style={{ color: 'var(--color-text-subtle)' }}>
+                  <Clock3 size={12} className="shrink-0" aria-hidden="true" />
+                  <time dateTime={pageHeader.updatedAt ?? undefined} aria-label={updatedAtLabel} title={updatedAtLabel}>{updatedAt}</time>
                 </p>
               )}
             </div>
@@ -472,7 +218,7 @@ export default function TopNav() {
               icon={<Presentation size={17} aria-hidden="true" />}
               onClick={() => void iniciarApresentacao()}
               isDisabled={paginasApresentacao.length === 0}
-              className="top-nav__theme-button"
+              className="top-nav__presentation-action top-nav__theme-button"
             />
 
             <Button
@@ -481,7 +227,7 @@ export default function TopNav() {
               isIconOnly
               icon={<Settings2 size={17} aria-hidden="true" />}
               onClick={() => setIsPresentationManagerOpen(true)}
-              className="top-nav__theme-button"
+              className="top-nav__presentation-action top-nav__theme-button"
             />
 
             <CommunicationsBell />
@@ -498,22 +244,15 @@ export default function TopNav() {
             {!apresentacao && usuario && <div className="dashboard-top-account">
               <Button label="Sair" variant="ghost" icon={<LogOut size={16} aria-hidden="true" />} onClick={() => void handleLogout()} />
             </div>}
-            <Button
-              ref={hamburgerButtonRef}
-              label={hamburgerLabel}
-              variant="ghost"
-              isIconOnly
-              icon={isMenuOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
-              onClick={() => setIsMenuOpen((current) => !current)}
-              aria-expanded={isMenuOpen}
-              aria-controls={panelId}
-              className="top-nav__menu-button"
-            />
+
           </div>
         </div>
       </header>
 
-      {drawer}
+      <DashboardMobileNav id={panelId} open={isMenuOpen} onOpenChange={setIsMenuOpen} sections={navSections}
+        nome={usuario?.nome} setor={usuario?.setor.nome} email={usuario?.email} canPresent={paginasApresentacao.length > 0}
+        onStart={() => void iniciarApresentacao()} onManage={() => setIsPresentationManagerOpen(true)}
+        onLogout={() => void handleLogout()} />
       <PresentationSequencesModal
         open={isPresentationManagerOpen}
         paginasDisponiveis={paginasApresentacao.map((pagina) => ({ id: pagina.path.slice(1), label: pagina.label }))}

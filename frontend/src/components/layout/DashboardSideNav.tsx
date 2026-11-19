@@ -1,13 +1,16 @@
-import { useEffect, useRef, useState, type ComponentPropsWithRef } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import { Avatar } from '@astryxdesign/core/Avatar';
 import { Button } from '@astryxdesign/core/Button';
-import { SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core/SideNav';
-import { Link, useLocation } from 'react-router-dom';
+import { SideNav } from '@astryxdesign/core/SideNav';
+import { Link } from 'react-router-dom';
 import { useAutenticacao } from '../../contexts/AutenticacaoContext';
 import { useFiltro } from '../../contexts/FiltroContext';
 import { usePermissions } from '../../hooks/usePermissions';
-import { getDashboardNavSections, getNavIcon, type DashboardNavSection } from './dashboardNavItems';
+import { getDashboardNavSections, type DashboardNavSection } from './dashboardNavItems';
+
+import { DashboardNavGroups } from './DashboardNavGroups';
+import { useNavScroll } from './useNavScroll';
 
 const collapseKey = 'dashboard-sidebar-collapsed';
 
@@ -19,10 +22,6 @@ function storedCollapsed(): boolean {
   }
 }
 
-function DashboardNavLink({ href, ...props }: ComponentPropsWithRef<'a'>) {
-  return <Link {...props} to={href ?? '/'} />;
-}
-
 interface DashboardSideNavViewProps {
   sections: DashboardNavSection[];
   nome?: string;
@@ -30,48 +29,9 @@ interface DashboardSideNavViewProps {
 }
 
 export function DashboardSideNavView({ sections, nome, setor }: DashboardSideNavViewProps) {
-  const { pathname } = useLocation();
   const { obterLinkPainel } = useFiltro();
   const [collapsed, setCollapsed] = useState(storedCollapsed);
-  const listRef = useRef<HTMLDivElement>(null);
-  const arrowUpRef = useRef<HTMLDivElement>(null);
-  const arrowDownRef = useRef<HTMLDivElement>(null);
-  const [scrollState, setScrollState] = useState({ overflow: false, up: false, down: false });
-
-  useEffect(() => {
-    const list = listRef.current;
-    const viewport = list?.parentElement;
-    if (!list || !viewport) return;
-
-    function measure() {
-      if (!viewport || !list) return;
-      const arrowHeight = (arrowUpRef.current?.offsetHeight ?? 0) + (arrowDownRef.current?.offsetHeight ?? 0);
-      const overflow = list.scrollHeight > viewport.clientHeight + arrowHeight + 1;
-      const up = overflow && viewport.scrollTop > 1;
-      const down = overflow && viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1;
-      setScrollState(current => current.overflow === overflow && current.up === up && current.down === down
-        ? current : { overflow, up, down });
-    }
-    const observer = new ResizeObserver(measure);
-    observer.observe(list);
-    observer.observe(viewport);
-    viewport.addEventListener('scroll', measure, { passive: true });
-    const frame = requestAnimationFrame(measure);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-      viewport.removeEventListener('scroll', measure);
-    };
-  }, [collapsed]);
-
-  function scrollMenu(direction: -1 | 1) {
-    const viewport = listRef.current?.parentElement;
-    if (!viewport) return;
-    viewport.scrollBy({
-      top: direction * Math.max(76, Math.round(viewport.clientHeight * .56)),
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-    });
-  }
+  const { listRef, arrowUpRef, arrowDownRef, scrollState, scrollMenu } = useNavScroll();
 
   function onCollapsedChange(next: boolean) {
     setCollapsed(next);
@@ -119,21 +79,7 @@ export function DashboardSideNavView({ sections, nome, setor }: DashboardSideNav
         </div>}
       >
         <div className="dashboard-side-list" ref={listRef}>
-          {sections.map(({ title, items }) => (
-            <SideNavSection key={title} title={title === 'Principal' ? 'Navegação' : title}>
-              {items.map(item => {
-                const Icon = getNavIcon(item);
-                return <SideNavItem
-                  key={item.path}
-                  label={item.label}
-                  icon={<Icon size={17} aria-hidden="true" />}
-                  as={DashboardNavLink}
-                  href={obterLinkPainel(item.path)}
-                  isSelected={pathname === item.path}
-                />;
-              })}
-            </SideNavSection>
-          ))}
+          <DashboardNavGroups sections={sections} />
         </div>
       </SideNav>
     </aside>

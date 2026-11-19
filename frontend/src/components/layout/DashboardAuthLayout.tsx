@@ -1,3 +1,4 @@
+import './auth-mobile.css';
 import type { ReactNode } from 'react';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
@@ -14,7 +15,7 @@ export default function DashboardAuthLayout({ title, description, children }: {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const dark = (resolvedTheme ?? theme) === 'dark';
   return (
-    <main className="dashboard-auth">
+    <main className="dashboard-auth dashboard-auth-responsive">
       <div className="dashboard-auth-toolbar">
         <Button label={dark ? 'Alternar para tema claro' : 'Alternar para tema escuro'}
           className="dashboard-auth-theme" variant="secondary" isIconOnly size="sm"

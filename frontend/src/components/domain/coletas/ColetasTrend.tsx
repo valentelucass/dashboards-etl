@@ -79,7 +79,7 @@ export default function ColetasTrend({ dados, isLoading }: ColetasTrendProps) {
           grid={<ChartGrid horizontal tickCount={5} />}
           axes={<>
             <ChartAxis position="left" tickFormat={(value) => formatarNumero(Number(value))} />
-            <ChartAxis position="bottom" maxTicks={9} tickFormat={formatarDia} />
+            <ChartAxis position="bottom" tickFormat={formatarDia} />
           </>}
           tooltip={{
             render: (date, values) => (

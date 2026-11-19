@@ -3,7 +3,8 @@ import { Badge } from '@astryxdesign/core/Badge';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
-import { Dialog } from '@astryxdesign/core/Dialog';
+import DashboardAdaptiveDialog from '../shared/DashboardAdaptiveDialog';
+import { Grid } from '@astryxdesign/core/Grid';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Tab, TabList } from '@astryxdesign/core/TabList';
@@ -50,13 +51,15 @@ export default function HomeRequestsAdminPanel({
     ARQUIVADA: requests.filter(request => request.status === 'ARQUIVADA'),
   };
   const visible = grouped[view] ?? [];
+  const largestGroup = Math.max(...VIEWS.map(key => grouped[key].length));
+  const preferredWidth = largestGroup < 2 ? '42rem' : largestGroup === 2 ? '67rem' : '96rem';
   const subtitle = view === 'ABERTA'
     ? visible.length + ' pendente(s) para avaliação'
     : 'As solicitações ' + STATUSES[view].label.toLowerCase() + ' ficam disponíveis por até 60 dias.';
 
   return (
-    <Dialog isOpen={open} onOpenChange={next => { if (!next) onClose(); }} purpose="info"
-      width={840} aria-labelledby={sectionId + '-title'}>
+    <DashboardAdaptiveDialog label={isAdmin ? 'Solicitações de melhoria' : 'Minhas solicitações'} isOpen={open} onOpenChange={next => { if (!next) onClose(); }} purpose="info"
+      width={preferredWidth} maxHeight="calc(100dvh - 2rem)" className="home-requests-dialog" aria-labelledby={sectionId + '-title'}>
       <div className="home-fields">
         <div className="home-communications-heading">
           <div className="min-w-0">
@@ -75,17 +78,17 @@ export default function HomeRequestsAdminPanel({
           {error && <Banner status="error" title={error} />}
           {isLoading && <DashboardLoading variant="section" label="Carregando solicitações" />}
           {!isLoading && visible.length === 0 && <EmptyState title="Nenhuma solicitação nesta situação" icon={<ClipboardList size={24} />} isCompact />}
-          {visible.length > 0 && <div className="home-request-list">
+          {visible.length > 0 && <Grid className="home-request-list" columns={{ minWidth: 368, max: 3, repeat: 'fit' }} gap={4} align="start">
             {visible.map(request => (
-              <Card key={request.id} padding={4} className="home-fields home-wrap-text">
+              <Card key={request.id} padding={4} className="home-request-card home-wrap-text">
                 <div className="home-notice-meta">
                   <Badge label={request.status === 'ABERTA' ? TYPE_LABELS[request.tipo] : STATUSES[request.status].label}
                     variant={STATUSES[request.status].variant} />
-                  <Text size="xsm" color="secondary">Enviada em {formatDate(request.criadoEm)}</Text>
+                  <Text size="sm" color="secondary">Enviada em {formatDate(request.criadoEm)}</Text>
                 </div>
                 <div>
                   <Heading level={3} className="home-notice-title">{request.titulo}</Heading>
-                  <Text as="p" size="sm" className="home-notice-copy" color="secondary">{request.descricao}</Text>
+                  <Text as="p" className="home-notice-copy">{request.descricao}</Text>
                 </div>
                 {request.expectedResult && <Text as="p" size="sm"><strong>Resultado esperado</strong> {request.expectedResult}</Text>}
                 {request.applicationLocation && <Text as="p" size="sm"><strong>Onde será aplicado</strong> {request.applicationLocation}</Text>}
@@ -100,13 +103,13 @@ export default function HomeRequestsAdminPanel({
                   </div>
                 )}
                 {isAdmin && <div className="home-notice-meta">
-                  <Text size="xsm" color="secondary">{request.solicitanteNome}</Text>
-                  <Text size="xsm" color="secondary">{request.solicitanteEmail}</Text>
+                  <Text size="sm" color="secondary">{request.solicitanteNome}</Text>
+                  <Text size="sm" color="secondary">{request.solicitanteEmail}</Text>
                 </div>}
-                {request.status === 'CONCLUIDA' && request.completedAt && <Text size="xsm" color="secondary">Concluída em {formatDate(request.completedAt)}</Text>}
-                {request.status === 'ARQUIVADA' && request.archivedAt && <Text size="xsm" color="secondary">Arquivada em {formatDate(request.archivedAt)}</Text>}
+                {request.status === 'CONCLUIDA' && request.completedAt && <Text size="sm" color="secondary">Concluída em {formatDate(request.completedAt)}</Text>}
+                {request.status === 'ARQUIVADA' && request.archivedAt && <Text size="sm" color="secondary">Arquivada em {formatDate(request.archivedAt)}</Text>}
                 {isAdmin && request.status !== 'ARQUIVADA' && (
-                  <div className="home-actions">
+                  <div className="home-actions home-request-card-actions">
                     {request.status === 'ABERTA' && onComplete && <Button label="Marcar feita" size="sm" icon={<Check size={14} />}
                       isDisabled={saving} onClick={() => onComplete(request.id)} />}
                     {onArchive && <Button label="Arquivar" size="sm" variant="ghost" icon={<Archive size={14} />}
@@ -115,9 +118,9 @@ export default function HomeRequestsAdminPanel({
                 )}
               </Card>
             ))}
-          </div>}
+          </Grid>}
         </div>
       </div>
-    </Dialog>
+    </DashboardAdaptiveDialog>
   );
 }

@@ -1,0 +1,35 @@
+@media (max-width: 36rem), (max-width: 64rem) and (max-height: 32rem) {
+  .dashboard-auth.dashboard-auth-responsive {
+    position: relative;
+    grid-template-rows: 1fr auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-auth-responsive .dashboard-auth-toolbar {
+    position: absolute;
+    inset-block-start: env(safe-area-inset-top, 0px);
+    inset-inline-end: env(safe-area-inset-right, 0px);
+    padding: .5rem;
+  }
+
+  .dashboard-auth-responsive .dashboard-auth-body {
+    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) .75rem max(1rem, env(safe-area-inset-left));
+  }
+
+  .dashboard-auth-responsive .dashboard-auth-stack {
+    gap: 1rem;
+  }
+
+  .dashboard-auth-responsive .dashboard-auth-footer {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    padding: .5rem max(1rem, env(safe-area-inset-right)) max(.75rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-auth-responsive .dashboard-auth-footer a {
+    display: inline-block;
+    padding-block: .25rem;
+  }
+}
