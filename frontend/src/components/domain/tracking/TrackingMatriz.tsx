@@ -35,7 +35,7 @@ function PainelConsulta({ carregando, erro, vazio, mensagem, tentar, children }:
 }
 
 function LinhaExpansivel({ titulo, nomeAcessivel, aberta, alternar, children, resumo, fundos }: {
-  titulo: string; nomeAcessivel: string; aberta: boolean; alternar: () => void; children: ReactNode; resumo: ReactNode; fundos: CSSProperties;
+  titulo: string; nomeAcessivel: string; aberta: boolean; alternar: () => void; children: ReactNode; resumo: ReactNode; fundos?: CSSProperties;
 }) {
   const id = useId();
   return <div className="tracking-linha" style={fundos}>
@@ -78,7 +78,7 @@ function Fretes({ filtro, sigla, regiao }: { filtro: TrackingFiltro; sigla: stri
   return <>
     <h4>Fretes de {regiao}</h4>
     <PainelConsulta erro={consulta.error} carregando={consulta.isLoading} vazio={!dados?.conteudo.length} mensagem="Nenhum frete nesta região para os filtros selecionados." tentar={() => void consulta.refetch()}>
-      {dados?.conteudo.map((frete: TrackingFrete) => <article key={frete.numeroMinuta} className="tracking-linha" aria-label={`Minuta ${frete.numeroMinuta}`} style={fundosTracking(sigla, regiao, frete.numeroMinuta)}>
+      {dados?.conteudo.map((frete: TrackingFrete) => <article key={frete.numeroMinuta} className="tracking-linha" aria-label={`Minuta ${frete.numeroMinuta}`}>
         <div className="tracking-resumo"><strong className="tracking-identificador">Minuta {frete.numeroMinuta}</strong>
           <span><small>Status</small><StatusBadge status={frete.statusCarga} /></span>
           <span><small>Peso taxado</small>{formatarPeso(frete.pesoTaxado)}</span>
@@ -102,7 +102,7 @@ function Regioes({ filtro, sigla }: { filtro: TrackingFiltro; sigla: string }) {
   return <>
     <h3>Regiões de destino de {sigla}</h3>
     <PainelConsulta erro={consulta.error} carregando={consulta.isLoading} vazio={!dados?.conteudo.length} mensagem="Nenhuma região de destino para os filtros selecionados." tentar={() => void consulta.refetch()}>
-      {dados?.conteudo.map(linha => <LinhaExpansivel key={linha.regiaoDestino} titulo={linha.regiaoDestino} nomeAcessivel={`Região de destino ${linha.regiaoDestino}`} fundos={fundosTracking(sigla, linha.regiaoDestino)}
+      {dados?.conteudo.map(linha => <LinhaExpansivel key={linha.regiaoDestino} titulo={linha.regiaoDestino} nomeAcessivel={`Região de destino ${linha.regiaoDestino}`}
         aberta={aberta === linha.regiaoDestino} alternar={() => setAberta(aberta === linha.regiaoDestino ? null : linha.regiaoDestino)} resumo={<Metricas linha={linha} />}>
         <Fretes filtro={filtro} sigla={sigla} regiao={linha.regiaoDestino} />
       </LinhaExpansivel>)}

@@ -28,6 +28,8 @@ No Localizador, cada responsável tem uma família de cor nos temas claro e escu
 
 Com os detalhes visíveis, o cabeçalho e o conteúdo do cartão se encontram em uma linha reta. Os quatro cantos do cartão fechado continuam arredondados.
 
+Na revisão seguinte, a sigla continua com uma cor fixa. Cada lista de regiões e de minutas alterna uma linha da cor do responsável e outra neutra, em ambos os temas. A alternância acompanha a ordem visível após um filtro ou mudança de página.
+
 ## 19/11/2026 — Painel DEV na V2
 
 Duas atualizações automáticas chegaram ao SQL e ao painel DEV em 19/11. O intervalo do fim da primeira publicação ao início da segunda busca foi de 60 minutos e 8 segundos. As 13 fontes tinham recebimentos confirmados para as 90 datas entre 22/08 e 19/11. A fila de publicação terminou vazia em ambos os lotes.

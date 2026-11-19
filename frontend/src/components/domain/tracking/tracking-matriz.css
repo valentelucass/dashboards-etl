@@ -6,6 +6,15 @@
 .tracking-linha > .tracking-resumo { background-color: var(--tracking-fechado); }
 .tracking-resumo:has(+ .tracking-subnivel:not([hidden])) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .tracking-expansor[aria-expanded="true"], .tracking-linha > .tracking-expansor:hover { background-color: var(--tracking-aberto); }
+/* A alternância recomeça em cada lista visível de regiões ou minutas. */
+.tracking-subnivel > .tracking-linha {
+  --tracking-fechado: var(--tracking-faixa);
+  --tracking-aberto: var(--tracking-faixa);
+}
+.tracking-subnivel > .tracking-linha:nth-child(even of .tracking-linha) {
+  --tracking-fechado: light-dark(#fff, #16191d);
+  --tracking-aberto: var(--tracking-fechado);
+}
 .tracking-expansor:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 .tracking-resumo small { display: block; font-size: .7rem; font-weight: 500; color: light-dark(#46515c, #c6cbd0); }
 .tracking-identificador { display: flex; align-items: center; text-align: left; gap: .45rem; font-weight: 700; overflow-wrap: anywhere; }
