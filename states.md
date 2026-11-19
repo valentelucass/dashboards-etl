@@ -20,6 +20,8 @@ A expansão apresenta as regiões atendidas pelo responsável e, dentro de cada 
 
 No Localizador, cada responsável tem uma família de cor nos temas claro e escuro. As regiões e as minutas usam variações suaves dessa cor. A sigla, a região e a minuta conservam o tom quando a lista muda de ordem, de página ou de filtro. No DEV, a conferência visual acompanhou a AGU, a região de Bauru e a minuta 491699 com suas três notas fiscais nos dois temas.
 
+Com os detalhes visíveis, o cabeçalho e o conteúdo do cartão se encontram em uma linha reta. Os quatro cantos do cartão fechado continuam arredondados.
+
 ## 19/11/2026 — Painel DEV na V2
 
 Duas atualizações automáticas chegaram ao SQL e ao painel DEV em 19/11. O intervalo do fim da primeira publicação ao início da segunda busca foi de 60 minutos e 8 segundos. As 13 fontes tinham recebimentos confirmados para as 90 datas entre 22/08 e 19/11. A fila de publicação terminou vazia em ambos os lotes.
