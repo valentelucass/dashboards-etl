@@ -103,6 +103,18 @@ textarea {
   transition: background-color .15s;
 }
 
+@media (min-width: 64rem) and (width < 96rem) {
+  .performance-kpi-grid > :first-child .dashboard-kpi-card [title] { white-space: normal; }
+}
+
+@media (min-width: 96rem) {
+  .performance-kpi-grid {
+    --kpi-column: calc((100% - 11rem) / 12);
+    /* A nona coluna faz parte de Comprovante Anexado e cede espaço ao primeiro cartão. */
+    grid-template-columns: max(9rem, var(--kpi-column)) repeat(7, minmax(0, var(--kpi-column))) minmax(4.5rem, 1fr) repeat(3, minmax(0, var(--kpi-column)));
+  }
+}
+
 .dashboard-kpi-card:hover {
   background-color: var(--color-background-surface, var(--color-card)) !important;
 }

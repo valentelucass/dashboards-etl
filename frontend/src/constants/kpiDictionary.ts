@@ -113,6 +113,7 @@ export const KpiDictionary = {
       calculo:
         'Finalizadas ou coletadas até o agendamento ÷ Total de Finalizadas ou Coletadas × 100.',
       observacao:
+        'Verde indica que a meta do histórico foi atingida. Abaixo dela, amarelo indica atendimento parcial e vermelho indica que nenhuma coleta cumpriu o agendamento. ' +
         'Finalizadas sem data de conclusão ou sem agendamento permanecem no denominador, mas não contam como SLA atendido. ' +
         percentualSemBase,
     },
@@ -188,7 +189,7 @@ export const KpiDictionary = {
       titulo: 'Custo Total',
       descricao: 'Custo operacional total registrado nos manifestos.',
       calculo: 'Soma do Custo Total dos Manifestos.',
-      observacao: periodoManifestos,
+      observacao: `${periodoManifestos} Quando há movimento e orçamento aplicável, o valor fica verde até o limite e vermelho acima dele.`,
     },
     custosPorContrato: {
       titulo: 'Custos por Tipo de Contrato',
@@ -455,7 +456,7 @@ export const KpiDictionary = {
       titulo: 'Faturamento Realizado',
       descricao: 'Receita bruta elegível acumulada no período.',
       calculo: 'Soma do Valor Total dos Fretes Elegíveis.',
-      observacao: `${periodoFaturamento} ${elegibilidadeFaturamento}`,
+      observacao: `${periodoFaturamento} ${elegibilidadeFaturamento} Com movimento e meta configurada, o valor fica verde ao atingir a meta e vermelho abaixo dela.`,
     },
     faturamentoLiquido: {
       titulo: 'Faturamento Líquido',
@@ -687,7 +688,7 @@ export const KpiDictionary = {
       titulo: 'Conversão por Quantidade',
       descricao: 'Percentual das cotações que foram convertidas.',
       calculo: 'Cotações Convertidas ÷ Total de Cotações × 100.',
-      observacao: percentualSemBase,
+      observacao: `${percentualSemBase} Com cotações no período, o valor fica vermelho abaixo de 35%, amarelo de 35% a menos de 60% e verde a partir de 60%.`,
     },
     reprovacao: {
       titulo: 'Reprovação',
@@ -735,7 +736,7 @@ export const KpiDictionary = {
       descricao: 'Cargas abertas cuja previsão de entrega já venceu.',
       calculo:
         'Conta as cargas em aberto cuja previsão de entrega é anterior a hoje.',
-      observacao: filtrosLocalizacao,
+      observacao: `${filtrosLocalizacao} Com cargas no período, zero vencidas fica verde, de uma a dez fica amarelo e acima de dez fica vermelho.`,
     },
     valorCarteira: {
       titulo: 'Valor da Carteira',

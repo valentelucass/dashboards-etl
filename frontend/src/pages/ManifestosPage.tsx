@@ -506,7 +506,11 @@ export default function ManifestosPage() {
       ) : null}
 
       {performance.isError && <MensagemErro mensagem={getApiErrorMessage(performance.error, 'Erro ao carregar indicadores de manifestos.')} tipo={getTipoErro(performance.error)} />}
-      <ManifestosKpiGrid kpis={dadosPerformance?.kpis} isLoading={performance.isLoading} />
+      <ManifestosKpiGrid
+        kpis={dadosPerformance?.kpis}
+        custosEvolucao={dadosPerformance?.custosEvolucao}
+        isLoading={performance.isLoading}
+      />
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         <div className="col-span-full min-h-[43rem] lg:min-h-[34rem] xl:h-[28rem] xl:min-h-0">

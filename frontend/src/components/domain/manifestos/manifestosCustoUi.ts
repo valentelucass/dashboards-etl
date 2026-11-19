@@ -3,7 +3,6 @@ import type { EChartsOption } from 'echarts';
 import type { ManifestosCustosEvolucao } from '../../../types/manifestos';
 import { buildBaseLineOption, getEchartsThemeTokens } from '../../../utils/echartsBuilders';
 import { formatarMoeda } from '../../../utils/formatadores';
-import type { GoalTone } from '../../../utils/indicadoresGestaoVistaUi';
 
 function formatarDataCurta(data: string): string {
   const [ano, mes, dia] = data.split('-');
@@ -18,7 +17,7 @@ export function resolverTomCusto(
   valor: number,
   meta: number,
   comparacaoDisponivel: boolean,
-): GoalTone {
+): 'positive' | 'negative' | 'neutral' {
   if (!comparacaoDisponivel || !Number.isFinite(valor) || !Number.isFinite(meta)) {
     return 'neutral';
   }

@@ -5,9 +5,12 @@ import { resolveKpiIcon } from './kpiIconResolver';
 import { getKpiFlexBasis } from './kpiCardLayout';
 import { getGoalToneStyle, goalProgressVariant, type GoalTone } from '../../utils/indicadoresGestaoVistaUi';
 
+export type KpiValorTone = Extract<GoalTone, 'positive' | 'warning' | 'negative' | 'neutral'>;
+
 interface KpiCardProps {
   label: string;
   valor: string;
+  valorTone?: KpiValorTone;
   valorClassName?: string;
   valorStyle?: CSSProperties;
   icone?: ReactNode;
@@ -28,6 +31,7 @@ interface KpiCardProps {
 export default function KpiCard({
   label,
   valor,
+  valorTone,
   valorClassName,
   valorStyle,
   icone,
@@ -45,6 +49,7 @@ export default function KpiCard({
   const style = getGoalToneStyle(tone);
   const helperStyle = getGoalToneStyle(helperTone ?? tone);
   const secondaryColor = tone === 'neutral' ? 'var(--color-text-subtle)' : style.text;
+  const valueColor = valorTone && valorTone !== 'neutral' ? getGoalToneStyle(valorTone).text : 'var(--color-text)';
   const iconNode = icone ?? createElement(resolveKpiIcon(label), { size: 16, 'aria-hidden': 'true' });
   const widthPct = Math.max(0, Math.min(progressPct ?? 0, 100));
   const cardClassName = `dashboard-kpi-card flex min-w-0 flex-col border cursor-default ${compact ? 'gap-0 p-2' : 'gap-1 p-3'} ${className}`;
@@ -77,7 +82,7 @@ export default function KpiCard({
 
       <span
         className={valorClassName ?? defaultValueClassName}
-        style={valorStyle ?? (valorClassName ? undefined : { color: 'var(--color-text)' })}
+        style={valorStyle ?? (valorTone || !valorClassName ? { color: valueColor } : undefined)}
         data-long-value={valor.length > 13 || undefined}
       >
         {valor}

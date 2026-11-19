@@ -10,6 +10,8 @@ import { AlertTriangle, BarChart3, Coins, Search, Trophy } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { CotacoesResumoAgregado } from '../../../types/cotacoes';
 import { formatarMoeda, formatarNumero, formatarPorcentagem } from '../../../utils/formatadores';
+import { goalProgressVariant } from '../../../utils/indicadoresGestaoVistaUi';
+import { conversaoQuantidadeTone } from './conversaoQuantidadeTone';
 
 export type CotacoesResumoVisualView = 'usuario' | 'filial' | 'clientes';
 
@@ -186,7 +188,7 @@ function montarInsights(rows: CotacoesResumoAgregado[]): InsightConfig[] {
 }
 
 function ConversionProgress({ value }: { value: number }) {
-  const variant = value >= 60 ? 'success' : value >= 35 ? 'warning' : 'error';
+  const variant = goalProgressVariant[conversaoQuantidadeTone(value)];
   return (
     <div className="flex min-w-0 items-center justify-end gap-2">
       <div className="min-w-0 max-w-32 flex-1">

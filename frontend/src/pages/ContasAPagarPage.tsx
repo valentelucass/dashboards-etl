@@ -279,7 +279,7 @@ export default function ContasAPagarPage() {
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de contas a pagar.')} tipo={getTipoErro(overview.error)} />}
       {overview.isLoading && !overview.data && <LoadingKpiGrid count={6} />}
-      {overview.data && <ContasAPagarKpiGrid overview={overview.data} />}
+      {overview.data && <ContasAPagarKpiGrid overview={overview.data} temTitulos={conciliacao.some(grupo => grupo.total > 0)} />}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartWrapper titulo="Pagos x Abertos" chartKey="contasPagarSerie" option={serieOption} actions={serieActions} isLoading={serie.isLoading} isEmpty={(serie.data ?? []).length === 0} />

@@ -1,3 +1,9 @@
+## 19/11/2026 — Cores dos indicadores e largura da faixa de Performance
+
+Coletas, Contas a Pagar, Cotações, Faturamento, Faturas por Cliente, Localização de Cargas e Manifestos usam cores no valor dos KPIs conforme a situação do indicador. O SLA considera a meta exibida no histórico de Coletas. A conversão por quantidade usa as faixas de 35% e 60% da tabela de Cotações. Em Localização, a previsão vencida usa as mesmas faixas do Executivo. Faturamento e Manifestos comparam receita e custo com as metas aplicáveis. Totais e medidas sem referência seguem com a cor de texto do tema.
+
+Na linha de nove cartões de Performance, Total de Entregas aproveita parte da largura de Comprovante Anexado. A grade de carregamento usa as mesmas colunas. Os dois rótulos ficaram inteiros nas oito larguras verificadas entre 390 e 1920 px, com o menu expandido e recolhido. A conferência das cores usou exemplos de metas atingidas, pendências, atrasos e períodos sem dados. Os 410 testes da interface passaram.
+
 ## 19/11/2026 — Responsividade do Dashboard e fichas de presença
 
 As telas do painel usam a navegação móvel do Astryx com as permissões das rotas do desktop. No celular, os filtros e formulários de diálogo abrem em folhas. O rodapé organiza identificação e versão acima dos contatos de desenvolvimento e suporte. Gráficos, indicadores, paginação e filtros se adaptam à largura disponível. As tabelas administrativas mostram os dados e as ações de cada registro juntos nas telas estreitas.

@@ -49,7 +49,6 @@ import type {
   FaturamentoResumoRow,
   FaturamentoTrendPoint,
 } from '../types/faturamento';
-import { CORES } from '../utils/chartColors';
 import { buildBaseBarOption, buildBaseDonutOption, buildBaseLineOption, getEchartsThemeTokens } from '../utils/echartsBuilders';
 import { formatarDataHoraMinuto, formatarMoeda, formatarNumero, formatarPeso, formatarPorcentagem } from '../utils/formatadores';
 import { isParceiroLogistico } from '../utils/filiais';
@@ -497,6 +496,7 @@ function FaturamentoEvolutionCard({
   onDrillLevelChange,
   dataFim,
   metaDiaria,
+  podeCompararMeta,
   faturamentoDiarioReal,
   diferencaDiaria,
   faturamentoFaltante,
@@ -509,6 +509,7 @@ function FaturamentoEvolutionCard({
   onDrillLevelChange: (level: PeriodDrillLevel) => void;
   dataFim: string;
   metaDiaria: number;
+  podeCompararMeta: boolean;
   faturamentoDiarioReal: number;
   diferencaDiaria: number;
   faturamentoFaltante: number;
@@ -520,12 +521,14 @@ function FaturamentoEvolutionCard({
     [dados, dataFim, drillLevel, isDark, metaDiaria],
   );
 
+  const corDesempenho = podeCompararMeta ? (diferencaDiaria < 0 ? 'text-negative' : 'text-positive') : '';
+  const corFaltante = podeCompararMeta ? (faturamentoFaltante > 0 ? 'text-warning' : 'text-positive') : '';
   const indicadores = [
-    { definition: KpiDictionary.faturamento.metaDiaria, label: 'Meta de Faturamento Diário', value: formatarMoeda(metaDiaria), tone: 'neutral' },
-    { definition: KpiDictionary.faturamento.faturamentoDiarioReal, label: 'Faturamento Diário Real', value: formatarMoeda(faturamentoDiarioReal), tone: 'neutral' },
-    { definition: KpiDictionary.faturamento.diferencaDiaria, label: 'Diferença', value: formatarMoeda(diferencaDiaria), tone: diferencaDiaria < 0 ? 'danger' : 'success' },
-    { definition: KpiDictionary.faturamento.faturamentoFaltante, label: 'Faturamento Faltante', value: formatarMoeda(faturamentoFaltante), tone: 'neutral' },
-    { definition: KpiDictionary.faturamento.metaDiariaDinamica, label: 'Meta Diária Dinâmica', value: formatarMoeda(metaDiariaDinamica), tone: 'neutral' },
+    { definition: KpiDictionary.faturamento.metaDiaria, label: 'Meta de Faturamento Diário', value: formatarMoeda(metaDiaria), cor: '' },
+    { definition: KpiDictionary.faturamento.faturamentoDiarioReal, label: 'Faturamento Diário Real', value: formatarMoeda(faturamentoDiarioReal), cor: corDesempenho },
+    { definition: KpiDictionary.faturamento.diferencaDiaria, label: 'Diferença', value: formatarMoeda(diferencaDiaria), cor: corDesempenho },
+    { definition: KpiDictionary.faturamento.faturamentoFaltante, label: 'Faturamento Faltante', value: formatarMoeda(faturamentoFaltante), cor: corFaltante },
+    { definition: KpiDictionary.faturamento.metaDiariaDinamica, label: 'Meta Diária Dinâmica', value: formatarMoeda(metaDiariaDinamica), cor: '' },
   ];
 
   return (
@@ -548,12 +551,7 @@ function FaturamentoEvolutionCard({
             >
               <div className="w-full">
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{item.label}</p>
-                <p
-                  className="mt-0.5 text-xl font-bold leading-tight"
-                  style={{
-                    color: item.tone === 'danger' ? CORES.perigo : item.tone === 'success' ? CORES.sucesso : 'var(--color-text)',
-                  }}
-                >
+                <p className={`mt-0.5 text-xl font-bold leading-tight ${item.cor}`}>
                   {item.value}
                 </p>
               </div>
@@ -1086,6 +1084,7 @@ export default function FaturamentoPage() {
             onDrillLevelChange={setPeriodDrillLevel}
             dataFim={dataFim}
             metaDiaria={metaDiaria}
+            podeCompararMeta={!metasIndisponiveis && metaDiaria > 0 && (faturamentoDiario?.diasUteisDecorridos ?? 0) > 0 && (overviewData?.totalFretes ?? 0) > 0}
             faturamentoDiarioReal={faturamentoDiarioReal}
             diferencaDiaria={diferencaDiaria}
             faturamentoFaltante={faturamentoFaltante}
