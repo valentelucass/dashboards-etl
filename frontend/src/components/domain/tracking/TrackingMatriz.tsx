@@ -2,13 +2,14 @@ import { Card } from '@astryxdesign/core/Card';
 import { ToggleButton } from '@astryxdesign/core/ToggleButton';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useId, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useTrackingFretes, useTrackingRegioes } from '../../../hooks/queries/useTracking';
 import type { TrackingFiltro, TrackingFrete, TrackingMatrizRegiao, TrackingRegiao } from '../../../types/tracking';
 import { getApiErrorMessage } from '../../../utils/apiError';
 import { formatarMoeda, formatarNumero, formatarPeso } from '../../../utils/formatadores';
 import DashboardButton from '../../shared/DashboardButton';
 import StatusBadge from '../../shared/StatusBadge';
+import { fundosTracking } from './fundosTracking';
 import './tracking-matriz.css';
 
 const TAMANHO = 10;
@@ -33,11 +34,11 @@ function PainelConsulta({ carregando, erro, vazio, mensagem, tentar, children }:
   return children;
 }
 
-function LinhaExpansivel({ titulo, nomeAcessivel, aberta, alternar, children, resumo }: {
-  titulo: string; nomeAcessivel: string; aberta: boolean; alternar: () => void; children: ReactNode; resumo: ReactNode;
+function LinhaExpansivel({ titulo, nomeAcessivel, aberta, alternar, children, resumo, fundos }: {
+  titulo: string; nomeAcessivel: string; aberta: boolean; alternar: () => void; children: ReactNode; resumo: ReactNode; fundos: CSSProperties;
 }) {
   const id = useId();
-  return <div className="tracking-linha">
+  return <div className="tracking-linha" style={fundos}>
     <button type="button" className="tracking-resumo tracking-expansor" aria-label={nomeAcessivel} aria-describedby={id + '-totais'} aria-expanded={aberta} aria-controls={id} onClick={alternar}>
       <span className="tracking-identificador">{aberta ? <ChevronDown size={16} /> : <ChevronRight size={16} />}{titulo}</span>
       <span id={id + '-totais'} className="contents">{resumo}</span>
@@ -77,7 +78,7 @@ function Fretes({ filtro, sigla, regiao }: { filtro: TrackingFiltro; sigla: stri
   return <>
     <h4>Fretes de {regiao}</h4>
     <PainelConsulta erro={consulta.error} carregando={consulta.isLoading} vazio={!dados?.conteudo.length} mensagem="Nenhum frete nesta região para os filtros selecionados." tentar={() => void consulta.refetch()}>
-      {dados?.conteudo.map((frete: TrackingFrete) => <article key={frete.numeroMinuta} className="tracking-linha" aria-label={`Minuta ${frete.numeroMinuta}`}>
+      {dados?.conteudo.map((frete: TrackingFrete) => <article key={frete.numeroMinuta} className="tracking-linha" aria-label={`Minuta ${frete.numeroMinuta}`} style={fundosTracking(sigla, regiao, frete.numeroMinuta)}>
         <div className="tracking-resumo"><strong className="tracking-identificador">Minuta {frete.numeroMinuta}</strong>
           <span><small>Status</small><StatusBadge status={frete.statusCarga} /></span>
           <span><small>Peso taxado</small>{formatarPeso(frete.pesoTaxado)}</span>
@@ -101,7 +102,7 @@ function Regioes({ filtro, sigla }: { filtro: TrackingFiltro; sigla: string }) {
   return <>
     <h3>Regiões de destino de {sigla}</h3>
     <PainelConsulta erro={consulta.error} carregando={consulta.isLoading} vazio={!dados?.conteudo.length} mensagem="Nenhuma região de destino para os filtros selecionados." tentar={() => void consulta.refetch()}>
-      {dados?.conteudo.map(linha => <LinhaExpansivel key={linha.regiaoDestino} titulo={linha.regiaoDestino} nomeAcessivel={`Região de destino ${linha.regiaoDestino}`}
+      {dados?.conteudo.map(linha => <LinhaExpansivel key={linha.regiaoDestino} titulo={linha.regiaoDestino} nomeAcessivel={`Região de destino ${linha.regiaoDestino}`} fundos={fundosTracking(sigla, linha.regiaoDestino)}
         aberta={aberta === linha.regiaoDestino} alternar={() => setAberta(aberta === linha.regiaoDestino ? null : linha.regiaoDestino)} resumo={<Metricas linha={linha} />}>
         <Fretes filtro={filtro} sigla={sigla} regiao={linha.regiaoDestino} />
       </LinhaExpansivel>)}
@@ -126,7 +127,7 @@ export default function TrackingMatriz({ linhas, filtro, status, alternarStatus,
     </header>
     <PainelConsulta erro={erro} carregando={carregando} vazio={!linhas.length} mensagem="Nenhuma carga para os filtros selecionados." tentar={tentar}>
       {linhas.slice((atual - 1) * TAMANHO, atual * TAMANHO).map(linha => <LinhaExpansivel key={linha.siglaRegiaoDestino}
-        titulo={linha.siglaRegiaoDestino} nomeAcessivel={`Responsável ${linha.siglaRegiaoDestino}`}
+        titulo={linha.siglaRegiaoDestino} nomeAcessivel={`Responsável ${linha.siglaRegiaoDestino}`} fundos={fundosTracking(linha.siglaRegiaoDestino)}
         aberta={aberta === linha.siglaRegiaoDestino} alternar={() => setAberta(aberta === linha.siglaRegiaoDestino ? null : linha.siglaRegiaoDestino)} resumo={<Metricas linha={linha} />}>
         <Regioes filtro={filtro} sigla={linha.siglaRegiaoDestino} />
       </LinhaExpansivel>)}

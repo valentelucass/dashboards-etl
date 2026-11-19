@@ -35,3 +35,45 @@ it('abre a região e mostra suas NFs sem outro clique; as páginas preservam sig
   fireEvent.click(sigla);
   expect(screen.queryByRole('article', { name: 'Minuta 492000' })).toBeNull();
 });
+
+it('mantém as famílias aprovadas e preserva os tons da região e minuta ao filtrar e trocar de página', () => {
+  const totais = { totalCargas: 3, pesoTaxado: 200, valorFrete: 100, valorNota: 500, volumes: 6, foraDoPrazo: 1 };
+  const siglas = ['AGU', 'SPO', 'CPQ', 'REC', 'TUP'];
+  const grupos = siglas.map(sigla => ({ ...totais, siglaRegiaoDestino: sigla, responsavelRegiaoDestino: sigla }));
+  const bauru = 'BAU - AGU - BAURU - POLO';
+  const entrada = { linhas: grupos, filtro: { dataInicio: '2026-11-01', dataFim: '2026-11-19' },
+    status: [], alternarStatus: vi.fn(), carregando: false, erro: null, tentar: vi.fn() };
+  const mostrarRegioes = (ordem: string[]) => regioes.mockReturnValue({ data: {
+    conteudo: ordem.map(regiaoDestino => ({ ...totais, regiaoDestino })), totalPaginas: 1,
+  } });
+  const jau = 'JAU - AGU - PEDERNEIRAS - REGIÃO';
+  mostrarRegioes([bauru, jau]);
+  fretes.mockImplementation((f: TrackingFiltro, _sigla: string, _regiao: string, pagina: number) => ({ data: {
+    conteudo: [{ ...totais, numeroMinuta: f.numeroMinuta || pagina === 2 ? 702 : 701, numerosNf: [], statusCarga: 'Manifestada' }],
+    totalPaginas: f.numeroMinuta ? 1 : 2,
+  } }));
+  const button = (name: string) => screen.getByRole('button', { name });
+  const fundo = (elemento: HTMLElement, tipo = 'fechado') => elemento.closest<HTMLElement>('.tracking-linha')!.style.getPropertyValue('--tracking-' + tipo);
+  const view = render(<TrackingMatriz {...entrada} />);
+  expect(siglas.map(s => fundo(button('Responsável ' + s)))).toEqual([
+    'light-dark(#d1e2f3, #314860)', 'light-dark(#c2e2db, #2c504b)', 'light-dark(#ede3f3, #4a4055)',
+    'light-dark(#f0e1cf, #564837)', 'light-dark(#f1dfe4, #544048)',
+  ]);
+  fireEvent.click(button('Responsável AGU'));
+  expect(fundo(button('Região de destino ' + bauru), 'aberto')).toBe('light-dark(#dce0f2, #40465e)');
+  const porTema = (regiao: string) => fundo(button('Região de destino ' + regiao)).match(/#[0-9a-f]{6}/g)!;
+  expect(porTema(jau)[0]).not.toBe(porTema(bauru)[0]);
+  expect(porTema(jau)[1]).not.toBe(porTema(bauru)[1]);
+  fireEvent.click(button('Região de destino ' + bauru));
+  const primeira = fundo(screen.getByRole('article', { name: 'Minuta 701' }));
+  fireEvent.click(button('Próxima página de fretes de ' + bauru));
+  const segunda = fundo(screen.getByRole('article', { name: 'Minuta 702' }));
+  expect(segunda).not.toBe(primeira);
+  mostrarRegioes([jau, bauru]);
+  view.rerender(<TrackingMatriz {...entrada} key="filtrado" linhas={grupos.slice().reverse()} filtro={{ ...entrada.filtro, numeroMinuta: '702' }} />);
+  expect(fundo(button('Responsável AGU'))).toBe('light-dark(#d1e2f3, #314860)');
+  fireEvent.click(button('Responsável AGU'));
+  expect(fundo(button('Região de destino ' + bauru), 'aberto')).toBe('light-dark(#dce0f2, #40465e)');
+  fireEvent.click(button('Região de destino ' + bauru));
+  expect(fundo(screen.getByRole('article', { name: 'Minuta 702' }))).toBe(segunda);
+});
