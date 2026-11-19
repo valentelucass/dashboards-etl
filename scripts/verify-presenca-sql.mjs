@@ -98,9 +98,9 @@ INSERT INTO #navegacao(usuario_id,dia,rota_atual,ultimo_pulso) VALUES
 (9,CAST(@presenceNow AS DATE),'/coletas',DATEADD(MILLISECOND,-75001,@presenceNow));
 CREATE TABLE #resumoAtual(total BIGINT,ativos BIGINT,inativos BIGINT,online BIGINT);
 INSERT INTO #resumoAtual ${atNow('calcularResumoSessoes')};
-CREATE TABLE #onlineAtual(id BIGINT,nome VARCHAR(100),email VARCHAR(100),atividade VARCHAR(33),rota VARCHAR(100));
+CREATE TABLE #onlineAtual(ordem INT IDENTITY, id BIGINT,nome VARCHAR(100),email VARCHAR(100),atividade VARCHAR(33),rota VARCHAR(100));
 INSERT INTO #onlineAtual ${atNow('findUsuariosOnlineResumo')};
-CREATE TABLE #recentes(id BIGINT,nome VARCHAR(100),email VARCHAR(100),atividade VARCHAR(33),rota VARCHAR(100));
+CREATE TABLE #recentes(ordem INT IDENTITY, id BIGINT,nome VARCHAR(100),email VARCHAR(100),atividade VARCHAR(33),rota VARCHAR(100));
 INSERT INTO #recentes ${atNow('findUsuariosRecentesResumo')};
 `;
 check('(SELECT online FROM #resumoAtual)=2 AND (SELECT COUNT(*) FROM #onlineAtual)=2', 'count and list agree at same clock');
@@ -128,6 +128,29 @@ INSERT INTO #aposRetomar ${atNow('findUsuariosOnlineResumo')};
 `;
 check('(SELECT COUNT(*) FROM #aposExpirar)=1 AND (SELECT id FROM #aposExpirar)=8', 'no heartbeat expires without cleanup or restart');
 check("(SELECT COUNT(*) FROM #aposRetomar WHERE id=4 AND rota='/performance')=1", 'new confirmed heartbeat restores presence');
+script += `;WITH pessoas AS (
+    SELECT 101 AS id UNION ALL SELECT id + 1 FROM pessoas WHERE id < 196
+)
+INSERT INTO #usuarios (id,email,login,ativo,nome)
+SELECT id, CONCAT('p',id,'@teste.invalid'), CONCAT('p',id), 1, CONCAT('Pessoa ',297-id) FROM pessoas;
+INSERT INTO #navegacao(usuario_id,dia,rota_atual,ultimo_pulso)
+SELECT id, CAST(@presenceNow AS DATE), '/coletas',
+       CASE WHEN id <= 148 THEN DATEADD(MINUTE,-5-(id-101)/2,@presenceNow)
+            ELSE DATEADD(SECOND,-(id-149)/2,@presenceNow) END
+FROM #usuarios WHERE id BETWEEN 101 AND 196;
+TRUNCATE TABLE #recentes;
+TRUNCATE TABLE #onlineAtual;
+INSERT INTO #recentes ${atNow('findUsuariosRecentesResumo')};
+INSERT INTO #onlineAtual ${atNow('findUsuariosOnlineResumo')};
+`;
+check('(SELECT COUNT(DISTINCT id) FROM #recentes WHERE id BETWEEN 101 AND 148)=48', 'all 48 recent users are listed');
+check('(SELECT COUNT(DISTINCT id) FROM #onlineAtual WHERE id BETWEEN 149 AND 196)=48', 'all 48 online users are listed');
+for (const lista of ['#recentes', '#onlineAtual']) {
+  check(`NOT EXISTS (SELECT 1 FROM (
+    SELECT ordem, ROW_NUMBER() OVER (ORDER BY CAST(atividade AS DATETIMEOFFSET) DESC, LOWER(nome)) AS esperada
+    FROM ${lista}
+  ) classificacao WHERE ordem <> esperada)`, `pulse then name order in ${lista}`);
+}
 script += `PRINT 'PASS ${checks} presence checks using temporary tables only';\n`;
 const output = process.argv[2] ?? '.tmp/presenca-sql-check';
 mkdirSync(output, { recursive: true });

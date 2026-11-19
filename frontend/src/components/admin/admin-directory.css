@@ -3,23 +3,8 @@
   container: admin-presence / inline-size;
 }
 
-/* Mantém a âncora quando há espaço e usa a janela inteira para fichas longas. */
-@position-try --presence-viewport {
-  position-area: span-all;
-  place-self: center;
-  margin: 0;
-}
-
-[data-layer-anchored]:popover-open:has(.admin-presence-panel) {
-  /* O Astryx define os fallbacks da âncora diretamente no elemento. */
-  position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline, --presence-viewport !important;
-}
-
-.astryx-popover .admin-presence-title {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 1;
-  background: var(--color-card);
+.admin-presence-pagination {
+  margin-block-end: .75rem;
 }
 
 .admin-presence-sections > section {

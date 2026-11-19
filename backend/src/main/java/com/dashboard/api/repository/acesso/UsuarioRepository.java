@@ -111,7 +111,7 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
     List<UsuarioOnlineResumoProjection> findUsuariosOnlineResumo(@Param("operador") String operador, @Param("agora") String agora);
 
     @Query(value = """
-            SELECT TOP (12) u.id AS [id], u.nome AS [nome], u.email AS [email],
+            SELECT u.id AS [id], u.nome AS [nome], u.email AS [email],
                    CONVERT(varchar(33), n.ultimo_pulso, 127) AS [ultimaAtividade],
                    COALESCE(n.rota_atual, JSON_VALUE(n.visitas,
                        CASE WHEN n.indice_atual >= 0 THEN CONCAT('$[', n.indice_atual, '].rota') ELSE '$.rota' END)) AS [ultimaRotaAcessada]

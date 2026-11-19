@@ -59,7 +59,7 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
   const dados = !query.isError && compativel && query.data?.dia === dia ? query.data : undefined;
 
   return <section className="min-w-0 p-4" aria-label={`Acessos de hoje de ${nome}`}>
-    <DashboardButton type="button" aria-label="Fechar acessos de hoje" onClick={onClose}
+    <DashboardButton type="button" autoFocus aria-label="Fechar acessos de hoje" onClick={onClose}
       className="mb-3 inline-flex items-center gap-1.5 rounded text-xs font-semibold focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
       style={{ color: 'var(--color-primary)' }}><ArrowLeft size={15} />Voltar às pessoas</DashboardButton>
     <h3 className="text-base font-bold">Acessos de hoje</h3>

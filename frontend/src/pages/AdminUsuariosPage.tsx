@@ -1,7 +1,9 @@
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import '../components/admin/admin-directory.css';
 import { Grid } from '@astryxdesign/core/Grid';
-import { Collapsible } from '@astryxdesign/core/Collapsible';
+import PresencePeopleStack from '../components/admin/PresencePeopleStack';
+import PeoplePagination from '../components/admin/PeoplePagination';
+import { usePresencePage } from '../components/admin/usePresencePage';
 import { TableText } from '../components/shared/DashboardTable';
 import DashboardLoading from '../components/shared/DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -16,7 +18,7 @@ import DashboardAdaptiveDialog from '../components/shared/DashboardAdaptiveDialo
 import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList';
 import { Selector } from '@astryxdesign/core/Selector';
 import { FormPasswordField, FormTextField } from '../components/shared/FormTextField';
-import { CircleHelp, Clock3, Eye, KeyRound, MapPin, MoreHorizontal, Pencil, Upload, UserCheck, UserX, Users } from 'lucide-react';
+import { CircleHelp, Eye, KeyRound, MoreHorizontal, Pencil, Upload, UserCheck, UserX, Users, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { PresenceHistoryContent } from '../components/admin/PresenceHistory';
 import TooltipKpi from '../components/shared/TooltipKpi';
@@ -175,40 +177,28 @@ interface SummaryCardProps {
 
 function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, listTitle, usuarios, emptyMessage, acaoUsuario }: SummaryCardProps) {
   const [open, setOpen] = useState(false);
+  const pagina = usePresencePage(usuarios);
+
+  function changeOpen(next: boolean) {
+    setOpen(next);
+    if (!next) pagina.reset();
+  }
+
+  function runUserAction(usuario: UsuarioAdmin, button: HTMLButtonElement) {
+    if (!acaoUsuario) return;
+    const dialog = button.closest('dialog');
+    // Aguarda a devolução do foco ao cartão antes de abrir o formulário de senha.
+    if (dialog?.open) {
+      dialog.addEventListener('close', () => acaoUsuario.onClick(usuario), { once: true });
+    } else {
+      acaoUsuario.onClick(usuario);
+    }
+    changeOpen(false);
+  }
 
   return (
-    <Popover presentation="adaptive" label={listTitle} isOpen={open} onOpenChange={setOpen} alignment="start" width="min(22rem, calc(100vw - 24px))" padding={0}
-      content={<div>
-        <div className="border-b px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
-          <h2 className="text-sm font-bold">{listTitle}</h2>
-          <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>{usuarios.length} usuário{usuarios.length === 1 ? '' : 's'}</p>
-        </div>
-        <div className="max-h-64 space-y-1 overflow-y-auto p-2">
-          {usuarios.length > 0 ? usuarios.map((usuario) => (
-            <div key={usuario.id} className="flex items-center gap-3 rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--color-bg)' }}>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold" title={usuario.nome}>{usuario.nome}</p>
-                <p className="text-xs wrap-anywhere" title={usuario.email} style={{ color: 'var(--color-text-subtle)' }}>{usuario.email}</p>
-              </div>
-              {acaoUsuario && (
-                <DashboardButton
-                  type="button"
-                  onClick={() => {
-                    acaoUsuario.onClick(usuario);
-                    setOpen(false);
-                  }}
-                  className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${FOCUS_RING_CLASS}`}
-                  style={SECONDARY_BUTTON_STYLE}
-                >
-                  {acaoUsuario.label}
-                </DashboardButton>
-              )}
-            </div>
-          )) : <p className="px-3 py-6 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>{emptyMessage}</p>}
-        </div>
-        </div>}>
-      {trigger => (
-        <div className="grid sm:min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
+    <>
+      <div className="grid sm:min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconSurface, color: accent }}>
           <Icon size={19} strokeWidth={2.2} aria-hidden="true" />
         </div>
@@ -219,12 +209,37 @@ function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, li
           </div>
           <div className="mt-1 truncate text-xs" style={{ color: 'var(--color-text-muted)' }}>{detail}</div>
         </div>
-        <DashboardButton {...trigger} type="button" aria-label={`Ver ${listTitle.toLowerCase()}`} title={`Ver ${listTitle.toLowerCase()}`} className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
-            <CircleHelp size={16} aria-hidden="true" />
-          </DashboardButton>
+        <DashboardButton type="button" onClick={() => changeOpen(true)} aria-haspopup="dialog" aria-label={`Ver ${listTitle.toLowerCase()}`} title={`Ver ${listTitle.toLowerCase()}`} className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
+          <CircleHelp size={16} aria-hidden="true" />
+        </DashboardButton>
       </div>
-      )}
-    </Popover>
+      <DashboardAdaptiveDialog label={listTitle} isOpen={open} onOpenChange={changeOpen}
+        purpose="info" sheetHeight="hug" width="min(34rem, calc(100dvw - 2rem))" maxHeight="calc(100dvh - 2rem)" padding={0}>
+        <div className="flex items-start justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="min-w-0">
+            <h2 className="text-base font-bold">{listTitle}</h2>
+            <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>{usuarios.length} usuário{usuarios.length === 1 ? '' : 's'}</p>
+          </div>
+          <Button label={`Fechar ${listTitle.toLowerCase()}`} isIconOnly variant="ghost" size="sm" icon={<X size={18} />} onClick={() => changeOpen(false)} />
+        </div>
+        <div className="p-3">
+          <PeoplePagination label={`Paginação de ${listTitle.toLowerCase()}`} page={pagina.page} totalPages={pagina.totalPages} onChange={pagina.setPage} />
+          {usuarios.length ? (
+            <ul className="space-y-1.5">
+              {pagina.pessoas.map(usuario => (
+                <li key={usuario.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--color-bg)' }}>
+                  <div className="min-w-0 flex-[1_1_12rem]">
+                    <p className="wrap-anywhere text-sm font-semibold">{usuario.nome}</p>
+                    <p className="wrap-anywhere text-xs" style={{ color: 'var(--color-text-subtle)' }}>{usuario.email}</p>
+                  </div>
+                  {acaoUsuario && <Button label={acaoUsuario.label} variant="secondary" size="sm" onClick={event => runUserAction(usuario, event.currentTarget)} />}
+                </li>
+              ))}
+            </ul>
+          ) : <p className="px-3 py-5 text-center text-sm" style={{ color: 'var(--color-text-subtle)' }}>{emptyMessage}</p>}
+        </div>
+      </DashboardAdaptiveDialog>
+    </>
   );
 }
 
@@ -233,55 +248,6 @@ function timestampAtividade(valor: string | null): number {
 
   const timestamp = new Date(valor).getTime();
   return Number.isNaN(timestamp) ? 0 : timestamp;
-}
-function formatTempoUltimoPulso(valor: string | null): string {
-  const timestamp = timestampAtividade(valor);
-  if (!timestamp) return 'Sem pulso registrado';
-
-  const segundos = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (segundos < 10) return 'Sinal recebido agora';
-  if (segundos < 60) return `Último sinal há ${segundos}s`;
-
-  const minutos = Math.floor(segundos / 60);
-  if (minutos < 60) return `Último sinal há ${minutos} min`;
-
-  const horas = Math.floor(minutos / 60);
-  return `Último sinal há ${horas}h ${minutos % 60}min`;
-}
-
-type PessoaPresente = Pick<UsuarioAdmin, 'id' | 'nome' | 'email' | 'ultimaAtividade' | 'ultimaRotaAcessada'>;
-
-function PresencePeopleStack({ pessoas, online, aberta, onOpen, onHistory }: {
-  pessoas: PessoaPresente[];
-  online: boolean;
-  aberta: string | null;
-  onOpen: (id: string | null) => void;
-  onHistory?: (pessoa: PessoaPresente) => void;
-}) {
-  return (
-    <div className="admin-presence-stack">
-      {pessoas.map(pessoa => (
-        <Card key={pessoa.id} padding={0} className="admin-presence-sheet" data-open={aberta === pessoa.id}>
-          <Collapsible isOpen={aberta === pessoa.id} onOpenChange={open => onOpen(open ? pessoa.id : null)}
-            id={`presenca-pessoa-${pessoa.id}`}
-            trigger={<span className="admin-presence-identity">
-              <span aria-hidden="true" className="admin-presence-avatar" data-online={online}>{pessoa.nome.trim().charAt(0).toUpperCase() || '?'}</span>
-              <span className="wrap-anywhere">{pessoa.nome}</span>
-            </span>}>
-            <div className="admin-presence-details">
-              <p className="min-w-0 wrap-anywhere">{pessoa.email}</p>
-              <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-2">
-                <span className="inline-flex items-center gap-1.5"><Clock3 size={14} aria-hidden="true" />{online ? formatTempoUltimoPulso(pessoa.ultimaAtividade) : pessoa.ultimaAtividade ? formatarDataHoraMinuto(pessoa.ultimaAtividade) : 'Sem atividade registrada'}</span>
-                {pessoa.ultimaRotaAcessada && <span className="inline-flex min-w-0 items-center gap-1.5"><MapPin size={14} className="shrink-0" aria-hidden="true" /><span className="wrap-anywhere">{pessoa.ultimaRotaAcessada}</span></span>}
-              </div>
-              {onHistory && <Button variant="secondary" size="sm" id={`presenca-historico-${pessoa.id}`}
-                label="Ver acessos de hoje" onClick={() => onHistory(pessoa)} />}
-            </div>
-          </Collapsible>
-        </Card>
-      ))}
-    </div>
-  );
 }
 
 function AccessSummaryItem({
@@ -339,39 +305,26 @@ function OnlineUsersCard({
 }) {
   const [open, setOpen] = useState(false);
   const [folhaAberta, setFolhaAberta] = useState<string | null>();
-  const folhaAtual = folhaAberta === null || [...usuarios, ...recentes].some(pessoa => pessoa.id === folhaAberta)
-    ? folhaAberta ?? null : usuarios[0]?.id ?? recentes[0]?.id ?? null;
+  const onlinePage = usePresencePage(usuarios);
+  const recentesPage = usePresencePage(recentes);
+  const folhasVisiveis = [...onlinePage.pessoas, ...recentesPage.pessoas];
+  const folhaAtual = folhaAberta === null || folhasVisiveis.some(pessoa => pessoa.id === folhaAberta)
+    ? folhaAberta ?? null : folhasVisiveis[0]?.id ?? null;
   const [selecionado, setSelecionado] = useState<{ id: string; nome: string } | null>(null);
 
+  function changeOpen(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setSelecionado(null);
+      setFolhaAberta(undefined);
+      onlinePage.reset();
+      recentesPage.reset();
+    }
+  }
+
   return (
-    <Popover presentation="adaptive" label="Acessos recentes" isOpen={open} onOpenChange={(aberto) => { setOpen(aberto); setSelecionado(null); setFolhaAberta(undefined); }} alignment="end" width="min(68rem, calc(100dvw - 2rem))" padding={0}
-      content={<div className="admin-presence-panel">
-        {selecionado && podeVerTrilha ? <PresenceHistoryContent key={selecionado.id} usuarioId={selecionado.id} nome={selecionado.nome} onClose={() => {
-          const pessoaId = selecionado.id;
-          setSelecionado(null);
-          requestAnimationFrame(() => document.getElementById(`presenca-historico-${pessoaId}`)?.focus({ preventScroll: true }));
-        }} /> : <>
-        <div className="admin-presence-title flex items-center gap-2 px-5 pt-4 pb-1"><Users size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" /><h2 className="text-base font-bold">Presença de usuários</h2></div>
-          <div className="border-b px-5 pb-4" style={{ borderColor: 'var(--color-border)' }}>
-          <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Outras pessoas com a página em foco e sinal nos últimos 75 segundos. Sua conta não entra nesta lista.</p>
-          <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>{!isError && atualizadoEm > 0 ? `Consulta realizada às ${new Date(atualizadoEm).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' })}. ` : ''}Atualização a cada 15 segundos.</p>
-        </div>
-        {isError ? <p role="alert" className="p-5 text-sm">Não foi possível atualizar a presença. Aguardando nova consulta.</p> :
-        <Grid className="admin-presence-sections" gap={0} align="start"
-          columns={usuarios.length > 0 && recentes.length > 0 ? { minWidth: 384, max: 2 } : 1}
-          data-both={usuarios.length > 0 && recentes.length > 0}>
-          <section>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><Badge label={isLoading ? '—' : totalOnline} variant="success" /></div>
-            {isLoading ? <DashboardLoading label="Carregando presença..." /> : usuarios.length > 0 ? <PresencePeopleStack pessoas={usuarios} online aberta={folhaAtual} onOpen={setFolhaAberta} onHistory={podeVerTrilha ? setSelecionado : undefined} /> : <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhuma outra pessoa com presença confirmada agora.</p>}
-          </section>
-          <section>
-            <div className="mb-3"><h3 className="text-sm font-bold">Vistos recentemente</h3><p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>Sinais de foco das últimas 24 horas, sem presença confirmada agora.</p></div>
-            {recentes.length > 0 ? <PresencePeopleStack pessoas={recentes} online={false} aberta={folhaAtual} onOpen={setFolhaAberta} onHistory={podeVerTrilha ? setSelecionado : undefined} /> : <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
-          </section>
-        </Grid>}</>}
-        </div>}>
-      {trigger => (
-        <div className="grid sm:min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
+    <>
+      <div className="grid sm:min-h-[92px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-4 py-3.5" style={SURFACE_STYLE}>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
           <Users size={19} strokeWidth={2.2} aria-hidden="true" />
         </div>
@@ -382,12 +335,48 @@ function OnlineUsersCard({
           </div></TooltipKpi>
           <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>{isError ? 'Presença indisponível' : isLoading ? null : 'Outras pessoas com a página em foco'}</div>
         </div>
-        <DashboardButton {...trigger} type="button" aria-label="Ver detalhes de presença" title="Ver detalhes de presença" className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
-            <CircleHelp size={16} aria-hidden="true" />
-          </DashboardButton>
+        <DashboardButton type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label="Ver detalhes de presença" title="Ver detalhes de presença" className={`self-start rounded-full p-1.5 ${FOCUS_RING_CLASS}`} style={{ color: 'var(--color-primary)' }}>
+          <CircleHelp size={16} aria-hidden="true" />
+        </DashboardButton>
       </div>
-      )}
-    </Popover>
+      <DashboardAdaptiveDialog label="Presença de usuários" isOpen={open} onOpenChange={changeOpen}
+        purpose="info" sheetHeight="hug" width="min(68rem, calc(100dvw - 2rem))" maxHeight="calc(100dvh - 2rem)" padding={0}>
+        <div className="admin-presence-panel">
+          <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-1">
+            <h2 className="flex min-w-0 items-center gap-2 text-base font-bold">
+              <Users size={18} className="shrink-0" style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
+              Presença de usuários
+            </h2>
+            <Button label="Fechar presença de usuários" isIconOnly variant="ghost" size="sm" icon={<X size={18} />} onClick={() => changeOpen(false)} />
+          </div>
+          {selecionado && podeVerTrilha ? <PresenceHistoryContent key={selecionado.id} usuarioId={selecionado.id} nome={selecionado.nome} onClose={() => {
+            const pessoaId = selecionado.id;
+            setSelecionado(null);
+            requestAnimationFrame(() => document.getElementById(`presenca-historico-${pessoaId}`)?.focus({ preventScroll: true }));
+          }} /> : <>
+          <div className="border-b px-5 pb-4" style={{ borderColor: 'var(--color-border)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Outras pessoas com a página em foco e sinal nos últimos 75 segundos. Sua conta não entra nesta lista.</p>
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>{!isError && atualizadoEm > 0 ? `Consulta realizada às ${new Date(atualizadoEm).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' })}. ` : ''}Atualização a cada 15 segundos.</p>
+          </div>
+          {isError ? <p role="alert" className="p-5 text-sm">Não foi possível atualizar a presença. Aguardando nova consulta.</p> :
+          <Grid className="admin-presence-sections" gap={0} align="start"
+            columns={usuarios.length > 0 && recentes.length > 0 ? { minWidth: 384, max: 2 } : 1}
+            data-both={usuarios.length > 0 && recentes.length > 0}>
+            <section aria-label="Online agora">
+              <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Online agora</h3><Badge label={isLoading ? '—' : usuarios.length} variant="success" /></div>
+              {isLoading ? <DashboardLoading label="Carregando presença..." /> : usuarios.length > 0 ? <PresencePeopleStack pagina={onlinePage} online aberta={folhaAtual} onOpen={setFolhaAberta} onHistory={podeVerTrilha ? setSelecionado : undefined} /> : <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Nenhuma outra pessoa com presença confirmada agora.</p>}
+            </section>
+            <section aria-label="Vistos recentemente">
+              <div className="mb-3">
+                <div className="flex items-center justify-between"><h3 className="text-sm font-bold">Vistos recentemente</h3><Badge label={isLoading ? '—' : recentes.length} variant="neutral" /></div>
+                <p className="mt-0.5 text-xs" style={{ color: 'var(--color-text-subtle)' }}>Sinais de foco das últimas 24 horas, sem presença confirmada agora.</p>
+              </div>
+              {isLoading ? <DashboardLoading label="Carregando acessos recentes..." /> : recentes.length > 0 ? <PresencePeopleStack pagina={recentesPage} online={false} aberta={folhaAtual} onOpen={setFolhaAberta} onHistory={podeVerTrilha ? setSelecionado : undefined} /> : <p className="text-sm" style={{ color: 'var(--color-text-subtle)' }}>Ainda não há atividades recentes.</p>}
+            </section>
+          </Grid>}</>}
+        </div>
+      </DashboardAdaptiveDialog>
+    </>
   );
 }
 
@@ -758,10 +747,12 @@ export default function AdminUsuariosPage() {
     [resumoUsuarios.usuariosOnlineDetalhes, operador?.id],
   );
   const usuariosVistosRecentemente = useMemo(
-    () =>
-      (resumoSessoes.data?.usuariosRecentes ?? [])
-        .filter((usuario) => usuario.id !== operador?.id && !usuariosOnlineAgora.some(online => online.id === usuario.id))
-        .map(usuario => ({ ...usuario, ultimaRotaAcessada: usuario.ultimaRotaAcessada ?? null })),
+    () => {
+      const idsOnline = new Set(usuariosOnlineAgora.map(usuario => usuario.id));
+      return (resumoSessoes.data?.usuariosRecentes ?? [])
+        .filter(usuario => usuario.id !== operador?.id && !idsOnline.has(usuario.id))
+        .map(usuario => ({ ...usuario, ultimaRotaAcessada: usuario.ultimaRotaAcessada ?? null }));
+    },
     [resumoSessoes.data?.usuariosRecentes, operador?.id, usuariosOnlineAgora],
   );
   const usuariosOnlineComDetalhes = useMemo(

@@ -1,3 +1,7 @@
+## 19/11/2026 — Modais e paginação da presença
+
+Os modais do Dashboard desfocam o fundo nos temas claro e escuro, respeitando a preferência por transparência reduzida. Em Gestão de usuários, a presença abre em uma janela central no desktop e em uma folha no celular. Cada grupo tem cinco pessoas por página, contagem própria e navegação até a última ficha. Os cartões Total, Ativos e Solicitações usam o mesmo padrão de janela e paginação. A consulta de recentes retorna todas as pessoas elegíveis pelas regras de foco e atividade já vigentes. O histórico de cada pessoa mantém sua permissão de acesso.
+
 ## 19/11/2026 — Cores dos indicadores e largura da faixa de Performance
 
 Coletas, Contas a Pagar, Cotações, Faturamento, Faturas por Cliente, Localização de Cargas e Manifestos usam cores no valor dos KPIs conforme a situação do indicador. O SLA considera a meta exibida no histórico de Coletas. A conversão por quantidade usa as faixas de 35% e 60% da tabela de Cotações. Em Localização, a previsão vencida usa as mesmas faixas do Executivo. Faturamento e Manifestos comparam receita e custo com as metas aplicáveis. Totais e medidas sem referência seguem com a cor de texto do tema.
