@@ -781,3 +781,10 @@ Coletas, Cotações, Faturamento, Integrações e Performance usam o seletor seg
 A auditoria das rotas e componentes identificou desenho manual de fatias em cima de um Chart vazio. As roscas, pizzas e os três medidores semicirculares de Manifestos agora usam RadialChart e RadialSlice do Astryx Lab na mesma versão dos pacotes instalados. A seleção continua usando o índice do registro de origem. Os percentuais dos medidores mantêm o valor real, mesmo acima de 100%. As cores compartilhadas de séries e as de Coletas e Localização usam os tokens de dados do Astryx. Linhas, áreas, barras e indicadores de progresso já usavam os componentes oficiais.
 
 Conferidas as 12 rotas na prévia com dados de exemplo, incluindo a legenda, a seleção por teclado e a rosca no celular em tema claro. Doze testes focados aprovados e build local concluído.
+
+
+## 19/11/2026 — Financeiro e Recebíveis
+
+O relatório usa o período de emissão dos CT-es, inclui os fretes elegíveis sem CT-e pela data do serviço e reparte cada título entre os fretes pelo valor. O prazo real vai até a liquidação bancária da última parcela. O gráfico de vencimentos e o ranking consideram o saldo de cada parcela na data de corte. O painel também apresenta o prazo cadastral, o tempo para faturar e a comparação dos fretes realizados com o faturamento.
+
+A migração V077 conecta os objetos preparados pelo ETL. Na conferência de 1 a 19/11, as faixas de vencimento somaram os mesmos R$ 3.184.789,72 do cartão. O filtro de filial, o detalhe paginado e os rankings Top 5, 10 e 15 foram validados em produção.
