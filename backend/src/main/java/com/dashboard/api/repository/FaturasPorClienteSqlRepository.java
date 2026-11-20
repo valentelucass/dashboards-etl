@@ -66,29 +66,35 @@ public class FaturasPorClienteSqlRepository {
         MapSqlParameterSource params = copiarParams(source);
         params.addValue("dataReferencia", dataReferencia);
 
-        String sql = baseNormalizadaSql(source) + """
+        String sql = baseNormalizadaSql(source) + parcelasAbertasSql() + """
                 , por_documento AS (
-                    SELECT cliente_chave, documento_fatura, MAX(snapshot_em) AS snapshot_em,
+                    SELECT cliente_chave, documento_fatura, data_base_prazo, MAX(snapshot_em) AS snapshot_em,
                            SUM(valor_faturado_rateado) AS valor_faturado, SUM(valor_a_faturar) AS valor_a_faturar,
                            COUNT(*) AS fretes, MAX(baixa_titulo) AS baixa, MAX(data_base_prazo) AS emissao,
                            MAX(data_vencimento_fatura) AS vencimento,
                            SUM(CASE WHEN documento_fatura IS NOT NULL THEN CAST(DATEDIFF(day, data_servico_frete, data_base_prazo) AS bigint) END) AS dias_ate_fatura,
                            COUNT(CASE WHEN documento_fatura IS NOT NULL AND data_servico_frete IS NOT NULL AND data_base_prazo IS NOT NULL THEN 1 END) AS fretes_com_datas
                     FROM base_normalizada
-                    GROUP BY cliente_chave, documento_fatura
+                    GROUP BY cliente_chave, documento_fatura, data_base_prazo
+                ), saldos AS (
+                    SELECT cliente_chave,documento_fatura,data_base_prazo,SUM(valor) AS saldo,
+                           SUM(CASE WHEN dias_atraso > 0 THEN valor ELSE 0 END) AS saldo_vencido
+                    FROM parcelas_abertas
+                    GROUP BY cliente_chave,documento_fatura,data_base_prazo
                 )
                 SELECT MAX(snapshot_em) AS updated_at, SUM(valor_faturado) AS valor_faturado,
                        SUM(valor_a_faturar) AS valor_a_faturar,
-                       SUM(CASE WHEN documento_fatura IS NOT NULL THEN fretes ELSE 0 END) AS registros_faturados,
-                       SUM(CASE WHEN documento_fatura IS NULL THEN fretes ELSE 0 END) AS aguardando_faturamento,
-                       SUM(CASE WHEN documento_fatura IS NOT NULL AND baixa IS NULL THEN valor_faturado ELSE 0 END) AS carteira,
-                       SUM(CASE WHEN baixa IS NULL AND vencimento < :dataReferencia THEN valor_faturado ELSE 0 END) AS vencido,
-                       SUM(CASE WHEN documento_fatura IS NOT NULL AND baixa IS NULL AND vencimento < :dataReferencia THEN 1 ELSE 0 END) AS titulos_em_atraso,
+                       SUM(CASE WHEN d.documento_fatura IS NOT NULL THEN fretes ELSE 0 END) AS registros_faturados,
+                       SUM(CASE WHEN d.documento_fatura IS NULL THEN fretes ELSE 0 END) AS aguardando_faturamento,
+                       SUM(saldo) AS carteira, SUM(saldo_vencido) AS vencido,
+                       SUM(CASE WHEN saldo_vencido > 0 THEN 1 ELSE 0 END) AS titulos_em_atraso,
                        AVG(CAST(DATEDIFF(day, emissao, vencimento) AS decimal(19,2))) AS prazo_medio_dias,
-                       AVG(CAST(DATEDIFF(day, emissao, baixa) AS decimal(19,2))) AS prazo_recebimento_dias,
+                       AVG(CAST(DATEDIFF(day, emissao, CASE WHEN baixa <= :dataReferencia THEN baixa END) AS decimal(19,2))) AS prazo_recebimento_dias,
                        SUM(dias_ate_fatura) * 1.0 / NULLIF(SUM(fretes_com_datas), 0) AS prazo_ate_faturar,
-                       COUNT(DISTINCT cliente_chave) AS clientes_ativos
-                FROM por_documento
+                       COUNT(DISTINCT d.cliente_chave) AS clientes_ativos
+                FROM por_documento d LEFT JOIN saldos s ON s.documento_fatura=d.documento_fatura
+                    AND s.data_base_prazo=d.data_base_prazo
+                    AND (s.cliente_chave=d.cliente_chave OR (s.cliente_chave IS NULL AND d.cliente_chave IS NULL))
                 OPTION (MAXDOP 1)
                 """;
 
@@ -141,14 +147,16 @@ public class FaturasPorClienteSqlRepository {
             FaturasPorClienteMetrica metrica
     ) {
         DashboardExportSqlBuilder.ExportSql source = source(filtro, referencia);
-        source.params().addValue("dataReferencia", LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")));
+        LocalDate hoje = LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo"));
+        LocalDate corte = filtro.dataFim() != null && filtro.dataFim().isBefore(hoje) ? filtro.dataFim() : hoje;
+        source.params().addValue("dataReferencia", corte);
         String dataReferencia = dataReferenciaSql(referencia);
         String periodo = periodoSql(granularidade, dataReferencia);
-        String sql = baseNormalizadaSql(source) + """
+        String sql = baseParaMetrica(source, metrica) + """
                 SELECT %s AS periodo,
                     CAST(COALESCE(%s, 0) AS DECIMAL(19,2)) AS valor,
                     COUNT(1) AS registros
-                FROM base_normalizada
+                FROM base_metrica
                 WHERE status_processo = N'Faturado' AND %s IS NOT NULL
                 GROUP BY %s
                 ORDER BY periodo
@@ -236,24 +244,37 @@ public class FaturasPorClienteSqlRepository {
         return mapearDrilldown(sql, params);
     }
 
+    private String parcelasAbertasSql() {
+        return """
+                , parcelas_abertas AS (
+                    SELECT b.unique_id, b.cliente_chave, b.cliente_nome, b.cliente_cnpj, b.documento_fatura, b.data_base_prazo,
+                           CONVERT(decimal(19,2), ROUND(p.valor*b.peso_acumulado/b.peso_total,2)
+                               - ROUND(p.valor*(b.peso_acumulado-b.peso_atual)/b.peso_total,2)) AS valor,
+                           DATEDIFF(day,p.vencimento,:dataReferencia) AS dias_atraso
+                    FROM base_normalizada b JOIN dbo.dashboard_parcelas_recebiveis p
+                      ON p.documento=b.documento_fatura AND p.emissao=b.data_base_prazo
+                      AND (p.cliente_cnpj=b.cnpj_parcela OR (p.cliente_cnpj IS NULL AND b.cnpj_parcela IS NULL))
+                    WHERE p.emissao <= :dataReferencia AND (p.liquidacao IS NULL OR p.liquidacao > :dataReferencia)
+                )
+                """;
+    }
+
     private String titulosAbertosSql(DashboardExportSqlBuilder.ExportSql source) {
-        return baseNormalizadaSql(source) + """
-                , titulos_abertos AS (
-                    SELECT cliente_chave, documento_fatura,
-                           COALESCE(MAX(cliente_nome), N'Sem cliente') AS cliente_nome, MAX(cliente_cnpj) AS cliente_cnpj,
-                           SUM(valor_faturado_rateado) AS valor,
-                           DATEDIFF(day, MAX(data_vencimento_fatura), :dataReferencia) AS dias_atraso
-                    FROM base_normalizada
-                    WHERE documento_fatura IS NOT NULL AND baixa_titulo IS NULL
-                    GROUP BY cliente_chave, documento_fatura
-                ), classificados AS (
+        return baseNormalizadaSql(source) + parcelasAbertasSql() + """
+                , faixas AS (
                     SELECT *, CASE WHEN dias_atraso IS NULL THEN N'Sem vencimento'
                                    WHEN dias_atraso <= 0 THEN N'A vencer'
                                    WHEN dias_atraso <= 15 THEN N'1-15 dias'
                                    WHEN dias_atraso <= 30 THEN N'16-30 dias'
                                    WHEN dias_atraso <= 60 THEN N'31-60 dias'
                                    ELSE N'61+ dias' END AS faixa
-                    FROM titulos_abertos
+                    FROM parcelas_abertas
+                ), classificados AS (
+                    SELECT cliente_chave, documento_fatura, data_base_prazo, faixa, MAX(dias_atraso) AS dias_atraso,
+                           COALESCE(MAX(cliente_nome),N'Sem cliente') AS cliente_nome, MAX(cliente_cnpj) AS cliente_cnpj,
+                           SUM(valor) AS valor
+                    FROM faixas GROUP BY cliente_chave, documento_fatura, data_base_prazo, faixa
+                    HAVING SUM(valor) > 0
                 )
                 """;
     }
@@ -271,7 +292,7 @@ public class FaturasPorClienteSqlRepository {
         DashboardExportSqlBuilder.ExportSql source = source(filtro);
         String sql = titulosAbertosSql(source) + """
                 SELECT TOP (10) MAX(cliente_nome) AS cliente, MAX(cliente_cnpj) AS cliente_cnpj,
-                       COUNT(*) AS titulos, MAX(dias_atraso) AS maior_atraso, SUM(valor) AS valor_em_atraso
+                       COUNT(DISTINCT documento_fatura) AS titulos, MAX(dias_atraso) AS maior_atraso, SUM(valor) AS valor_em_atraso
                 FROM classificados WHERE dias_atraso > 0 AND cliente_chave IS NOT NULL
                 GROUP BY cliente_chave
                 ORDER BY titulos DESC, valor_em_atraso DESC, maior_atraso DESC, cliente, cliente_chave
@@ -358,10 +379,10 @@ public class FaturasPorClienteSqlRepository {
                 filtros += " AND " + clienteSql + " = :drillCliente";
             }
         }
-        String sql = baseNormalizadaSql(source) + """
+        String sql = baseParaMetrica(source, metrica) + """
                 , agregado AS (
                     SELECT %s AS label, %s AS detalhe, CAST(%s AS DECIMAL(19,2)) AS valor, COUNT(1) AS registros
-                    FROM base_normalizada
+                    FROM base_metrica
                     WHERE status_processo = N'Faturado' %s
                     GROUP BY %s
                 )
@@ -443,6 +464,7 @@ public class FaturasPorClienteSqlRepository {
                         baixa_titulo,
                         valor_faturado_rateado,
                         valor_a_faturar,
+                        cnpj_parcela, peso_acumulado, peso_atual, peso_total,
                         cliente_chave,
                         cliente_nome,
                         cliente_cnpj,
@@ -487,12 +509,24 @@ public class FaturasPorClienteSqlRepository {
         };
     }
 
+    private String baseParaMetrica(DashboardExportSqlBuilder.ExportSql source, FaturasPorClienteMetrica metrica) {
+        if (metrica != FaturasPorClienteMetrica.VALOR_EM_ATRASO) {
+            return baseNormalizadaSql(source) + ", base_metrica AS (SELECT * FROM base_normalizada) ";
+        }
+        return baseNormalizadaSql(source) + parcelasAbertasSql() + """
+                , atrasos AS (SELECT unique_id,SUM(valor) AS saldo_vencido FROM parcelas_abertas
+                              WHERE dias_atraso > 0 GROUP BY unique_id),
+                base_metrica AS (SELECT b.*,a.saldo_vencido FROM base_normalizada b
+                                LEFT JOIN atrasos a ON a.unique_id=b.unique_id)
+                """;
+    }
+
     private String medidaSql(FaturasPorClienteMetrica metrica) {
         return switch (metrica) {
             case VALOR_FATURADO -> "SUM(valor_faturado_rateado)";
             case REGISTROS_FATURADOS -> "COUNT(1)";
             case TICKET_MEDIO -> "SUM(valor_faturado_rateado) / NULLIF(COUNT(1), 0)";
-            case VALOR_EM_ATRASO -> "SUM(CASE WHEN data_vencimento_fatura < :dataReferencia AND baixa_titulo IS NULL THEN valor_faturado_rateado ELSE 0 END)";
+            case VALOR_EM_ATRASO -> "SUM(saldo_vencido)";
         };
     }
 

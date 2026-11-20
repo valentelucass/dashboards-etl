@@ -100,11 +100,11 @@ class FaturasPorClienteSqlRepositoryTest {
         verify(jdbcTemplate).queryForObject(sqlCaptor.capture(), any(MapSqlParameterSource.class), any(RowMapper.class));
 
         assertThat(sqlCaptor.getValue())
-                .contains("dbo.fato_gestao_vista_faturas")
-                .contains("data_emissao_cte >= :inicioOffset AND data_emissao_cte < :fimOffset")
+                .contains("dbo.dashboard_financeiro_fretes")
+                .contains("data_financeira >= :dataInicio AND data_financeira < :dataFimExclusivo")
                 .contains("excluido_na_origem = 0")
-                .contains("SUM(CASE WHEN status_processo = N'Faturado' THEN valor_operacional ELSE 0 END)")
-                .contains("COUNT(DISTINCT cliente_chave) AS clientes_ativos")
+                .contains("SUM(valor_faturado_rateado)")
+                .contains("COUNT(DISTINCT d.cliente_chave) AS clientes_ativos")
                 .doesNotContain("ROW_NUMBER() OVER")
                 .doesNotContain("WHERE TRY_CONVERT")
                 .doesNotContain("TRY_CONVERT(datetimeoffset, data_emissao_cte)");
@@ -132,7 +132,7 @@ class FaturasPorClienteSqlRepositoryTest {
 
     private static CachedRowSet overviewRowSet(Timestamp updatedAt) throws Exception {
         RowSetMetaDataImpl metadata = new RowSetMetaDataImpl();
-        metadata.setColumnCount(7);
+        metadata.setColumnCount(12);
         configurarColuna(metadata, 1, "updated_at", Types.TIMESTAMP);
         configurarColuna(metadata, 2, "valor_faturado", Types.DECIMAL);
         configurarColuna(metadata, 3, "registros_faturados", Types.INTEGER);
@@ -140,6 +140,11 @@ class FaturasPorClienteSqlRepositoryTest {
         configurarColuna(metadata, 5, "titulos_em_atraso", Types.INTEGER);
         configurarColuna(metadata, 6, "prazo_medio_dias", Types.DECIMAL);
         configurarColuna(metadata, 7, "clientes_ativos", Types.INTEGER);
+        configurarColuna(metadata, 8, "valor_a_faturar", Types.DECIMAL);
+        configurarColuna(metadata, 9, "carteira", Types.DECIMAL);
+        configurarColuna(metadata, 10, "vencido", Types.DECIMAL);
+        configurarColuna(metadata, 11, "prazo_recebimento_dias", Types.DECIMAL);
+        configurarColuna(metadata, 12, "prazo_ate_faturar", Types.DECIMAL);
 
         CachedRowSet rowSet = RowSetProvider.newFactory().createCachedRowSet();
         rowSet.setMetaData(metadata);
@@ -151,6 +156,11 @@ class FaturasPorClienteSqlRepositoryTest {
         rowSet.updateInt("titulos_em_atraso", 0);
         rowSet.updateBigDecimal("prazo_medio_dias", BigDecimal.ZERO);
         rowSet.updateInt("clientes_ativos", 0);
+        rowSet.updateBigDecimal("valor_a_faturar", BigDecimal.ZERO);
+        rowSet.updateBigDecimal("carteira", BigDecimal.ZERO);
+        rowSet.updateBigDecimal("vencido", BigDecimal.ZERO);
+        rowSet.updateNull("prazo_recebimento_dias");
+        rowSet.updateNull("prazo_ate_faturar");
         rowSet.insertRow();
         rowSet.moveToCurrentRow();
         rowSet.beforeFirst();
@@ -183,7 +193,7 @@ class FaturasPorClienteSqlRepositoryTest {
 
         assertThat(sqlCaptor.getValue())
                 .contains("CONVERT(CHAR(7), data_referencia_mensal, 23) AS mes")
-                .contains("SUM(valor_operacional)")
+                .contains("SUM(valor_faturado_rateado)")
                 .contains("GROUP BY CONVERT(CHAR(7), data_referencia_mensal, 23)");
     }
 
@@ -201,15 +211,11 @@ class FaturasPorClienteSqlRepositoryTest {
         verify(jdbcTemplate).query(sqlCaptor.capture(), any(MapSqlParameterSource.class), any(RowCallbackHandler.class));
 
         assertThat(sqlCaptor.getValue())
-                .contains("data_emissao_cte >= :inicioOffset AND data_emissao_cte < :fimOffset")
-                .contains("titulos_aging AS")
-                .contains("FROM base_normalizada")
-                .contains("WHERE status_processo = N'Faturado'")
-                .contains("AND status_pagamento <> N'baixado'")
-                .contains("aging_calculado AS")
-                .contains("DATEDIFF(day, data_vencimento_fatura, :dataReferencia)")
-                .contains("FROM aging_calculado")
-                .doesNotContain("DATEDIFF(day, data_vencimento_fatura, :dataReferencia) <= 15");
+                .contains("data_financeira >= :dataInicio AND data_financeira < :dataFimExclusivo")
+                .contains("dbo.dashboard_parcelas_recebiveis")
+                .contains("DATEDIFF(day,p.vencimento,:dataReferencia)")
+                .contains("p.emissao <= :dataReferencia AND (p.liquidacao IS NULL OR p.liquidacao > :dataReferencia)")
+                .contains("GROUP BY cliente_chave, documento_fatura, data_base_prazo, faixa");
     }
 
     private static FiltroConsultaDTO filtroPadrao() {

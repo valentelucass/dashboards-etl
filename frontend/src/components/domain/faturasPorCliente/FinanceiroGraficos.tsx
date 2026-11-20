@@ -23,6 +23,10 @@ interface Props {
 }
 
 const moedaTooltip = (value: unknown) => formatarMoeda(Number(value));
+const coresVencimento: Record<string, string> = {
+  'A vencer': CORES.primaria, '1-15 dias': 'var(--color-data-yellow-4)', '16-30 dias': CORES.aviso,
+  '31-60 dias': CORES.perigo, '61+ dias': CORES.perigo, 'Sem vencimento': CORES.cinza,
+};
 const controles = 'flex max-w-full flex-wrap items-center gap-2';
 
 function Voltar({ onClick }: { onClick: () => void }) {
@@ -46,11 +50,11 @@ function ContasPorVencimento({ filtro }: Props) {
     }).map(d => ({ nome: d.faixa, valor: d.valor, titulos: d.titulos }));
   const valor = metrica === 'valor';
   const opcoes = buildBaseBarOption(isDark, {
-    xAxis: { type: 'value' },
-    yAxis: { type: 'category', inverse: true, data: linhas.map(d => d.nome), axisLabel: { width: 145 } },
+    xAxis: faixa ? { type: 'value' } : { type: 'category', data: linhas.map(d => d.nome) },
+    yAxis: faixa ? { type: 'category', inverse: true, data: linhas.map(d => d.nome), axisLabel: { width: 145 } } : { type: 'value' },
     tooltip: { trigger: 'axis', valueFormatter: valor ? moedaTooltip : v => formatarNumero(Number(v)) },
     series: [{ name: valor ? 'Contas a receber' : 'Títulos', type: 'bar',
-      data: linhas.map(d => valor ? d.valor : d.titulos), itemStyle: { color: CORES.primaria } }],
+      data: linhas.map(d => ({ value: valor ? d.valor : d.titulos, itemStyle: { color: coresVencimento[faixa ?? d.nome] ?? CORES.primaria } })) }],
   });
   const selecionar = ({ dataIndex }: { dataIndex: number }) => {
     const selecionada = linhas[dataIndex];
@@ -161,10 +165,10 @@ function EvolucaoDosFretes({ filtro }: Props) {
     erro={consulta.isError ? getApiErrorMessage(consulta.error, 'Erro ao carregar a evolução dos fretes.') : null}
     actions={<div className={controles}>
       <DashboardSelector aria-label="Granularidade" value={granularidade} onValueChange={v => setGranularidade(v as FaturasPorClienteGranularidade)}>
-        <option value="dia">Dia</option><option value="mes">Mês</option><option value="ano">Ano</option>
+        <option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mês</option><option value="ano">Ano</option>
       </DashboardSelector>
       <DashboardSelector aria-label="Referência temporal" value={referencia} onValueChange={v => setReferencia(v as FaturasPorClienteReferenciaTemporal)}>
-        <option value="emissao">Emissão</option><option value="vencimento">Vencimento</option><option value="baixa">Baixa</option>
+        <option value="emissao">Emissão</option><option value="vencimento">Vencimento</option><option value="baixa">Recebimento</option>
       </DashboardSelector>
     </div>} />;
 }

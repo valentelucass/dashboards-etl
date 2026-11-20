@@ -80,7 +80,7 @@ export default function FaturasPorClientePage() {
       <AsyncMultiSelect label="Status Processo" opcoes={['Faturado', 'Aguardando Faturamento']} selecionados={filtros.statusProcesso ?? []} onChange={(valores) => setFiltro('statusProcesso', valores)} />
     </FilterBar>
     {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar os indicadores financeiros.')} tipo={getTipoErro(overview.error)} />}
-    {overview.isLoading && !overview.data && <LoadingKpiGrid count={7} />}
+    {overview.isLoading && !overview.data && <LoadingKpiGrid count={9} />}
     {overview.data && <FaturasPorClienteKpiGrid overview={overview.data} />}
     <FinanceiroGraficos key={JSON.stringify(filtro)} filtro={filtro} />
 

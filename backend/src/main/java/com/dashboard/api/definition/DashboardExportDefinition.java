@@ -127,7 +127,7 @@ public enum DashboardExportDefinition {
     FATURAS_POR_CLIENTE(
             "faturas-por-cliente",
             "faturas-por-cliente",
-            FinanceiroRecebiveisSql.FONTE,
+            "dbo.dashboard_financeiro_fretes",
             DateMode.NATIVE_LOCAL_DATE,
             "data_financeira",
             List.of("filial"),

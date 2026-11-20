@@ -34,8 +34,8 @@ const performanceBase = {
 } as const;
 
 const faturasClienteBase = {
-  tabelasOrigem: 'dbo.fato_gestao_vista_faturas',
-  cruzamentos: 'Nenhum JOIN; CTE base_normalizada no FaturasPorClienteSqlRepository.',
+  tabelasOrigem: 'dbo.dashboard_financeiro_fretes e dbo.dashboard_parcelas_recebiveis',
+  cruzamentos: 'As parcelas são vinculadas à fatura por documento, emissão e cliente. O valor de cada frete determina sua participação.',
 } as const;
 
 const contasPagarBase = {
@@ -271,15 +271,15 @@ export const chartDictionary = {
 
   faturasMensal: {
     ...faturasClienteBase,
-    descricao: 'Compara o valor original dos fretes com o valor nominal das faturas por dia, semana ou mês.',
+    descricao: 'Compara o valor original dos fretes com o valor nominal das faturas por dia, semana, mês ou ano.',
     calculoTecnico: 'Soma por período o valor original dos fretes elegíveis e o valor atribuído dos títulos emitidos.',
     calculoNegocio: 'Azul mostra os fretes faturados e a faturar. Cinza mostra os títulos emitidos, que podem incluir ajustes. A referência escolhe a data usada para agrupar.',
-    agrupamento: 'Por dia, semana ou mês de emissão, vencimento ou baixa. Cada período exige a data de referência escolhida.',
+    agrupamento: 'Por dia, semana, mês ou ano de emissão, vencimento ou liquidação bancária. Cada período exige a data de referência escolhida.',
   },
   faturasAging: {
     ...faturasClienteBase,
     descricao: 'Distribui os títulos em aberto pelo prazo até o vencimento ou pelos dias em atraso.',
-    calculoTecnico: 'Agrupa por faixa de vencimento o valor e a quantidade dos títulos sem baixa.',
+    calculoTecnico: 'Soma as parcelas em aberto no fim do período pelo vencimento de cada parcela. Conta cada fatura uma vez por faixa.',
     calculoNegocio: 'O período seleciona os CT-es pela data de emissão. Um título com vencimento no último dia do período ou depois fica em A vencer. Para períodos ainda em andamento, a referência é hoje. Títulos sem vencimento têm uma faixa própria.',
     agrupamento: 'Por faixa de vencimento, depois por cliente e fatura.',
   },

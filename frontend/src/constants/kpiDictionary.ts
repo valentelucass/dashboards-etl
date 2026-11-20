@@ -565,7 +565,7 @@ export const KpiDictionary = {
   faturasPorCliente: {
     valorFaturado: {
       titulo: 'Faturas emitidas',
-      descricao: 'Valor nominal das faturas emitidas no período.',
+      descricao: 'Valor faturado correspondente aos fretes do período selecionado.',
       calculo: 'Soma os títulos emitidos uma vez. O percentual divide o faturado pela soma do faturado e dos fretes a faturar.',
       observacao: 'Quando os filtros selecionam parte dos fretes de um título, o valor é proporcional aos fretes selecionados.',
     },
@@ -582,7 +582,7 @@ export const KpiDictionary = {
     contasAReceber: {
       titulo: 'Contas a receber',
       descricao: 'Saldo das faturas vinculado aos CT-es emitidos no período selecionado.',
-      calculo: 'Soma o valor dos títulos sem baixa, incluindo vencidos, a vencer e sem vencimento.',
+      calculo: 'Soma as parcelas ainda em aberto na data de corte. Cada pagamento reduz o saldo na data da liquidação bancária.',
     },
     valorEmAtraso: {
       titulo: 'Em atraso',
@@ -602,7 +602,7 @@ export const KpiDictionary = {
     prazoMedio: {
       titulo: 'Prazo médio real',
       descricao: 'Tempo médio entre a emissão da fatura e o recebimento.',
-      calculo: 'Média dos dias entre emissão e baixa dos títulos recebidos com datas válidas.',
+      calculo: 'Média dos dias da emissão da fatura até a liquidação bancária da última parcela, nas faturas integralmente recebidas até a data de corte.',
     },
     clientesAtivos: {
       titulo: 'Clientes ativos',
