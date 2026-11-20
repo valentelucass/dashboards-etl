@@ -986,6 +986,10 @@ dialog:modal::backdrop {
   }
 }
 
+.cotacoes-ranking-controls [role="radiogroup"] {
+  --size-element-sm: var(--size-element-md, 2rem);
+}
+
 /* A tabela ocupa o painel, com espaço reservado ao conteúdo de cada métrica. */
 table.cotacoes-resumo-table {
   width: 100%;
@@ -993,6 +997,12 @@ table.cotacoes-resumo-table {
   table-layout: fixed;
 }
 .cotacoes-col-entidade { width: 14rem; }
+.cotacoes-resumo-table .cotacoes-rank-position {
+  flex: none;
+  min-inline-size: 1.5rem;
+  padding-inline: .375rem;
+  font-variant-numeric: tabular-nums;
+}
 .cotacoes-col-conversao { width: 15%; }
 .cotacoes-col-freteCotado, .cotacoes-col-freteGanho { width: 14%; }
 .cotacoes-col-volumeM3 { width: 11%; }

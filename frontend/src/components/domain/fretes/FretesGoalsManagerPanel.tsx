@@ -193,7 +193,7 @@ export default function FretesGoalsManagerPanel({
         </p>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="fretes-goals-form grid gap-4 rounded-2xl border p-4 lg:grid-cols-[1fr_1fr_minmax(15rem,auto)_1fr_1fr_auto]" style={{ borderColor: 'var(--color-border)' }}>
+      <form onSubmit={handleSubmit} className="fretes-goals-form grid items-end gap-4 rounded-2xl border p-4 lg:grid-cols-[1fr_1fr_minmax(15rem,auto)_1fr_1fr_auto]" style={{ borderColor: 'var(--color-border)' }}>
         <div className="grid gap-1 text-sm font-semibold" style={{ color: 'var(--color-text-subtle)' }}>
           Ano
           <DashboardSelector label="Ano"
@@ -258,7 +258,7 @@ export default function FretesGoalsManagerPanel({
           </DashboardSelector>
         </div>
         <NumberInput label="Meta Faturamento" value={metaFaturamentoValue === '' ? null : Number(metaFaturamentoValue)} min={0} step={0.01}
-          width="100%" hasClear onChange={value => setMetaFaturamentoDraft(value == null ? '' : String(value))} />
+          width="100%" controlClassName="h-11" hasClear onChange={value => setMetaFaturamentoDraft(value == null ? '' : String(value))} />
         <div className="flex items-end">
           <div className="flex gap-2">
             {onViewScope ? (

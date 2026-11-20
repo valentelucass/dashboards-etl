@@ -296,22 +296,15 @@ export default function CotacoesResumoVisualTable({
 
         {isInitialLoading ? <LoadingInsightsBar /> : insights.length > 0 && <InsightsBar insights={insights} />}
 
-        <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <div className="relative block h-9 w-full min-w-[13rem] sm:w-64">
-            <Search
-              size={15}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-              style={{ color: 'var(--color-text-muted)' }}
-              aria-hidden="true"
-            />
-            <span className="sr-only">Filtrar entidade</span>
+        <div className="cotacoes-ranking-controls flex min-w-0 flex-wrap items-center gap-3">
+          <div className="w-full min-w-0 sm:w-64">
             <DashboardInput label="Filtrar entidade"
               type="search"
+              startIcon={<Search size={15} aria-hidden="true" />}
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder={config.searchPlaceholder}
               disabled={isInitialLoading}
-              className="h-full w-full rounded-lg border pl-9 pr-3 text-sm outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
               style={{
                 backgroundColor: 'var(--color-card)',
                 borderColor: 'var(--color-border)',
@@ -372,7 +365,7 @@ export default function CotacoesResumoVisualTable({
                 >
                   <TableCell className={`px-3 py-3 align-middle ${RESUMO_COLUMNS[0].align}`}>
                     <div className="flex min-w-0 items-center gap-3">
-                      <Badge label={index + 1} variant="neutral" />
+                      <Badge label={index + 1} variant="neutral" className="cotacoes-rank-position" />
                       <span className="min-w-0 font-semibold" style={{ color: 'var(--color-text)' }}>
                         <TableText>{row.entidade}</TableText>
                       </span>

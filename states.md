@@ -1,3 +1,7 @@
+## 20/11/2026 — Alinhamento em Cotações e nas metas de faturamento
+
+Nos rankings por usuário, filial e cliente, a posição tem espaço próprio para os dígitos. A busca e a ordenação usam a mesma altura. Em Gerenciar Metas de Faturamento, o valor da meta acompanha a altura dos seletores e dos botões.
+
 ## 20/11/2026 — Lista de clientes em atraso
 
 Em Financeiro e Recebíveis, o gráfico por vencimento define a altura da linha no desktop. A lista de clientes em atraso tem rolagem própria e mantém os títulos das colunas visíveis. No celular, os cartões ficam empilhados e a lista também pode ser rolada.
