@@ -288,9 +288,15 @@ public class ColetasAgregadosSqlRepository {
     public List<ColetasCidadeOrigemDTO> buscarCidadesOrigem(FiltroConsultaDTO filtro, String regiaoLogistica) {
         DashboardExportSqlBuilder.ExportSql source = source(filtro);
         MapSqlParameterSource params = copiarParams(source);
-        params.addValue("regiaoLogisticaSelecionada", regiaoLogistica);
-
+        String filtroRegiao = "";
         String cidadeSql = cidadeSql();
+        if (regiaoLogistica != null && !regiaoLogistica.isBlank()) {
+            params.addValue("regiaoLogisticaSelecionada", regiaoLogistica.trim());
+            filtroRegiao = "AND " + REGIAO_COLETA_SQL + " = :regiaoLogisticaSelecionada";
+        } else {
+            cidadeSql = "CONCAT_WS(N' - ', " + cidadeSql + ", NULLIF(UPPER(TRIM([UF])), N''))";
+        }
+
         String sql = """
                 WITH base_filtrada AS (
                     SELECT *
@@ -315,10 +321,10 @@ public class ColetasAgregadosSqlRepository {
                     SUM(COALESCE([Peso Taxado], 0)) AS peso_taxado
                 FROM base_deduplicada
                 WHERE %s
-                  AND %s = :regiaoLogisticaSelecionada
+                  %s
                 GROUP BY %s
                 ORDER BY total_coletas DESC, cidade ASC
-                """.formatted(source.sql(), cidadeSql, FILTRO_STATUS_EXCLUIDA_SQL, REGIAO_COLETA_SQL, cidadeSql);
+                """.formatted(source.sql(), cidadeSql, FILTRO_STATUS_EXCLUIDA_SQL, filtroRegiao, cidadeSql);
 
         return jdbcTemplate.query(sql, params, (rs, rowNum) -> new ColetasCidadeOrigemDTO(
                 rs.getString("cidade"),

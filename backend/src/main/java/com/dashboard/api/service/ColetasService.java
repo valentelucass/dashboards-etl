@@ -121,15 +121,7 @@ public class ColetasService {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
         contractValidator.validarSolicitacaoNativa();
 
-        if (!temTexto(regiaoLogistica)) {
-            return List.of();
-        }
-
-        return agregadosSqlRepository.buscarCidadesOrigem(filtro, regiaoLogistica.trim());
-    }
-
-    private boolean temTexto(String valor) {
-        return valor != null && !valor.isBlank();
+        return agregadosSqlRepository.buscarCidadesOrigem(filtro, regiaoLogistica);
     }
 
 }

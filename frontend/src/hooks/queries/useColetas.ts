@@ -11,7 +11,7 @@ import {
   buscarColetasTabelaPaginada,
   buscarColetasTabelaTotal,
 } from '../../api/endpoints/coletasServico';
-import type { ColetasFiltro, ColetasHistoricoPeriodo } from '../../types/coletas';
+import type { VisaoOrigemColetas, ColetasFiltro, ColetasHistoricoPeriodo } from '../../types/coletas';
 import type { TableApiFilters } from '../../types/tableFilters';
 import { OPERATIONAL_QUERY_POLLING_OPTIONS } from '../../utils/pollingUtils';
 
@@ -80,12 +80,13 @@ export function useColetasHistoricoPerformance(
   });
 }
 
-export function useColetasCidadesOrigem(filtro: ColetasFiltro, regiaoLogistica: string | null) {
+export function useColetasCidadesOrigem(filtro: ColetasFiltro, visao: VisaoOrigemColetas) {
+  const regiao = visao.nivel === 'cidade' ? visao.regiao : null;
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
-    queryKey: ['coletas', 'graficos', 'cidades-origem', filtro, regiaoLogistica],
-    queryFn: ({ signal }) => buscarColetasCidadesOrigem(filtro, regiaoLogistica ?? '', signal),
-    enabled: Boolean(regiaoLogistica),
+    queryKey: ['coletas', 'graficos', 'cidades-origem', filtro, regiao],
+    queryFn: ({ signal }) => buscarColetasCidadesOrigem(filtro, regiao, signal),
+    enabled: visao.nivel === 'cidade',
     staleTime: STALE_TIME,
     retry: 1,
   });

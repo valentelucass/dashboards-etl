@@ -6,6 +6,10 @@ Em Gestão de usuários, Acessos de hoje mostra cinco rotas por página. As seta
 
 A faixa distribui os nove indicadores conforme a largura disponível e o tamanho dos valores. Em desktops largos, os nove ficam na mesma linha. Quando a faixa precisa de duas linhas, os cinco indicadores financeiros ficam juntos, seguidos dos quatro de prazos e clientes. Em telas menores, a grade passa a três, duas ou uma coluna. Os nomes ficam visíveis por inteiro.
 
+## 20/11/2026 — Agrupamento direto por cidade de coleta
+
+O botão Cidades agrupa todas as coletas dos filtros ativos por cidade e UF. Clicar em uma região restringe o detalhamento às cidades daquela região. Voltar para Regiões de coleta limpa esse detalhamento.
+
 ## 19/11/2026 — Coletas por região e cidade
 
 O gráfico de origem usa a região da coleta informada no ESL (pck_prn_name) e permite detalhar as cidades dentro de cada região. As colunas mostram as coletas e a linha mostra o peso taxado. O histórico exibe os percentuais nos pontos da série de performance.

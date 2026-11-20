@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
 import { Button } from '@astryxdesign/core/Button';
 import { ProgressBar, type ProgressBarVariant } from '@astryxdesign/core/ProgressBar';
+import type { VisaoOrigemColetas } from '../../../types/coletas';
 import ChartCard from '../../shared/ChartCard';
 import AstryxDashboardChart, { type ChartEvents } from '../../charts/AstryxDashboardChart';
 import { formatarNumero, formatarPeso } from '../../../utils/formatadores';
@@ -38,14 +39,16 @@ interface RegionPoint {
   pesoTaxado: number;
 }
 
-export function ColetasRegionChart({ data, isLoading, regiao, actions, onEvents, erro }: {
+export function ColetasRegionChart({ data, isLoading, visao, actions, onEvents, erro }: {
   data: RegionPoint[];
   isLoading: boolean;
-  regiao: string | null;
+  visao: VisaoOrigemColetas;
   erro?: string | null;
   actions: ReactNode;
   onEvents: ChartEvents;
 }) {
+  const porCidade = visao.nivel === 'cidade';
+  const titulo = porCidade ? ['Coletas por cidade', visao.regiao].filter(Boolean).join(' · ') : 'Coletas por região de coleta';
   const option = useMemo<EChartsOption>(() => ({
     xAxis: { type: 'category', data: data.map(row => row.nome) },
     yAxis: [
@@ -61,13 +64,13 @@ export function ColetasRegionChart({ data, isLoading, regiao, actions, onEvents,
   }), [data]);
 
   return (
-    <ChartCard titulo={regiao ? `Coletas por cidade · ${regiao}` : 'Coletas por região de coleta'} chartKey="coletasOrigem"
+    <ChartCard titulo={titulo} chartKey="coletasOrigem"
       className="2xl:col-span-3" actions={actions} isLoading={isLoading} isEmpty={data.length === 0} erro={erro}
-      emptyMessage={regiao ? 'Nenhuma cidade encontrada nesta região.' : 'Nenhuma região de coleta encontrada no período.'}>
+      emptyMessage={porCidade ? 'Nenhuma cidade encontrada para os filtros selecionados.' : 'Nenhuma região de coleta encontrada no período.'}>
       <div className="dashboard-coletas-regions">
-        <AstryxDashboardChart option={option} label={regiao ? 'Coletas e peso taxado por cidade' : 'Coletas e peso taxado por região'}
-          style={{ height: 300 }} onEvents={regiao ? undefined : onEvents} />
-        {!regiao && (
+        <AstryxDashboardChart option={option} label={porCidade ? 'Coletas e peso taxado por cidade' : 'Coletas e peso taxado por região'}
+          style={{ height: 300 }} onEvents={porCidade ? undefined : onEvents} />
+        {!porCidade && (
           <div className="dashboard-coletas-region-actions" role="group" aria-label="Detalhar por região">
             {data.map(row => (
               <Button key={row.nome} label={row.nome} variant="secondary" size="sm"

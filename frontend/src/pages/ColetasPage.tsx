@@ -4,7 +4,7 @@ import DashboardSelector from "../components/shared/DashboardSelector";
 import ColetasBars from '../components/domain/coletas/ColetasBars';
 import { ColetasRegionChart, ColetasStatusChart } from '../components/domain/coletas/ColetasOperationalCharts';
 import { escapeHtml } from '../utils/escapeHtml';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import ColetasKpiGrid from '../components/domain/coletas/ColetasKpiGrid';
 import ColetasTrend from '../components/domain/coletas/ColetasTrend';
@@ -25,7 +25,7 @@ import { useClientes, useFiliais, useUsuarios } from '../hooks/queries/useDimens
 import { useColetasCidadesOrigem, useColetasOperacao, useColetasStatus, useColetasHistoricoPerformance, useColetasOverview, useColetasSerie, useColetasTabelaPaginada } from '../hooks/queries/useColetas';
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
-import type { ColetaResumoRow, ColetasFiltro, ColetasHistoricoPerformance, ColetasHistoricoPeriodo } from '../types/coletas';
+import type { VisaoOrigemColetas, ColetaResumoRow, ColetasFiltro, ColetasHistoricoPerformance, ColetasHistoricoPeriodo } from '../types/coletas';
 import { formatarMoeda, formatarPeso, formatarPorcentagem } from '../utils/formatadores';
 import { combinarStatusOptions } from '../utils/tableStatusOptions';
 
@@ -105,8 +105,8 @@ function HistoricoPeriodoActions({
 export default function ColetasPage() {
   const [carregarOpcoesDeFiltro, setCarregarOpcoesDeFiltro] = useState(false);
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, limparFiltros } = useFiltro();
-  const [regiaoLogisticaSelecionada, setRegiaoLogisticaSelecionada] = useState<string | null>(null);
-  const [regiaoLogisticaEmFoco, setRegiaoLogisticaEmFoco] = useState<string | null>(null);
+  const [visaoOrigem, setVisaoOrigem] = useState<VisaoOrigemColetas>({ nivel: 'regiao' });
+  const porCidade = visaoOrigem.nivel === 'cidade';
   const [origemLimite, setOrigemLimite] = useState<(typeof ORIGEM_LIMITES)[number]>(10);
   const [historicoPeriodo, setHistoricoPeriodo] = useState<ColetasHistoricoPeriodo>('dias');
   const filiais = useFiliais(carregarOpcoesDeFiltro);
@@ -136,7 +136,7 @@ export default function ColetasPage() {
   const statusQuery = useColetasStatus(filtro);
   const graficos = useColetasOperacao(filtro);
   const historicoPerformanceQuery = useColetasHistoricoPerformance(filtro, historicoPeriodo);
-  const cidadesOrigem = useColetasCidadesOrigem(filtro, regiaoLogisticaSelecionada);
+  const cidadesOrigem = useColetasCidadesOrigem(filtro, visaoOrigem);
   const filtrosTabela = useAnalyticalTableFilters();
   const paginacaoResetKey = useMemo(() => JSON.stringify({ filtro, tabela: filtrosTabela.resetKey }), [filtro, filtrosTabela.resetKey]);
   const paginacaoTabela = useTabelaPaginadaState(paginacaoResetKey);
@@ -148,7 +148,7 @@ export default function ColetasPage() {
     updatedAt: overview.data?.updatedAt ?? null,
   });
 
-  const erroOrigem = regiaoLogisticaSelecionada ? cidadesOrigem.error : graficos.error;
+  const erroOrigem = porCidade ? cidadesOrigem.error : graficos.error;
   const statusData = statusQuery.data ?? EMPTY_ARRAY;
   const historicoPerformanceResponse = historicoPerformanceQuery.data;
   const historicoPerformance = useMemo<ColetasHistoricoPerformance[]>(() => (
@@ -173,14 +173,9 @@ export default function ColetasPage() {
     .map((item) => ({ nome: item.cidade, totalColetas: item.totalColetas, pesoTaxado: item.pesoTaxado }))
     .sort((a, b) => b.totalColetas - a.totalColetas), [cidadesOrigemData]);
   const origemData = useMemo(() => {
-    const origemDataCompleta = regiaoLogisticaSelecionada ? cidadesOrigemOrdenadas : regioesOrigemOrdenadas;
+    const origemDataCompleta = porCidade ? cidadesOrigemOrdenadas : regioesOrigemOrdenadas;
     return origemDataCompleta.slice(0, origemLimite);
-  }, [cidadesOrigemOrdenadas, origemLimite, regiaoLogisticaSelecionada, regioesOrigemOrdenadas]);
-  const regiaoLogisticaDrilldown = useMemo(() => {
-    const regiaoEmFocoValida = regiaoLogisticaEmFoco && regioesOrigemOrdenadas.some((item) => item.nome === regiaoLogisticaEmFoco);
-    return regiaoLogisticaSelecionada ?? (regiaoEmFocoValida ? regiaoLogisticaEmFoco : regioesOrigemOrdenadas[0]?.nome ?? null);
-  }, [regiaoLogisticaEmFoco, regiaoLogisticaSelecionada, regioesOrigemOrdenadas]);
-  const podeDrillDownOrigem = !regiaoLogisticaSelecionada && Boolean(regiaoLogisticaDrilldown);
+  }, [cidadesOrigemOrdenadas, origemLimite, porCidade, regioesOrigemOrdenadas]);
   const agingMap = useMemo(() => new Map((graficos.data?.agingAbertas ?? EMPTY_ARRAY).map((item) => [item.faixa, item.total])), [graficos.data?.agingAbertas]);
   const aging = useMemo(() => AGING_BUCKETS.map((faixa) => ({ faixa, total: agingMap.get(faixa) ?? 0 })), [agingMap]);
   const statusTabelaOptions = useMemo(() => combinarStatusOptions(
@@ -272,47 +267,12 @@ export default function ColetasPage() {
     };
   }, [historicoPerformance, historicoPeriodo]);
 
-  const handleOrigemClick = useCallback((params: unknown) => {
-    if (regiaoLogisticaSelecionada) {
-      return;
-    }
-    const nome = (params as { name?: string }).name;
-    if (nome) {
-      setRegiaoLogisticaEmFoco(nome);
-      setRegiaoLogisticaSelecionada(nome);
-    }
-  }, [regiaoLogisticaSelecionada]);
-
-  const handleOrigemMouseOver = useCallback((params: unknown) => {
-    if (regiaoLogisticaSelecionada) {
-      return;
-    }
-    const nome = (params as { name?: string }).name;
-    if (nome) {
-      setRegiaoLogisticaEmFoco(nome);
-    }
-  }, [regiaoLogisticaSelecionada]);
-
   const origemEvents = useMemo(() => ({
-    click: handleOrigemClick,
-    mouseover: handleOrigemMouseOver,
-  }), [handleOrigemClick, handleOrigemMouseOver]);
-
-  const fazerDrillUpOrigem = useCallback(() => {
-    if (!regiaoLogisticaSelecionada) {
-      return;
-    }
-    setRegiaoLogisticaEmFoco(regiaoLogisticaSelecionada);
-    setRegiaoLogisticaSelecionada(null);
-  }, [regiaoLogisticaSelecionada]);
-
-  const fazerDrillDownOrigem = useCallback(() => {
-    if (!podeDrillDownOrigem || !regiaoLogisticaDrilldown) {
-      return;
-    }
-    setRegiaoLogisticaEmFoco(regiaoLogisticaDrilldown);
-    setRegiaoLogisticaSelecionada(regiaoLogisticaDrilldown);
-  }, [podeDrillDownOrigem, regiaoLogisticaDrilldown]);
+    click: (params: unknown) => {
+      const regiao = (params as { name?: string }).name;
+      if (regiao) setVisaoOrigem({ nivel: 'cidade', regiao });
+    },
+  }), []);
 
   const origemActions = useMemo(() => (
     <div className="flex flex-wrap items-center justify-end gap-2">
@@ -327,18 +287,16 @@ export default function ColetasPage() {
           </option>
         ))}
       </DashboardSelector>
-      <DashboardSegments label="Detalhamento das coletas" value={regiaoLogisticaSelecionada ? 'cidade' : 'regiao'}
+      <DashboardSegments<VisaoOrigemColetas['nivel']> label="Detalhamento das coletas" value={visaoOrigem.nivel}
         options={[
           { value: 'regiao', label: 'Regiões de coleta' },
-          { value: 'cidade', label: 'Cidades', disabled: !podeDrillDownOrigem && !regiaoLogisticaSelecionada,
-            title: regiaoLogisticaSelecionada ?? regiaoLogisticaDrilldown ?? 'Selecione uma região para ver as cidades' },
+          { value: 'cidade', label: 'Cidades' },
         ]}
         onChange={nivel => {
-          if (nivel === 'regiao') fazerDrillUpOrigem();
-          else if (!regiaoLogisticaSelecionada) fazerDrillDownOrigem();
+          if (nivel !== visaoOrigem.nivel) setVisaoOrigem(nivel === 'regiao' ? { nivel } : { nivel, regiao: null });
         }} />
     </div>
-  ), [fazerDrillDownOrigem, fazerDrillUpOrigem, origemLimite, podeDrillDownOrigem, regiaoLogisticaDrilldown, regiaoLogisticaSelecionada]);
+  ), [origemLimite, visaoOrigem.nivel]);
 
   const agingChart = useMemo(() => aging.map((item) => ({ nome: item.faixa, total: item.total })), [aging]);
 
@@ -416,9 +374,9 @@ export default function ColetasPage() {
           erro={historicoPerformanceQuery.isError ? getApiErrorMessage(historicoPerformanceQuery.error, 'Erro ao carregar histórico de performance de coletas.') : null}
           className="2xl:col-span-2"
         />
-        <ColetasRegionChart data={origemData} regiao={regiaoLogisticaSelecionada} actions={origemActions}
+        <ColetasRegionChart data={origemData} visao={visaoOrigem} actions={origemActions}
           erro={erroOrigem ? getApiErrorMessage(erroOrigem, 'Erro ao carregar as coletas por origem.') : null}
-          onEvents={origemEvents} isLoading={regiaoLogisticaSelecionada ? cidadesOrigem.isLoading : graficos.isLoading} />
+          onEvents={origemEvents} isLoading={porCidade ? cidadesOrigem.isLoading : graficos.isLoading} />
         <ColetasBars titulo="Coletas em aberto" chartKey="coletasAging" data={agingChart} isLoading={graficos.isLoading} className="2xl:col-span-3" />
       </div>
 

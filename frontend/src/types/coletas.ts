@@ -60,6 +60,8 @@ export interface ColetasHistoricoPerformance {
 
 export type ColetasHistoricoPeriodo = 'dias' | '3meses' | '6meses' | '1ano';
 
+export type VisaoOrigemColetas = { nivel: 'regiao' } | { nivel: 'cidade'; regiao: string | null };
+
 export interface ColetasRegiaoOrigem {
   regiaoLogistica: string;
   totalColetas: number;

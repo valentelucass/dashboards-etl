@@ -300,6 +300,19 @@ class ColetasAgregadosSqlRepositoryTest {
                 .contains("GROUP BY COALESCE(NULLIF(LTRIM(RTRIM([Cidade]))");
     }
 
+    @Test
+    void buscarCidadesSemRegiaoAgrupaPorCidadeEUfSemEscolherRegiao() {
+        ColetasAgregadosSqlRepository repository = new ColetasAgregadosSqlRepository(
+                jdbcTemplate, new DashboardExportSqlBuilder(PeriodoOffsetDateTimeHelper.padrao()), escopoSemRestricao());
+        repository.buscarCidadesOrigem(new FiltroConsultaDTO(
+                LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 30), Map.of()), null);
+
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        verify(jdbcTemplate).query(sql.capture(), any(MapSqlParameterSource.class), any(RowMapper.class));
+        assertThat(sql.getValue()).contains("GROUP BY CONCAT_WS", "TRIM([UF])", "COUNT(DISTINCT [Coleta])")
+                .doesNotContain(":regiaoLogisticaSelecionada");
+    }
+
     private static EscopoFilialService escopoSemRestricao() {
         return new EscopoFilialService(null, null) {
             @Override
