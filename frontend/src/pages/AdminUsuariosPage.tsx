@@ -118,12 +118,6 @@ const WARNING_PANEL_STYLE = {
   color: 'var(--color-text)',
 };
 
-const SECONDARY_BUTTON_STYLE = {
-  backgroundColor: 'var(--color-bg)',
-  borderColor: 'var(--color-border)',
-  color: 'var(--color-text)',
-};
-
 const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
 
 const passwordVariant = {
@@ -341,7 +335,7 @@ function OnlineUsersCard({
       </div>
       <DashboardAdaptiveDialog label="Presença de usuários" isOpen={open} onOpenChange={changeOpen}
         purpose="info" sheetHeight="hug" width="min(68rem, calc(100dvw - 2rem))" maxHeight="calc(100dvh - 2rem)" padding={0}>
-        <div className="admin-presence-panel">
+        <div className="admin-presence-panel admin-directory-dialog-body">
           <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-1">
             <h2 className="flex min-w-0 items-center gap-2 text-base font-bold">
               <Users size={18} className="shrink-0" style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
@@ -482,35 +476,11 @@ function formatEscopoFiliaisTipo(value: UsuarioAdmin['escopoFiliaisTipo']) {
   }
 }
 
-function DetailItem({ label, value }: { label: string; value: string }) {
+function DetailItem({ label, value, className = '' }: { label: string; value: string; className?: string }) {
   return (
-    <div className="rounded-xl border px-3 py-2" style={SOFT_PANEL_STYLE}>
-      <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>
-        {label}
-      </div>
-      <div className="mt-1 break-words text-sm font-medium" style={{ color: 'var(--color-text)' }}>
-        {value || 'Nenhuma'}
-      </div>
-    </div>
-  );
-}
-
-function DetailTextBlock({ label, value, fallback }: { label: string; value: string; fallback: string }) {
-  return (
-    <div className="space-y-1">
-      <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>
-        {label}
-      </div>
-      <div
-        className="max-h-24 overflow-y-auto rounded-xl border px-3 py-2 text-xs leading-relaxed"
-        style={{
-          backgroundColor: 'var(--color-bg)',
-          borderColor: 'var(--color-border)',
-          color: 'var(--color-text)',
-        }}
-      >
-        {value || fallback}
-      </div>
+    <div className={`min-w-0 rounded-xl border px-3 py-2 ${className}`} style={SOFT_PANEL_STYLE}>
+      <dt className="text-xs text-[var(--color-text-subtle)]">{label}</dt>
+      <dd className="mt-1 wrap-anywhere text-sm font-medium">{value || 'Nenhuma'}</dd>
     </div>
   );
 }
@@ -554,55 +524,56 @@ function renderUltimaTelaCell(row: UsuarioRow) {
   );
 }
 
-function renderUsuarioDetailsPopover(row: UsuarioRow) {
+function UsuarioDetailsDialog({ row, onClose }: { row: UsuarioRow; onClose: () => void }) {
   return (
-    <Popover presentation="adaptive" label={"Detalhes de " + row.nome} alignment="end" width="min(30rem, calc(100vw - 24px))" padding={3}
-      content={<div className="max-h-[min(34rem,70dvh)] overflow-y-auto">
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="truncate text-sm font-bold" style={{ color: 'var(--color-text)' }}>
-                {row.nome}
-              </h3>
-              <p className="break-all text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                {row.email}
-              </p>
+    <DashboardAdaptiveDialog label={`Detalhes de ${row.nome}`} isOpen onOpenChange={open => { if (!open) onClose(); }}
+      purpose="info" sheetHeight="hug" width="min(54rem, calc(100dvw - 2rem))" maxHeight="calc(100dvh - 2rem)" padding={0}>
+      <div className="admin-directory-dialog-body">
+        <header className="flex items-start gap-3 border-b px-4 py-4 sm:px-6" style={{ borderColor: 'var(--color-border)' }}>
+          <Users size={19} className="mt-1 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 className="wrap-anywhere text-base font-bold">{row.nome}</h2>
+              {renderStatusBadge(row.ativo)}
             </div>
-            {renderStatusBadge(row.ativo)}
+            <p className="mt-1 wrap-anywhere text-sm text-[var(--color-text-subtle)]">{row.email}</p>
           </div>
-
-          <div className="grid gap-2 sm:grid-cols-2">
-            <DetailItem label="Setor" value={row.setorNome} />
-            <DetailItem label="Papel" value={row.papelResumo || 'Sem papel'} />
-            <DetailItem label="Escopo" value={formatEscopoFiliaisTipo(row.escopoFiliaisTipo)} />
-            <DetailItem label="Senha" value={row.senhaResumo} />
-            <DetailItem label="Última tela" value={row.ultimaRotaAcessada ?? 'Sem registro'} />
-            <DetailItem label="Última atividade" value={formatUltimaAtividade(row.ultimaAtividade)} />
-          </div>
-
-          <DetailTextBlock label="Filiais efetivas" value={row.filiaisResumo} fallback="Acesso total" />
-          <DetailTextBlock
-            label="Filiais próprias"
-            value={formatFiliaisResumo(row.filiaisPermitidasUsuario, row.escopoFiliaisTipo === 'TODAS')}
-            fallback="Nenhuma"
-          />
-          <DetailTextBlock label="Permissões efetivas" value={row.permissoesResumo} fallback="Sem permissões" />
-          <DetailTextBlock label="Concessões individuais" value={row.concessoesResumo} fallback="Nenhuma" />
-          <DetailTextBlock label="Negações individuais" value={row.negacoesResumo} fallback="Nenhuma" />
+          <Button label="Fechar detalhes do usuário" isIconOnly variant="ghost" size="sm" icon={<X size={18} />} onClick={onClose} />
+        </header>
+        <div className="grid gap-5 px-4 py-4 sm:px-6 sm:py-5">
+          <section>
+            <h3 className="mb-2 text-sm font-bold">Conta e atividade</h3>
+            <dl className="grid gap-2 sm:grid-cols-3">
+              <DetailItem label="Setor" value={row.setorNome} />
+              <DetailItem label="Papel" value={row.papelResumo || 'Sem papel'} />
+              <DetailItem label="Senha" value={row.senhaResumo} />
+              <div className="min-w-0 rounded-xl border px-3 py-2" style={SOFT_PANEL_STYLE}>
+                <dt className="text-xs text-[var(--color-text-subtle)]">Presença</dt>
+                <dd className="mt-1">{renderOnlineBadge(row.presencaAtual, row.propriaConta)}</dd>
+              </div>
+              <DetailItem label="Última tela" value={row.ultimaRotaAcessada ?? 'Sem registro'} />
+              <DetailItem label="Última atividade" value={formatUltimaAtividade(row.ultimaAtividade)} />
+            </dl>
+          </section>
+          <section>
+            <h3 className="mb-2 text-sm font-bold">Filiais</h3>
+            <dl className="grid gap-2 sm:grid-cols-3">
+              <DetailItem label="Escopo" value={formatEscopoFiliaisTipo(row.escopoFiliaisTipo)} />
+              <DetailItem label="Filiais efetivas" value={row.filiaisResumo || 'Acesso total'} />
+              <DetailItem label="Filiais próprias" value={formatFiliaisResumo(row.filiaisPermitidasUsuario, row.escopoFiliaisTipo === 'TODAS')} />
+            </dl>
+          </section>
+          <section>
+            <h3 className="mb-2 text-sm font-bold">Permissões</h3>
+            <dl className="grid gap-2 sm:grid-cols-2">
+              <DetailItem label="Permissões efetivas" value={row.permissoesResumo || 'Sem permissões'} className="sm:col-span-2" />
+              <DetailItem label="Concessões individuais" value={row.concessoesResumo} />
+              <DetailItem label="Negações individuais" value={row.negacoesResumo} />
+            </dl>
+          </section>
         </div>
-        </div>}>
-      {trigger => (
-        <DashboardButton {...trigger}
-          type="button"
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-all duration-150 hover:-translate-y-px hover:bg-[var(--color-bg)] ${FOCUS_RING_CLASS}`}
-          style={SECONDARY_BUTTON_STYLE}
-          aria-label={`Ver detalhes de ${row.nome}`}
-        >
-          <Eye size={14} />
-          Ver mais
-        </DashboardButton>
-      )}
-    </Popover>
+      </div>
+    </DashboardAdaptiveDialog>
   );
 }
 
@@ -619,6 +590,7 @@ export default function AdminUsuariosPage() {
   const atualizarUsuario = useAtualizarUsuario();
   const excluirUsuario = useExcluirUsuario();
   const redefinirSenhaUsuario = useRedefinirSenhaUsuario();
+  const [detalheId, setDetalheId] = useState<string | null>(null);
   const [editing, setEditing] = useState<UsuarioAdmin | null>(null);
   const [form, setForm] = useState<UsuarioPayload>(FORM_INICIAL);
   const [erro, setErro] = useState('');
@@ -942,6 +914,15 @@ export default function AdminUsuariosPage() {
     || setores.isLoading
     || (form.escopoFiliaisTipo === 'SELECIONADAS' && filiais.isLoading);
 
+  const detalhe = detalheId ? linhas.find(row => row.id === detalheId) : undefined;
+
+  function renderUsuarioDetailsButton(row: UsuarioRow) {
+    return <DashboardButton type="button" aria-haspopup="dialog" aria-label={`Ver detalhes de ${row.nome}`}
+      className="rounded-lg border px-2.5 py-1.5" style={SOFT_PANEL_STYLE} onClick={() => setDetalheId(row.id)}>
+      <Eye size={14} aria-hidden="true" />Ver mais
+    </DashboardButton>;
+  }
+
   function renderActionMenu(row: UsuarioRow) {
     const usuarioSupremo = row.papel === PAPEL_DESENVOLVEDOR;
     const bloqueado = usuarioSupremo || (!podeOperarPapelElevado && row.papel !== 'usuario_comum');
@@ -1006,7 +987,7 @@ export default function AdminUsuariosPage() {
       label: 'Detalhes',
       largura: '100px',
       ordenavel: false,
-      formato: (_, row) => renderUsuarioDetailsPopover(row),
+      formato: (_, row) => renderUsuarioDetailsButton(row),
     },
     {
       chave: 'acoes',
@@ -1027,7 +1008,7 @@ export default function AdminUsuariosPage() {
           {renderMobileAccessCell(row)}
           <div className="flex flex-wrap items-center gap-2">
             {renderOnlineBadge(row.presencaAtual, row.propriaConta)}
-            {renderUsuarioDetailsPopover(row)}
+            {renderUsuarioDetailsButton(row)}
             {renderActionMenu(row)}
           </div>
         </div>
@@ -1037,6 +1018,7 @@ export default function AdminUsuariosPage() {
 
   return (
     <div className="dashboard-admin admin-directory-page space-y-5">
+      {detalhe && <UsuarioDetailsDialog row={detalhe} onClose={() => setDetalheId(null)} />}
       {sucesso && <ToastStack items={[{ id: 'redefinicao-senha', message: sucesso, tone: 'success' }]} />}
       {usuarioParaRedefinirSenha && (
         <DashboardAdaptiveDialog label="Redefinir senha" isOpen purpose="form" aria-labelledby="redefinir-senha-titulo"

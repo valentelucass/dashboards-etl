@@ -1,14 +1,16 @@
 import KpiCard from '../../shared/KpiCard';
+import DashboardLoading from '../../shared/DashboardLoading';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary } from '../../../constants/kpiDictionary';
 import type { FaturasPorClienteOverview } from '../../../types/faturasPorCliente';
 import { formatarMoeda, formatarNumero, formatarPorcentagem } from '../../../utils/formatadores';
+import './financeiro-kpis.css';
 
 interface FaturasPorClienteKpiGridProps {
-  overview: FaturasPorClienteOverview;
+  overview?: FaturasPorClienteOverview;
 }
 
-export default function FaturasPorClienteKpiGrid({ overview }: FaturasPorClienteKpiGridProps) {
+function financialCards(overview: FaturasPorClienteOverview) {
   const definitions = KpiDictionary.faturasPorCliente;
   const temFaturas = overview.registrosFaturados > 0;
   const aguardando = overview.aguardandoFaturamento > 0 ? 'warning' : temFaturas ? 'positive' : 'neutral';
@@ -27,15 +29,23 @@ export default function FaturasPorClienteKpiGrid({ overview }: FaturasPorCliente
     { definition: definitions.clientesAtivos, valor: formatarNumero(overview.clientesAtivos) },
   ] as const;
 
-  const indicadores = cards.map((card) => (
-        <TooltipKpi key={card.definition.titulo} definition={card.definition}>
-          <KpiCard label={card.definition.titulo} valor={card.valor}
-            helperText={'helperText' in card ? card.helperText : undefined}
-            valorTone={'tone' in card ? card.tone : 'neutral'} />
-        </TooltipKpi>
+  return cards.map(card => (
+    <TooltipKpi key={card.definition.titulo} definition={card.definition} className="financeiro-kpi-item">
+      <KpiCard label={card.definition.titulo} valor={card.valor}
+        helperText={'helperText' in card ? card.helperText : undefined}
+        valorTone={'tone' in card ? card.tone : 'neutral'} />
+    </TooltipKpi>
   ));
-  return <div className="mb-4 grid gap-3">
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">{indicadores.slice(0, 5)}</div>
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{indicadores.slice(5)}</div>
+}
+
+export default function FaturasPorClienteKpiGrid({ overview }: FaturasPorClienteKpiGridProps) {
+  const cards = overview ? financialCards(overview) : Array.from({ length: 9 }, (_, index) =>
+    <DashboardLoading key={index} variant="card" label="" />);
+  return <div className="financeiro-kpis mb-4" role={overview ? undefined : 'status'}
+    aria-label={overview ? undefined : 'Carregando indicadores'}>
+    <div className="financeiro-kpi-grid">
+      <div className="financeiro-kpi-group">{cards.slice(0, 5)}</div>
+      <div className="financeiro-kpi-group">{cards.slice(5)}</div>
+    </div>
   </div>;
 }

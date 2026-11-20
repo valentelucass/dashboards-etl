@@ -1,4 +1,3 @@
-import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import { useMemo } from 'react';
 import FinanceiroGraficos from '../components/domain/faturasPorCliente/FinanceiroGraficos';
 import FaturasPorClienteKpiGrid from '../components/domain/faturasPorCliente/FaturasPorClienteKpiGrid';
@@ -80,8 +79,7 @@ export default function FaturasPorClientePage() {
       <AsyncMultiSelect label="Status Processo" opcoes={['Faturado', 'Aguardando Faturamento']} selecionados={filtros.statusProcesso ?? []} onChange={(valores) => setFiltro('statusProcesso', valores)} />
     </FilterBar>
     {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar os indicadores financeiros.')} tipo={getTipoErro(overview.error)} />}
-    {overview.isLoading && !overview.data && <LoadingKpiGrid count={9} />}
-    {overview.data && <FaturasPorClienteKpiGrid overview={overview.data} />}
+    {(overview.data || overview.isLoading) && <FaturasPorClienteKpiGrid overview={overview.data} />}
     <FinanceiroGraficos key={JSON.stringify(filtro)} filtro={filtro} />
 
     <AnalyticalDataTable acoesCabecalho={<ExportButton nomeArquivo="faturas-por-cliente" onExport={() => exportarFaturasPorClienteCsv(filtro, filtrosTabela.apiFilters)} />} titulo="Detalhamento dos recebíveis" dados={tabela.data?.conteudo ?? []} colunas={colunasResumo} chaveLinha="idUnico" filtros={filtrosTabela.filters} hiddenActiveCount={filtrosTabela.hiddenActiveCount} hasAnyFilter={filtrosTabela.hasAnyFilter} onTextFilterChange={filtrosTabela.setTextFilter} onMultiFilterChange={filtrosTabela.setMultiFilter} onColumnFilterChange={filtrosTabela.setColumnFilter} onClearFilters={filtrosTabela.clearTableFilters} statusOptions={statusTabelaOptions} statusOptionsLoading={statusProcesso.isLoading} isLoading={tabela.isLoading} error={tabela.error} errorFallbackMessage="Erro ao carregar o detalhamento dos recebíveis." totalRegistros={tabela.data?.totalElementos} paginaAtual={paginacaoTabela.pagina} tamanhoPagina={paginacaoTabela.tamanhoPagina} onPaginaChange={paginacaoTabela.setPagina} onTamanhoPaginaChange={paginacaoTabela.setTamanhoPagina} />

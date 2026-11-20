@@ -1,3 +1,11 @@
+## 19/11/2026 — Histórico de acessos e ficha do usuário
+
+Em Gestão de usuários, Acessos de hoje mostra cinco rotas por página. As setas ficam acima da lista e permitem ir diretamente à primeira ou à última página. As contagens e o tempo em foco representam o dia inteiro. O botão Ver mais da tabela abre uma ficha de consulta com conta e atividade, filiais e permissões, em um diálogo centralizado no desktop e uma folha no celular.
+
+## 19/11/2026 — KPIs de Financeiro e Recebíveis
+
+A faixa distribui os nove indicadores conforme a largura disponível e o tamanho dos valores. Em desktops largos, os nove ficam na mesma linha. Quando a faixa precisa de duas linhas, os cinco indicadores financeiros ficam juntos, seguidos dos quatro de prazos e clientes. Em telas menores, a grade passa a três, duas ou uma coluna. Os nomes ficam visíveis por inteiro.
+
 ## 19/11/2026 — Prazo da minuta no Localizador
 
 A minuta mostra a previsão de entrega junto às notas fiscais e sinaliza em vermelho as cargas em aberto com prazo vencido. O filtro Classificação do frete se aplica aos indicadores, às regiões, às minutas, à tabela e à exportação.

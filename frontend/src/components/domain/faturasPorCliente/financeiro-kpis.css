@@ -1,0 +1,56 @@
+.financeiro-kpis {
+  container: financeiro-kpis / inline-size;
+}
+
+.financeiro-kpi-grid {
+  display: grid;
+  gap: .5rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.financeiro-kpi-group { display: contents; }
+.financeiro-kpi-grid .financeiro-kpi-item { display: grid; }
+
+.financeiro-kpi-grid .dashboard-kpi-card [title] {
+  white-space: normal;
+}
+
+@container financeiro-kpis (min-width: 22.5rem) {
+  .financeiro-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container financeiro-kpis (22.5rem <= width < 24rem) {
+  .financeiro-kpi-grid .dashboard-kpi-card { padding-inline: .5rem; }
+}
+
+@container financeiro-kpis (min-width: 38rem) {
+  .financeiro-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container financeiro-kpis (min-width: 58rem) {
+  .financeiro-kpi-grid { display: flex; flex-wrap: wrap; }
+
+  /* Os grupos compartilham a linha quando os textos e valores cabem por inteiro. */
+  .financeiro-kpi-group {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, auto);
+    gap: inherit;
+    flex: 1 1 max-content;
+    min-inline-size: 0;
+  }
+
+  .financeiro-kpis[role="status"] .financeiro-kpi-group {
+    grid-auto-columns: minmax(0, 1fr);
+    flex-basis: 36rem;
+  }
+  .financeiro-kpis[role="status"] .financeiro-kpi-group:first-child { flex-basis: 55rem; }
+}
+
+@container financeiro-kpis (min-width: 85rem) and (max-width: 100rem) {
+  .financeiro-kpi-grid { gap: .375rem; }
+  .financeiro-kpi-group .dashboard-kpi-card { padding-inline: .5rem; }
+  .financeiro-kpi-group .dashboard-kpi-card > div:first-child { gap: .125rem; }
+  .financeiro-kpi-group .dashboard-kpi-card svg { width: .875rem; height: .875rem; }
+  .financeiro-kpis[role="status"] .financeiro-kpi-group:first-child { flex-basis: 53rem; }
+}

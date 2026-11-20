@@ -1,3 +1,16 @@
+.admin-directory-dialog-body {
+  min-inline-size: 0;
+  min-block-size: 0;
+  max-block-size: calc(100dvh - 2rem - 2px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.astryx-bottom-sheet .admin-directory-dialog-body {
+  max-block-size: none;
+  overflow: visible;
+}
+
 .admin-presence-panel {
   min-inline-size: 0;
   container: admin-presence / inline-size;

@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { InternationalizationProvider } from '@astryxdesign/core/i18n';
+import ptBR from '@astryxdesign/core/locales/pt-BR.generated.js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, expect, it, vi } from 'vitest';
 import PresenceHistory from './PresenceHistory';
@@ -8,18 +10,36 @@ vi.mock('../../api/clienteAxios', () => ({ default: { get } }));
 afterEach(() => { cleanup(); get.mockReset(); });
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(<QueryClientProvider client={client}><PresenceHistory usuarioId="7" nome="Pessoa de teste"><span>Pessoa</span></PresenceHistory></QueryClientProvider>);
+  render(<InternationalizationProvider locale="pt-BR" messages={{ 'pt-BR': ptBR }}>
+    <QueryClientProvider client={client}><PresenceHistory usuarioId="7" nome="Pessoa de teste"><span>Pessoa</span></PresenceHistory></QueryClientProvider>
+  </InternationalizationProvider>);
   return client;
 }
 const hoje = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-it('consulta sob demanda no clique, mostra páginas consolidadas e pagina no servidor', async () => {
-  get.mockResolvedValue({ data: { agrupamento: 'PAGINA', segundosTotal: 600, atualizadoEm: null, dia: hoje(), total: 11, visitas: [{ ordem: 10, rota: '/cotacoes', inicio: '2026-09-10T12:00:00Z', fim: '2026-09-10T12:02:00Z', segundos: 120 }] } });
+it('mostra os 14 acessos em grupos de cinco e busca o próximo lote ao passar do décimo', async () => {
+  const visitas = Array.from({ length: 14 }, (_, i) => ({ ordem: 14 - i, rota: '/pagina-' + i,
+    inicio: hoje() + 'T12:00:00Z', fim: hoje() + 'T12:02:00Z', segundos: 1 + i }));
+  get.mockImplementation((_url, { params: { pagina } }) => Promise.resolve({ data: {
+    agrupamento: 'PAGINA', segundosTotal: 105, atualizadoEm: null, dia: hoje(), total: 14,
+    visitas: visitas.slice(pagina * 10, (pagina + 1) * 10),
+  } }));
   setup(); expect(get).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: 'Ver acessos de hoje de Pessoa de teste' }));
-  expect(await screen.findByText('2min 0s')).toBeTruthy();
-  expect(screen.getByText('Cotações')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+  const nav = within(await screen.findByRole('navigation', { name: 'Paginação dos acessos de hoje' }));
+  for (let i = 0; i < 3; i++) {
+    if (i) fireEvent.click(nav.getByRole('button', { name: 'Ir para a próxima página' }));
+    const lista = within(await screen.findByRole('list', { name: 'Páginas acessadas hoje' }));
+    expect(lista.getAllByRole('listitem').map(li => li.querySelector('strong')?.textContent))
+      .toEqual(visitas.slice(i * 5, (i + 1) * 5).map(v => v.segundos + 's'));
+    expect(nav.getByText(`Página ${i + 1} de 3`)).toBeTruthy();
+    expect(screen.getByText('1min 45s')).toBeTruthy();
+    expect(get).toHaveBeenCalledTimes(i === 2 ? 2 : 1);
+  }
   await waitFor(() => expect(get).toHaveBeenLastCalledWith('/api/admin/acesso/usuarios/7/navegacao-dia', expect.objectContaining({ params: { pagina: 1 } })));
+  fireEvent.click(nav.getByRole('button', { name: 'Ir para a primeira página' }));
+  expect(await screen.findByText('1s')).toBeTruthy();
+  fireEvent.click(nav.getByRole('button', { name: 'Ir para a última página' }));
+  expect(await screen.findByText('14s')).toBeTruthy();
 });
 it('não apresenta visitas de outro dia nem transforma erro em lista vazia', async () => {
   get.mockResolvedValueOnce({ data: { agrupamento: 'PAGINA', segundosTotal: 600, atualizadoEm: null, dia: '2000-01-01', total: 1, visitas: [{ ordem: 0, rota: '/coletas', inicio: '2000-01-01T12:00:00Z', fim: '2000-01-01T12:01:00Z', segundos: 60 }] } });
@@ -67,7 +87,7 @@ it('oculta a lista antiga se a atualização falhar e recupera pela ação de te
   expect(await screen.findByText('Indicadores de Gestão à Vista')).toBeTruthy();
   expect(screen.getByText('Primeiro sinal: 19:53:00')).toBeTruthy();
   expect(screen.getByText('Último sinal: 19:54:00')).toBeTruthy();
-  expect(screen.queryByRole('button', { name: 'Próxima' })).toBeNull();
+  expect(screen.queryByRole('navigation', { name: 'Paginação dos acessos de hoje' })).toBeNull();
   get.mockRejectedValueOnce(new Error('rede'));
   await client.invalidateQueries({ queryKey: ['admin', 'acesso', 'navegacao-dia'] });
   expect(await screen.findByRole('alert')).toBeTruthy();

@@ -7,6 +7,11 @@ import clienteAxios from '../../api/clienteAxios';
 import { Popover } from '@astryxdesign/core/Popover';
 import { ADMIN_NAV_ITEMS, DASHBOARD_NAV_ITEMS } from '../../utils/accessControl';
 import TooltipKpi from '../shared/TooltipKpi';
+import PeoplePagination from './PeoplePagination';
+
+// A API entrega dez rotas por consulta. Cada tela do histórico exibe cinco.
+const VISITAS_POR_CONSULTA = 10;
+const VISITAS_POR_PAGINA = 5;
 
 interface NavegacaoDia {
   dia: string;
@@ -36,18 +41,22 @@ function paginaNome(rota: string) {
 }
 
 export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId: string; nome: string; onClose: () => void }) {
-  const [pagina, setPagina] = useState(0);
+  const [pagina, setPagina] = useState(1);
+  const inicio = (pagina - 1) * VISITAS_POR_PAGINA;
+  const paginaApi = Math.floor(inicio / VISITAS_POR_CONSULTA);
   const [dia, setDia] = useState(diaBrasilia);
   useEffect(() => {
     const timer = setInterval(() => {
       const hoje = diaBrasilia();
-      if (hoje !== dia) { setDia(hoje); setPagina(0); }
+      if (hoje !== dia) { setDia(hoje); setPagina(1); }
     }, 1000);
     return () => clearInterval(timer);
   }, [dia]);
   const query = useQuery({
-    queryKey: ['admin', 'acesso', 'navegacao-dia', usuarioId, dia, pagina],
-    queryFn: async ({ signal }) => (await clienteAxios.get<NavegacaoDia>(`/api/admin/acesso/usuarios/${usuarioId}/navegacao-dia`, { params: { pagina }, signal })).data,
+    queryKey: ['admin', 'acesso', 'navegacao-dia', usuarioId, dia, paginaApi],
+    queryFn: async ({ signal }) => (await clienteAxios.get<NavegacaoDia>(`/api/admin/acesso/usuarios/${usuarioId}/navegacao-dia`, { params: { pagina: paginaApi }, signal })).data,
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[3] === usuarioId && previous?.dia === dia ? previous : undefined,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
@@ -57,6 +66,10 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
   });
   const compativel = query.data?.agrupamento === 'PAGINA';
   const dados = !query.isError && compativel && query.data?.dia === dia ? query.data : undefined;
+  const totalPaginas = Math.max(1, Math.ceil((dados?.total ?? 0) / VISITAS_POR_PAGINA));
+  if (dados && pagina > totalPaginas) setPagina(totalPaginas);
+  const offset = inicio % VISITAS_POR_CONSULTA;
+  const visitas = dados?.visitas.slice(offset, offset + VISITAS_POR_PAGINA) ?? [];
 
   return <section className="min-w-0 p-4" aria-label={`Acessos de hoje de ${nome}`}>
     <DashboardButton type="button" autoFocus aria-label="Fechar acessos de hoje" onClick={onClose}
@@ -74,21 +87,17 @@ export function PresenceHistoryContent({ usuarioId, nome, onClose }: { usuarioId
         <div><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Páginas acessadas</p><strong className="text-lg tabular-nums">{dados.total}</strong></div>
         <TooltipKpi kpiName="administracao.navegacaoHoje"><div><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Tempo registrado em foco</p><strong className="text-lg tabular-nums">{duracao(dados.segundosTotal)}</strong></div></TooltipKpi>
       </div>
-      <ol className="space-y-2" aria-label="Páginas acessadas hoje">
-        {dados.visitas.map(visita => <li key={visita.rota} className="rounded-lg border p-3" style={{ borderColor: 'var(--color-border)' }}>
+      <PeoplePagination label="Paginação dos acessos de hoje" page={pagina} totalPages={totalPaginas} onChange={setPagina} />
+      {query.isPlaceholderData ? <DashboardLoading label="Carregando acessos..." /> : <ol className="space-y-2" aria-label="Páginas acessadas hoje">
+        {visitas.map(visita => <li key={visita.rota} className="rounded-lg border p-3" style={{ borderColor: 'var(--color-border)' }}>
           <div className="flex items-start justify-between gap-3 text-sm"><span className="min-w-0 break-words font-semibold">{paginaNome(visita.rota)}</span><strong className="shrink-0 tabular-nums">{duracao(visita.segundos)}</strong></div>
           <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums" style={{ color: 'var(--color-text-muted)' }}>
             <span>Primeiro sinal: {hora(visita.inicio)}</span><span>Último sinal: {hora(visita.fim)}</span>
           </div>
         </li>)}
-      </ol>
+      </ol>}
       <p className="mt-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>Soma dos períodos registrados em foco; pausas ficam de fora. Os horários acima não representam permanência contínua.</p>
       {dados.atualizadoEm && <p className="mt-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>Último sinal da pessoa: {hora(dados.atualizadoEm)} · Consulta a cada 15s.</p>}
-      {dados.total > 10 && <div className="mt-3 flex items-center justify-between gap-2 border-t pt-3 text-xs" style={{ borderColor: 'var(--color-border)' }}>
-        <DashboardButton type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={pagina === 0 || query.isFetching} onClick={() => setPagina(p => p - 1)}>Anterior</DashboardButton>
-        <span>{pagina + 1}/{Math.ceil(dados.total / 10)} · {dados.total} páginas</span>
-        <DashboardButton type="button" className="rounded border px-2 py-1 disabled:opacity-40" disabled={(pagina + 1) * 10 >= dados.total || query.isFetching} onClick={() => setPagina(p => p + 1)}>Próxima</DashboardButton>
-      </div>}
     </>}
   </section>;
 }
