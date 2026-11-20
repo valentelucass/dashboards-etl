@@ -7,10 +7,13 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -20,6 +23,7 @@ final class PerformanceEficiencia {
     record Frete(boolean finalizado, boolean noPrazo, LocalDate finalizacao) {}
     private enum Tipo { EFE, EFT, EFD }
     private record Visita(Tipo tipo, String origem, int numero) {}
+    private record PassagemFiscal(String nota, String origem, int visitasNaFilial, Etapa etapa) {}
 
     private static final String SEM_FILIAL = "Sem informação";
     private final LocalDate inicio;
@@ -51,17 +55,32 @@ final class PerformanceEficiencia {
         }
         if (porNota.isEmpty()) porNota.put("", new ArrayList<>());
         Map<Visita, Etapa> passagens = new LinkedHashMap<>();
-        for (List<Evento> caminho : porNota.values()) {
+        List<PassagemFiscal> transbordos = new ArrayList<>();
+        for (var registro : porNota.entrySet()) {
+            List<Evento> caminho = registro.getValue();
             // Um lançamento sem NF se aplica ao frete. O mesmo evento não gera uma passagem por nota.
             if (!comuns.isEmpty()) {
                 caminho.addAll(comuns);
-                caminho.sort(java.util.Comparator.comparing(Evento::hora)
+                caminho.sort(Comparator.comparing(Evento::hora)
                         .thenComparingInt(e -> ordemOperacional(e.codigo())));
             }
             Map<Visita, Etapa> etapasDaNota = analisarNota(caminho, emissao);
-            etapasDaNota.forEach((visita, parcial) -> etapa(passagens, visita).incluir(visita.tipo(), parcial));
+            Map<String, Integer> quantidades = new HashMap<>();
+            for (Visita v : etapasDaNota.keySet()) {
+                if (v.tipo() == Tipo.EFT) quantidades.merge(v.origem(), 1, Integer::sum);
+            }
+            etapasDaNota.forEach((visita, parcial) -> {
+                if (visita.tipo() == Tipo.EFT) {
+                    transbordos.add(new PassagemFiscal(registro.getKey(), visita.origem(), quantidades.get(visita.origem()), parcial));
+                } else {
+                    etapa(passagens, visita).incluir(visita.tipo(), parcial);
+                }
+            });
         }
         passagens.forEach((visita, etapa) -> medir(visita.tipo(), etapa, frete.finalizado()));
+        for (PassagemFisica visita : conciliarTransbordos(transbordos)) {
+            medir(Tipo.EFT, visita.etapa, frete.finalizado());
+        }
         if (frete.finalizado()) {
             LocalDate data = entrega == null ? frete.finalizacao() : entrega.hora().toLocalDate();
             if (noPeriodo(data)) {
@@ -104,7 +123,7 @@ final class PerformanceEficiencia {
                 case 102 -> {
                     if (!embarqueEncerrado && emissao != null) etapa(passagens, embarque).avancou = true;
                     trechoInicial = false;
-                    if (transbordo == null || transbordoEncerrado || !java.util.Objects.equals(chegada.filial(), e.filial())) {
+                    if (transbordo == null || transbordoEncerrado || !Objects.equals(chegada.filial(), e.filial())) {
                         if (transbordo != null && !transbordoEncerrado) etapa(passagens, transbordo).avancou = true;
                         chegada = e;
                         int numero = visitasFilial.merge(e.filial(), 1, Integer::sum);
@@ -145,6 +164,72 @@ final class PerformanceEficiencia {
 
     private static Etapa etapa(Map<Visita, Etapa> passagens, Visita chave) {
         return passagens.computeIfAbsent(chave, v -> new Etapa());
+    }
+
+    private static List<PassagemFisica> conciliarTransbordos(List<PassagemFiscal> fiscais) {
+        // Uma NF que passou duas vezes pela mesma filial prova a existência de duas visitas.
+        // Fixamos essas referências antes de encaixar notas cujo histórico contém só uma delas.
+        fiscais.sort(Comparator.comparing((PassagemFiscal p) -> p.origem() == null)
+                .thenComparing(Comparator.comparingInt(PassagemFiscal::visitasNaFilial).reversed())
+                .thenComparing(PassagemFiscal::nota).thenComparing(p -> p.etapa().inicio.hora()));
+        List<PassagemFisica> visitas = new ArrayList<>();
+        for (PassagemFiscal fiscal : fiscais) {
+            PassagemFisica escolhida = null;
+            int maiorAfinidade = 0;
+            for (PassagemFisica v : visitas) {
+                int afinidade = v.afinidade(fiscal);
+                if (afinidade > maiorAfinidade) {
+                    escolhida = v;
+                    maiorAfinidade = afinidade;
+                } else if (afinidade > 0 && afinidade == maiorAfinidade) {
+                    // Mais de uma visita possível: a posição do registro na NF não comprova o trecho.
+                    escolhida = null;
+                }
+            }
+            if (escolhida == null) {
+                escolhida = new PassagemFisica(fiscal.origem(), fiscal.visitasNaFilial());
+                visitas.add(escolhida);
+            }
+            escolhida.incluir(fiscal);
+        }
+        return visitas;
+    }
+
+    private static final class PassagemFisica {
+        final Etapa etapa = new Etapa();
+        final Set<String> notas = new HashSet<>();
+        final Set<LocalDateTime> chegadas = new HashSet<>();
+        final Set<LocalDateTime> saidas = new HashSet<>();
+        final String origem;
+        final int totalVisitasReferencia;
+
+        PassagemFisica(String origem, int totalVisitasReferencia) {
+            this.origem = origem;
+            this.totalVisitasReferencia = totalVisitasReferencia;
+        }
+
+        int afinidade(PassagemFiscal fiscal) {
+            if (notas.contains(fiscal.nota())) return 0;
+            if (origem != null && fiscal.origem() != null && !origem.equals(fiscal.origem())) return 0;
+            Etapa outra = fiscal.etapa();
+            boolean chegadaIgual = chegadas.contains(outra.inicio.hora());
+            boolean saidaIgual = outra.fim != null && saidas.contains(outra.fim.hora());
+            if (chegadaIgual && saidaIgual) return 4;
+            if (chegadaIgual || saidaIgual) return 3;
+            if (origem == null || fiscal.origem() == null) return 0;
+            LocalDateTime fim = etapa.fim == null ? etapa.inicio.hora() : etapa.fim.hora();
+            LocalDateTime outroFim = outra.fim == null ? outra.inicio.hora() : outra.fim.hora();
+            if (!outra.inicio.hora().isAfter(fim) && !etapa.inicio.hora().isAfter(outroFim)) return 2;
+            // Quando nenhuma NF revisitou a filial, saídas fracionadas pertencem à única passagem.
+            return totalVisitasReferencia == 1 && fiscal.visitasNaFilial() == 1 ? 1 : 0;
+        }
+
+        void incluir(PassagemFiscal fiscal) {
+            notas.add(fiscal.nota());
+            chegadas.add(fiscal.etapa().inicio.hora());
+            if (fiscal.etapa().fim != null) saidas.add(fiscal.etapa().fim.hora());
+            etapa.incluir(Tipo.EFT, fiscal.etapa());
+        }
     }
 
     private void medir(Tipo tipo, Etapa etapa, boolean finalizado) {
@@ -213,10 +298,13 @@ final class PerformanceEficiencia {
             if (nota.fim != null) fechar(nota.fim);
         }
         void abrir(Evento evento) {
-            if (inicio == null || evento.hora().isBefore(inicio.hora())) inicio = evento;
+            if (inicio == null || evento.hora().isBefore(inicio.hora()) || completaFilial(inicio, evento)) inicio = evento;
         }
         void fechar(Evento evento) {
-            if (fim == null || !evento.hora().isBefore(fim.hora())) fim = evento;
+            if (fim == null || evento.hora().isAfter(fim.hora()) || completaFilial(fim, evento)) fim = evento;
+        }
+        private static boolean completaFilial(Evento existente, Evento outro) {
+            return existente.hora().equals(outro.hora()) && existente.filial() == null && outro.filial() != null;
         }
     }
     private static final class Filial {

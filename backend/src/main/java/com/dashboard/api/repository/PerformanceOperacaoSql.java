@@ -3,22 +3,27 @@ package com.dashboard.api.repository;
 final class PerformanceOperacaoSql {
     private PerformanceOperacaoSql() {}
 
-    private static final String ENTREGA = """
-            (o.codigo = 1 OR o.descricao COLLATE Latin1_General_100_CI_AI = N'Entrega Realizada com Ressalvas')
-            """;
-    private static final String MARCO = "(o.codigo IN (110, 103, 102, 101, 55) OR " + ENTREGA + ")";
+    static String entrega(String tipoFrete) {
+        // ESL: entrega normal, com ressalvas, retirada no destino e entrega pelo parceiro.
+        // A devolução à origem encerra o frete de devolução, não a entrega do frete original.
+        return "(o.codigo IN (1, 65, 136, 140) OR (o.codigo = 25 AND " + tipoFrete + " = N'Return'))";
+    }
+
+    private static String marco(String tipoFrete) {
+        return "(o.codigo IN (110, 103, 102, 101, 55) OR " + entrega(tipoFrete) + ")";
+    }
     static final String PERIODO_OCORRENCIA = """
             ([Data de Finalização] >= :dataInicio AND [Data de Finalização] < :dataFim)
             OR EXISTS (
                 SELECT 1 FROM dbo.dashboard_performance_ocorrencias o
                  WHERE o.minuta = base_raw.[Nº Minuta] AND o.ocorrido_em >= :dataInicio
                    AND o.ocorrido_em < :dataFim AND %s)
-            """.formatted(MARCO);
+            """.formatted(marco("base_raw.[Tipo Frete]"));
 
     static String ocorrenciasAtraso(String filtros) {
         return """
                 , atrasadas AS (
-                    SELECT numero_minuta, notas_fiscais FROM entregas
+                    SELECT numero_minuta, notas_fiscais, tipo_frete FROM entregas
                      WHERE status_norm NOT IN (N'Finalizada', N'Cancelada')
                        AND data_previsao_entrega < :hoje %s
                 ), historico AS (
@@ -40,7 +45,7 @@ final class PerformanceOperacaoSql {
                 SELECT COALESCE(NULLIF(TRIM(descricao), N''), N'Sem ocorrência') AS ocorrencia, COUNT_BIG(1) AS notas
                 FROM cobranca WHERE entregue = 0
                 GROUP BY COALESCE(NULLIF(TRIM(descricao), N''), N'Sem ocorrência') ORDER BY notas DESC, ocorrencia
-                """.formatted(filtros, ENTREGA);
+                """.formatted(filtros, entrega("a.tipo_frete"));
     }
 
     static String entregasAtencao(String filtros) {
@@ -73,7 +78,7 @@ final class PerformanceOperacaoSql {
     static String eficiencia(String filtros) {
         return """
                 , elegiveis AS (
-                    SELECT numero_minuta, data_finalizacao, is_finalizada, is_no_prazo
+                    SELECT numero_minuta, tipo_frete, data_finalizacao, is_finalizada, is_no_prazo
                     FROM entregas WHERE status_norm <> N'Cancelada' %s
                 )
                 SELECT e.numero_minuta, e.data_finalizacao, e.is_finalizada, e.is_no_prazo,
@@ -85,6 +90,6 @@ final class PerformanceOperacaoSql {
                          CASE o.codigo WHEN 110 THEN 0 WHEN 102 THEN 1 WHEN 103 THEN 2
                                        WHEN 101 THEN 3 WHEN 55 THEN 4 ELSE 5 END,
                          o.data_particao, o.escopo, o.ordem
-                """.formatted(filtros, ENTREGA, MARCO);
+                """.formatted(filtros, entrega("e.tipo_frete"), marco("e.tipo_frete"));
     }
 }

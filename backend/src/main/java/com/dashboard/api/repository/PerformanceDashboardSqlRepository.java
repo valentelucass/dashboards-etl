@@ -1190,6 +1190,7 @@ public class PerformanceDashboardSqlRepository {
                 WITH fonte AS (
                     SELECT
                         TRY_CONVERT(BIGINT, [Nº Minuta]) AS numero_minuta,
+                        [Tipo Frete] AS tipo_frete,
                         [Pagador] AS pagador,
                         [NF] AS notas_fiscais,
                         [UF Destino] AS uf_destino,
@@ -1241,7 +1242,7 @@ public class PerformanceDashboardSqlRepository {
                 ),
                 minutas AS (
                     SELECT
-                        numero_minuta, data_frete, data_finalizacao_performance, pagador, notas_fiscais, uf_destino,
+                        numero_minuta, tipo_frete, data_frete, data_finalizacao_performance, pagador, notas_fiscais, uf_destino,
                         data_previsao_entrega,
                         data_finalizacao,
                         responsavel_regiao_destino,

@@ -95,4 +95,24 @@ class PerformanceEficienciaTest {
         assertEquals(100d,c.resultados().get(0).efd());
         assertEquals(50d,c.resultados().get(1).eft());
     }
+
+    @Test void notaQueIngressaNaSegundaVisitaNaoAlongaAPrimeiraVisitaDaOutraNota() {
+        var c=calculo("2026-11-01","2026-11-19","2026-11-19T18:00");
+        c.adicionar(ABERTO,List.of(ev(102,"A","2026-11-09T08:00","SPO"),ev(103,"A","2026-11-09T12:00","SPO"),
+                ev(102,"B","2026-11-12T08:00","SPO"),ev(102,"A","2026-11-12T08:00","SPO"),
+                ev(103,"A","2026-11-12T12:00","SPO"),ev(103,"B","2026-11-12T13:00","SPO")));
+        c.adicionar(ABERTO,List.of(ev(102,"X","2026-11-17T09:00","SPO"),ev(103,"X","2026-11-18T10:00","SPO")));
+        assertEquals(66.67d,c.resultados().get(0).eft());
+    }
+
+    @Test void duasNotasDaMesmaSaidaComFilialAusenteNaoContamDuasVezes() {
+        var c=calculo("2026-11-01","2026-11-19","2026-11-19T18:00");
+        c.adicionar(ABERTO,List.of(ev(102,"A","2026-11-09T08:00","CWB"),ev(102,"B","2026-11-09T08:00",null),
+                ev(103,"A","2026-11-09T12:00","NHB"),ev(103,"B","2026-11-09T12:00",null)));
+        c.adicionar(ABERTO,List.of(ev(102,"X","2026-11-17T09:00","CWB"),ev(103,"X","2026-11-18T10:00","NHB")));
+        assertEquals(1,c.resultados().size());
+        assertEquals("NHB",c.resultados().get(0).filial());
+        assertEquals(50d,c.resultados().get(0).eft());
+        assertEquals(0,c.resultados().get(0).semInformacao());
+    }
 }
