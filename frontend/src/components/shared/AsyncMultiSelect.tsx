@@ -3,7 +3,8 @@ import { useId, useMemo, useState } from 'react';
 import { Check, ChevronDown, X } from 'lucide-react';
 import { Badge } from '@astryxdesign/core/Badge';
 import { Button } from '@astryxdesign/core/Button';
-import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
+import { CheckboxList } from '@astryxdesign/core/CheckboxList';
+import FilterOption from './FilterOption';
 import { FormTextField } from './FormTextField';
 import { Popover } from '@astryxdesign/core/Popover';
 
@@ -107,11 +108,7 @@ export default function AsyncMultiSelect({
     onChange(Array.from(new Set([...selecionados, ...valoresDisponiveis])));
   }
 
-  function alternar(valor: string) {
-    const proximos = selecao.has(valor)
-      ? selecionados.filter((v) => v !== valor)
-      : [...selecionados, valor];
-
+  function alterarSelecao(proximos: string[]) {
     onChange(proximos);
 
     if (proximos.length === 0) {
@@ -136,10 +133,11 @@ export default function AsyncMultiSelect({
         </div>
 
         <div className="max-h-56 space-y-1 overflow-y-auto">
-          {opcoesFiltradas.slice(0, limite).map(opcao => (
-            <CheckboxInput key={opcao.value} label={opcao.label} description={opcao.description ?? undefined}
-              value={selecao.has(opcao.value)} onChange={() => alternar(opcao.value)} />
-          ))}
+          <CheckboxList label={label} isLabelHidden density="compact" value={selecionados} onChange={alterarSelecao}>
+            {opcoesFiltradas.slice(0, limite).map(opcao => (
+              <FilterOption key={opcao.value} {...opcao} />
+            ))}
+          </CheckboxList>
           {opcoesFiltradas.length > limite && (
             <Button label="Mostrar mais opções" variant="ghost" size="sm" onClick={() => setLimite(valor => valor + OPCOES_POR_PAGINA)} />
           )}

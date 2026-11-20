@@ -18,7 +18,7 @@ it('exibe cada filtro uma vez ao abrir a barra e permite remover inclusive o qua
   fireEvent.click(screen.getByRole('button', { name: /Filtros/ }));
   expect(screen.getByText('Filial Atual: AGU')).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Remover filtro Filial Atual' })).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Limpar', exact: true })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Limpar' })).toBeNull();
   expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Remover filtro Status' }));
   expect(removerStatus).toHaveBeenCalledOnce();

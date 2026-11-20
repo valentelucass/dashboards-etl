@@ -1,7 +1,8 @@
 import { Spinner } from '@astryxdesign/core/Spinner';
 import DashboardLoading from './DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
-import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
+import { CheckboxList } from '@astryxdesign/core/CheckboxList';
+import FilterOption from './FilterOption';
 import { DashboardInput } from "./DashboardTextEntry";
 import DashboardSelector from "./DashboardSelector";
 import DashboardButton from "./DashboardButton";
@@ -58,12 +59,6 @@ interface AnalyticalDataTableProps<T> {
   error?: unknown;
   errorFallbackMessage?: string;
   acoesCabecalho?: ReactNode;
-}
-
-function toggleValue(valores: string[], valor: string): string[] {
-  return valores.includes(valor)
-    ? valores.filter((item) => item !== valor)
-    : [...valores, valor];
 }
 
 function uniqueOptions(opcoes: string[] | undefined): string[] {
@@ -215,13 +210,9 @@ function MultiSelectFilter({
           </DashboardButton>
         </div>
         <div className="max-h-56 space-y-0.5 overflow-y-auto">
-          {opcoesEfetivas.map((opcao) => {
-            const selecionado = selecionados.includes(opcao);
-            return (
-              <CheckboxInput key={opcao} label={opcao} value={selecionado}
-                onChange={() => onChange(toggleValue(selecionados, opcao))} />
-            );
-          })}
+          <CheckboxList label={label} isLabelHidden density="compact" value={selecionados} onChange={onChange}>
+            {opcoesEfetivas.map(opcao => <FilterOption key={opcao} value={opcao} label={opcao} />)}
+          </CheckboxList>
           {opcoesEfetivas.length === 0 && isLoading && (
             <DashboardLoading label="Carregando..." />
           )}
