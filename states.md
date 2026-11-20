@@ -1,3 +1,9 @@
+## 20/11/2026 — Performance das etapas por filial
+
+O cartão OTIF mantém a pontualidade das entregas finalizadas. Responsável, região de destino e cidade podem ser selecionados diretamente ou detalhados a partir das barras. A lista de minutas em atenção usa a previsão, o status e a última ocorrência. O ranking agrupa as notas em aberto e atrasadas pela última ocorrência do ESL.
+
+A eficiência mede o embarque (24 horas), cada passagem pelo transbordo (24 horas) e a operação de destino (48 horas). O painel usa a filial que registrou a saída e a data de conclusão da etapa. Uma etapa aberta é avaliada pela data de início e passa a ineficiente ao ultrapassar o limite. O tempo desconta sábados, domingos e feriados nacionais. Pontos facultativos em dias de semana contam. Saídas parciais das notas da mesma passagem fecham na última saída. A tabela sinaliza etapas com dados insuficientes e atribui o OTIF à filial entregadora.
+
 ## 20/11/2026 — Alinhamento em Cotações e nas metas de faturamento
 
 Nos rankings por usuário, filial e cliente, a posição tem espaço próprio para os dígitos. A busca e a ordenação usam a mesma altura. Em Gerenciar Metas de Faturamento, o valor da meta acompanha a altura dos seletores e dos botões.
