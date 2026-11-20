@@ -7,12 +7,14 @@
 .dashboard-filter-dimensions { display: flex; align-items: end; gap: 12px; min-width: 0; }
 .dashboard-filter-fields {
   display: grid;
+  align-items: end;
   flex: 1;
   min-width: 0;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
   gap: 12px;
 }
-.dashboard-filter-fields > * { width: 100%; min-width: 0; justify-self: stretch; }
+/* O Astryx renderiza a lista aberta como irmã do campo dentro da grade. */
+.dashboard-filter-fields > :not([popover], dialog) { width: 100%; min-width: 0; }
 .dashboard-filter-fields > * > input { width: 100%; min-width: 0; }
 .dashboard-filter-fields > * > span:first-child { flex-wrap: wrap; }
 .dashboard-filter-period .date-range-controls { gap: 12px; }

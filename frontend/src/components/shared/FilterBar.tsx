@@ -14,7 +14,7 @@ export interface ActiveFilter {
   label: string;
   count: number;
   valueLabel?: string;
-  onRemove: () => void;
+  onRemove?: () => void;
 }
 
 interface FilterBarProps {
@@ -46,8 +46,8 @@ function FilterBadge({ label, count, valueLabel, onRemove }: ActiveFilter) {
   return (
     <span className="inline-flex max-w-full items-center gap-1">
       <Badge variant="info" label={label + ': ' + displayValue} className="max-w-48 min-w-0" />
-      <Button label={'Remover filtro ' + label} variant="ghost" size="sm" isIconOnly icon={<X size={12} />}
-        onClick={event => { event.stopPropagation(); onRemove(); }} />
+      {onRemove && <Button label={'Remover filtro ' + label} variant="ghost" size="sm" isIconOnly icon={<X size={12} />}
+        onClick={event => { event.stopPropagation(); onRemove(); }} />}
     </span>
   );
 }
@@ -102,7 +102,7 @@ export default function FilterBar({
   // ── barra recolhida (sempre visível) ──────────────────────────────
   const collapsedBar = (
     <div
-      className={`dashboard-filter-card flex items-center border ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : actionsOnMobileRow ? 'min-h-12 flex-wrap gap-x-3 gap-y-1 rounded-[20px] px-4 py-1.5 md:h-12 md:flex-nowrap md:py-0' : 'min-h-12 flex-wrap gap-x-3 gap-y-2 rounded-[20px] px-4 py-2 md:h-12 md:flex-nowrap md:py-0'}`}
+      className={`dashboard-filter-card flex items-center border ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : actionsOnMobileRow ? 'min-h-12 flex-wrap gap-x-3 gap-y-1 rounded-[20px] px-4 py-1.5 md:flex-nowrap md:py-0' : 'min-h-12 flex-wrap gap-x-3 gap-y-2 rounded-[20px] px-4 py-2 md:flex-nowrap md:py-0'}`}
       style={{ backgroundColor: isPresentationMode ? 'transparent' : 'var(--color-card)', borderColor: 'var(--color-border)' }}
     >
       {/* Data compacta */}
@@ -159,12 +159,12 @@ export default function FilterBar({
       ) : null}
 
       {/* Chips de filtros ativos — somente desktop */}
-      {hasActive && (
-          <div className={`min-w-0 flex-1 items-center gap-1.5 overflow-hidden ${isPresentationMode ? 'hidden' : 'hidden md:flex'}`} aria-label="Filtros ativos">
-          {filtersWithValues.slice(0, 3).map((f) => (
+      {hasActive && !isMobile && !isPresentationMode && (
+        <div className={`flex min-w-0 flex-1 items-center gap-1.5 ${open ? 'flex-wrap py-1' : 'overflow-hidden'}`} aria-label="Filtros ativos">
+          {(open ? filtersWithValues : filtersWithValues.slice(0, 3)).map((f) => (
             <FilterBadge key={f.label} {...f} />
           ))}
-          {filtersWithValues.length > 3 && (
+          {!open && filtersWithValues.length > 3 && (
             <span className="shrink-0 text-xs" style={{ color: 'var(--color-text-muted)' }}>
               +{filtersWithValues.length - 3}
             </span>
@@ -173,7 +173,7 @@ export default function FilterBar({
       )}
 
       {/* Limpar */}
-      {hasActive && onClear && (
+      {hasActive && onClear && !open && (
         <DashboardButton
           type="button"
           onClick={onClear}
@@ -248,7 +248,7 @@ export default function FilterBar({
             </div>
 
             {/* A faixa adicional só ocupa espaço quando há seleções a mostrar. */}
-            {hasActive && (
+            {hasActive && isPresentationMode && (
               <div
                 className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3"
                 style={{ borderColor: 'var(--color-border)' }}

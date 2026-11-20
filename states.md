@@ -1,3 +1,7 @@
+## 19/11/2026 — Filtros dos dashboards
+
+No desktop, a lista de opções abre junto ao campo com a largura do seletor Astryx. Os controles de cada linha ficam alinhados pela base, inclusive quando há contadores de seleção. Cada filtro ativo aparece uma vez. Em Localização de Cargas, remover uma filial escolhida restaura a filial padrão, que é obrigatória.
+
 ## 19/11/2026 — Troca rápida entre painéis
 
 Na navegação entre painéis, o navegador pode ler o tempo de espera (Retry-After) que a API envia quando as três vagas de consulta estão ocupadas. A fila existente aguarda o intervalo e cancela a espera ao sair da tela. No resumo administrativo de sessões, uma leitura desfeita por deadlock 1205 no SQL Server é repetida uma vez em uma nova transação.

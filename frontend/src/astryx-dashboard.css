@@ -649,6 +649,7 @@ dialog:modal::backdrop {
 .dashboard-filter-select-label {
   display: flex;
   align-items: center;
+  min-block-size: 1.5rem;
   flex-wrap: wrap;
   gap: .375rem;
   font-size: .75rem;
@@ -667,6 +668,8 @@ dialog:modal::backdrop {
 
 .dashboard-filter-select-panel {
   display: grid;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
   gap: .625rem;
 }
 

@@ -105,7 +105,8 @@ export default function TrackingPage() {
       label: 'Filial Atual',
       count: filialAtualFiltro.length,
       valueLabel: codigoFilialAtual(filialAtualSelecionada),
-      onRemove: () => setFiltro('filialAtual', []),
+      onRemove: normalizarTexto(filialAtualSelecionada) === normalizarTexto(filialAtualPadrao)
+        ? undefined : () => setFiltro('filialAtual', []),
     },
     { label: 'Minuta', count: numeroMinuta ? 1 : 0, valueLabel: numeroMinuta, onRemove: () => setFiltro('numeroMinuta', []) },
     { label: 'Status', count: filtros.statusCarga?.length ?? 0, onRemove: () => setFiltro('statusCarga', []) },
@@ -240,8 +241,8 @@ export default function TrackingPage() {
           placeholder="Selecione"
           isLoading={filiais.isLoading}
         />
-        <div className="flex min-w-36 flex-col gap-1">
-          <label htmlFor="tracking-numero-minuta" className="text-xs font-medium">Número da minuta</label>
+        <div className="dashboard-filter-select">
+          <label htmlFor="tracking-numero-minuta" className="dashboard-filter-select-label">Número da minuta</label>
           <DashboardInput id="tracking-numero-minuta" type="text" inputMode="numeric" aria-label="Número da minuta" placeholder="Nº da minuta"
             value={numeroMinuta} maxLength={19}
             onChange={(event) => {
