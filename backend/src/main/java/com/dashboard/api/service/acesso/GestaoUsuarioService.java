@@ -598,7 +598,7 @@ public class GestaoUsuarioService {
             case "fretes" -> "Faturamento/Fretes";
             case "tracking" -> "Tracking";
             case "performance" -> "Performance";
-            case "faturas-por-cliente" -> "Faturas por Cliente";
+            case "faturas-por-cliente" -> "Financeiro e Recebíveis";
             case "contas-a-pagar" -> "Contas a Pagar";
             case "cotacoes" -> "Cotações";
             case "indicadores-gestao-a-vista", "gestao-vista" -> "Indicadores de Gestão à Vista";

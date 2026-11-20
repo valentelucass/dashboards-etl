@@ -84,7 +84,8 @@ class FaturasPorClienteSqlRepositoryTest {
                         0,
                         0,
                         0.0,
-                        0
+                        0,
+                        BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, null
                 ));
 
         FaturasPorClienteSqlRepository repository = new FaturasPorClienteSqlRepository(

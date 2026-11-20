@@ -12,7 +12,7 @@ public enum PermissaoCatalogo {
     FRETES("fretes", "Faturamento", "Dashboard operacional de faturamento", "/faturamento"),
     PERFORMANCE("performance", "Performance", "Dashboard operacional de performance de entrega", "/performance"),
     TRACKING("tracking", "Localização de cargas", "Dashboard de tracking e localização de cargas", "/tracking"),
-    FATURAS_POR_CLIENTE("faturasPorCliente", "Faturas por Cliente", "Dashboard operacional de faturamento por cliente", "/faturas-por-cliente"),
+    FATURAS_POR_CLIENTE("faturasPorCliente", "Financeiro e Recebíveis", "Faturamento, títulos em aberto e recebimentos", "/faturas-por-cliente"),
     CONTAS_A_PAGAR("contasAPagar", "Contas a pagar", "Dashboard financeiro de contas a pagar", "/contas-a-pagar"),
     COTACOES("cotacoes", "Cotações", "Dashboard comercial de cotações", "/cotacoes"),
     INDICADORES_GESTAO_A_VISTA("indicadoresGestaoAVista", "Indicadores de Gestão à Vista", "Dashboard operacional de indicadores de gestão à vista", "/indicadores-gestao-a-vista"),

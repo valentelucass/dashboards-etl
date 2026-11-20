@@ -34,7 +34,7 @@ export const DASHBOARD_NAV_ITEMS: NavItem[] = [
   { label: 'Faturamento', path: '/faturamento', permission: 'fretes' },
   { label: 'Performance', path: '/performance', permission: 'performance' },
   { label: 'Localização de Cargas', path: '/tracking', permission: 'tracking' },
-  { label: 'Faturas por Cliente', path: '/faturas-por-cliente', permission: 'faturasPorCliente' },
+  { label: 'Financeiro e Recebíveis', path: '/faturas-por-cliente', permission: 'faturasPorCliente' },
   { label: 'Contas a Pagar', path: '/contas-a-pagar', permission: 'contasAPagar' },
   { label: 'Cotações', path: '/cotacoes', permission: 'cotacoes' },
   { label: 'Indicadores de Gestão à Vista', path: '/indicadores-gestao-a-vista', permission: 'indicadoresGestaoAVista' },

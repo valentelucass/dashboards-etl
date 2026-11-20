@@ -5,7 +5,8 @@ import java.util.Locale;
 public enum FaturasPorClienteGranularidade {
     DIA,
     SEMANA,
-    MES;
+    MES,
+    ANO;
 
     public static FaturasPorClienteGranularidade from(String valor) {
         try {

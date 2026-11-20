@@ -1,10 +1,17 @@
 export interface FaturasPorClienteOverview {
   updatedAt: string;
+  valorAFaturar: number;
+  contasAReceber: number;
+  valorEmAtraso: number;
+  percentualFaturado: number;
+  percentualEmAtraso: number;
   valorFaturado: number;
   registrosFaturados: number;
   aguardandoFaturamento: number;
   titulosEmAtraso: number;
   prazoMedioDias: number;
+  prazoAteFaturarDias: number | null;
+  prazoRecebimentoDias: number | null;
   clientesAtivos: number;
 }
 
@@ -14,7 +21,7 @@ export interface FaturasPorClienteMensalTrend {
   registrosFaturados: number;
 }
 
-export type FaturasPorClienteGranularidade = 'dia' | 'semana' | 'mes';
+export type FaturasPorClienteGranularidade = 'dia' | 'semana' | 'mes' | 'ano';
 export type FaturasPorClienteReferenciaTemporal = 'emissao' | 'vencimento' | 'baixa';
 export type FaturasPorClienteMetrica = 'valor_faturado' | 'registros_faturados' | 'ticket_medio' | 'valor_em_atraso';
 export type FaturasPorClienteAgingEscopo = 'todos' | 'a_vencer' | 'em_atraso';
@@ -46,7 +53,23 @@ export interface FaturasPorClienteAgingBucket {
   titulos: number;
 }
 
+export interface ClienteEmAtraso {
+  cliente: string;
+  clienteCnpj: string | null;
+  titulos: number;
+  maiorAtrasoDias: number;
+  valorEmAtraso: number;
+}
+
+export interface EvolucaoFretes {
+  periodo: string;
+  valorTotalFretes: number;
+  valorFaturado: number;
+  quantidadeFretes: number;
+}
+
 export interface FaturasPorClienteTopCliente {
+  valorAFaturar: number;
   cliente: string;
   clienteCnpj: string | null;
   valorFaturado: number;

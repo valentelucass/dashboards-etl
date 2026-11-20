@@ -127,16 +127,16 @@ public enum DashboardExportDefinition {
     FATURAS_POR_CLIENTE(
             "faturas-por-cliente",
             "faturas-por-cliente",
-            "dbo.fato_gestao_vista_faturas",
-            DateMode.OFFSET_DATE_TIME,
-            "data_emissao_cte",
+            FinanceiroRecebiveisSql.FONTE,
+            DateMode.NATIVE_LOCAL_DATE,
+            "data_financeira",
             List.of("filial"),
             Map.of(
                     "filiais", List.of("filial"),
                     "pagadores", List.of("pagador_nome"),
                     "clientesCnpj", List.of("cliente_cnpj", "cliente_cnpj_key", "pagador_documento", "pagador_documento_key")
             ),
-            List.of("data_emissao_cte DESC", "unique_id DESC"),
+            List.of("data_financeira DESC", "unique_id DESC"),
             null,
             List.of("excluido_na_origem = 0")
     ),

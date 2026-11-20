@@ -4,6 +4,8 @@ import { buscarTabelaPaginada } from '../tabelaPaginada';
 import { montarQueryParams } from './queryParams';
 import type { PaginacaoResponse } from '../../types/common';
 import type {
+  ClienteEmAtraso,
+  EvolucaoFretes,
   FaturaPorClienteResumoRow,
   FaturasPorClienteAgingBucket,
   FaturasPorClienteAgingEscopo,
@@ -30,6 +32,27 @@ export async function buscarFaturasPorClienteOverview(
     signal,
     params: montarQueryParams(filtro),
   });
+  return data;
+}
+
+export async function buscarClientesEmAtraso(filtro: FaturasPorClienteFiltro, signal?: AbortSignal) {
+  const { data } = await clienteAxios.get<ClienteEmAtraso[]>('/api/painel/faturas-por-cliente/clientes-em-atraso', {
+    signal,
+    params: montarQueryParams(filtro),
+  });
+  return data;
+}
+
+export async function buscarEvolucaoFretes(
+  filtro: FaturasPorClienteFiltro,
+  granularidade: FaturasPorClienteGranularidade,
+  referencia: FaturasPorClienteReferenciaTemporal,
+  signal?: AbortSignal,
+) {
+  const params = montarQueryParams(filtro);
+  params.set('granularidade', granularidade);
+  params.set('referencia', referencia);
+  const { data } = await clienteAxios.get<EvolucaoFretes[]>('/api/painel/faturas-por-cliente/evolucao-fretes', { signal, params });
   return data;
 }
 

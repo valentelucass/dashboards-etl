@@ -3,32 +3,38 @@ import KpiGrid from '../../shared/KpiGrid';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary } from '../../../constants/kpiDictionary';
 import type { FaturasPorClienteOverview } from '../../../types/faturasPorCliente';
-import { formatarMoeda, formatarNumero } from '../../../utils/formatadores';
+import { formatarMoeda, formatarNumero, formatarPorcentagem } from '../../../utils/formatadores';
 
 interface FaturasPorClienteKpiGridProps {
   overview: FaturasPorClienteOverview;
 }
 
 export default function FaturasPorClienteKpiGrid({ overview }: FaturasPorClienteKpiGridProps) {
+  const definitions = KpiDictionary.faturasPorCliente;
   const temFaturas = overview.registrosFaturados > 0;
-  const aguardandoTone = overview.aguardandoFaturamento > 0 ? 'warning'
-    : overview.aguardandoFaturamento === 0 && temFaturas ? 'positive' : 'neutral';
-  const atrasoTone = overview.titulosEmAtraso > 0 ? 'negative'
-    : overview.titulosEmAtraso === 0 && temFaturas ? 'positive' : 'neutral';
+  const aguardando = overview.aguardandoFaturamento > 0 ? 'warning' : temFaturas ? 'positive' : 'neutral';
+  const atraso = overview.titulosEmAtraso > 0 ? 'negative' : temFaturas ? 'positive' : 'neutral';
   const cards = [
-    { definition: KpiDictionary.faturasPorCliente.valorFaturado, label: 'Valor Faturado', valor: formatarMoeda(overview.valorFaturado), valorTone: 'neutral' },
-    { definition: KpiDictionary.faturasPorCliente.registrosFaturados, label: 'Reg. Faturados', valor: formatarNumero(overview.registrosFaturados), valorTone: 'neutral' },
-    { definition: KpiDictionary.faturasPorCliente.aguardandoFaturamento, label: 'Ag. Faturamento', valor: formatarNumero(overview.aguardandoFaturamento), valorTone: aguardandoTone },
-    { definition: KpiDictionary.faturasPorCliente.titulosEmAtraso, label: 'Tít. Atraso', valor: formatarNumero(overview.titulosEmAtraso), valorTone: atrasoTone },
-    { definition: KpiDictionary.faturasPorCliente.prazoMedio, label: 'Prazo Médio', valor: `${formatarNumero(overview.prazoMedioDias, 1)} dias`, valorTone: 'neutral' },
-    { definition: KpiDictionary.faturasPorCliente.clientesAtivos, label: 'Clientes Ativos', valor: formatarNumero(overview.clientesAtivos), valorTone: 'neutral' },
+    { definition: definitions.valorFaturado, valor: formatarMoeda(overview.valorFaturado),
+      helperText: overview.valorFaturado + overview.valorAFaturar > 0 ? formatarPorcentagem(overview.percentualFaturado, 2) + ' do total' : 'Sem base para o percentual' },
+    { definition: definitions.valorAFaturar, valor: formatarMoeda(overview.valorAFaturar), tone: aguardando },
+    { definition: definitions.aguardandoFaturamento, valor: formatarNumero(overview.aguardandoFaturamento), tone: aguardando },
+    { definition: definitions.contasAReceber, valor: formatarMoeda(overview.contasAReceber) },
+    { definition: definitions.valorEmAtraso, valor: formatarMoeda(overview.valorEmAtraso), tone: atraso,
+      helperText: overview.contasAReceber > 0 ? formatarPorcentagem(overview.percentualEmAtraso, 2) + ' da carteira em aberto' : 'Sem carteira em aberto' },
+    { definition: definitions.prazoCadastral, valor: temFaturas ? formatarNumero(overview.prazoMedioDias, 1) + ' dias' : '—' },
+    { definition: definitions.prazoAteFaturar, valor: overview.prazoAteFaturarDias == null ? '—' : formatarNumero(overview.prazoAteFaturarDias, 1) + ' dias' },
+    { definition: definitions.prazoMedio, valor: overview.prazoRecebimentoDias == null ? '—' : formatarNumero(overview.prazoRecebimentoDias, 1) + ' dias' },
+    { definition: definitions.clientesAtivos, valor: formatarNumero(overview.clientesAtivos) },
   ] as const;
 
   return (
-    <KpiGrid count={6}>
+    <KpiGrid count={cards.length}>
       {cards.map((card) => (
-        <TooltipKpi key={card.label} definition={card.definition}>
-          <KpiCard label={card.label} valor={card.valor} valorTone={card.valorTone} />
+        <TooltipKpi key={card.definition.titulo} definition={card.definition}>
+          <KpiCard label={card.definition.titulo} valor={card.valor}
+            helperText={'helperText' in card ? card.helperText : undefined}
+            valorTone={'tone' in card ? card.tone : 'neutral'} />
         </TooltipKpi>
       ))}
     </KpiGrid>

@@ -2,6 +2,8 @@ package com.dashboard.api.service;
 
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.faturascliente.FaturaPorClienteResumoDTO;
+import com.dashboard.api.dto.faturascliente.ClienteEmAtrasoDTO;
+import com.dashboard.api.dto.faturascliente.EvolucaoFretesRecebiveisDTO;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteAgingBucketDTO;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteAgingEscopo;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteDrilldownNivel;
@@ -54,7 +56,7 @@ public class FaturasPorClienteService {
 
     public FaturasPorClienteOverviewDTO buscarOverview(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
-        return sqlRepository.buscarOverview(filtro, hoje());
+        return sqlRepository.buscarOverview(filtro, dataDeCorte(filtro));
     }
 
     public List<FaturasPorClienteMensalDTO> buscarMensal(FiltroConsultaDTO filtro) {
@@ -79,12 +81,12 @@ public class FaturasPorClienteService {
 
     public List<FaturasPorClienteAgingBucketDTO> buscarAging(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
-        return sqlRepository.buscarAging(filtro, hoje());
+        return sqlRepository.buscarAging(filtro, dataDeCorte(filtro));
     }
 
     public List<FaturasPorClienteAgingBucketDTO> buscarAging(FiltroConsultaDTO filtro, String escopo) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
-        return sqlRepository.buscarAging(filtro, hoje(), FaturasPorClienteAgingEscopo.from(escopo));
+        return sqlRepository.buscarAging(filtro, dataDeCorte(filtro), FaturasPorClienteAgingEscopo.from(escopo));
     }
 
     public List<FaturasPorClienteDrilldownPointDTO> buscarDrilldownAging(
@@ -95,8 +97,20 @@ public class FaturasPorClienteService {
             int limite
     ) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
-        return sqlRepository.buscarDrilldownAging(filtro, hoje(), faixa, FaturasPorClienteDrilldownNivel.from(nivel), cliente,
+        return sqlRepository.buscarDrilldownAging(filtro, dataDeCorte(filtro), faixa, FaturasPorClienteDrilldownNivel.from(nivel), cliente,
                 ConsultaLimiteUtils.limitar(limite, 10, 50));
+    }
+
+    public List<ClienteEmAtrasoDTO> buscarClientesEmAtraso(FiltroConsultaDTO filtro) {
+        validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
+        return sqlRepository.buscarClientesEmAtraso(filtro, dataDeCorte(filtro));
+    }
+
+    public List<EvolucaoFretesRecebiveisDTO> buscarEvolucaoFretes(
+            FiltroConsultaDTO filtro, String granularidade, String referencia) {
+        validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
+        return sqlRepository.buscarEvolucaoFretes(filtro, FaturasPorClienteGranularidade.from(granularidade),
+                FaturasPorClienteReferenciaTemporal.from(referencia));
     }
 
     public List<FaturasPorClienteTopClienteDTO> buscarTopClientes(FiltroConsultaDTO filtro, int limite) {
@@ -115,7 +129,7 @@ public class FaturasPorClienteService {
     ) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
         return sqlRepository.buscarDrilldownClientes(
-                filtro, hoje(), ConsultaLimiteUtils.limitar(limite, 10, 50), FaturasPorClienteMetrica.from(metrica),
+                filtro, dataDeCorte(filtro), ConsultaLimiteUtils.limitar(limite, 10, 50), FaturasPorClienteMetrica.from(metrica),
                 FaturasPorClienteDrilldownNivel.from(nivel), cliente, cnpj
         );
     }
@@ -143,7 +157,8 @@ public class FaturasPorClienteService {
         return tabelaPaginadaService;
     }
 
-    private LocalDate hoje() {
-        return LocalDate.now(clock);
+    private LocalDate dataDeCorte(FiltroConsultaDTO filtro) {
+        LocalDate hoje = LocalDate.now(clock);
+        return filtro.dataFim().isBefore(hoje) ? filtro.dataFim() : hoje;
     }
 }

@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
+  buscarClientesEmAtraso,
+  buscarEvolucaoFretes,
   buscarFaturasPorClienteAging,
   buscarFaturasPorClienteAgingDrilldown,
   buscarFaturasPorClienteMensal,
@@ -31,6 +33,30 @@ export function useFaturasPorClienteOverview(filtro: FaturasPorClienteFiltro) {
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
     queryKey: ['faturas-por-cliente', 'overview', filtro],
     queryFn: ({ signal }) => buscarFaturasPorClienteOverview(filtro, signal),
+    staleTime: STALE_TIME,
+    retry: 1,
+  });
+}
+
+export function useClientesEmAtraso(filtro: FaturasPorClienteFiltro) {
+  return useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: ['faturas-por-cliente', 'clientes-em-atraso', filtro],
+    queryFn: ({ signal }) => buscarClientesEmAtraso(filtro, signal),
+    staleTime: STALE_TIME,
+    retry: 1,
+  });
+}
+
+export function useEvolucaoFretes(
+  filtro: FaturasPorClienteFiltro,
+  granularidade: FaturasPorClienteGranularidade,
+  referencia: FaturasPorClienteReferenciaTemporal,
+) {
+  return useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: ['faturas-por-cliente', 'evolucao-fretes', filtro, granularidade, referencia],
+    queryFn: ({ signal }) => buscarEvolucaoFretes(filtro, granularidade, referencia, signal),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -104,9 +130,11 @@ export function useFaturasPorClienteTopClientesDrilldown(
   nivel: FaturasPorClienteDrilldownNivel,
   cliente: string | null,
   cnpj: string | null,
+  enabled = true,
 ) {
   return useQuery({
     ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    enabled,
     queryKey: ['faturas-por-cliente', 'top-clientes', 'drilldown', filtro, limite, metrica, nivel, cliente, cnpj],
     queryFn: ({ signal }) => buscarFaturasPorClienteTopClientesDrilldown(filtro, limite, metrica, nivel, cliente, cnpj, signal),
     staleTime: STALE_TIME,

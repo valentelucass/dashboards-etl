@@ -34,6 +34,8 @@ const charts: Record<string, ChartDictionaryKey[]> = {
   'contas-a-pagar/graficos/fornecedores': ['contasPagarTopFornecedores'],
   'contas-a-pagar/graficos/centros-custo': ['contasPagarCentroCusto'],
   'contas-a-pagar/graficos': ['contasPagarConciliacao'],
+  'faturas-por-cliente/evolucao-fretes': ['faturasMensal'],
+  'faturas-por-cliente/clientes-em-atraso': ['faturasClientesEmAtraso'],
   'faturas-por-cliente/serie': ['faturasMensal'],
   'faturas-por-cliente/aging': ['faturasAging'],
   'faturas-por-cliente/aging/drilldown': ['faturasAging'],

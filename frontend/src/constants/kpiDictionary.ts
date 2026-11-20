@@ -564,45 +564,50 @@ export const KpiDictionary = {
 
   faturasPorCliente: {
     valorFaturado: {
-      titulo: 'Valor Faturado',
-      descricao: 'Valor operacional total dos registros faturados.',
-      calculo: 'Soma do Valor Operacional com status Faturado.',
-      observacao: 'O período considera a data de emissão do CT-e.',
+      titulo: 'Faturas emitidas',
+      descricao: 'Valor nominal das faturas emitidas no período.',
+      calculo: 'Soma os títulos emitidos uma vez. O percentual divide o faturado pela soma do faturado e dos fretes a faturar.',
+      observacao: 'Quando os filtros selecionam parte dos fretes de um título, o valor é proporcional aos fretes selecionados.',
     },
-    registrosFaturados: {
-      titulo: 'Registros Faturados',
-      descricao: 'Quantidade de registros com faturamento concluído.',
-      calculo: 'Contagem de Registros com status Faturado.',
-      observacao: 'O período considera a data de emissão do CT-e.',
+    valorAFaturar: {
+      titulo: 'Fretes a faturar (R$)',
+      descricao: 'Valor dos fretes elegíveis que ainda aguardam faturamento.',
+      calculo: 'Soma o valor original desses fretes no período da emissão do frete.',
     },
     aguardandoFaturamento: {
-      titulo: 'Aguardando Faturamento',
-      descricao: 'Quantidade de registros ainda aguardando faturamento.',
-      calculo:
-        'Contagem de Registros com status Aguardando Faturamento.',
-      observacao: 'O período considera a data de emissão do CT-e.',
+      titulo: 'Fretes a faturar (quantidade)',
+      descricao: 'Quantidade de fretes elegíveis que ainda aguardam faturamento.',
+      calculo: 'Conta cada frete a faturar uma vez, pela emissão do frete.',
     },
-    titulosEmAtraso: {
-      titulo: 'Títulos em Atraso',
-      descricao: 'Títulos faturados, vencidos e ainda sem pagamento.',
-      calculo:
-        'Contagem de Faturados com Vencimento anterior à data atual e sem Data de Pagamento.',
-      observacao: 'O período considera a data de emissão do CT-e.',
+    contasAReceber: {
+      titulo: 'Contas a receber',
+      descricao: 'Saldo das faturas vinculado aos CT-es emitidos no período selecionado.',
+      calculo: 'Soma o valor dos títulos sem baixa, incluindo vencidos, a vencer e sem vencimento.',
+    },
+    valorEmAtraso: {
+      titulo: 'Em atraso',
+      descricao: 'Parte do saldo do período cujo vencimento já passou na data de corte.',
+      calculo: 'O percentual divide o saldo vencido pelo saldo total a receber. Para um período encerrado, a referência é o último dia selecionado. Para um período em andamento, a referência é hoje.',
+    },
+    prazoCadastral: {
+      titulo: 'Prazo médio cadastral',
+      descricao: 'Prazo combinado na emissão da fatura.',
+      calculo: 'Média dos dias entre a emissão e o vencimento das faturas com as duas datas.',
+    },
+    prazoAteFaturar: {
+      titulo: 'Do frete à fatura',
+      descricao: 'Tempo médio para faturar um frete realizado.',
+      calculo: 'Média dos dias entre a data do serviço e a emissão da fatura, por frete faturado com as duas datas.',
     },
     prazoMedio: {
-      titulo: 'Prazo Médio',
-      descricao: 'Prazo médio concedido entre a data-base e o vencimento da fatura.',
-      calculo:
-        'Soma dos dias completos entre Data-base e Vencimento ÷ Registros com Documento de Fatura e ambas as datas.',
-      observacao:
-        'A média não é limitada ao status faturado; participam os registros que possuem documento e datas válidas.',
+      titulo: 'Prazo médio real',
+      descricao: 'Tempo médio entre a emissão da fatura e o recebimento.',
+      calculo: 'Média dos dias entre emissão e baixa dos títulos recebidos com datas válidas.',
     },
     clientesAtivos: {
-      titulo: 'Clientes Ativos',
-      descricao: 'Quantidade de clientes distintos presentes no período.',
-      calculo: 'Contagem distinta de Clientes.',
-      observacao:
-        'Todos os status filtrados participam da contagem. O período considera a data de emissão do CT-e.',
+      titulo: 'Clientes ativos',
+      descricao: 'Clientes distintos com movimento no período.',
+      calculo: 'Conta os clientes presentes nos fretes ou faturas selecionados, considerando os filtros da tela.',
     },
   },
 
@@ -768,7 +773,7 @@ export const KpiDictionary = {
     valorFaturado: {
       titulo: 'Valor Faturado',
       descricao: 'Valor faturado consolidado por cliente no período selecionado.',
-      calculo: 'Soma do Valor Faturado do painel de Faturas por Cliente.',
+      calculo: 'Soma do Valor Faturado do painel Financeiro e Recebíveis.',
       observacao: 'O período considera a data de emissão do CT-e.',
     },
     saldoAReceber: {

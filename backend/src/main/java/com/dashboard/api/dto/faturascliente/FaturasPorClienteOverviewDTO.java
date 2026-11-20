@@ -9,6 +9,13 @@ public record FaturasPorClienteOverviewDTO(
         int aguardandoFaturamento,
         int titulosEmAtraso,
         double prazoMedioDias,
-        int clientesAtivos
+        int clientesAtivos,
+        BigDecimal valorAFaturar,
+        BigDecimal contasAReceber,
+        BigDecimal valorEmAtraso,
+        BigDecimal percentualFaturado,
+        BigDecimal percentualEmAtraso,
+        Double prazoRecebimentoDias,
+        Double prazoAteFaturarDias
 ) {
 }

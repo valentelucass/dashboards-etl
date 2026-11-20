@@ -271,28 +271,31 @@ export const chartDictionary = {
 
   faturasMensal: {
     ...faturasClienteBase,
-    descricao: 'Evolui o faturamento por dia, semana ou mês conforme a referência de emissão, vencimento ou baixa selecionada no card.',
-    calculoTecnico: 'SUM(valor_operacional), COUNT(1) ou SUM(valor_operacional) / COUNT(1), conforme a métrica selecionada.',
-    calculoNegocio:
-      'Permite alternar valor faturado, quantidade de faturas e ticket médio, sem alterar os filtros globais da página.',
-    agrupamento: 'GROUP BY dia, início da semana ou mês da data de referência selecionada.',
+    descricao: 'Compara o valor original dos fretes com o valor nominal das faturas por dia, semana ou mês.',
+    calculoTecnico: 'Soma por período o valor original dos fretes elegíveis e o valor atribuído dos títulos emitidos.',
+    calculoNegocio: 'Azul mostra os fretes faturados e a faturar. Cinza mostra os títulos emitidos, que podem incluir ajustes. A referência escolhe a data usada para agrupar.',
+    agrupamento: 'Por dia, semana ou mês de emissão, vencimento ou baixa. Cada período exige a data de referência escolhida.',
   },
   faturasAging: {
     ...faturasClienteBase,
-    descricao: 'Agrupa títulos abertos por faixa de aging e permite detalhar uma faixa até cliente e fatura/ID Único.',
-    calculoTecnico: 'CAST(COALESCE(SUM(valor_operacional), 0) AS DECIMAL(19,2)); COUNT(1)',
-    calculoNegocio:
-      'Alterna valor e quantidade de títulos, restringe a visão a todos, a vencer ou em atraso e mantém o drill-down local ao card.',
-    agrupamento: 'GROUP BY faixa; no drill, GROUP BY cliente e depois por documento/ID Único.',
+    descricao: 'Distribui os títulos em aberto pelo prazo até o vencimento ou pelos dias em atraso.',
+    calculoTecnico: 'Agrupa por faixa de vencimento o valor e a quantidade dos títulos sem baixa.',
+    calculoNegocio: 'O período seleciona os CT-es pela data de emissão. Um título com vencimento no último dia do período ou depois fica em A vencer. Para períodos ainda em andamento, a referência é hoje. Títulos sem vencimento têm uma faixa própria.',
+    agrupamento: 'Por faixa de vencimento, depois por cliente e fatura.',
   },
   faturasTopClientes: {
-    tabelasOrigem: 'dbo.fato_gestao_vista_faturas',
-    cruzamentos: 'Nenhum JOIN; CTE agregado no FaturasPorClienteSqlRepository.',
-    descricao: 'Ranqueia clientes com Top 5/10/15, métricas financeiras e Pareto, com drill-down para CNPJ e fatura.',
-    calculoTecnico: 'SUM(valor_operacional), COUNT(1), ticket médio ou valor vencido sem baixa; percentual acumulado via SUM() OVER.',
-    calculoNegocio:
-      'Expõe concentração da carteira em barras verticais, com Pareto no eixo percentual, e permite abrir o cliente em seus CNPJs e, por fim, nas faturas que compõem o resultado.',
-    agrupamento: 'GROUP BY cliente, CNPJ ou documento/ID Único conforme o nível de drill-down.',
+    ...faturasClienteBase,
+    descricao: 'Compara o valor faturado e o valor dos fretes a faturar de cada cliente.',
+    calculoTecnico: 'Soma os valores por cliente e ordena pelo valor faturado decrescente.',
+    calculoNegocio: 'Exibe os 5, 10 ou 15 primeiros clientes pelo valor faturado. Cada barra reúne o faturado e o valor a faturar. Selecione o cliente para detalhar o faturado por CNPJ e fatura.',
+    agrupamento: 'Por cliente no ranking. O detalhe do faturado agrupa por CNPJ e depois por fatura.',
+  },
+  faturasClientesEmAtraso: {
+    ...faturasClienteBase,
+    descricao: 'Mostra os dez clientes com mais títulos vencidos em aberto.',
+    calculoTecnico: 'Conta os títulos distintos, soma o valor em atraso e calcula o maior número de dias desde o vencimento.',
+    calculoNegocio: 'Cada título conta uma vez. O maior atraso corresponde ao título em aberto que venceu há mais tempo para o cliente.',
+    agrupamento: 'Por cliente, em ordem decrescente de quantidade de títulos vencidos.',
   },
   faturasStatusProcesso: {
     ...faturasClienteBase,

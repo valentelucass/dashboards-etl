@@ -75,7 +75,8 @@ class FaturasPorClienteServiceTest {
                 1,
                 0,
                 0.0,
-                2
+                2,
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, null
         );
 
         FaturasPorClienteOverviewDTO overview = service.buscarOverview(filtroPadrao());
@@ -113,7 +114,8 @@ class FaturasPorClienteServiceTest {
                 0,
                 0,
                 0.0,
-                3
+                3,
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, null
         );
 
         FaturasPorClienteOverviewDTO overview = service.buscarOverview(filtroPadrao());
@@ -146,7 +148,8 @@ class FaturasPorClienteServiceTest {
                 1,
                 1,
                 0.0,
-                4
+                4,
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, null
         );
 
         FaturasPorClienteOverviewDTO overview = service.buscarOverview(filtroPadrao());
@@ -192,7 +195,7 @@ class FaturasPorClienteServiceTest {
         sqlRepository.topClientes = List.of(new FaturasPorClienteTopClienteDTO(
                 "Cliente A",
                 "12.345.678/0001-90",
-                new BigDecimal("300.00")
+                new BigDecimal("300.00"), BigDecimal.ZERO
         ));
 
         List<FaturasPorClienteTopClienteDTO> topClientes = service.buscarTopClientes(filtroPadrao(), 10);
@@ -200,7 +203,7 @@ class FaturasPorClienteServiceTest {
         assertThat(topClientes).containsExactly(new FaturasPorClienteTopClienteDTO(
                 "Cliente A",
                 "12.345.678/0001-90",
-                new BigDecimal("300.00")
+                new BigDecimal("300.00"), BigDecimal.ZERO
         ));
     }
 
@@ -214,7 +217,7 @@ class FaturasPorClienteServiceTest {
         sqlRepository.topClientes = List.of(new FaturasPorClienteTopClienteDTO(
                 "Cliente A",
                 "12345678000190",
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"), BigDecimal.ZERO
         ));
 
         List<FaturasPorClienteTopClienteDTO> topClientes = service.buscarTopClientes(filtroPadrao(), 10);
@@ -222,7 +225,7 @@ class FaturasPorClienteServiceTest {
         assertThat(topClientes).containsExactly(new FaturasPorClienteTopClienteDTO(
                 "Cliente A",
                 "12345678000190",
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"), BigDecimal.ZERO
         ));
     }
 
@@ -272,7 +275,8 @@ class FaturasPorClienteServiceTest {
                 0,
                 0,
                 0.0,
-                0
+                0,
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, null
         );
 
         service.buscarOverview(filtroPadrao());

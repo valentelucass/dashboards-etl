@@ -1,6 +1,8 @@
 package com.dashboard.api.controller;
 
 import com.dashboard.api.dto.faturascliente.FaturaPorClienteResumoDTO;
+import com.dashboard.api.dto.faturascliente.ClienteEmAtrasoDTO;
+import com.dashboard.api.dto.faturascliente.EvolucaoFretesRecebiveisDTO;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteAgingBucketDTO;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteDrilldownPointDTO;
 import com.dashboard.api.dto.faturascliente.FaturasPorClienteMensalDTO;
@@ -92,6 +94,25 @@ public class FaturasPorClienteController {
             @RequestParam MultiValueMap<String, String> params) {
         return ResponseEntity.ok(service.buscarDrilldownAging(
                 FiltroRequestMapper.from(dataInicio, dataFim, params), faixa, nivel, cliente, limite));
+    }
+
+    @GetMapping("/clientes-em-atraso")
+    public ResponseEntity<List<ClienteEmAtrasoDTO>> clientesEmAtraso(
+            @RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim,
+            @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(service.buscarClientesEmAtraso(FiltroRequestMapper.from(dataInicio, dataFim, params)));
+    }
+
+    @GetMapping("/evolucao-fretes")
+    public ResponseEntity<List<EvolucaoFretesRecebiveisDTO>> evolucaoFretes(
+            @RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim,
+            @RequestParam(defaultValue = "mes") String granularidade,
+            @RequestParam(defaultValue = "emissao") String referencia,
+            @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(service.buscarEvolucaoFretes(
+                FiltroRequestMapper.from(dataInicio, dataFim, params), granularidade, referencia));
     }
 
     @GetMapping("/top-clientes")
