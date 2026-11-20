@@ -125,6 +125,30 @@ export interface PerformanceAgingPoint {
   total: number;
 }
 
+export interface PerformanceOcorrenciaAtraso {
+  ocorrencia: string;
+  notas: number;
+}
+
+export interface PerformanceEntregaAtencao {
+  numeroMinuta: number;
+  cliente: string | null;
+  destino: string | null;
+  previsaoEntrega: string | null;
+  status: string;
+  alerta: string | null;
+  ultimaOcorrencia: string | null;
+}
+
+export interface PerformanceEficienciaFilial {
+  filial: string;
+  efe: number | null;
+  eft: number | null;
+  efd: number | null;
+  otif: number | null;
+  semInformacao: number;
+}
+
 export interface PerformanceKpiItem {
   label: string;
   valor: string;

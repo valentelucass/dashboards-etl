@@ -34,7 +34,7 @@ export function buildPerformanceKpis(overview?: PerformanceOverview): Performanc
     { definition: KpiDictionary.performance.foraDoPrazo, label: 'Fora do Prazo', valor: formatarNumero(overview?.foraDoPrazo ?? 0), tone: (overview?.foraDoPrazo ?? 0) > 0 ? 'negative' : 'neutral' },
     {
       definition: KpiDictionary.performance.percentualPerformance,
-      label: 'Performance',
+      label: KpiDictionary.performance.percentualPerformance.titulo,
       valor: formatarPorcentagem(performance, 2),
       tone: performance >= 95 ? 'positive' : performance >= 90 ? 'warning' : 'negative',
     },

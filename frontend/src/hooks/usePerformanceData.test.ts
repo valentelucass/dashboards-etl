@@ -25,7 +25,7 @@ describe('buildPerformanceKpis', () => {
       'Finalizadas',
       'No Prazo',
       'Fora do Prazo',
-      'Performance',
+      'OTIF - On-Time In-Full',
       'Em Atraso',
       'Peso Taxado (t)',
       'Comprovante Anexado',

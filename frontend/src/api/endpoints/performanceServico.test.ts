@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import clienteAxios from '../clienteAxios';
-import { buscarPerformanceHistorico, buscarPerformanceTabelaPaginada, exportarPerformanceCsv } from './performanceServico';
+import { buscarPerformanceEficienciaFiliais, buscarPerformanceEntregasAtencao, buscarPerformanceHistorico,
+  buscarPerformanceOcorrenciasAtraso, buscarPerformanceTabelaPaginada, exportarPerformanceCsv } from './performanceServico';
 
 vi.mock('../downloadArquivo', () => ({
   extrairNomeArquivo: vi.fn((_contentDisposition: string | undefined, fallback: string) => fallback),
@@ -42,6 +43,39 @@ describe('performanceServico', () => {
     expect(params.getAll('f.filiais')).toEqual(['SPO']);
     expect(params.getAll('f.status')).toEqual(['Finalizada']);
     expect(params.getAll('f.pagadores')).toEqual(['Cliente A']);
+  });
+
+  it('encaminha filtros, cancelamento e paginação aos três indicadores operacionais', async () => {
+    const filtro = { dataInicio: '2026-11-01', dataFim: '2026-11-19', filiais: ['REC'], pagadores: ['Cliente A'] };
+    const sinal = new AbortController().signal;
+    await buscarPerformanceOcorrenciasAtraso(filtro, sinal);
+    await buscarPerformanceEntregasAtencao(filtro, 2, 10, sinal);
+    await buscarPerformanceEficienciaFiliais(filtro, sinal);
+    expect(clienteMock.get.mock.calls.map(([url]) => url)).toEqual([
+      '/api/painel/performance/ocorrencias-atraso', '/api/painel/performance/entregas-atencao', '/api/painel/performance/eficiencia-filiais',
+    ]);
+    for (const [, config] of clienteMock.get.mock.calls) {
+      expect(config.params.get('f.filiais')).toBe('REC');
+      expect(config.params.get('f.pagadores')).toBe('Cliente A');
+      expect(config.params.get('dataFim')).toBe('2026-11-19');
+      expect(config.signal).toBe(sinal);
+    }
+    expect(clienteMock.get.mock.calls[1][1].params.get('pagina')).toBe('2');
+    expect(clienteMock.get.mock.calls[1][1].params.get('tamanhoPagina')).toBe('10');
+  });
+
+  it('envia a mesma seleção exata da barra para a tabela e o CSV sem substituir os filtros do usuário', async () => {
+    const filtro = { dataInicio: '2026-11-01', dataFim: '2026-11-19', filiais: ['SPO'], drillResponsavel: 'chave', drillRegiao: 'Zona Norte' };
+    const tabela = { tabelaRazaoSocial: 'busca manual' };
+    await buscarPerformanceTabelaPaginada(filtro, 1, 10, tabela);
+    clienteMock.get.mockResolvedValue({ data: new Blob(['minuta'], { type: 'text/csv' }), headers: { 'content-type': 'text/csv' } });
+    await exportarPerformanceCsv(filtro, tabela);
+    for (const [, config] of clienteMock.get.mock.calls) {
+      expect(config.params.get('f.drillResponsavel')).toBe('chave');
+      expect(config.params.get('f.drillRegiao')).toBe('Zona Norte');
+      expect(config.params.get('f.tabelaRazaoSocial')).toBe('busca manual');
+      expect(config.params.get('f.filiais')).toBe('SPO');
+    }
   });
 
   it('envia filtros analíticos para a tabela paginada de performance', async () => {

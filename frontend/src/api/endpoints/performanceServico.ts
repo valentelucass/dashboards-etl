@@ -8,8 +8,11 @@ import type {
   PerformanceAgingPoint,
   PerformanceDrilldownParams,
   PerformanceDrilldownPoint,
+  PerformanceEficienciaFilial,
+  PerformanceEntregaAtencao,
   PerformanceFiltro,
   PerformanceHistoricoPoint,
+  PerformanceOcorrenciaAtraso,
   PerformanceOverview,
   PerformanceSerieTemporalPoint,
   PerformanceStatusDistribuicao,
@@ -112,6 +115,28 @@ export function createPerformanceServico(basePath = PERFORMANCE_API_BASE_PATH) {
       return data;
     },
 
+    async buscarOcorrenciasAtraso(filtro: PerformanceFiltro, signal?: AbortSignal) {
+      const { data } = await clienteAxios.get<PerformanceOcorrenciaAtraso[]>(`${basePath}/ocorrencias-atraso`, {
+        params: paramsComFiltro(filtro), signal,
+      });
+      return data;
+    },
+
+    async buscarEntregasAtencao(filtro: PerformanceFiltro, pagina: number, tamanhoPagina: number, signal?: AbortSignal) {
+      const params = paramsComFiltro(filtro);
+      params.set('pagina', String(pagina));
+      params.set('tamanhoPagina', String(tamanhoPagina));
+      const { data } = await clienteAxios.get<PaginacaoResponse<PerformanceEntregaAtencao>>(`${basePath}/entregas-atencao`, { params, signal });
+      return data;
+    },
+
+    async buscarEficienciaFiliais(filtro: PerformanceFiltro, signal?: AbortSignal) {
+      const { data } = await clienteAxios.get<PerformanceEficienciaFilial[]>(`${basePath}/eficiencia-filiais`, {
+        params: paramsComFiltro(filtro), signal,
+      });
+      return data;
+    },
+
     async buscarTabela(
       filtro: PerformanceFiltro,
       pagina: number,
@@ -164,6 +189,9 @@ export const buscarPerformanceStatus = performanceServico.buscarStatus;
 export const buscarPerformanceHistorico = performanceServico.buscarHistorico;
 export const buscarPerformanceDrilldown = performanceServico.buscarDrilldown;
 export const buscarPerformanceAging = performanceServico.buscarAging;
+export const buscarPerformanceOcorrenciasAtraso = performanceServico.buscarOcorrenciasAtraso;
+export const buscarPerformanceEntregasAtencao = performanceServico.buscarEntregasAtencao;
+export const buscarPerformanceEficienciaFiliais = performanceServico.buscarEficienciaFiliais;
 export const buscarPerformanceTabela = performanceServico.buscarTabela;
 export const buscarPerformanceTabelaPaginada = performanceServico.buscarTabelaPaginada;
 export const exportarPerformanceCsv = performanceServico.exportarCsv;

@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import {
   buscarPerformanceAging,
   buscarPerformanceDrilldown,
+  buscarPerformanceEficienciaFiliais,
+  buscarPerformanceEntregasAtencao,
   buscarPerformanceHistorico,
+  buscarPerformanceOcorrenciasAtraso,
   buscarPerformanceOverview,
   buscarPerformanceSerieTemporal,
   buscarPerformanceStatus,
@@ -105,6 +108,36 @@ export function usePerformanceAging(filtro: PerformanceFiltro, enabled = true) {
     staleTime: STALE_TIME,
     retry: 1,
     enabled,
+  });
+}
+
+export function usePerformanceOcorrenciasAtraso(filtro: PerformanceFiltro) {
+  return useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: [...QUERY_KEY, 'ocorrencias-atraso', filtro],
+    queryFn: ({ signal }) => buscarPerformanceOcorrenciasAtraso(filtro, signal),
+    staleTime: STALE_TIME,
+    retry: 1,
+  });
+}
+
+export function usePerformanceEntregasAtencao(filtro: PerformanceFiltro, pagina: number, tamanhoPagina: number) {
+  return useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: [...QUERY_KEY, 'entregas-atencao', filtro, pagina, tamanhoPagina],
+    queryFn: ({ signal }) => buscarPerformanceEntregasAtencao(filtro, pagina, tamanhoPagina, signal),
+    staleTime: STALE_TIME,
+    retry: 1,
+  });
+}
+
+export function usePerformanceEficienciaFiliais(filtro: PerformanceFiltro) {
+  return useQuery({
+    ...OPERATIONAL_QUERY_POLLING_OPTIONS,
+    queryKey: [...QUERY_KEY, 'eficiencia-filiais', filtro],
+    queryFn: ({ signal }) => buscarPerformanceEficienciaFiliais(filtro, signal),
+    staleTime: STALE_TIME,
+    retry: 1,
   });
 }
 

@@ -402,7 +402,7 @@ export const KpiDictionary = {
       observacao: periodoPerformance,
     },
     percentualPerformance: {
-      titulo: 'Performance',
+      titulo: 'OTIF - On-Time In-Full',
       descricao: 'Percentual das entregas finalizadas que ocorreram dentro do prazo.',
       calculo: 'Entregas no Prazo ÷ Entregas Finalizadas × 100.',
       observacao: `${periodoPerformance} ${percentualSemBase}`,

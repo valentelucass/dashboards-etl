@@ -107,6 +107,7 @@ const rawLabelIconMap: Record<string, LucideIcon> = {
   'No Prazo': PackageCheck,
   'Fora do Prazo': AlertCircle,
   Performance: Gauge,
+  'OTIF - On-Time In-Full': Gauge,
   'Em Atraso': AlertCircle,
   'Peso Taxado (t)': Weight,
   'Comprovante Anexado': FileCheck,

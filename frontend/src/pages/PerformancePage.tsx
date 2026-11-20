@@ -11,6 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import PerformanceTabela from '../components/domain/performance/PerformanceTabela';
+import PerformanceIndicadoresOperacionais from '../components/domain/performance/PerformanceIndicadoresOperacionais';
 import AsyncMultiSelect, { type AsyncMultiSelectOpcao } from '../components/shared/AsyncMultiSelect';
 import DateRangePicker from '../components/shared/DateRangePicker';
 import ExportButton from '../components/shared/ExportButton';
@@ -40,10 +41,10 @@ import {
 } from '../hooks/queries/usePerformance';
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { usePerformanceData } from '../hooks/usePerformanceData';
+import { usePerformanceAgrupamento } from '../hooks/usePerformanceAgrupamento';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import type {
   PerformanceAgingPoint,
-  PerformanceDrilldownParams,
   PerformanceDrilldownNivel,
   PerformanceDrilldownPoint,
   PerformanceFiltro,
@@ -52,7 +53,7 @@ import type {
   PerformanceStatusDistribuicao,
   PerformanceTempoNivel,
 } from '../types/performance';
-import type { TableApiFilters } from '../types/tableFilters';
+import { KpiDictionary } from '../constants/kpiDictionary';
 import { getApiErrorMessage, getTipoErro } from '../utils/apiError';
 import { dataHojeLocal, primeiroDiaMesesAtrasLocal } from '../utils/dateUtils';
 import { buildBaseBarOption, buildBaseLineOption, getEchartsThemeTokens } from '../utils/echartsBuilders';
@@ -193,13 +194,6 @@ function monthName(value: string): string {
     return formatMonthLabel(value);
   }
   return new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(date).replace('.', '');
-}
-
-function normalizeDrillNivel(value: string | null): PerformanceDrilldownNivel {
-  if (value === 'regiao' || value === 'cidade') {
-    return value;
-  }
-  return 'responsavel';
 }
 
 function buildSerieTemporalOption(dados: PerformanceSerieTemporalPoint[], nivel: PerformanceTempoNivel, isDark: boolean): EChartsOption {
@@ -506,7 +500,7 @@ function kpiValorClassName(label: string, tone?: GoalTone): string | undefined {
   if (label === 'Comprovante Anexado') {
     return `text-2xl font-bold truncate ${toneClassName}`.trim();
   }
-  if (label === 'Performance') {
+  if (label === KpiDictionary.performance.percentualPerformance.titulo) {
     return `text-xl font-bold truncate ${toneClassName}`.trim();
   }
   return toneClassName ? `text-2xl font-bold truncate ${toneClassName}` : undefined;
@@ -560,51 +554,19 @@ function DrillUpButton({
 
 function DrilldownActions({
   nivel,
-  responsavel,
-  regiao,
   onNivelClick,
 }: {
   nivel: PerformanceDrilldownNivel;
-  responsavel: string | null;
-  regiao: string | null;
   onNivelClick: (nivel: PerformanceDrilldownNivel) => void;
 }) {
   return (
     <DashboardSegments label="Detalhamento da performance" value={nivel} onChange={onNivelClick}
       options={[
         { value: 'responsavel', label: 'Responsável' },
-        { value: 'regiao', label: 'Região', disabled: !responsavel,
-          title: responsavel ?? 'Selecione um responsável no gráfico para ver as regiões' },
-        { value: 'cidade', label: 'Cidade', disabled: !responsavel || !regiao,
-          title: regiao ?? 'Selecione uma região no gráfico para ver as cidades' },
+        { value: 'regiao', label: 'Região' },
+        { value: 'cidade', label: 'Cidade' },
       ]} />
   );
-}
-
-function aplicarDrillNosFiltrosTabela(
-  filtrosTabela: TableApiFilters,
-  nivel: PerformanceDrilldownNivel,
-  responsavel: string | null,
-  regiao: string | null,
-): TableApiFilters {
-  const tabelaColuna = { ...(filtrosTabela.tabelaColuna ?? {}) };
-  const next: TableApiFilters = { ...filtrosTabela };
-
-  if ((nivel === 'regiao' || nivel === 'cidade') && responsavel) {
-    next.tabelaRazaoSocial = responsavel;
-  }
-
-  if (nivel === 'cidade' && regiao) {
-    tabelaColuna.regiaoDestino = regiao;
-  }
-
-  if (Object.keys(tabelaColuna).length > 0) {
-    next.tabelaColuna = tabelaColuna;
-  } else {
-    delete next.tabelaColuna;
-  }
-
-  return next;
 }
 
 function drillTabelaLabel(
@@ -694,9 +656,6 @@ export default function PerformancePage() {
   const filiais = useFiliais(carregarOpcoesDeFiltro);
   const pagadores = usePagadores(pagadorBuscaDiferida, carregarOpcoesDeFiltro || Boolean(filtros.pagadores?.length));
 
-  const drillNivel = normalizeDrillNivel(searchParams.get('drillNivel'));
-  const drillResponsavel = normalizarDrillTexto(searchParams.get('drillResponsavel'));
-  const drillRegiao = normalizarDrillTexto(searchParams.get('drillRegiao'));
   const nivelTemporal = normalizeTemporalNivel(searchParams.get(NIVEL_PARAM));
   const anoTemporal = numeroParam(searchParams.get(ANO_PARAM));
   const mesTemporal = numeroParam(searchParams.get(MES_PARAM));
@@ -777,36 +736,21 @@ export default function PerformancePage() {
   const status = usePerformanceStatus(filtro);
   const historico = usePerformanceHistorico(historicoFiltro, historicoPeriodoMeses);
   const filtrosTabela = useAnalyticalTableFilters();
-  const filtrosTabelaComDrill = useMemo(
-    () => aplicarDrillNosFiltrosTabela(
-      filtrosTabela.apiFilters,
-      drillNivel,
-      drillResponsavel,
-      drillRegiao,
-    ),
-    [drillNivel, drillRegiao, drillResponsavel, filtrosTabela.apiFilters],
-  );
+  const agrupamento = usePerformanceAgrupamento(filtro);
+  const { nivel: drillNivel, responsavel: drillResponsavel, regiao: drillRegiao } = agrupamento;
   const drillTabelaResumo = useMemo(
     () => drillTabelaLabel(drillNivel, drillResponsavel, drillRegiao),
     [drillNivel, drillRegiao, drillResponsavel],
   );
-  const drilldownParams = useMemo<PerformanceDrilldownParams>(() => ({
-    nivel: drillNivel,
-    responsavel: drillResponsavel,
-    regiaoDestino: drillRegiao,
-  }), [drillNivel, drillRegiao, drillResponsavel]);
-  const drillStateKey = useMemo(
-    () => [drilldownParams.nivel, drilldownParams.responsavel ?? '', drilldownParams.regiaoDestino ?? ''].join('|'),
-    [drilldownParams],
-  );
-  const paginacaoTabela = useTabelaPaginadaState(JSON.stringify({ filtro, tabela: filtrosTabelaComDrill }));
+  const drillStateKey = JSON.stringify(agrupamento.parametros);
+  const paginacaoTabela = useTabelaPaginadaState(JSON.stringify({ filtro: agrupamento.filtroDetalhamento, tabela: filtrosTabela.apiFilters }));
   const tabela = usePerformanceTabelaPaginada(
-    filtro,
+    agrupamento.filtroDetalhamento,
     paginacaoTabela.pagina,
     paginacaoTabela.tamanhoPagina,
-    filtrosTabelaComDrill,
+    filtrosTabela.apiFilters,
   );
-  const drilldown = usePerformanceDrilldown(filtro, drilldownParams);
+  const drilldown = usePerformanceDrilldown(filtro, agrupamento.parametros);
   const aging = usePerformanceAging(filtro);
 
   usePageHeader({
@@ -881,58 +825,6 @@ export default function PerformancePage() {
     }
     setSearchParams(next, { replace: true });
   }, [nivelTemporal, searchParams, setSearchParams]);
-
-  function drillUp() {
-    const next = new URLSearchParams(searchParams);
-    if (drillNivel === 'cidade') {
-      next.set('drillNivel', 'regiao');
-      next.delete('drillRegiao');
-    } else {
-      next.delete('drillNivel');
-      next.delete('drillResponsavel');
-      next.delete('drillRegiao');
-    }
-    setSearchParams(next, { replace: true, preventScrollReset: true });
-  }
-
-  function drillToNivel(nivelAlvo: PerformanceDrilldownNivel) {
-    const next = new URLSearchParams(searchParams);
-
-    if (nivelAlvo === 'responsavel') {
-      next.delete('drillNivel');
-      next.delete('drillResponsavel');
-      next.delete('drillRegiao');
-    } else if (nivelAlvo === 'regiao' && drillResponsavel) {
-      next.set('drillNivel', 'regiao');
-      next.set('drillResponsavel', drillResponsavel);
-      next.delete('drillRegiao');
-    } else if (nivelAlvo === 'cidade' && drillResponsavel && drillRegiao) {
-      next.set('drillNivel', 'cidade');
-      next.set('drillResponsavel', drillResponsavel);
-      next.set('drillRegiao', drillRegiao);
-    }
-
-    setSearchParams(next, { replace: true, preventScrollReset: true });
-  }
-
-  function drillDown(nome: string | null) {
-    const nomeDrill = normalizarDrillTexto(nome);
-
-    if (!nomeDrill || drillNivel === 'cidade') {
-      return;
-    }
-
-    const next = new URLSearchParams(searchParams);
-    if (drillNivel === 'responsavel') {
-      next.set('drillNivel', 'regiao');
-      next.set('drillResponsavel', nomeDrill);
-      next.delete('drillRegiao');
-    } else {
-      next.set('drillNivel', 'cidade');
-      next.set('drillRegiao', nomeDrill);
-    }
-    setSearchParams(next, { replace: true, preventScrollReset: true });
-  }
 
   return (
     <div className="w-full">
@@ -1012,6 +904,7 @@ export default function PerformancePage() {
                 <KpiCard
                   label={kpi.label}
                   valor={kpi.valor}
+                  className={kpi.definition === KpiDictionary.performance.percentualPerformance ? '[&_[title]]:whitespace-normal' : undefined}
                   valorClassName={kpiValorClassName(kpi.label, kpi.tone)}
                   helperText={kpi.helperText}
                 />
@@ -1075,7 +968,12 @@ export default function PerformancePage() {
           />
         </div>
         <div className="flex h-[30rem] min-h-0 flex-col 2xl:col-span-3">
-          <DrillUpButton nivel={drillNivel} regiao={drillRegiao} onBack={drillUp} />
+          {(drillResponsavel || drillRegiao) && (
+            <div className="flex flex-wrap items-baseline gap-2">
+              <DrillUpButton nivel={drillNivel} regiao={drillRegiao} onBack={agrupamento.voltar} />
+              <DashboardButton onClick={() => agrupamento.selecionarNivel(drillNivel)}>Limpar seleção</DashboardButton>
+            </div>
+          )}
           <div className="min-h-0 flex-1">
             <ChartWrapper
               key={drillStateKey}
@@ -1084,9 +982,7 @@ export default function PerformancePage() {
               actions={(
                 <DrilldownActions
                   nivel={drillNivel}
-                  responsavel={drillResponsavel}
-                  regiao={drillRegiao}
-                  onNivelClick={drillToNivel}
+                  onNivelClick={agrupamento.selecionarNivel}
                 />
               )}
               option={drilldownOption}
@@ -1100,7 +996,7 @@ export default function PerformancePage() {
                 click: (params: unknown) => {
                   const nome = chartClickName(params, drilldownData);
                   if (nome) {
-                    drillDown(nome);
+                    agrupamento.abrirGrupo(nome);
                   }
                 },
               }}
@@ -1122,6 +1018,8 @@ export default function PerformancePage() {
         </div>
       </div>
 
+      <PerformanceIndicadoresOperacionais filtro={filtro} />
+
       {drillTabelaResumo ? (
           <span
             className="mr-auto inline-flex min-w-0 max-w-full items-center rounded-md border px-3 py-1.5 text-xs font-medium"
@@ -1135,7 +1033,7 @@ export default function PerformancePage() {
           </span>
       ) : null}
       <PerformanceTabela
-        acoesCabecalho={<ExportButton nomeArquivo="performance" onExport={() => exportarPerformanceCsv(filtro, filtrosTabelaComDrill)} />}
+        acoesCabecalho={<ExportButton nomeArquivo="performance" onExport={() => exportarPerformanceCsv(agrupamento.filtroDetalhamento, filtrosTabela.apiFilters)} />}
         pagina={tabela.data}
         filtros={filtrosTabela.filters}
         hiddenActiveCount={filtrosTabela.hiddenActiveCount}
