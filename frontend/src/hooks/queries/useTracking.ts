@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   buscarTrackingGraficos,
+  buscarTrackingClassificacoes,
   buscarTrackingDashboard,
   buscarTrackingDetalhesPaginada,
   buscarTrackingRegioes,
@@ -16,6 +17,14 @@ import type { TableApiFilters } from '../../types/tableFilters';
 import { OPERATIONAL_QUERY_POLLING_OPTIONS } from '../../utils/pollingUtils';
 
 const STALE_TIME = 5 * 60 * 1000;
+
+export function useTrackingClassificacoes(filtro: TrackingFiltro) {
+  return useQuery({
+    queryKey: ['tracking', 'classificacoes', filtro],
+    queryFn: ({ signal }) => buscarTrackingClassificacoes(filtro, signal),
+    staleTime: STALE_TIME,
+  });
+}
 
 export function useTrackingOverview(filtro: TrackingFiltro) {
   return useQuery({

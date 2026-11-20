@@ -381,10 +381,13 @@ class DashboardExportSqlBuilderTest {
     @Test
     void trackingFiltraMinutaPorNumeroEStatusDepoisDoAgrupamento() {
         var query = builder.buildSelect(DashboardExportDefinition.TRACKING,
-                filtro(Map.of("numeroMinuta", List.of("0492325"), "statusCarga", List.of("No Armazém"))),
+                filtro(Map.of("numeroMinuta", List.of("0492325"), "statusCarga", List.of("No Armazém"),
+                        "classificacoes", List.of("Fracionado", "Lotação"))),
                 EscopoFilialService.EscopoFilial.comAcessoTotal(), Set.of());
 
         assertThat(query.params().getValues()).containsEntry("filtro_numeroMinuta", List.of(492325L));
+        assertThat(query.params().getValues()).containsEntry("filtro_classificacoes", List.of("fracionado", "lotação"));
+        assertThat(query.sql()).contains("[Classificação] IN (:filtro_classificacoes)");
         assertThat(query.sql()).contains("[N° Minuta] IN (:filtro_numeroMinuta)", "[Status Carga] IN (:filtro_statusCarga)")
                 .doesNotContain("base_raw.[Status Carga] IN (:filtro_statusCarga)");
 

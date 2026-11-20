@@ -1,3 +1,7 @@
+## 19/11/2026 — Prazo da minuta no Localizador
+
+A minuta mostra a previsão de entrega junto às notas fiscais e sinaliza em vermelho as cargas em aberto com prazo vencido. O filtro Classificação do frete se aplica aos indicadores, às regiões, às minutas, à tabela e à exportação.
+
 ## 19/11/2026 — Filtros no cabeçalho
 
 O cabeçalho reúne título, abas da página, período, Filtros e ações gerais em uma linha. Quando falta largura, Cotações e Integrações oferecem as mesmas opções em um seletor. No celular, o período pode ser consultado e alterado em Filtros. O cabeçalho exibe o título da página centralizado na altura dos controles. Gerenciar Metas compartilha a área expansível de Filtros no desktop e a folha no celular. No desktop, Metas cresce com a página e o conteúdo mantém a borda inferior visível. Uma divisória separa o horário de atualização e os filtros ativos dos campos de seleção. Em ETL Saúde, Dados recebidos no ETL V2 abre nessa mesma área para os perfis autorizados.

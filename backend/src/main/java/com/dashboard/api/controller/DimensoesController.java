@@ -198,6 +198,16 @@ public class DimensoesController {
         return dashboardExportService.listarDestinosCotacoes(filtro);
     }
 
+    @GetMapping("/tracking/classificacoes")
+    @PreAuthorize("@acessoSeguranca.podeAcessar('tracking')")
+    public List<String> trackingClassificacoes(
+            @RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim,
+            @RequestParam MultiValueMap<String, String> params
+    ) {
+        return dashboardExportService.listarClassificacoesTracking(FiltroRequestMapper.from(dataInicio, dataFim, params));
+    }
+
     @GetMapping("/manifestos/classificacoes")
     @PreAuthorize("@acessoSeguranca.podeAcessar('manifestos')")
     public List<String> manifestosClassificacoes(

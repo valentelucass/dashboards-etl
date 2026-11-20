@@ -18,6 +18,13 @@
 .tracking-expansor:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 .tracking-resumo small { display: block; font-size: .7rem; font-weight: 500; color: light-dark(#46515c, #c6cbd0); }
 .tracking-identificador { display: flex; align-items: center; text-align: left; gap: .45rem; font-weight: 700; overflow-wrap: anywhere; }
+.tracking-minuta { flex-wrap: wrap; gap: .15rem .5rem; }
+.tracking-minuta strong, .tracking-minuta time { white-space: nowrap; }
+.tracking-minuta small { flex-basis: 100%; }
+.tracking-minuta .tracking-atrasadas { font-size: .72rem; }
+@media (min-width: 851px) {
+  article.tracking-linha > .tracking-resumo { grid-template-columns: minmax(11rem, 2fr) repeat(6, minmax(0, 1fr)); }
+}
 .tracking-identificador svg { flex: none; }
 .tracking-atrasadas { color: light-dark(#9e2231, #ffaaa7); }
 .tracking-subnivel { border-top: 1px solid var(--color-border); border-radius: 0 0 .5rem .5rem; padding: .7rem .8rem .75rem 1.1rem; background-color: var(--tracking-campo); }

@@ -13,7 +13,7 @@ it('abre a região e mostra suas NFs sem outro clique; as páginas preservam sig
   const totais = { totalCargas: 1, pesoTaxado: 1, valorFrete: 1, valorNota: 2, volumes: 3, foraDoPrazo: 0 };
   regioes.mockReturnValue({ data: { conteudo: [{ ...totais, regiaoDestino: 'BAURU' }], totalPaginas: 1 } });
   fretes.mockImplementation((_filtro: TrackingFiltro, _sigla: string, _regiao: string, pagina: number) => ({ data: {
-    conteudo: [{ numeroMinuta: pagina === 1 ? 491699 : 492000, numerosNf: pagina === 1 ? ['001', '002', '003'] : [], statusCarga: 'Manifestada', ...totais }],
+    conteudo: [{ numeroMinuta: pagina === 1 ? 491699 : 492000, numerosNf: pagina === 1 ? ['001', '002', '003'] : [], statusCarga: 'Manifestada', previsaoEntrega: pagina === 1 ? '2026-11-18' : null, atrasado: pagina === 1, ...totais }],
     totalPaginas: 2,
   } }));
 
@@ -27,10 +27,15 @@ it('abre a região e mostra suas NFs sem outro clique; as páginas preservam sig
   expect(fretes).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: 'Região de destino BAURU' }));
   expect(fretes).toHaveBeenCalledWith(filtro, 'AGU', 'BAURU', 1, 10);
+  const minuta = within(screen.getByRole('article', { name: 'Minuta 491699' }));
+  expect(minuta.getByText('18/11/2026').getAttribute('datetime')).toBe('2026-11-18');
+  expect(minuta.getByText('ATRASADO')).toBeTruthy();
   const notas = screen.getByRole('list', { name: 'Notas fiscais da minuta 491699' });
   expect(within(notas).getAllByRole('listitem').map(nf => nf.textContent)).toEqual(['001', '002', '003']);
   fireEvent.click(screen.getByRole('button', { name: 'Próxima página de fretes de BAURU' }));
   expect(fretes).toHaveBeenLastCalledWith(filtro, 'AGU', 'BAURU', 2, 10);
+  expect(screen.queryByText('ATRASADO')).toBeNull();
+  expect(screen.getByText('Sem previsão de entrega')).toBeTruthy();
   expect(screen.getByText('Sem nota fiscal informada.')).toBeTruthy();
   fireEvent.click(sigla);
   expect(screen.queryByRole('article', { name: 'Minuta 492000' })).toBeNull();

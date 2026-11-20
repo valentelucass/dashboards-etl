@@ -6,7 +6,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useTrackingFretes, useTrackingRegioes } from '../../../hooks/queries/useTracking';
 import type { TrackingFiltro, TrackingFrete, TrackingMatrizRegiao, TrackingRegiao } from '../../../types/tracking';
 import { getApiErrorMessage } from '../../../utils/apiError';
-import { formatarMoeda, formatarNumero, formatarPeso } from '../../../utils/formatadores';
+import { formatarData, formatarMoeda, formatarNumero, formatarPeso } from '../../../utils/formatadores';
 import DashboardButton from '../../shared/DashboardButton';
 import StatusBadge from '../../shared/StatusBadge';
 import { fundosTracking } from './fundosTracking';
@@ -79,7 +79,12 @@ function Fretes({ filtro, sigla, regiao }: { filtro: TrackingFiltro; sigla: stri
     <h4>Fretes de {regiao}</h4>
     <PainelConsulta erro={consulta.error} carregando={consulta.isLoading} vazio={!dados?.conteudo.length} mensagem="Nenhum frete nesta região para os filtros selecionados." tentar={() => void consulta.refetch()}>
       {dados?.conteudo.map((frete: TrackingFrete) => <article key={frete.numeroMinuta} className="tracking-linha" aria-label={`Minuta ${frete.numeroMinuta}`}>
-        <div className="tracking-resumo"><strong className="tracking-identificador">Minuta {frete.numeroMinuta}</strong>
+        <div className="tracking-resumo">
+          <div className="tracking-identificador tracking-minuta">
+            <strong>Minuta {frete.numeroMinuta}</strong>
+            {frete.atrasado && <span className="tracking-atrasadas">ATRASADO</span>}
+            <small>{frete.previsaoEntrega ? <>Entrega prevista para <time dateTime={frete.previsaoEntrega}>{formatarData(frete.previsaoEntrega)}</time></> : 'Sem previsão de entrega'}</small>
+          </div>
           <span><small>Status</small><StatusBadge status={frete.statusCarga} /></span>
           <span><small>Peso taxado</small>{formatarPeso(frete.pesoTaxado)}</span>
           <span><small>Valor do frete</small>{formatarMoeda(frete.valorFrete)}</span>

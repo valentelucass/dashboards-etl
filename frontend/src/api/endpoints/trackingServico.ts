@@ -30,6 +30,13 @@ function normalizarTrackingRow(item: TrackingApiRow): TrackingRawRow {
   };
 }
 
+export async function buscarTrackingClassificacoes(filtro: TrackingFiltro, signal?: AbortSignal): Promise<string[]> {
+  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/tracking/classificacoes', {
+    signal, params: montarQueryParams(filtro),
+  });
+  return data;
+}
+
 export async function buscarTrackingOverview(filtro: TrackingFiltro, signal?: AbortSignal): Promise<TrackingOverview> {
   const { data } = await clienteAxios.get<TrackingOverview>('/api/painel/tracking', {
     signal,

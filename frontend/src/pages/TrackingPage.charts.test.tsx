@@ -13,6 +13,7 @@ vi.mock('../components/charts/ChartWrapper', () => ({ default: ({ titulo, option
 } }));
 vi.mock('../components/charts/useEchartsTheme', () => ({ useEchartsTheme: () => ({ isDark: state.dark }) }));
 vi.mock('../hooks/queries/useTracking', () => ({
+  useTrackingClassificacoes: () => ({ data: [] }),
   useTrackingDashboard: () => ({ data: state.data, isLoading: !state.data }),
   useTrackingDetalhesPaginada: () => ({ data: { conteudo: [] }, isLoading: state.tableLoading }),
 }));

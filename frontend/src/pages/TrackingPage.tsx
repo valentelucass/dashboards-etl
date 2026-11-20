@@ -17,7 +17,7 @@ import { exportarTrackingCsv } from '../api/endpoints/trackingServico';
 import { useFiltro } from '../contexts/FiltroContext';
 import { usePageHeader } from '../contexts/PageHeaderContext';
 import { useFiliais } from '../hooks/queries/useDimensoes';
-import { useTrackingDashboard, useTrackingDetalhesPaginada } from '../hooks/queries/useTracking';
+import { useTrackingClassificacoes, useTrackingDashboard, useTrackingDetalhesPaginada } from '../hooks/queries/useTracking';
 import { useAnalyticalTableFilters } from '../hooks/useAnalyticalTableFilters';
 import { useTabelaPaginadaState } from '../hooks/useTabelaPaginadaState';
 import type { TrackingFiltro, TrackingRawRow } from '../types/tracking';
@@ -92,13 +92,16 @@ export default function TrackingPage() {
   }, [deveInjetarFilialPadrao, filialAtualPadrao, setFiltro]);
 
   const numeroMinuta = filtros.numeroMinuta?.[0] ?? '';
-  const filtro: TrackingFiltro = {
+  const contextoClassificacao: TrackingFiltro = {
     dataInicio,
     dataFim,
     filialAtual: filialAtualFiltro,
     statusCarga: filtros.statusCarga,
     numeroMinuta: numeroMinuta || undefined,
   };
+
+  const filtro = { ...contextoClassificacao, classificacoes: filtros.classificacoes };
+  const classificacoes = useTrackingClassificacoes(contextoClassificacao);
 
   const activeFilters: ActiveFilter[] = [
     {
@@ -109,6 +112,7 @@ export default function TrackingPage() {
         ? undefined : () => setFiltro('filialAtual', []),
     },
     { label: 'Minuta', count: numeroMinuta ? 1 : 0, valueLabel: numeroMinuta, onRemove: () => setFiltro('numeroMinuta', []) },
+    { label: 'Classificação do frete', count: filtros.classificacoes?.length ?? 0, valueLabel: filtros.classificacoes?.length === 1 ? filtros.classificacoes[0] : undefined, onRemove: () => setFiltro('classificacoes', []) },
     { label: 'Status', count: filtros.statusCarga?.length ?? 0, onRemove: () => setFiltro('statusCarga', []) },
   ];
 
@@ -256,6 +260,14 @@ export default function TrackingPage() {
           opcoes={STATUS_BASE}
           selecionados={filtros.statusCarga ?? []}
           onChange={(valores) => setFiltro('statusCarga', valores)}
+        />
+        <AsyncMultiSelect
+          label="Classificação do frete"
+          opcoes={classificacoes.data ?? []}
+          selecionados={filtros.classificacoes ?? []}
+          onChange={(valores) => setFiltro('classificacoes', valores)}
+          isLoading={classificacoes.isLoading}
+          erro={classificacoes.isError ? getApiErrorMessage(classificacoes.error, 'Erro ao carregar classificações.') : null}
         />
       </FilterBar>
 

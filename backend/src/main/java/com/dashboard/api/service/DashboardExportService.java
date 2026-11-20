@@ -136,10 +136,18 @@ public class DashboardExportService {
     }
 
     public List<String> listarClassificacoesManifestos(FiltroConsultaDTO filtro) {
+        return listarClassificacoes(DashboardExportDefinition.MANIFESTOS, filtro);
+    }
+
+    public List<String> listarClassificacoesTracking(FiltroConsultaDTO filtro) {
+        return listarClassificacoes(DashboardExportDefinition.TRACKING, filtro);
+    }
+
+    private List<String> listarClassificacoes(DashboardExportDefinition definicao, FiltroConsultaDTO filtro) {
         validadorPeriodoService.validar(filtro.dataInicio(), filtro.dataFim());
         EscopoFilialService.EscopoFilial escopo = escopoFilialService.escopoAtual();
         DashboardExportSqlBuilder.ExportSql query = sqlBuilder.buildDistinct(
-                DashboardExportDefinition.MANIFESTOS,
+                definicao,
                 "[Classificação]",
                 filtro,
                 escopo,

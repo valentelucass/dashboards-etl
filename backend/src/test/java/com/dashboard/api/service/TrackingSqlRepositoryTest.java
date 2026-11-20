@@ -34,7 +34,7 @@ class TrackingSqlRepositoryTest {
                 .contains("AS previsao_vencida")
                 .contains("AS pct_finalizado")
                 .contains("base_raw.[Data do frete] >= :inicioOffset AND base_raw.[Data do frete] < :fimOffset")
-                .contains("[Previsão Entrega/Previsão de entrega] < :hoje")
+                .contains("CAST([Previsão Entrega/Previsão de entrega] AS date) < :hoje AND [Status Terminal] = 0")
                 .doesNotContain("TRY_CONVERT(datetimeoffset, [Data do frete])")
                 .doesNotContain("TRY_CONVERT(date, [Previsão Entrega/Previsão de entrega])");
     }

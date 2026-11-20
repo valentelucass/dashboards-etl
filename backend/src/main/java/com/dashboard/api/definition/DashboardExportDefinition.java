@@ -57,6 +57,7 @@ public enum DashboardExportDefinition {
                     "regiaoOrigem", List.of("[Região Origem]"),
                     "regiaoDestino", List.of("[Região Destino]"),
                     "statusCarga", List.of("[Status Carga]"),
+                    "classificacoes", List.of("[Classificação]"),
                     "siglaResponsavel", List.of("[Sigla Responsável Região Destino]"),
                     "numeroMinuta", List.of("[N° Minuta]")
             ),

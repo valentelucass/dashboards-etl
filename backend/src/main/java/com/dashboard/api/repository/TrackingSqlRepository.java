@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -239,12 +240,15 @@ public class TrackingSqlRepository {
         String sql = """
                 SELECT [N° Minuta], [Status Carga], %s AS volumes, %s AS peso_taxado,
                        %s AS valor_frete, %s AS valor_nota,
+                       CAST([Previsão Entrega/Previsão de entrega] AS date) AS previsao_entrega,
+                       CASE WHEN %s THEN 1 ELSE 0 END AS atrasado,
                        JSON_QUERY([Metadata], '$.invoices_mapping') AS notas
                 %s
                 ORDER BY [Data do frete] DESC, [N° Minuta] DESC, [Hash Localização]
-                """.formatted(volumesSql(), pesoSql(colunas), valorFreteSql(), valorNfSql(colunas), source.sql());
+                """.formatted(volumesSql(), pesoSql(colunas), valorFreteSql(), valorNfSql(colunas), previsaoVencidaSql(), source.sql());
         return pagina("SELECT COUNT_BIG(1) " + source.sql(), sql, source, pagina, tamanho, (rs, rowNum) -> new TrackingFreteDTO(
                 rs.getObject("N° Minuta", Long.class), numerosNf(rs.getString("notas")), rs.getString("Status Carga"),
+                rs.getObject("previsao_entrega", LocalDate.class), rs.getBoolean("atrasado"),
                 rs.getInt("volumes"), rs.getBigDecimal("peso_taxado"), rs.getBigDecimal("valor_frete"), rs.getBigDecimal("valor_nota")
         ));
     }
@@ -431,7 +435,7 @@ public class TrackingSqlRepository {
     }
 
     private String previsaoVencidaSql() {
-        return "[Previsão Entrega/Previsão de entrega] < :hoje AND [Status Terminal] = 0";
+        return "CAST([Previsão Entrega/Previsão de entrega] AS date) < :hoje AND [Status Terminal] = 0";
     }
 
     private String pesoSql(TrackingViewColumns colunas) {

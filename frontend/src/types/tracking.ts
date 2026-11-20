@@ -53,6 +53,8 @@ export interface TrackingRegiao extends TrackingTotaisGrupo {
 export interface TrackingFrete {
   numeroMinuta: number;
   numerosNf: string[];
+  previsaoEntrega: string | null;
+  atrasado: boolean;
   statusCarga: string;
   volumes: number;
   pesoTaxado: number;
@@ -116,4 +118,5 @@ export interface TrackingFiltro {
   regiaoOrigem?: string[];
   regiaoDestino?: string[];
   statusCarga?: string[];
+  classificacoes?: string[];
 }
