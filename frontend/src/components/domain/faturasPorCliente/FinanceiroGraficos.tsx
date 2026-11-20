@@ -16,7 +16,7 @@ import type {
 import { getApiErrorMessage } from '../../../utils/apiError';
 import { CORES } from '../../../utils/chartColors';
 import { buildBaseBarOption } from '../../../utils/echartsBuilders';
-import { formatarMoeda, formatarNumero } from '../../../utils/formatadores';
+import { formatarDataCurta, formatarMoeda, formatarNumero } from '../../../utils/formatadores';
 
 interface Props {
   filtro: FaturasPorClienteFiltro;
@@ -152,7 +152,11 @@ function EvolucaoDosFretes({ filtro }: Props) {
   const consulta = useEvolucaoFretes(filtro, granularidade, referencia);
   const linhas = consulta.data ?? [];
   const opcoes = buildBaseBarOption(isDark, {
-    xAxis: { type: 'category', data: linhas.map(d => d.periodo) },
+    xAxis: { type: 'category', data: linhas.map(({ periodo }) => {
+      if (granularidade === 'dia' || granularidade === 'semana') return formatarDataCurta(periodo);
+      if (granularidade === 'mes') return periodo.slice(5, 7) + '/' + periodo.slice(0, 4);
+      return periodo;
+    }) },
     yAxis: { type: 'value' },
     tooltip: { trigger: 'axis', valueFormatter: moedaTooltip },
     series: [

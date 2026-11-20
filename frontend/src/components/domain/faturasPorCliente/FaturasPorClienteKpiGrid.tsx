@@ -1,5 +1,4 @@
 import KpiCard from '../../shared/KpiCard';
-import KpiGrid from '../../shared/KpiGrid';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary } from '../../../constants/kpiDictionary';
 import type { FaturasPorClienteOverview } from '../../../types/faturasPorCliente';
@@ -28,15 +27,15 @@ export default function FaturasPorClienteKpiGrid({ overview }: FaturasPorCliente
     { definition: definitions.clientesAtivos, valor: formatarNumero(overview.clientesAtivos) },
   ] as const;
 
-  return (
-    <KpiGrid count={cards.length}>
-      {cards.map((card) => (
+  const indicadores = cards.map((card) => (
         <TooltipKpi key={card.definition.titulo} definition={card.definition}>
           <KpiCard label={card.definition.titulo} valor={card.valor}
             helperText={'helperText' in card ? card.helperText : undefined}
             valorTone={'tone' in card ? card.tone : 'neutral'} />
         </TooltipKpi>
-      ))}
-    </KpiGrid>
-  );
+  ));
+  return <div className="mb-4 grid gap-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">{indicadores.slice(0, 5)}</div>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{indicadores.slice(5)}</div>
+  </div>;
 }
