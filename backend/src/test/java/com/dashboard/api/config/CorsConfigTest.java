@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CorsConfigTest {
 
     @Test
-    void deveExporContentDispositionParaDownloadCsvNoFrontend() {
+    void deveExporCabecalhosDeDownloadEEsperaNoFrontend() {
         CorsConfig config = new CorsConfig();
         ReflectionTestUtils.setField(
                 config,
@@ -30,7 +30,7 @@ class CorsConfigTest {
         assertThat(cors).isNotNull();
         assertThat(cors.getAllowedOrigins()).contains("https://analytics.rodogarcia.com.br");
         assertThat(cors.getAllowedHeaders()).contains("Authorization", "Content-Type", "X-API-KEY", "X-Dashboard-Route");
-        assertThat(cors.getExposedHeaders()).contains("Content-Disposition", "Content-Length");
+        assertThat(cors.getExposedHeaders()).contains("Content-Disposition", "Content-Length", "Retry-After");
     }
 
     @Test
@@ -50,6 +50,7 @@ class CorsConfigTest {
                 .isEqualTo("https://analytics.rodogarcia.com.br");
         assertThat(cors.checkHttpMethod(HttpMethod.POST)).contains(HttpMethod.POST);
         assertThat(cors.checkHttpMethod(HttpMethod.PATCH)).contains(HttpMethod.PATCH);
+        assertThat(cors.getExposedHeaders()).contains("Retry-After");
         assertThat(cors.checkHeaders(List.of("content-type", "x-dashboard-route")))
                 .contains("content-type", "x-dashboard-route");
     }

@@ -21,6 +21,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
+    private static final List<String> HEADERS_EXPOSTOS = List.of("Content-Disposition", "Content-Length", "Retry-After");
+
     private static final List<String> HEADERS_PERMITIDOS = List.of(
             "Authorization",
             "Content-Type",
@@ -81,7 +83,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(parseOrigensPermitidas())
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders(HEADERS_PERMITIDOS.toArray(String[]::new))
-                .exposedHeaders("Content-Disposition", "Content-Length")
+                .exposedHeaders(HEADERS_EXPOSTOS.toArray(String[]::new))
                 .allowCredentials(true)
                 .maxAge(3600);
     }
@@ -98,7 +100,7 @@ public class CorsConfig implements WebMvcConfigurer {
         configuration.setAllowedOrigins(Arrays.asList(parseOrigensPermitidas()));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(HEADERS_PERMITIDOS);
-        configuration.setExposedHeaders(List.of("Content-Disposition", "Content-Length"));
+        configuration.setExposedHeaders(HEADERS_EXPOSTOS);
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
         return configuration;

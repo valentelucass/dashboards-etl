@@ -15,7 +15,9 @@ import com.dashboard.api.security.PermissaoCatalogo;
 import com.dashboard.api.service.acesso.GestaoSetorService;
 import com.dashboard.api.service.acesso.GestaoUsuarioService;
 import jakarta.validation.Valid;
+import java.sql.SQLException;
 import java.util.List;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -85,6 +87,14 @@ public class AdminAcessoController {
 
     @GetMapping("/usuarios/resumo-sessoes")
     public UsuarioSessaoResumoDTO resumoSessoesUsuarios() {
+        try {
+            return gestaoUsuarioService.resumoSessoesUsuarios();
+        } catch (DataAccessException ex) {
+            if (!(ex.getMostSpecificCause() instanceof SQLException sql) || sql.getErrorCode() != 1205) {
+                throw ex;
+            }
+            // O SQL Server já desfez a transação vítima do deadlock. Releia uma vez em nova transação.
+        }
         return gestaoUsuarioService.resumoSessoesUsuarios();
     }
 

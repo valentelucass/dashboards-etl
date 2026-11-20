@@ -1,3 +1,7 @@
+## 19/11/2026 — Troca rápida entre painéis
+
+Na navegação entre painéis, o navegador pode ler o tempo de espera (Retry-After) que a API envia quando as três vagas de consulta estão ocupadas. A fila existente aguarda o intervalo e cancela a espera ao sair da tela. No resumo administrativo de sessões, uma leitura desfeita por deadlock 1205 no SQL Server é repetida uma vez em uma nova transação.
+
 ## 19/11/2026 — Performance na Gestão à Vista
 
 A Gestão à Vista usa a mesma seleção de minutas da tela Performance para o cartão, o ranking e o detalhamento. O percentual divide as entregas finalizadas no prazo por todas as finalizadas e aparece com duas casas decimais. O total de entregas continua disponível separadamente. Na conferência de 1 a 19/11/2026, as duas telas mostraram 9.010 entregas no prazo de 10.208 finalizadas (88,26%). Ao filtrar a filial AGU, ambas mostraram 86,95%.
