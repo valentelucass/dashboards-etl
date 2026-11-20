@@ -148,6 +148,7 @@ export default function ColetasPage() {
     updatedAt: overview.data?.updatedAt ?? null,
   });
 
+  const erroOrigem = regiaoLogisticaSelecionada ? cidadesOrigem.error : graficos.error;
   const statusData = statusQuery.data ?? EMPTY_ARRAY;
   const historicoPerformanceResponse = historicoPerformanceQuery.data;
   const historicoPerformance = useMemo<ColetasHistoricoPerformance[]>(() => (
@@ -255,7 +256,8 @@ export default function ColetasPage() {
           type: 'line',
           smooth: false,
           data: historicoPerformance.map((item) => item.performancePercentual),
-          symbol: 'none',
+          symbol: 'circle',
+          label: { show: true, position: 'top', formatter: ponto => formatarPorcentagem(Number(ponto.value), 1) },
           lineStyle: { width: 2, color: 'var(--coletas-chart-volume)' },
         },
         {
@@ -327,7 +329,7 @@ export default function ColetasPage() {
       </DashboardSelector>
       <DashboardSegments label="Detalhamento das coletas" value={regiaoLogisticaSelecionada ? 'cidade' : 'regiao'}
         options={[
-          { value: 'regiao', label: 'Regiões logísticas' },
+          { value: 'regiao', label: 'Regiões de coleta' },
           { value: 'cidade', label: 'Cidades', disabled: !podeDrillDownOrigem && !regiaoLogisticaSelecionada,
             title: regiaoLogisticaSelecionada ?? regiaoLogisticaDrilldown ?? 'Selecione uma região para ver as cidades' },
         ]}
@@ -405,6 +407,7 @@ export default function ColetasPage() {
         <ChartWrapper
           titulo="Histórico da Performance"
           chartKey="coletasHistoricoPerformance"
+          minCategoryWidth={52}
           altura="100%"
           option={historicoPerformanceOption}
           actions={<HistoricoPeriodoActions periodo={historicoPeriodo} onPeriodoChange={setHistoricoPeriodo} />}
@@ -413,7 +416,8 @@ export default function ColetasPage() {
           erro={historicoPerformanceQuery.isError ? getApiErrorMessage(historicoPerformanceQuery.error, 'Erro ao carregar histórico de performance de coletas.') : null}
           className="2xl:col-span-2"
         />
-        <ColetasRegionChart data={origemData} cityView={Boolean(regiaoLogisticaSelecionada)} actions={origemActions}
+        <ColetasRegionChart data={origemData} regiao={regiaoLogisticaSelecionada} actions={origemActions}
+          erro={erroOrigem ? getApiErrorMessage(erroOrigem, 'Erro ao carregar as coletas por origem.') : null}
           onEvents={origemEvents} isLoading={regiaoLogisticaSelecionada ? cidadesOrigem.isLoading : graficos.isLoading} />
         <ColetasBars titulo="Coletas em aberto" chartKey="coletasAging" data={agingChart} isLoading={graficos.isLoading} className="2xl:col-span-3" />
       </div>

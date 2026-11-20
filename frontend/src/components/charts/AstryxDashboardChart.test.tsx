@@ -47,6 +47,21 @@ it('mantém a escala secundária percentual e alterna as séries pela legenda', 
   expect(toggle.getAttribute('aria-pressed')).toBe('false');
 });
 
+it('mostra os percentuais sem sobreposição e permite ler os próximos pontos sem hover', () => {
+  const dias = Array.from({ length: 18 }, (_, i) => i + 1);
+  const option: EChartsOption = {
+    xAxis: { type: 'category', data: dias.map(String) },
+    yAxis: { type: 'value' },
+    series: [{ type: 'line', data: dias, label: { show: true, formatter: p => String(p.value) + '%' } }],
+  };
+  const { container } = render(<AstryxDashboardChart option={option} minCategoryWidth={52} />);
+  const rotulos = () => Array.from(container.querySelectorAll('.dashboard-plot-annotation text'), el => el.textContent);
+  const primeiraPagina = rotulos();
+  expect(primeiraPagina.length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima página do gráfico' }));
+  expect([...primeiraPagina, ...rotulos()]).toEqual(dias.map(dia => dia + '%'));
+});
+
 it('mantém o índice original ao paginar e selecionar uma barra horizontal', () => {
   const click = vi.fn();
   const option: EChartsOption = {

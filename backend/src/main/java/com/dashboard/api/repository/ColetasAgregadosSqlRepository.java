@@ -32,7 +32,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class ColetasAgregadosSqlRepository {
 
-    private static final String REGIAO_LOGISTICA_SEM_MAPEAMENTO = "Sem regiao logistica";
+    private static final String REGIAO_COLETA_SQL = "COALESCE(NULLIF(TRIM(JSON_VALUE([Metadata], '$.pck_prn_name')), N''), N'Sem região informada')";
     private static final String CIDADE_SEM_MAPEAMENTO = "Sem cidade";
     private static final String FILTRO_STATUS_EXCLUIDA_SQL =
             "LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status])))) <> N'excluída'";
@@ -250,7 +250,6 @@ public class ColetasAgregadosSqlRepository {
 
     public List<ColetasRegiaoOrigemDTO> buscarRegioesOrigem(FiltroConsultaDTO filtro) {
         DashboardExportSqlBuilder.ExportSql source = source(filtro);
-        String regiaoLogisticaSql = regiaoLogisticaSql();
         String sql = """
                 WITH base_filtrada AS (
                     SELECT *
@@ -277,7 +276,7 @@ public class ColetasAgregadosSqlRepository {
                 WHERE %s
                 GROUP BY %s
                 ORDER BY total_coletas DESC, regiao_logistica ASC
-                """.formatted(source.sql(), regiaoLogisticaSql, FILTRO_STATUS_EXCLUIDA_SQL, regiaoLogisticaSql);
+                """.formatted(source.sql(), REGIAO_COLETA_SQL, FILTRO_STATUS_EXCLUIDA_SQL, REGIAO_COLETA_SQL);
 
         return jdbcTemplate.query(sql, copiarParams(source), (rs, rowNum) -> new ColetasRegiaoOrigemDTO(
                 rs.getString("regiao_logistica"),
@@ -291,7 +290,6 @@ public class ColetasAgregadosSqlRepository {
         MapSqlParameterSource params = copiarParams(source);
         params.addValue("regiaoLogisticaSelecionada", regiaoLogistica);
 
-        String regiaoLogisticaSql = regiaoLogisticaSql();
         String cidadeSql = cidadeSql();
         String sql = """
                 WITH base_filtrada AS (
@@ -320,7 +318,7 @@ public class ColetasAgregadosSqlRepository {
                   AND %s = :regiaoLogisticaSelecionada
                 GROUP BY %s
                 ORDER BY total_coletas DESC, cidade ASC
-                """.formatted(source.sql(), cidadeSql, FILTRO_STATUS_EXCLUIDA_SQL, regiaoLogisticaSql, cidadeSql);
+                """.formatted(source.sql(), cidadeSql, FILTRO_STATUS_EXCLUIDA_SQL, REGIAO_COLETA_SQL, cidadeSql);
 
         return jdbcTemplate.query(sql, params, (rs, rowNum) -> new ColetasCidadeOrigemDTO(
                 rs.getString("cidade"),
@@ -443,10 +441,6 @@ public class ColetasAgregadosSqlRepository {
 
     private MapSqlParameterSource copiarParams(DashboardExportSqlBuilder.ExportSql source) {
         return new MapSqlParameterSource(source.params().getValues());
-    }
-
-    private String regiaoLogisticaSql() {
-        return "COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Região Logística]))), N''), N'" + REGIAO_LOGISTICA_SEM_MAPEAMENTO + "')";
     }
 
     private String cidadeSql() {

@@ -20,6 +20,7 @@ interface ChartWrapperProps {
   className?: string;
   contentClassName?: string;
   chartClassName?: string;
+  minCategoryWidth?: number;
   chartKey?: ChartDictionaryKey;
   sideContent?: ReactNode;
   sideContentLayoutClassName?: string;
@@ -40,6 +41,7 @@ function ChartWrapperInner({
   className,
   contentClassName,
   chartClassName,
+  minCategoryWidth,
   chartKey,
   sideContent,
   sideContentLayoutClassName,
@@ -61,7 +63,7 @@ function ChartWrapperInner({
     <ChartCard titulo={titulo} actions={actions} isLoading={isLoading} isEmpty={isEmpty} emptyMessage={emptyMessage} erro={erro} className={className} contentClassName={contentClassName} chartKey={chartKey}>
       <div className={sideContent ? resolvedSideContentLayoutClassName : 'h-full min-h-0'}>
         <div className={`h-full min-h-0 ${sideContent ? resolvedSideContentChartClassName : ''} ${chartClassName ?? ''}`} style={chartStyle}>
-          <AstryxDashboardChart option={option} label={titulo} style={chartStyle} onEvents={onEvents} />
+          <AstryxDashboardChart option={option} label={titulo} minCategoryWidth={minCategoryWidth} style={chartStyle} onEvents={onEvents} />
         </div>
         {sideContent ? (
           <div className={`min-h-0 ${resolvedSideContentAsideClassName}`}>

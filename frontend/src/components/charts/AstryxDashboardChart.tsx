@@ -13,10 +13,11 @@ export interface AstryxChartProps {
   option: EChartsOption;
   label?: string;
   style?: CSSProperties;
+  minCategoryWidth?: number;
   onEvents?: ChartEvents;
 }
 
-export default function AstryxDashboardChart({ option, label, onEvents, style }: AstryxChartProps) {
+export default function AstryxDashboardChart({ option, label, onEvents, style, minCategoryWidth }: AstryxChartProps) {
   const model = useMemo(() => readDashboardChart(option), [option]);
   const { config, series, rows } = model;
   const palette = useChartColors();
@@ -39,7 +40,10 @@ export default function AstryxDashboardChart({ option, label, onEvents, style }:
 
   const radial = series[0]?.type === 'pie';
   const end = config.dataZoom?.find(item => item.type === 'slider')?.end;
-  const pageSize = end ? Math.max(1, Math.round(rows.length * end / 100)) : rows.length;
+  const zoomSize = end ? Math.max(1, Math.round(rows.length * end / 100)) : rows.length;
+  const pageSize = minCategoryWidth && width
+    ? Math.min(zoomSize, Math.max(1, Math.floor((width - 90) / minCategoryWidth)))
+    : zoomSize;
   const pageCount = pageSize ? Math.ceil(rows.length / pageSize) : 1;
   const currentPage = Math.min(page, pageCount - 1);
   const candidates = series.map((item, index) => describeSeries(item, index, colors));

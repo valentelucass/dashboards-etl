@@ -6,6 +6,10 @@ Em Gestão de usuários, Acessos de hoje mostra cinco rotas por página. As seta
 
 A faixa distribui os nove indicadores conforme a largura disponível e o tamanho dos valores. Em desktops largos, os nove ficam na mesma linha. Quando a faixa precisa de duas linhas, os cinco indicadores financeiros ficam juntos, seguidos dos quatro de prazos e clientes. Em telas menores, a grade passa a três, duas ou uma coluna. Os nomes ficam visíveis por inteiro.
 
+## 19/11/2026 — Coletas por região e cidade
+
+O gráfico de origem usa a região da coleta informada no ESL (pck_prn_name) e permite detalhar as cidades dentro de cada região. As colunas mostram as coletas e a linha mostra o peso taxado. O histórico exibe os percentuais nos pontos da série de performance.
+
 ## 19/11/2026 — Prazo da minuta no Localizador
 
 A minuta mostra a previsão de entrega junto às notas fiscais e sinaliza em vermelho as cargas em aberto com prazo vencido. O filtro Classificação do frete se aplica aos indicadores, às regiões, às minutas, à tabela e à exportação.

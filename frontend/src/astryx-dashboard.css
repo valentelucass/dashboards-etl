@@ -251,21 +251,11 @@ dialog:modal::backdrop {
 }
 
 .dashboard-coletas-regions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   min-height: 350px;
   gap: 8px;
-}
-
-.dashboard-coletas-regions > section {
-  flex: 1 1 14rem;
-}
-
-.dashboard-coletas-regions h4 {
-  color: var(--color-text);
-  font-size: .875rem;
-  font-weight: 650;
 }
 
 [data-dashboard-chart="coletasOrigem"] h3 {

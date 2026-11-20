@@ -96,7 +96,8 @@ class ColetasAgregadosSqlRepositoryTest {
                 .contains("COUNT(DISTINCT [Coleta]) AS total_coletas")
                 .contains("SUM(COALESCE([Peso Taxado], 0)) AS peso_taxado")
                 .contains("LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status])))) <> N'excluída'")
-                .contains("GROUP BY COALESCE(NULLIF(LTRIM(RTRIM(CONVERT(NVARCHAR(255), [Região Logística])))");
+                .contains("GROUP BY COALESCE(NULLIF(TRIM(JSON_VALUE([Metadata], '$.pck_prn_name'))")
+                .contains("Sem região informada");
     }
 
     @Test
@@ -295,7 +296,8 @@ class ColetasAgregadosSqlRepositoryTest {
         assertThat(sqlCaptor.getValue())
                 .contains("COUNT(DISTINCT [Coleta]) AS total_coletas")
                 .contains("LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status])))) <> N'excluída'")
-                .contains(":regiaoLogisticaSelecionada");
+                .contains("COALESCE(NULLIF(TRIM(JSON_VALUE([Metadata], '$.pck_prn_name')), N''), N'Sem região informada') = :regiaoLogisticaSelecionada")
+                .contains("GROUP BY COALESCE(NULLIF(LTRIM(RTRIM([Cidade]))");
     }
 
     private static EscopoFilialService escopoSemRestricao() {
