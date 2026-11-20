@@ -4,11 +4,13 @@ import { BottomSheet } from '@astryxdesign/core/BottomSheet';
 import DashboardButton from "./DashboardButton";
 import { Button } from '@astryxdesign/core/Button';
 import { Badge } from '@astryxdesign/core/Badge';
-import { Children, useEffect, useId, useRef, useState } from 'react';
+import { Children, useContext, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
+import { FilterHeaderContext } from '../../contexts/FilterHeaderContext';
+import LastUpdated from './LastUpdated';
 
 export interface ActiveFilter {
   label: string;
@@ -33,10 +35,10 @@ interface FilterBarProps {
 }
 
 // ── helpers ───────────────────────────────────────────────────────────
-function fmtData(iso: string): string {
+function fmtData(iso: string, fullYear: boolean): string {
   if (!iso) return '';
   const [ano, mes, dia] = iso.split('-');
-  return `${dia}/${mes}/${ano.slice(2)}`;
+  return `${dia}/${mes}/${fullYear ? ano : ano.slice(2)}`;
 }
 
 // ── sub-components ────────────────────────────────────────────────────
@@ -66,6 +68,7 @@ export default function FilterBar({
   dateAccessory,
 }: FilterBarProps) {
   const [open, setOpen] = useState(false);
+  const header = useContext(FilterHeaderContext);
   const isMobile = useMediaQuery('(width < 48rem)');
   const [isPresentationMode, setIsPresentationMode] = useState(() => document.body.dataset.presentationMode === 'true');
   const panelId = useId();
@@ -97,30 +100,34 @@ export default function FilterBar({
   const totalActive = filtersWithValues.reduce((s, f) => s + f.count, 0);
   const showDate = dataInicio && dataFim;
   const dimensionCount = Children.toArray(children).length;
-  const hasFilterControls = Boolean(period || dimensionCount);
+  const hasFilterControls = Boolean(period || dimensionCount || hasActive);
+  const inHeader = !isPresentationMode && Boolean(header?.toolbar && header.panel);
+  const panelSummary = (header?.updatedAt || hasActive) && (
+    <div className="dashboard-filter-summary">
+      {header?.updatedAt && <LastUpdated dataExtracao={header.updatedAt} />}
+      {hasActive && <div role="group" aria-label="Filtros ativos" className="dashboard-filter-badges">
+        {filtersWithValues.map(filter => <FilterBadge key={filter.label} {...filter} />)}
+      </div>}
+    </div>
+  );
 
   // ── barra recolhida (sempre visível) ──────────────────────────────
   const collapsedBar = (
     <div
-      className={`dashboard-filter-card flex items-center border ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : actionsOnMobileRow ? 'min-h-12 flex-wrap gap-x-3 gap-y-1 rounded-[20px] px-4 py-1.5 md:flex-nowrap md:py-0' : 'min-h-12 flex-wrap gap-x-3 gap-y-2 rounded-[20px] px-4 py-2 md:flex-nowrap md:py-0'}`}
-      style={{ backgroundColor: isPresentationMode ? 'transparent' : 'var(--color-card)', borderColor: 'var(--color-border)' }}
+      className={inHeader ? 'dashboard-header-toolbar' : `dashboard-filter-card flex items-center border ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : 'min-h-12 flex-wrap gap-x-3 gap-y-2 rounded-[20px] px-4 py-2 md:flex-nowrap md:py-0'}`}
     >
       {/* Data compacta */}
       {showDate && (
         <>
-          <div className="flex flex-wrap items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+          <div className="dashboard-filter-date flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>
             <Calendar size={13} className="shrink-0" aria-hidden="true" />
-            <span className="font-medium tabular-nums" style={{ color: 'var(--color-text)' }}>{fmtData(dataInicio)}</span>
-            <span aria-hidden="true">→</span>
-            <span className="font-medium tabular-nums" style={{ color: 'var(--color-text)' }}>{fmtData(dataFim)}</span>
-            {dateAccessory && !isMobile ? (
-              <>
-                <span className="mx-1 h-4 w-px" style={{ backgroundColor: 'var(--color-border)' }} aria-hidden="true" />
-                {dateAccessory}
-              </>
-            ) : null}
+            <div className="dashboard-filter-date-values">
+              <time dateTime={dataInicio}><span className="sr-only">De </span>{fmtData(dataInicio, inHeader)}</time>
+              {!inHeader && <span aria-hidden="true"> → </span>}
+              <time dateTime={dataFim}><span className="sr-only">Até </span>{fmtData(dataFim, inHeader)}</time>
+            </div>
           </div>
-          <div className="hidden h-5 w-px shrink-0 sm:block" style={{ backgroundColor: 'var(--color-border)' }} aria-hidden="true" />
+          {!inHeader && <div className="hidden h-5 w-px shrink-0 sm:block" style={{ backgroundColor: 'var(--color-border)' }} aria-hidden="true" />}
         </>
       )}
 
@@ -129,8 +136,9 @@ export default function FilterBar({
         <Button
           ref={filterButtonRef}
           label="Filtros"
-          variant={isPresentationMode ? 'ghost' : 'secondary'}
+          variant={isPresentationMode || inHeader ? 'ghost' : 'secondary'}
           size={isPresentationMode ? 'sm' : 'md'}
+          className={inHeader ? 'dashboard-header-action' : undefined}
           onClick={() => {
             if (!open) onOpen?.();
             setOpen(!open);
@@ -152,38 +160,13 @@ export default function FilterBar({
         </Button>
       )}
 
+      {dateAccessory && !isMobile && <div className="shrink-0 text-xs">{dateAccessory}</div>}
       {actions ? (
-        <div className={`flex items-center gap-2 ${actionsOnMobileRow && !isPresentationMode ? 'min-w-0 basis-full md:basis-auto md:shrink-0' : 'shrink-0 overflow-hidden'} ${isPresentationMode ? 'p-0' : 'p-1'}`}>
+        <div className={`dashboard-filter-actions flex min-w-0 max-w-full items-center gap-2 ${actionsOnMobileRow ? 'dashboard-filter-views' : ''}`}>
           {actions}
         </div>
       ) : null}
 
-      {/* Chips de filtros ativos — somente desktop */}
-      {hasActive && !isMobile && !isPresentationMode && (
-        <div className={`flex min-w-0 flex-1 items-center gap-1.5 ${open ? 'flex-wrap py-1' : 'overflow-hidden'}`} aria-label="Filtros ativos">
-          {(open ? filtersWithValues : filtersWithValues.slice(0, 3)).map((f) => (
-            <FilterBadge key={f.label} {...f} />
-          ))}
-          {!open && filtersWithValues.length > 3 && (
-            <span className="shrink-0 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-              +{filtersWithValues.length - 3}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Limpar */}
-      {hasActive && onClear && !open && (
-        <DashboardButton
-          type="button"
-          onClick={onClear}
-          className="ml-auto shrink-0 cursor-pointer text-xs font-medium transition-opacity hover:opacity-70 active:scale-[0.97]
-                     focus:outline-none focus:underline"
-          style={{ color: 'var(--color-text-muted)' }}
-        >
-          Limpar
-        </DashboardButton>
-      )}
     </div>
   );
 
@@ -212,6 +195,7 @@ export default function FilterBar({
             className="mt-2 rounded-[20px] border p-4 shadow-sm"
             style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
           >
+            {panelSummary}
             {/* Período e dimensões quebram como grupos completos, sem campos isolados. */}
             <div
               role="group"
@@ -247,17 +231,6 @@ export default function FilterBar({
               )}
             </div>
 
-            {/* A faixa adicional só ocupa espaço quando há seleções a mostrar. */}
-            {hasActive && isPresentationMode && (
-              <div
-                className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3"
-                style={{ borderColor: 'var(--color-border)' }}
-              >
-                {filtersWithValues.map((f) => (
-                  <FilterBadge key={f.label} {...f} />
-                ))}
-              </div>
-            )}
           </motion.div>
         </motion.div>
       )}
@@ -276,12 +249,12 @@ export default function FilterBar({
           </div>
           <Button label="Fechar filtros" isIconOnly icon={<X size={16} />} variant="ghost" onClick={() => setOpen(false)} />
         </div>
+        {panelSummary}
         <div role="group" aria-label="Opções de filtro" className="dashboard-mobile-filter-fields grid min-w-0 gap-4">
           {period && <div className="dashboard-filter-period">{period}</div>}
           {dateAccessory && <div className="text-xs">{dateAccessory}</div>}
           {children}
         </div>
-        {hasActive && <div className="flex flex-wrap gap-2">{filtersWithValues.map(item => <FilterBadge key={item.label} {...item} />)}</div>}
         {onClear && <Button label="Limpar filtros" onClick={() => { onClear(); setOpen(false); }} />}
       </div>
     </BottomSheet>
@@ -316,6 +289,14 @@ export default function FilterBar({
         {mobileDrawer}
       </>
     );
+  }
+
+  if (inHeader && header?.toolbar && header.panel) {
+    return <>
+      {createPortal(collapsedBar, header.toolbar)}
+      {createPortal(desktopPanel, header.panel)}
+      {mobileDrawer}
+    </>;
   }
 
   return (

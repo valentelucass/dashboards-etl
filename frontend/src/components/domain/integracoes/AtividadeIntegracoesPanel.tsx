@@ -20,7 +20,7 @@ export default function AtividadeIntegracoesPanel({ dados, destinos }: { dados?:
       </p>
     </TooltipKpi>
     {dados.atividade.length === 0 ? <p className="text-sm text-[var(--color-text-muted)]">Nenhuma atividade registrada neste período. Datas anteriores ao início da medição não representam zero tentativas.</p>
-      : <div className="overflow-x-auto"><Table className="w-full min-w-[680px] text-left text-xs tabular-nums">
+      : <div className="integracoes-atividade-tabela"><Table className="w-full min-w-[680px] text-left text-xs tabular-nums">
         <caption className="sr-only">Histórico de avaliações e tentativas</caption>
         <TableHeader><TableRow isHeaderRow className="border-b border-[var(--color-border)]">
           {['Dia', 'Etapa', 'Avaliações', 'Envios iniciados', 'Repetições de envio¹', 'Consultas à origem', 'Sem conclusão'].map(t => <TableHeaderCell key={t} scope="col" className="p-2">{t}</TableHeaderCell>)}

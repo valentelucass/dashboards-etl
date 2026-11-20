@@ -9,7 +9,6 @@ import { useTheme } from 'next-themes';
 import {
   ChevronLeft,
   ChevronRight,
-  Clock3,
   LogOut,
   Menu,
   Moon,
@@ -22,14 +21,18 @@ import { useAutenticacao } from '../../contexts/AutenticacaoContext';
 import { usePageHeader } from '../../contexts/PageHeaderContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import type { NavItem } from '../../utils/accessControl';
-import { formatarDataHoraMinuto } from '../../utils/formatadores';
 import { filterPresentationPages, type PresentationPage } from '../../utils/presentationSequence';
 import PresentationSequencesModal from '../presentation/PresentationSequencesModal';
 import CommunicationsBell from '../home/CommunicationsBell';
 
 const focusRingClass = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
 
-export default function TopNav() {
+interface TopNavProps {
+  toolbarRef: React.RefCallback<HTMLDivElement>;
+  panelRef: React.RefCallback<HTMLDivElement>;
+}
+
+export default function TopNav({ toolbarRef, panelRef }: TopNavProps) {
   const { usuario, logout } = useAutenticacao();
   const navigate = useNavigate();
   const currentLocation = useLocation();
@@ -47,8 +50,6 @@ export default function TopNav() {
   const isDarkTheme = theme === 'dark';
   const themeToggleLabel = isDarkTheme ? 'Alternar para modo claro' : 'Alternar para modo escuro';
   const hamburgerLabel = isMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação';
-  const updatedAt = pageHeader.updatedAt ? formatarDataHoraMinuto(pageHeader.updatedAt) : null;
-  const updatedAtLabel = updatedAt ? `Atualizado em ${updatedAt}` : null;
 
   const paginasApresentacao = filterPresentationPages(canAccess);
 
@@ -175,24 +176,13 @@ export default function TopNav() {
                   {pageHeader.description}
                 </p>
               )}
-              {!apresentacao && updatedAtLabel && (
-                <p className="top-nav__mobile-updated mt-1 text-[11px] sm:hidden" style={{ color: 'var(--color-text-subtle)' }}>
-                  <Clock3 size={12} className="shrink-0" aria-hidden="true" />
-                  <time dateTime={pageHeader.updatedAt ?? undefined} aria-label={updatedAtLabel} title={updatedAtLabel}>{updatedAt}</time>
-                </p>
-              )}
             </div>
           </div>
 
           {apresentacao && <div id="presentation-filter-slot" className="min-w-0 flex-1 border-r px-3" style={{ borderColor: 'var(--color-border)' }} />}
+          {!apresentacao && <div ref={toolbarRef} className="top-nav__filters" />}
 
           <div className={`top-nav__right flex shrink-0 items-center ${apresentacao ? 'gap-1.5 pl-3' : 'gap-2'}`}>
-            {updatedAtLabel && (
-              <span className={`top-nav__updated hidden max-w-[12rem] text-right leading-relaxed md:block ${apresentacao ? 'text-[10px]' : 'text-xs'}`} style={{ color: 'var(--color-text-subtle)' }}>
-                {updatedAtLabel}
-              </span>
-            )}
-
             {apresentacao && (
               <div className="flex items-center gap-1 border-l pl-3" style={{ borderColor: 'var(--color-border)' }}>
                 <span className="hidden pr-1 text-[10px] font-semibold lg:inline" style={{ color: 'var(--color-text-muted)' }}>
@@ -247,6 +237,7 @@ export default function TopNav() {
 
           </div>
         </div>
+        {!apresentacao && <div ref={panelRef} className="top-nav__filter-panel" />}
       </header>
 
       <DashboardMobileNav id={panelId} open={isMenuOpen} onOpenChange={setIsMenuOpen} sections={navSections}

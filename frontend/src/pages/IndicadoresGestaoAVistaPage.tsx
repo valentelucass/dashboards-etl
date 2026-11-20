@@ -1,4 +1,5 @@
 import { Card } from '@astryxdesign/core/Card';
+import { Button } from '@astryxdesign/core/Button';
 import DashboardButton from "../components/shared/DashboardButton";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, BarChart3, Boxes, CheckCircle2, ChevronRight, ChevronUp, Clock3, Gauge, MessageSquarePlus, PackageCheck, Settings, ShieldAlert, Truck } from 'lucide-react';
@@ -1070,15 +1071,11 @@ export default function IndicadoresGestaoAVistaPage() {
         dataInicio={dataInicioIndicadores}
         dataFim={dataFimIndicadores}
         actions={canManageKpiGoals ? (
-          <DashboardButton
-            type="button"
+          <Button
+            label="Gerenciar Metas" variant="ghost" size="sm" icon={<Settings size={14} />}
+            className="dashboard-header-action"
             onClick={abrirGerenciadorMetas}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-[var(--color-bg)] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            style={{ color: 'var(--color-text)' }}
-          >
-            <Settings size={14} aria-hidden="true" />
-            Gerenciar Metas
-          </DashboardButton>
+          />
         ) : null}
       >
         <FiliaisParceirosFilter

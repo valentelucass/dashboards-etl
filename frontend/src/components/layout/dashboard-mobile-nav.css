@@ -105,8 +105,7 @@
   .top-nav .top-nav__bar { gap: .5rem; }
   .top-nav .top-nav__identity { gap: .5rem; }
   .top-nav .top-nav__right { gap: .125rem; }
-  .top-nav .top-nav__presentation-action,
-  .top-nav .top-nav__updated { display: none; }
+  .top-nav .top-nav__presentation-action { display: none; }
 
   .top-nav .top-nav__menu-button,
   .top-nav .top-nav__theme-button,
@@ -129,15 +128,6 @@
     height: 1px;
     overflow: hidden;
     clip-path: inset(50%);
-  }
-
-  .top-nav .top-nav__mobile-updated {
-    display: flex;
-    align-items: center;
-    gap: .25rem;
-    margin-top: .15rem;
-    font-size: .6875rem;
-    line-height: 1.2;
   }
 
   body[data-presentation-mode="true"] .top-nav__bar {

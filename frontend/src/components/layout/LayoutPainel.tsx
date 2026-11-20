@@ -5,6 +5,8 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { CalendarClock, Code2, Mail } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import TopNav from './TopNav';
+import { FilterHeaderContext } from '../../contexts/FilterHeaderContext';
+import { usePageHeader } from '../../contexts/PageHeaderContext';
 import usePresencaNavegacao from '../../hooks/usePresencaNavegacao';
 
 type BuildInfo = {
@@ -109,14 +111,20 @@ function BuildInfoFooter() {
 
 export default function LayoutPainel() {
   usePresencaNavegacao();
+  const { updatedAt } = usePageHeader();
+  const [toolbar, setToolbar] = useState<HTMLDivElement | null>(null);
+  const [panel, setPanel] = useState<HTMLDivElement | null>(null);
+  const filterHeader = useMemo(() => ({ toolbar, panel, updatedAt }), [toolbar, panel, updatedAt]);
   return (
     <div className="dashboard-shell dashboard-shell-with-sidebar flex min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
       <DashboardSideNav />
       <div className="dashboard-main-column flex min-w-0 flex-1 flex-col">
-        <TopNav />
+        <TopNav toolbarRef={setToolbar} panelRef={setPanel} />
         <main className="flex-1 w-full overflow-auto px-3 py-3 sm:px-5 sm:py-4">
           <Suspense fallback={<DashboardRouteLoading />}>
-            <Outlet />
+            <FilterHeaderContext.Provider value={filterHeader}>
+              <Outlet />
+            </FilterHeaderContext.Provider>
           </Suspense>
         </main>
         <footer className="dashboard-footer mt-auto border-t" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>

@@ -1,3 +1,7 @@
+## 19/11/2026 — Filtros no cabeçalho
+
+Os doze dashboards mostram o período, o botão Filtros e as ações da página no cabeçalho. O painel aberto mantém os campos originais e reúne o horário de atualização e os filtros ativos na primeira linha. No celular, os campos continuam na folha de filtros. Em Integrações, o histórico de avaliações usa a rolagem própria da tabela quando as sete colunas excedem a largura disponível.
+
 ## 19/11/2026 — Filtros dos dashboards
 
 No desktop, a lista de opções abre junto ao campo com a largura do seletor Astryx. Os controles de cada linha ficam alinhados pela base, inclusive quando há contadores de seleção. Cada filtro ativo aparece uma vez. Em Localização de Cargas, remover uma filial escolhida restaura a filial padrão, que é obrigatória.

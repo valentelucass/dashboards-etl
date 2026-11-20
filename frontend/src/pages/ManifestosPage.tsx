@@ -1,6 +1,6 @@
 import { Badge } from '@astryxdesign/core/Badge';
 import { DashboardInput } from "../components/shared/DashboardTextEntry";
-import DashboardButton from "../components/shared/DashboardButton";
+import { Button } from '@astryxdesign/core/Button';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -427,15 +427,11 @@ export default function ManifestosPage() {
           </span>
         ) : null}
         actions={canManageManifestosGoals ? (
-          <DashboardButton
-            type="button"
+          <Button
+            label="Gerenciar Metas" variant="ghost" size="sm" icon={<Settings size={14} />}
+            className="dashboard-header-action"
             onClick={() => setIsMetasPanelOpen((current) => !current)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-[var(--color-bg)] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            style={{ color: 'var(--color-text)' }}
-          >
-            <Settings size={14} aria-hidden="true" />
-            Gerenciar Metas
-          </DashboardButton>
+          />
         ) : null}
       >
         <div className="flex w-full min-w-[148px] flex-col gap-1 self-end justify-self-start md:w-auto">

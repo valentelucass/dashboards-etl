@@ -14,7 +14,8 @@ it('exibe cada filtro uma vez ao abrir a barra e permite remover inclusive o qua
     { label: 'Status', count: 1, onRemove: removerStatus },
   ]}><input aria-label="Número da minuta" /></FilterBar>);
 
-  expect(screen.getByText('+1')).toBeTruthy();
+  expect(screen.getByLabelText('4 filtros ativos')).toBeTruthy();
+  expect(screen.queryByText('Filial Atual: AGU')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: /Filtros/ }));
   expect(screen.getByText('Filial Atual: AGU')).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Remover filtro Filial Atual' })).toBeNull();

@@ -1027,3 +1027,8 @@ table.cotacoes-resumo-table {
 .dashboard-chart-heading [role="radio"][aria-disabled="true"] {
   color: color-mix(in srgb, var(--color-text-muted) 80%, var(--color-card));
 }
+.integracoes-atividade-tabela {
+  --container-padding-inline-start: 0px;
+  --container-padding-inline-end: 0px;
+  min-inline-size: 0;
+}
