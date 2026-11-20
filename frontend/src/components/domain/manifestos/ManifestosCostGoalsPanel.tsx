@@ -1,3 +1,4 @@
+import HeaderPanelContent from '../../shared/HeaderPanelContent';
 import DashboardLoading from '../../shared/DashboardLoading';
 import { DashboardInput } from "../../shared/DashboardTextEntry";
 import DashboardSelector from "../../shared/DashboardSelector";
@@ -380,7 +381,7 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
   }
 
   return (
-    <>
+    <HeaderPanelContent>
       <section
         className="mb-4 rounded-[20px] border p-5 shadow-sm"
         style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
@@ -628,6 +629,6 @@ export default function ManifestosCostGoalsPanel({ open }: ManifestosCostGoalsPa
       </section>
       <ManifestosMetasImportacaoModal open={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
       <ToastStack items={toasts} />
-    </>
+    </HeaderPanelContent>
   );
 }

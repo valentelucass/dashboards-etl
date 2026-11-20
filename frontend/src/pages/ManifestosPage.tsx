@@ -1,10 +1,9 @@
+import { Settings } from 'lucide-react';
 import { Badge } from '@astryxdesign/core/Badge';
 import { DashboardInput } from "../components/shared/DashboardTextEntry";
-import { Button } from '@astryxdesign/core/Button';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useCallback, useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import { Settings } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
@@ -426,13 +425,14 @@ export default function ManifestosPage() {
             {dadosPerformance.totalDiasUteis} Dias Úteis
           </span>
         ) : null}
-        actions={canManageManifestosGoals ? (
-          <Button
-            label="Gerenciar Metas" variant="ghost" size="sm" icon={<Settings size={14} />}
-            className="dashboard-header-action"
-            onClick={() => setIsMetasPanelOpen((current) => !current)}
-          />
-        ) : null}
+        actionPanel={canManageManifestosGoals ? {
+          label: 'Gerenciar Metas', icon: Settings,
+          open: isMetasPanelOpen,
+          onOpenChange: setIsMetasPanelOpen,
+          content: (
+            <ManifestosCostGoalsPanel open={isMetasPanelOpen} />
+          ),
+        } : undefined}
       >
         <div className="flex w-full min-w-[148px] flex-col gap-1 self-end justify-self-start md:w-auto">
           <label
@@ -496,10 +496,6 @@ export default function ManifestosPage() {
           onChange={(valores) => setFiltro('tiposContrato', valores)}
         />
       </FilterBar>
-
-      {canManageManifestosGoals ? (
-        <ManifestosCostGoalsPanel open={isMetasPanelOpen} />
-      ) : null}
 
       {performance.isError && <MensagemErro mensagem={getApiErrorMessage(performance.error, 'Erro ao carregar indicadores de manifestos.')} tipo={getTipoErro(performance.error)} />}
       <ManifestosKpiGrid

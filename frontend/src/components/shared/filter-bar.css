@@ -26,48 +26,57 @@
 
 .top-nav__bar:has(> .top-nav__filters:not(:empty)) {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, max-content) minmax(max-content, 1fr) auto;
+  align-items: center;
 }
 
 .top-nav__bar:has(> .top-nav__filters:not(:empty)) .top-nav__identity {
-  max-inline-size: 25cqi;
+  max-inline-size: min(35cqi, 27rem);
 }
 
-.top-nav__filters {
-  min-inline-size: 0;
+.top-nav__filters { min-inline-size: 0; }
+
+.top-nav__filters:not(:empty) + .top-nav__right {
   border-inline-start: 1px solid var(--color-border);
-  padding-inline-start: 1rem;
+  padding-inline-start: .75rem;
 }
 
 .dashboard-header-toolbar {
   --header-control-height: 2rem;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: .375rem .75rem;
+  justify-content: flex-end;
+  gap: .625rem;
 }
 
-.dashboard-header-toolbar .dashboard-header-action {
+.dashboard-header-toolbar .dashboard-filter-actions,
+.dashboard-header-toolbar .dashboard-date-accessory {
+  display: flex;
+  align-items: center;
   min-block-size: var(--header-control-height);
+  flex: none;
+}
+
+.dashboard-header-toolbar > :is(.dashboard-filter-actions, .dashboard-date-accessory):first-child {
+  border-inline-start: 1px solid var(--color-border);
+  padding-inline-start: .875rem;
+}
+
+.dashboard-header-toolbar .dashboard-header-action,
+.dashboard-header-toolbar [role="tab"] {
+  min-block-size: var(--header-control-height);
+}
+
+.dashboard-header-toolbar .dashboard-filter-toggle {
+  flex: none;
   padding-inline: .625rem;
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-control, .5rem);
 }
 
-.dashboard-header-toolbar .dashboard-header-action[aria-expanded="true"] {
+.dashboard-header-toolbar .dashboard-filter-toggle[aria-expanded="true"] {
   color: var(--color-text);
   background: var(--color-background-selected, var(--color-bg));
-}
-
-.dashboard-header-toolbar :is(.astryx-tab, .astryx-segmented-control) {
-  min-block-size: var(--header-control-height);
-}
-
-.dashboard-header-toolbar .astryx-segmented-control-item {
-  min-block-size: calc(var(--header-control-height) - .5rem);
-}
-
-@media (pointer: coarse) {
-  .dashboard-header-toolbar { --header-control-height: 2.75rem; }
 }
 
 .dashboard-filter-date-values {
@@ -76,14 +85,48 @@
   white-space: nowrap;
 }
 
-.dashboard-header-toolbar .dashboard-filter-date-values {
-  display: grid;
-  line-height: 1.25;
+.dashboard-header-toolbar .dashboard-filter-date {
+  flex: none;
+  margin-inline-start: auto;
+}
+
+.dashboard-header-view-picker { display: none; }
+
+.dashboard-view-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .dashboard-header-toolbar { --header-control-height: 2.75rem; }
 }
 
 .top-nav__filter-panel {
   max-block-size: 65dvh;
   overflow-y: auto;
+}
+
+/* Long dashboard panels run with the page so their last row and border stay reachable. */
+.top-nav:has(.top-nav__filter-panel .dashboard-header-panel-content) { position: relative; }
+
+.top-nav__filter-panel:has(.dashboard-header-panel-content) {
+  max-block-size: none;
+  overflow: visible;
+}
+
+.dashboard-header-panel-content section:first-child {
+  margin-block-end: 0;
+}
+
+@media (width < 48rem) {
+  .dashboard-header-panel-content { min-inline-size: 0; }
+  .dashboard-header-panel-content > section {
+    border: 0;
+    padding: 0;
+    box-shadow: none;
+  }
 }
 
 .dashboard-filter-summary,
@@ -95,6 +138,8 @@
 }
 
 .dashboard-filter-summary {
+  border-block-end: 1px solid var(--color-border);
+  padding-block-end: .75rem;
   color: var(--color-text-muted);
   font-size: .875rem;
   font-weight: 500;
@@ -111,26 +156,58 @@
   font-size: .8125rem;
 }
 
-@container dashboard-header (width < 58rem) {
+@container dashboard-header (width < 61rem) {
   .top-nav__bar:has(> .top-nav__filters:not(:empty)) {
-    grid-template-columns: minmax(0, 1fr) auto;
-    row-gap: .5rem;
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
+  .top-nav__bar:has(> .top-nav__filters:not(:empty)) .top-nav__identity { max-inline-size: none; }
+  .dashboard-header-toolbar .dashboard-header-tabs { display: none; }
+  .dashboard-header-toolbar .dashboard-header-view-picker { display: block; }
+}
 
-  .top-nav__bar:has(> .top-nav__filters:not(:empty)) .top-nav__identity {
-    max-inline-size: none;
-  }
+@container dashboard-header (width < 56rem) {
+  .dashboard-panel-toggle :is(.dashboard-action-label, .dashboard-filter-chevron) { display: none; }
+  .dashboard-header-toolbar .dashboard-panel-toggle { min-inline-size: var(--header-control-height); }
+}
 
-  .top-nav__filters {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    border-inline-start: 0;
+@container dashboard-header (width < 51rem) {
+  .dashboard-header-toolbar:has(.dashboard-date-accessory) .dashboard-filter-date { display: none; }
+}
+
+@container dashboard-header (width < 45rem) {
+  .dashboard-header-toolbar .dashboard-filter-date { display: none; }
+  .dashboard-header-toolbar { gap: .25rem; }
+  .dashboard-header-toolbar > :is(.dashboard-filter-actions, .dashboard-date-accessory):first-child {
     padding-inline-start: 0;
-    border-block-start: 1px solid var(--color-border);
-    padding-block-start: .5rem;
+    border: 0;
   }
 }
 
-@container dashboard-header (width < 30rem) {
-  .dashboard-filter-views { flex-basis: 100%; }
+@container dashboard-header (width < 34rem) {
+  .top-nav__bar:has(> .top-nav__filters:not(:empty)) { column-gap: .25rem; }
+  .top-nav__filters:not(:empty) + .top-nav__right { padding-inline-start: .25rem; }
+  .dashboard-header-view-picker { --header-picker-width: 3rem; min-inline-size: 3.75rem; }
+  .dashboard-header-toolbar .dashboard-action-label,
+  .dashboard-header-toolbar .dashboard-filter-chevron,
+  .dashboard-header-toolbar .dashboard-view-selection > span { display: none; }
+
+  .dashboard-header-toolbar :is(.dashboard-header-action, [role="combobox"]) {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding-inline: .375rem;
+  }
+
+  .dashboard-header-toolbar .dashboard-filter-toggle [aria-label$="filtros ativos"] {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+  }
+
+  .top-nav__bar:has(> .top-nav__filters:not(:empty)) .top-nav__page-copy h1 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: normal;
+  }
 }

@@ -1,7 +1,6 @@
-import { useMediaQuery } from '@astryxdesign/core/hooks';
+import DashboardHeaderViews from '../components/shared/DashboardHeaderViews';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSegments from '../components/shared/DashboardSegments';
-import { Tab, TabList } from '@astryxdesign/core/TabList';
 import DashboardSelector from "../components/shared/DashboardSelector";
 import { escapeHtml } from '../utils/escapeHtml';
 import { useId, useMemo, useState } from 'react';
@@ -9,7 +8,6 @@ import type { EChartsOption } from 'echarts';
 import AstryxDashboardChart from '../components/charts/AstryxDashboardChart';
 import { Card } from '@astryxdesign/core/Card';
 import { ProgressBar } from '@astryxdesign/core/ProgressBar';
-import { Building2, Table2, UserRound, UsersRound } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import CotacoesKpiGrid from '../components/domain/cotacoes/CotacoesKpiGrid';
@@ -81,11 +79,11 @@ interface TrendBucket {
 }
 
 const KPI_CARD_HEIGHT_CLASS = 'h-full min-h-0';
-const COTACOES_VIEW_TABS: Array<{ value: CotacoesViewTab; label: string; compactLabel: string; icon: typeof UserRound }> = [
-  { value: 'analitica', label: 'Visão Analítica', compactLabel: 'Análise', icon: Table2 },
-  { value: 'usuario', label: 'Por Usuário', compactLabel: 'Usuário', icon: UserRound },
-  { value: 'filial', label: 'Por Filial', compactLabel: 'Filial', icon: Building2 },
-  { value: 'clientes', label: 'Top 40 Clientes', compactLabel: 'Clientes', icon: UsersRound },
+const COTACOES_VIEW_TABS: Array<{ value: CotacoesViewTab; label: string }> = [
+  { value: 'analitica', label: 'Visão Analítica' },
+  { value: 'usuario', label: 'Por Usuário' },
+  { value: 'filial', label: 'Por Filial' },
+  { value: 'clientes', label: 'Top 40 Clientes' },
 ];
 const PERIOD_LEVELS = [{ value: 'ano', label: 'Ano' }, { value: 'mes', label: 'Mês' }, { value: 'dia', label: 'Dia' }] as const;
 const CONVERSION_LEVELS = [PERIOD_LEVELS[0], PERIOD_LEVELS[1]] as const;
@@ -165,28 +163,6 @@ function chartClickName(params: unknown): string | null {
   const item = params as { name?: unknown; data?: { name?: unknown } };
   if (typeof item.data?.name === 'string') return item.data.name;
   return typeof item.name === 'string' ? item.name : null;
-}
-
-function CotacoesViewTabs({
-  activeView,
-  onChange,
-  panelId,
-}: {
-  activeView: CotacoesViewTab;
-  panelId: string;
-  onChange: (view: CotacoesViewTab) => void;
-}) {
-  const compact = useMediaQuery('(width < 48rem)');
-  return (
-    <TabList role="tablist" aria-label="Visões de cotações" value={activeView} size="sm" hasDivider
-      onChange={value => { const next = COTACOES_VIEW_TABS.find(item => item.value === value); if (next) onChange(next.value); }}>
-      {COTACOES_VIEW_TABS.map(({ value, label, compactLabel, icon: Icon }) => (
-        <Tab key={value} id={panelId + '-' + value} panelId={panelId}
-          value={value} aria-label={label} label={compact ? compactLabel : label} icon={compact ? undefined : <Icon size={15} />}
-          className="max-md:min-h-10 max-md:px-1.5" />
-      ))}
-    </TabList>
-  );
 }
 
 function ConversionPeriodoActions({
@@ -913,8 +889,8 @@ export default function CotacoesPage() {
         activeFilters={activeFilters}
         dataInicio={dataInicio}
         dataFim={dataFim}
-        actions={<CotacoesViewTabs activeView={activeView} onChange={setActiveView} panelId={viewPanelId} />}
-        actionsOnMobileRow
+        actions={<DashboardHeaderViews label="Visões de cotações" options={COTACOES_VIEW_TABS}
+          value={activeView} onChange={setActiveView} panelId={viewPanelId} />}
       >
         <FiliaisParceirosFilter
           opcoes={filiais.data ?? []}

@@ -401,7 +401,7 @@ dialog:modal::backdrop {
 }
 
 /* The rail takes only its own width. The rest remains a fluid chart canvas. */
-.dashboard-side-rail, .dashboard-nav-kicker, .dashboard-top-account {
+.dashboard-side-rail, .dashboard-top-account {
   display: none;
 }
 
@@ -561,14 +561,6 @@ dialog:modal::backdrop {
 
   .dashboard-side-nav [role="group"] [id$="-title"] {
     margin: .625rem .5rem .25rem;
-  }
-
-  .dashboard-nav-kicker {
-    display: block;
-    color: var(--color-text-muted);
-    font-size: .75rem;
-    line-height: 1.25;
-    margin-bottom: .1875rem;
   }
 
   .dashboard-shell-with-sidebar .dashboard-nav-description {

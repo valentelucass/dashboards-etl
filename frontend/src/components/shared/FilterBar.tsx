@@ -8,9 +8,10 @@ import { Children, useContext, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
+import { Calendar, ChevronDown, type LucideIcon, SlidersHorizontal, X } from 'lucide-react';
 import { FilterHeaderContext } from '../../contexts/FilterHeaderContext';
 import LastUpdated from './LastUpdated';
+import { HeaderPanelOutletContext } from '../../contexts/HeaderPanelOutletContext';
 
 export interface ActiveFilter {
   label: string;
@@ -26,7 +27,7 @@ interface FilterBarProps {
   onOpen?: () => void;
   activeFilters?: ActiveFilter[];
   actions?: ReactNode;
-  actionsOnMobileRow?: boolean;
+  actionPanel?: { label: string; icon: LucideIcon; open: boolean; onOpenChange: (open: boolean) => void; content: ReactNode };
   /** Se fornecidos, exibe data compacta na barra recolhida */
   dataInicio?: string;
   dataFim?: string;
@@ -39,6 +40,19 @@ function fmtData(iso: string, fullYear: boolean): string {
   if (!iso) return '';
   const [ano, mes, dia] = iso.split('-');
   return `${dia}/${mes}/${fullYear ? ano : ano.slice(2)}`;
+}
+
+const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+function compactPeriod(start: string, end: string): string {
+  const [startYear, startMonth, startDay] = start.split('-').map(Number);
+  const [endYear, endMonth, endDay] = end.split('-').map(Number);
+  const last = `${endDay} ${months[endMonth - 1]} ${endYear}`;
+  if (start === end) return last;
+  let from = String(startDay);
+  if (startYear !== endYear || startMonth !== endMonth) from += ' ' + months[startMonth - 1];
+  if (startYear !== endYear) from += ' ' + startYear;
+  return from + ' a ' + last;
 }
 
 // ── sub-components ────────────────────────────────────────────────────
@@ -62,7 +76,7 @@ export default function FilterBar({
   onOpen,
   activeFilters,
   actions,
-  actionsOnMobileRow = false,
+  actionPanel,
   dataInicio,
   dataFim,
   dateAccessory,
@@ -72,7 +86,11 @@ export default function FilterBar({
   const isMobile = useMediaQuery('(width < 48rem)');
   const [isPresentationMode, setIsPresentationMode] = useState(() => document.body.dataset.presentationMode === 'true');
   const panelId = useId();
-  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const lastTriggerRef = useRef<HTMLButtonElement>(null);
+  const [actionOutlet, setActionOutlet] = useState<HTMLDivElement | null>(null);
+  const showingAction = Boolean(actionPanel?.open);
+  const panelOpen = open || showingAction;
+  const panelLabel = showingAction && actionPanel ? actionPanel.label : 'Filtros';
   const presentationAnchorRef = useRef<HTMLDivElement>(null);
   const [presentationPanelTop, setPresentationPanelTop] = useState(0);
 
@@ -83,7 +101,7 @@ export default function FilterBar({
   }, []);
 
   useEffect(() => {
-    if (!isPresentationMode || !open || isMobile) return;
+    if (!isPresentationMode || !panelOpen || isMobile) return;
 
     const atualizarPosicao = () => {
       const base = presentationAnchorRef.current?.getBoundingClientRect().bottom;
@@ -93,7 +111,7 @@ export default function FilterBar({
     atualizarPosicao();
     window.addEventListener('resize', atualizarPosicao);
     return () => window.removeEventListener('resize', atualizarPosicao);
-  }, [isMobile, isPresentationMode, open]);
+  }, [isMobile, isPresentationMode, panelOpen]);
 
   const filtersWithValues = activeFilters?.filter((f) => f.count > 0) ?? [];
   const hasActive = filtersWithValues.length > 0;
@@ -111,61 +129,91 @@ export default function FilterBar({
     </div>
   );
 
+  function toggleFilters() {
+    if (showingAction) actionPanel?.onOpenChange(false);
+    if (!open) onOpen?.();
+    setOpen(!open);
+  }
+
+  function closePanel() {
+    if (showingAction) actionPanel?.onOpenChange(false);
+    setOpen(false);
+  }
+
+  function disclosureButton(kind: 'filters' | 'action') {
+    const isAction = kind === 'action';
+    const label = isAction && actionPanel ? actionPanel.label : 'Filtros';
+    const expanded = isAction ? showingAction : open;
+    const Icon = isAction && actionPanel ? actionPanel.icon : SlidersHorizontal;
+    return (
+      <Button
+        label={label} tooltip={label}
+        aria-label={!isAction && totalActive ? `Filtros, ${totalActive} selecionado(s)` : label}
+        variant={isPresentationMode || inHeader ? 'ghost' : 'secondary'}
+        size={isPresentationMode ? 'sm' : 'md'}
+        className={inHeader ? `dashboard-header-action dashboard-filter-toggle${isAction ? ' dashboard-panel-toggle' : ''}` : undefined}
+        aria-expanded={expanded} aria-controls={panelId}
+        data-dashboard-filters-open={!isAction && open ? 'true' : undefined}
+        onClick={event => {
+          lastTriggerRef.current = event.currentTarget;
+          if (isAction) {
+            setOpen(false);
+            actionPanel?.onOpenChange(!showingAction);
+          } else {
+            toggleFilters();
+          }
+        }}
+      >
+        <span className="dashboard-code-button-content">
+          <Icon size={14} aria-hidden="true" />
+          <span className="dashboard-action-label">{label}</span>
+          {!isAction && totalActive > 0 && <span aria-label={totalActive + ' filtros ativos'}><Badge label={totalActive} /></span>}
+          <motion.span className="dashboard-filter-chevron" animate={{ rotate: expanded ? 180 : 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }} aria-hidden="true">
+            <ChevronDown size={13} />
+          </motion.span>
+        </span>
+      </Button>
+    );
+  }
+
+  const pageActions = <>
+    {dateAccessory && !isMobile && <div className="dashboard-date-accessory shrink-0 text-xs">{dateAccessory}</div>}
+    {(actions || actionPanel) && <div className="dashboard-filter-actions flex min-w-0 max-w-full items-center gap-2">
+      {actions}
+      {actionPanel && disclosureButton('action')}
+    </div>}
+  </>;
+
   // ── barra recolhida (sempre visível) ──────────────────────────────
   const collapsedBar = (
     <div
       className={inHeader ? 'dashboard-header-toolbar' : `dashboard-filter-card flex items-center border ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : 'min-h-12 flex-wrap gap-x-3 gap-y-2 rounded-[20px] px-4 py-2 md:flex-nowrap md:py-0'}`}
     >
+      {inHeader && pageActions}
       {/* Data compacta */}
       {showDate && (
         <>
           <div className="dashboard-filter-date flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>
             <Calendar size={13} className="shrink-0" aria-hidden="true" />
-            <div className="dashboard-filter-date-values">
-              <time dateTime={dataInicio}><span className="sr-only">De </span>{fmtData(dataInicio, inHeader)}</time>
-              {!inHeader && <span aria-hidden="true"> → </span>}
-              <time dateTime={dataFim}><span className="sr-only">Até </span>{fmtData(dataFim, inHeader)}</time>
-            </div>
+            {inHeader ? (
+              <span className="dashboard-filter-date-values" title={fmtData(dataInicio, true) + ' → ' + fmtData(dataFim, true)}>
+                {compactPeriod(dataInicio, dataFim)}
+              </span>
+            ) : (
+              <div className="dashboard-filter-date-values">
+                <time dateTime={dataInicio}><span className="sr-only">De </span>{fmtData(dataInicio, false)}</time>
+                <span aria-hidden="true"> → </span>
+                <time dateTime={dataFim}><span className="sr-only">Até </span>{fmtData(dataFim, false)}</time>
+              </div>
+            )}
           </div>
           {!inHeader && <div className="hidden h-5 w-px shrink-0 sm:block" style={{ backgroundColor: 'var(--color-border)' }} aria-hidden="true" />}
         </>
       )}
 
-      {/* Botão Filtros */}
-      {hasFilterControls && (
-        <Button
-          ref={filterButtonRef}
-          label="Filtros"
-          variant={isPresentationMode || inHeader ? 'ghost' : 'secondary'}
-          size={isPresentationMode ? 'sm' : 'md'}
-          className={inHeader ? 'dashboard-header-action' : undefined}
-          onClick={() => {
-            if (!open) onOpen?.();
-            setOpen(!open);
-          }}
-          aria-expanded={open}
-          data-dashboard-filters-open={open ? 'true' : undefined}
-          aria-controls={panelId}
-        >
-          <span className="dashboard-code-button-content">
-            <SlidersHorizontal size={14} aria-hidden="true" />
-            Filtros
-            {totalActive > 0 && (
-              <span aria-label={String(totalActive) + ' filtros ativos'}><Badge label={totalActive} /></span>
-            )}
-            <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2, ease: 'easeInOut' }} aria-hidden="true">
-              <ChevronDown size={13} />
-            </motion.span>
-          </span>
-        </Button>
-      )}
-
-      {dateAccessory && !isMobile && <div className="shrink-0 text-xs">{dateAccessory}</div>}
-      {actions ? (
-        <div className={`dashboard-filter-actions flex min-w-0 max-w-full items-center gap-2 ${actionsOnMobileRow ? 'dashboard-filter-views' : ''}`}>
-          {actions}
-        </div>
-      ) : null}
+      {hasFilterControls && disclosureButton('filters')}
+      {!inHeader && pageActions}
 
     </div>
   );
@@ -173,64 +221,65 @@ export default function FilterBar({
   // ── painel desktop (expande inline) ──────────────────────────────
   const desktopPanel = (
     <AnimatePresence initial={false}>
-      {open && !isMobile && hasFilterControls && (
+      {panelOpen && !isMobile && (
         <motion.div
           id={panelId}
           key="desktop-panel"
           role="region"
-          aria-label="Painel de filtros"
+          aria-label={showingAction ? panelLabel : 'Painel de filtros'}
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeInOut' }}
           className={isPresentationMode
-            ? 'fixed inset-x-4 z-50 mt-2 overflow-hidden'
+            ? 'fixed inset-x-4 z-50 mt-2 overflow-y-auto overscroll-contain'
             : 'overflow-hidden'}
-          style={isPresentationMode ? { top: presentationPanelTop } : undefined}
+          style={isPresentationMode ? { top: presentationPanelTop, maxHeight: `calc(100dvh - ${presentationPanelTop}px - 1rem)` } : undefined}
         >
           <motion.div
             initial={{ y: -8, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.15 }}
-            className="mt-2 rounded-[20px] border p-4 shadow-sm"
-            style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
+            className={showingAction ? 'dashboard-header-panel-content mt-2' : 'mt-2 rounded-[20px] border p-4 shadow-sm'}
+            style={showingAction ? undefined : { backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
           >
-            {panelSummary}
-            {/* Período e dimensões quebram como grupos completos, sem campos isolados. */}
-            <div
-              role="group"
-              aria-label="Opções de filtro"
-              className="dashboard-filter-options flex flex-wrap items-end gap-3"
-            >
-              {period && <div className="dashboard-filter-period">{period}</div>}
-              {(dimensionCount > 0 || onClear) && (
-                <div
-                  className="dashboard-filter-dimensions"
-                  style={{
-                    flexGrow: dimensionCount,
-                    flexBasis: dimensionCount * 150 + Math.max(0, dimensionCount - 1) * 12 + (onClear ? 120 : 0),
-                  }}
-                >
-                  {dimensionCount > 0 && (
-                    <div className="dashboard-filter-fields" style={{ '--filter-count': dimensionCount } as CSSProperties}>
-                      {children}
-                    </div>
-                  )}
-                  {onClear && (
-                    <DashboardButton
-                      type="button"
-                      onClick={onClear}
-                      className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-                      style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
-                    >
-                      <X size={13} aria-hidden="true" />
-                      Limpar filtros
-                    </DashboardButton>
-                  )}
-                </div>
-              )}
-            </div>
-
+            {showingAction ? <div ref={setActionOutlet} /> : <>
+              {panelSummary}
+              {/* Período e dimensões quebram como grupos completos, sem campos isolados. */}
+              <div
+                role="group"
+                aria-label="Opções de filtro"
+                className="dashboard-filter-options flex flex-wrap items-end gap-3"
+              >
+                {period && <div className="dashboard-filter-period">{period}</div>}
+                {(dimensionCount > 0 || onClear) && (
+                  <div
+                    className="dashboard-filter-dimensions"
+                    style={{
+                      flexGrow: dimensionCount,
+                      flexBasis: dimensionCount * 150 + Math.max(0, dimensionCount - 1) * 12 + (onClear ? 120 : 0),
+                    }}
+                  >
+                    {dimensionCount > 0 && (
+                      <div className="dashboard-filter-fields" style={{ '--filter-count': dimensionCount } as CSSProperties}>
+                        {children}
+                      </div>
+                    )}
+                    {onClear && (
+                      <DashboardButton
+                        type="button"
+                        onClick={onClear}
+                        className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+                        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
+                      >
+                        <X size={13} aria-hidden="true" />
+                        Limpar filtros
+                      </DashboardButton>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>}
           </motion.div>
         </motion.div>
       )}
@@ -238,39 +287,42 @@ export default function FilterBar({
   );
 
   // Below md the filters move out of the content column into a touch sheet.
-  const mobileDrawer = isMobile && hasFilterControls ? (
-    <BottomSheet isOpen={open} id={panelId} label="Filtros" height="tall" padding={4}
-      finalFocusRef={filterButtonRef} onOpenChange={setOpen}>
+  const mobileDrawer = isMobile && (hasFilterControls || actionPanel) ? (
+    <BottomSheet isOpen={panelOpen} id={panelId} label={panelLabel} height="tall" padding={4}
+      finalFocusRef={lastTriggerRef} onOpenChange={next => { if (!next) closePanel(); }}>
       <div className="grid gap-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold">Filtros</span>
-            {totalActive > 0 && <Badge label={totalActive} variant="info" aria-label={totalActive + ' filtros ativos'} />}
+            <span className="text-sm font-semibold">{panelLabel}</span>
+            {!showingAction && totalActive > 0 && <Badge label={totalActive} variant="info" aria-label={totalActive + ' filtros ativos'} />}
           </div>
-          <Button label="Fechar filtros" isIconOnly icon={<X size={16} />} variant="ghost" onClick={() => setOpen(false)} />
+          <Button label={showingAction ? 'Fechar ' + panelLabel : 'Fechar filtros'} isIconOnly icon={<X size={16} />} variant="ghost" onClick={closePanel} />
         </div>
-        {panelSummary}
-        <div role="group" aria-label="Opções de filtro" className="dashboard-mobile-filter-fields grid min-w-0 gap-4">
-          {period && <div className="dashboard-filter-period">{period}</div>}
-          {dateAccessory && <div className="text-xs">{dateAccessory}</div>}
-          {children}
-        </div>
-        {onClear && <Button label="Limpar filtros" onClick={() => { onClear(); setOpen(false); }} />}
+        {showingAction ? <div className="dashboard-header-panel-content" ref={setActionOutlet} /> : <>
+          {panelSummary}
+          <div role="group" aria-label="Opções de filtro" className="dashboard-mobile-filter-fields grid min-w-0 gap-4">
+            {period && <div className="dashboard-filter-period">{period}</div>}
+            {dateAccessory && <div className="text-xs">{dateAccessory}</div>}
+            {children}
+          </div>
+          {onClear && <Button label="Limpar filtros" onClick={() => { onClear(); setOpen(false); }} />}
+        </>}
       </div>
     </BottomSheet>
   ) : null;
 
-  const presentationBackdrop = isPresentationMode && open && !isMobile && typeof document !== 'undefined'
+  const presentationBackdrop = isPresentationMode && panelOpen && !isMobile && typeof document !== 'undefined'
     ? createPortal(
         <div
           className="fixed inset-0 z-40"
-          onClick={() => setOpen(false)}
+          onClick={closePanel}
           aria-hidden="true"
         />,
         document.body,
       )
     : null;
 
+  const actionEditor = actionPanel && <HeaderPanelOutletContext.Provider value={actionOutlet}>{actionPanel.content}</HeaderPanelOutletContext.Provider>;
   const presentationSlot = typeof document !== 'undefined'
     ? document.getElementById('presentation-filter-slot')
     : null;
@@ -287,6 +339,7 @@ export default function FilterBar({
         )}
         {presentationBackdrop}
         {mobileDrawer}
+        {actionEditor}
       </>
     );
   }
@@ -296,6 +349,7 @@ export default function FilterBar({
       {createPortal(collapsedBar, header.toolbar)}
       {createPortal(desktopPanel, header.panel)}
       {mobileDrawer}
+      {actionEditor}
     </>;
   }
 
@@ -305,6 +359,7 @@ export default function FilterBar({
       {desktopPanel}
       {presentationBackdrop}
       {mobileDrawer}
+      {actionEditor}
     </div>
   );
 }

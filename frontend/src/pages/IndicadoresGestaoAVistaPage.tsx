@@ -1,8 +1,7 @@
 import { Card } from '@astryxdesign/core/Card';
-import { Button } from '@astryxdesign/core/Button';
 import DashboardButton from "../components/shared/DashboardButton";
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, BarChart3, Boxes, CheckCircle2, ChevronRight, ChevronUp, Clock3, Gauge, MessageSquarePlus, PackageCheck, Settings, ShieldAlert, Truck } from 'lucide-react';
+import { Settings, AlertCircle, BarChart3, Boxes, CheckCircle2, ChevronRight, ChevronUp, Clock3, Gauge, MessageSquarePlus, PackageCheck, ShieldAlert, Truck } from 'lucide-react';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import type { ColunaTabela } from '../components/shared/DataTable';
 import type { ColunaTabelaAnalitica } from '../components/shared/AnalyticalDataTable';
@@ -450,12 +449,10 @@ export default function IndicadoresGestaoAVistaPage() {
     atualizarGlobais.reset();
     atualizarFilial.reset();
     removerOverride.reset();
-    if (!goalsPanelOpen) {
-      setGoalsPanelCompetencia(competenciaFiltroGlobal);
-    }
+    setGoalsPanelCompetencia(competenciaFiltroGlobal);
     setGoalsPanelBranchId(goalBranchId === GLOBAL_KPI_GOAL_BRANCH_ID ? (filiais.data?.[0] ?? '') : goalBranchId);
     setGoalsHistoryPage(1);
-    setGoalsPanelOpen((current) => !current);
+    setGoalsPanelOpen(true);
   }
 
   async function aplicarMetasGlobais(kpiGoalValues: KpiGoalsMap) {
@@ -1070,13 +1067,33 @@ export default function IndicadoresGestaoAVistaPage() {
         activeFilters={activeFilters}
         dataInicio={dataInicioIndicadores}
         dataFim={dataFimIndicadores}
-        actions={canManageKpiGoals ? (
-          <Button
-            label="Gerenciar Metas" variant="ghost" size="sm" icon={<Settings size={14} />}
-            className="dashboard-header-action"
-            onClick={abrirGerenciadorMetas}
-          />
-        ) : null}
+        actionPanel={canManageKpiGoals ? {
+          label: 'Gerenciar Metas', icon: Settings,
+          open: goalsPanelOpen,
+          onOpenChange: next => next ? abrirGerenciadorMetas() : setGoalsPanelOpen(false),
+          content: (
+            <KpiGoalsManagerPanel
+              open={goalsPanelOpen}
+              branchId={goalsPanelBranchId}
+              competencia={goalsPanelCompetencia}
+              branchOptions={goalBranchOptions}
+              data={managerKpiGoals.data}
+              history={managerHistory.data}
+              historyPage={goalsHistoryPage}
+              isLoading={managerKpiGoals.isLoading}
+              isHistoryLoading={managerHistory.isLoading}
+              isSaving={managerIsSaving}
+              error={managerKpiGoals.error}
+              saveError={managerSaveError}
+              onBranchChange={alterarFilialPainelMetas}
+              onCompetenciaChange={alterarCompetenciaPainelMetas}
+              onApplyGlobal={aplicarMetasGlobais}
+              onSaveBranch={salvarMetasFilial}
+              onRemoveOverride={removerOverrideFilial}
+              onHistoryPageChange={setGoalsHistoryPage}
+            />
+          ),
+        } : undefined}
       >
         <FiliaisParceirosFilter
           filialLabel="Filial base"
@@ -1089,29 +1106,6 @@ export default function IndicadoresGestaoAVistaPage() {
           isLoading={filiais.isLoading}
         />
       </FilterBar>
-
-      {canManageKpiGoals ? (
-        <KpiGoalsManagerPanel
-          open={goalsPanelOpen}
-          branchId={goalsPanelBranchId}
-          competencia={goalsPanelCompetencia}
-          branchOptions={goalBranchOptions}
-          data={managerKpiGoals.data}
-          history={managerHistory.data}
-          historyPage={goalsHistoryPage}
-          isLoading={managerKpiGoals.isLoading}
-          isHistoryLoading={managerHistory.isLoading}
-          isSaving={managerIsSaving}
-          error={managerKpiGoals.error}
-          saveError={managerSaveError}
-          onBranchChange={alterarFilialPainelMetas}
-          onCompetenciaChange={alterarCompetenciaPainelMetas}
-          onApplyGlobal={aplicarMetasGlobais}
-          onSaveBranch={salvarMetasFilial}
-          onRemoveOverride={removerOverrideFilial}
-          onHistoryPageChange={setGoalsHistoryPage}
-        />
-      ) : null}
 
       <div className="gestao-scoreboard" role="group" aria-label="Resultados dos indicadores de gestão">
         <IndicadoresGestaoSummaryCard

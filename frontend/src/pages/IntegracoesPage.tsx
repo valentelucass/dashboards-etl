@@ -1,7 +1,7 @@
-import DashboardSegments from '../components/shared/DashboardSegments';
+import DashboardHeaderViews from '../components/shared/DashboardHeaderViews';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import IndicadoresIntegracoesPanel from '../components/domain/integracoes/IndicadoresIntegracoesPanel';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import AnalyticalDataTable, {
   type ColunaTabelaAnalitica,
@@ -109,6 +109,7 @@ function SegmentedTabs<TValor extends string>({
 }
 
 export default function IntegracoesPage() {
+  const panelId = useId();
   const [abaSelecionada, setAbaSelecionada] = useState<IntegracoesAba>('PENDENCIAS');
   const [tableSort, setTableSort] = useState<IntegracoesTableSort | null>(null);
   const [destinoSelecionado, setDestinoSelecionado] = useState('');
@@ -197,7 +198,7 @@ export default function IntegracoesPage() {
 
   return (
     <div className="w-full">
-      <FilterBar actionsOnMobileRow
+      <FilterBar
         period={(
           <DateRangePicker
             dataInicio={dataInicio}
@@ -214,7 +215,7 @@ export default function IntegracoesPage() {
           : []}
         onClear={() => setDestinoSelecionado('')}
         actions={(
-          <DashboardSegments label="Filtrar por integração" value={destinoSelecionado || 'todos'}
+          <DashboardHeaderViews panelId={panelId} label="Filtrar por integração" value={destinoSelecionado || 'todos'}
             options={[{ value: 'todos', label: 'Todos' }, ...OPCOES_DESTINO_INTEGRACAO.map(value => ({
               value, label: value === 'VEDACIT' ? 'Vedacit' : value,
             }))]}
@@ -223,82 +224,81 @@ export default function IntegracoesPage() {
       >
       </FilterBar>
 
-      {integracoes.isError && (
-        <MensagemErro
-          mensagem={getApiErrorMessage(integracoes.error, 'Erro ao carregar auditoria de integrações.')}
-          tipo={getTipoErro(integracoes.error)}
-        />
-      )}
-
-      {sateliteIgnorouFiltroDestino && (
-        <section
-          role="alert"
-          className="mb-4 rounded-xl border px-4 py-3 text-sm"
-          style={{
-            backgroundColor: 'rgba(245, 158, 11, 0.10)',
-            borderColor: 'rgba(245, 158, 11, 0.35)',
-            color: 'var(--color-text)',
-          }}
-        >
-          O Satélite retornou destinos fora da seleção de Integração. Os dados foram ocultados para evitar
-          indicadores incorretos; atualize o processo do Satélite com o contrato de filtro por destino.
-        </section>
-      )}
-
-      <IndicadoresIntegracoesPanel inicio={dataInicio} fim={dataFim} destinos={destinosSelecionados} />
-
-      <div className="contents">
-          <CiclosIntegracaoPanel key={destinoSelecionado} dataInicio={dataInicio} dataFim={dataFim} cliente={destinoSelecionado} />
-
-          <AnalyticalDataTable
-            titulo={tituloTabela}
-            dados={pendencias}
-            colunas={colunas}
-            chaveLinha="id"
-            filtros={filtrosTabela.filters}
-            hiddenActiveCount={filtrosTabela.hiddenActiveCount}
-            hasAnyFilter={filtrosTabela.hasAnyFilter}
-            onTextFilterChange={filtrosTabela.setTextFilter}
-            onMultiFilterChange={filtrosTabela.setMultiFilter}
-            onColumnFilterChange={filtrosTabela.setColumnFilter}
-            onClearFilters={filtrosTabela.clearTableFilters}
-            statusOptions={statusOptions}
-            isLoading={integracoes.isLoading}
-            isFetching={integracoes.isFetching}
-            error={integracoes.error}
-            errorFallbackMessage={`Erro ao carregar ${tituloTabela.toLowerCase()}.`}
-            totalRegistros={totalRegistrosTabela}
-            paginaAtual={paginacaoTabela.pagina}
-            tamanhoPagina={paginacaoTabela.tamanhoPagina}
-            onPaginaChange={paginacaoTabela.setPagina}
-            onTamanhoPaginaChange={paginacaoTabela.setTamanhoPagina}
-            sortField={tableSort?.field}
-            sortDirection={tableSort?.direction}
-            onSortChange={(field, direction) => setTableSort({ field, direction })}
-            acoesCabecalho={(
-              <>
-                <SegmentedTabs
-                  ariaLabel="Filtro de status dos registros de integração"
-                  options={ABAS_STATUS_INTEGRACOES}
-                  selected={escopoTabelaSelecionado}
-                  onChange={selecionarStatusTabela}
-                />
-                <ExportButton
-                  nomeArquivo={escopoTabelaSelecionado === 'SUCESSO' ? 'integracoes-sucesso' : 'integracoes-pendencias'}
-                  onExport={() => exportarIntegracoesCsv(
-                    dataInicio,
-                    dataFim,
-                    filtrosTabela.apiFilters,
-                    tableSort?.field,
-                    tableSort?.direction,
-                    escopoTabelaSelecionado,
-                    destinosSelecionados,
-                  )}
-                />
-              </>
-            )}
+      <div id={panelId} role="tabpanel" aria-labelledby={panelId + '-' + (destinoSelecionado || 'todos')}>
+        {integracoes.isError && (
+          <MensagemErro
+            mensagem={getApiErrorMessage(integracoes.error, 'Erro ao carregar auditoria de integrações.')}
+            tipo={getTipoErro(integracoes.error)}
           />
+        )}
 
+        {sateliteIgnorouFiltroDestino && (
+          <section
+            role="alert"
+            className="mb-4 rounded-xl border px-4 py-3 text-sm"
+            style={{
+              backgroundColor: 'rgba(245, 158, 11, 0.10)',
+              borderColor: 'rgba(245, 158, 11, 0.35)',
+              color: 'var(--color-text)',
+            }}
+          >
+            O Satélite retornou destinos fora da seleção de Integração. Os dados foram ocultados para evitar
+            indicadores incorretos; atualize o processo do Satélite com o contrato de filtro por destino.
+          </section>
+        )}
+
+        <IndicadoresIntegracoesPanel inicio={dataInicio} fim={dataFim} destinos={destinosSelecionados} />
+
+        <CiclosIntegracaoPanel key={destinoSelecionado} dataInicio={dataInicio} dataFim={dataFim} cliente={destinoSelecionado} />
+
+        <AnalyticalDataTable
+          titulo={tituloTabela}
+          dados={pendencias}
+          colunas={colunas}
+          chaveLinha="id"
+          filtros={filtrosTabela.filters}
+          hiddenActiveCount={filtrosTabela.hiddenActiveCount}
+          hasAnyFilter={filtrosTabela.hasAnyFilter}
+          onTextFilterChange={filtrosTabela.setTextFilter}
+          onMultiFilterChange={filtrosTabela.setMultiFilter}
+          onColumnFilterChange={filtrosTabela.setColumnFilter}
+          onClearFilters={filtrosTabela.clearTableFilters}
+          statusOptions={statusOptions}
+          isLoading={integracoes.isLoading}
+          isFetching={integracoes.isFetching}
+          error={integracoes.error}
+          errorFallbackMessage={`Erro ao carregar ${tituloTabela.toLowerCase()}.`}
+          totalRegistros={totalRegistrosTabela}
+          paginaAtual={paginacaoTabela.pagina}
+          tamanhoPagina={paginacaoTabela.tamanhoPagina}
+          onPaginaChange={paginacaoTabela.setPagina}
+          onTamanhoPaginaChange={paginacaoTabela.setTamanhoPagina}
+          sortField={tableSort?.field}
+          sortDirection={tableSort?.direction}
+          onSortChange={(field, direction) => setTableSort({ field, direction })}
+          acoesCabecalho={(
+            <>
+              <SegmentedTabs
+                ariaLabel="Filtro de status dos registros de integração"
+                options={ABAS_STATUS_INTEGRACOES}
+                selected={escopoTabelaSelecionado}
+                onChange={selecionarStatusTabela}
+              />
+              <ExportButton
+                nomeArquivo={escopoTabelaSelecionado === 'SUCESSO' ? 'integracoes-sucesso' : 'integracoes-pendencias'}
+                onExport={() => exportarIntegracoesCsv(
+                  dataInicio,
+                  dataFim,
+                  filtrosTabela.apiFilters,
+                  tableSort?.field,
+                  tableSort?.direction,
+                  escopoTabelaSelecionado,
+                  destinosSelecionados,
+                )}
+              />
+            </>
+          )}
+        />
       </div>
     </div>
   );

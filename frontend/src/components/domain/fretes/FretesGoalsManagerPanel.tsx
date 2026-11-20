@@ -1,3 +1,4 @@
+import HeaderPanelContent from '../../shared/HeaderPanelContent';
 import DashboardLoading from '../../shared/DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
 import { NumberInput } from '@astryxdesign/core/NumberInput';
@@ -154,7 +155,7 @@ export default function FretesGoalsManagerPanel({
   }
 
   return (
-    <>
+    <HeaderPanelContent>
       <section
         className="mb-4 rounded-[20px] border p-5 shadow-sm"
         style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
@@ -335,6 +336,6 @@ export default function FretesGoalsManagerPanel({
       </div>
       </section>
       <ToastStack items={toasts} />
-    </>
+    </HeaderPanelContent>
   );
 }

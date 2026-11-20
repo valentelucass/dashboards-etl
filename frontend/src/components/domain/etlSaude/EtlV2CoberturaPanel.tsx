@@ -1,5 +1,4 @@
-import DashboardButton from "../../shared/DashboardButton";
-import { useId, useState } from 'react';
+import HeaderPanelContent from '../../shared/HeaderPanelContent';
 import { useQuery } from '@tanstack/react-query';
 import clienteAxios from '../../../api/clienteAxios';
 import DataTable, { type ColunaTabela } from '../../shared/DataTable';
@@ -76,9 +75,7 @@ const colunas = (consultadoEm: number): ColunaTabela<Cobertura>[] => [
   { chave: 'situacao', label: 'Situação', formato: (_, r) => situacaoDaCobertura(r, consultadoEm) },
 ];
 
-export default function EtlV2CoberturaPanel() {
-  const [aberto, setAberto] = useState(false);
-  const id = useId();
+export default function EtlV2CoberturaPanel({ aberto }: { aberto: boolean }) {
   const cobertura = useQuery({
     queryKey: ['etl-saude', 'cobertura-v2'],
     enabled: aberto,
@@ -91,39 +88,28 @@ export default function EtlV2CoberturaPanel() {
     retry: false,
   });
 
+  if (!aberto) return null;
+
   return (
-    <section className="mb-4" aria-label="Recebimento no ETL V2">
-      <DashboardButton
-        type="button"
-        className="rounded-lg border px-3 py-2 text-sm font-semibold"
-        aria-expanded={aberto}
-        aria-controls={id}
-        onClick={() => setAberto(valor => !valor)}
-      >
-        Dados recebidos no ETL V2
-      </DashboardButton>
-      <div id={id} hidden={!aberto}>
-        {aberto && (
-          <>
-            <p className="my-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              Mostra o último recebimento de cada dia, sem somar reextrações.
-              As datas indicam o primeiro e o último dia recebido. Pode haver dias sem carga entre eles.
-            </p>
-            {cobertura.isError ? (
-              <MensagemErro tipo="indisponivel" mensagem="Não foi possível consultar os dados recebidos no ETL V2." />
-            ) : (
-              <DataTable
-                titulo="Cobertura de recebimento"
-                dados={cobertura.data ?? []}
-                colunas={colunas(cobertura.dataUpdatedAt)}
-                chaveLinha="entidade"
-                isLoading={cobertura.isPending}
-                semPaginacao
-              />
-            )}
-          </>
+    <HeaderPanelContent>
+      <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4" aria-label="Recebimento no ETL V2">
+        <p className="my-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          Mostra o último recebimento de cada dia, sem somar reextrações.
+          As datas indicam o primeiro e o último dia recebido. Pode haver dias sem carga entre eles.
+        </p>
+        {cobertura.isError ? (
+          <MensagemErro tipo="indisponivel" mensagem="Não foi possível consultar os dados recebidos no ETL V2." />
+        ) : (
+          <DataTable
+            titulo="Cobertura de recebimento"
+            dados={cobertura.data ?? []}
+            colunas={colunas(cobertura.dataUpdatedAt)}
+            chaveLinha="entidade"
+            isLoading={cobertura.isPending}
+            semPaginacao
+          />
         )}
-      </div>
-    </section>
+      </section>
+    </HeaderPanelContent>
   );
 }

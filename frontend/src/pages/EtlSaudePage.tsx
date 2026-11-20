@@ -1,6 +1,7 @@
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import { escapeHtml } from '../utils/escapeHtml';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Database } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
 import ChartWrapper from '../components/charts/ChartWrapper';
@@ -144,6 +145,7 @@ function ResumoKpi({
 }
 
 export default function EtlSaudePage() {
+  const [coberturaAberta, setCoberturaAberta] = useState(false);
   const { usuario } = useAutenticacao();
   const { dataInicio, dataFim, setDataInicio, setDataFim, setDataRange, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
@@ -458,8 +460,12 @@ export default function EtlSaudePage() {
 
   return (
     <div className="w-full">
-      {(isAdminPlataforma(usuario) || isDesenvolvedor(usuario)) && <EtlV2CoberturaPanel />}
       <FilterBar
+        actionPanel={isAdminPlataforma(usuario) || isDesenvolvedor(usuario) ? {
+          label: 'Dados recebidos no ETL V2', icon: Database,
+          open: coberturaAberta, onOpenChange: setCoberturaAberta,
+          content: <EtlV2CoberturaPanel aberto={coberturaAberta} />,
+        } : undefined}
         period={(
           <DateRangePicker dataInicio={dataInicio} dataFim={dataFim} onDataInicioChange={setDataInicio} onDataFimChange={setDataFim} onRangeChange={setDataRange} />
         )}

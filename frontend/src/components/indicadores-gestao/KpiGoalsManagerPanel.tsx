@@ -1,3 +1,4 @@
+import HeaderPanelContent from '../shared/HeaderPanelContent';
 import DashboardLoading from '../shared/DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
 import { NumberInput } from '@astryxdesign/core/NumberInput';
@@ -266,6 +267,7 @@ export default function KpiGoalsManagerPanel({
   }
 
   return (
+    <HeaderPanelContent>
     <section
       className="kpi-goals-manager mb-5 rounded-[20px] border p-4 sm:p-5 shadow-sm"
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)' }}
@@ -546,5 +548,6 @@ export default function KpiGoalsManagerPanel({
         </div>
       </div>
     </section>
+    </HeaderPanelContent>
   );
 }

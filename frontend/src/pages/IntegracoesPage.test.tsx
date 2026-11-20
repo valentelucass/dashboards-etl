@@ -40,7 +40,7 @@ it('o filtro global SELIA alcança os ciclos, indicadores e documentos e reinici
   fireEvent.click(screen.getByRole('button', { name: 'Proxima' }));
   await waitFor(() => expect(vi.mocked(clienteAxios.get).mock.calls.some(([url, config]) =>
     url === '/api/painel/integracoes' && (config?.params as URLSearchParams).get('pagina') === '1')).toBe(true));
-  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Filtrar por integração' })).getByRole('radio', { name: 'SELIA' }));
+  fireEvent.click(within(screen.getByRole('tablist', { name: 'Filtrar por integração' })).getByRole('tab', { name: 'SELIA' }));
   await screen.findByRole('cell', { name: 'SELIA' });
   expect(screen.queryByRole('cell', { name: 'VEDACIT' })).toBeNull();
   expect(screen.getAllByRole('columnheader', { name: /Data AddEvents/ }).length).toBeGreaterThan(0);
@@ -60,7 +60,7 @@ it('não mantém documentos Vedacit enquanto carrega SELIA', async () => {
   preparar(); abrir();
   await screen.findByRole('cell', { name: 'VEDACIT' });
   vi.mocked(clienteAxios.get).mockImplementation(() => new Promise(() => {}));
-  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Filtrar por integração' })).getByRole('radio', { name: 'SELIA' }));
+  fireEvent.click(within(screen.getByRole('tablist', { name: 'Filtrar por integração' })).getByRole('tab', { name: 'SELIA' }));
   expect(screen.queryByRole('cell', { name: 'VEDACIT' })).toBeNull();
   expect(screen.queryByText(/O Satélite retornou destinos/)).toBeNull();
 });
@@ -68,7 +68,7 @@ it('não mantém documentos Vedacit enquanto carrega SELIA', async () => {
 it('oculta documentos de outro cliente mesmo quando as métricas da resposta estão vazias', async () => {
   preparar(() => auditoria('VEDACIT')); abrir();
   await screen.findByRole('cell', { name: 'VEDACIT' });
-  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Filtrar por integração' })).getByRole('radio', { name: 'SELIA' }));
+  fireEvent.click(within(screen.getByRole('tablist', { name: 'Filtrar por integração' })).getByRole('tab', { name: 'SELIA' }));
   await screen.findByText(/O Satélite retornou destinos/);
   expect(screen.queryByRole('cell', { name: 'VEDACIT' })).toBeNull();
 });

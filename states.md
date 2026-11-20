@@ -1,5 +1,7 @@
 ## 19/11/2026 — Filtros no cabeçalho
 
+O cabeçalho reúne título, abas da página, período, Filtros e ações gerais em uma linha. Quando falta largura, Cotações e Integrações oferecem as mesmas opções em um seletor. No celular, o período pode ser consultado e alterado em Filtros. O cabeçalho exibe o título da página centralizado na altura dos controles. Gerenciar Metas compartilha a área expansível de Filtros no desktop e a folha no celular. No desktop, Metas cresce com a página e o conteúdo mantém a borda inferior visível. Uma divisória separa o horário de atualização e os filtros ativos dos campos de seleção. Em ETL Saúde, Dados recebidos no ETL V2 abre nessa mesma área para os perfis autorizados.
+
 Os doze dashboards mostram o período, o botão Filtros e as ações da página no cabeçalho. O painel aberto mantém os campos originais e reúne o horário de atualização e os filtros ativos na primeira linha. No celular, os campos continuam na folha de filtros. Em Integrações, o histórico de avaliações usa a rolagem própria da tabela quando as sete colunas excedem a largura disponível.
 
 ## 19/11/2026 — Filtros dos dashboards

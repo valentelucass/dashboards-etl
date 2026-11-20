@@ -1,4 +1,7 @@
 // @vitest-environment jsdom
+import { useState } from 'react';
+import { Database } from 'lucide-react';
+import FilterBar from '../../shared/FilterBar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -9,7 +12,14 @@ vi.mock('../../../api/clienteAxios', () => ({ default: { get: vi.fn() } }));
 
 function abrir() {
   const client = new QueryClient();
-  render(<QueryClientProvider client={client}><EtlV2CoberturaPanel /></QueryClientProvider>);
+  function Panel() {
+    const [aberto, setAberto] = useState(false);
+    return <FilterBar actionPanel={{
+      label: 'Dados recebidos no ETL V2', icon: Database, open: aberto, onOpenChange: setAberto,
+      content: <EtlV2CoberturaPanel aberto={aberto} />,
+    }} />;
+  }
+  render(<QueryClientProvider client={client}><Panel /></QueryClientProvider>);
   const botao = screen.getByRole('button', { name: 'Dados recebidos no ETL V2' });
   expect(clienteAxios.get).not.toHaveBeenCalled();
   fireEvent.click(botao);

@@ -1,12 +1,11 @@
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSegments from '../components/shared/DashboardSegments';
 import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from '../components/shared/DashboardTable';
-import { Button } from '@astryxdesign/core/Button';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useMemo, useRef, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import AstryxDashboardChart from '../components/charts/AstryxDashboardChart';
-import { ArrowDown, ArrowUp, Info, Minus, Settings } from 'lucide-react';
+import { Settings, ArrowDown, ArrowUp, Info, Minus } from 'lucide-react';
 import ChartWrapper from '../components/charts/ChartWrapper';
 import { useEchartsTheme } from '../components/charts/useEchartsTheme';
 import FaturamentoGoalsManagerPanel from '../components/domain/faturamento/FaturamentoGoalsManagerPanel';
@@ -896,7 +895,7 @@ export default function FaturamentoPage() {
     const fim = parseDateLocal(dataFim);
     setGoalsPanelYear(fim.getFullYear());
     setGoalsPanelMonth(fim.getMonth() + 1);
-    setGoalsPanelOpen((current) => !current);
+    setGoalsPanelOpen(true);
   }
 
   async function salvarMetaFaturamento(payload: Parameters<typeof salvarMeta.mutateAsync>[0]) {
@@ -984,13 +983,45 @@ export default function FaturamentoPage() {
             {overview.data.totalDiasUteis} Dias Úteis
           </span>
         ) : null}
-        actions={canManageFaturamentoGoals ? (
-          <Button
-            label="Gerenciar Metas" variant="ghost" size="sm" icon={<Settings size={14} />}
-            className="dashboard-header-action"
-            onClick={abrirGerenciadorMetas}
-          />
-        ) : null}
+        actionPanel={canManageFaturamentoGoals ? {
+          label: 'Gerenciar Metas', icon: Settings,
+          open: goalsPanelOpen,
+          onOpenChange: next => next ? abrirGerenciadorMetas() : setGoalsPanelOpen(false),
+          content: (
+            <FaturamentoGoalsManagerPanel
+              open={goalsPanelOpen}
+              branchOptions={filiais.data ?? []}
+              data={metasConfiguracoes.data}
+              ano={goalsPanelYear}
+              mes={goalsPanelMonth}
+              isLoading={metasConfiguracoes.isLoading}
+              isSaving={managerIsSaving}
+              error={metasConfiguracoes.error}
+              saveError={managerSaveError}
+              replicateError={replicarMetas.error}
+              isReplicating={replicarMetas.isPending}
+              onPeriodChange={(ano, mes) => {
+                setGoalsPanelYear(ano);
+                setGoalsPanelMonth(mes);
+              }}
+              onSave={salvarMetaFaturamento}
+              onRemove={removerMetaFaturamento}
+              onReplicatePreviousMonth={replicarMetasFaturamento}
+              onViewScope={(branchId) => {
+                const isParceiro = isParceiroLogistico(branchId);
+                setFiltros({
+                  filiais: branchId !== 'GLOBAL' && !isParceiro ? [branchId] : [],
+                  parceirosLogisticos: branchId !== 'GLOBAL' && isParceiro ? [branchId] : [],
+                });
+                paginacaoTabela.setPagina(1);
+                setGoalsPanelOpen(false);
+                window.requestAnimationFrame(() => {
+                  faturamentoTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+              }}
+            />
+          ),
+        } : undefined}
       >
         <FiliaisParceirosFilter
           opcoes={filiais.data ?? []}
@@ -1022,41 +1053,6 @@ export default function FaturamentoPage() {
           isLoading={statusFaturamento.isLoading}
         />
       </FilterBar>
-
-      {canManageFaturamentoGoals ? (
-        <FaturamentoGoalsManagerPanel
-          open={goalsPanelOpen}
-          branchOptions={filiais.data ?? []}
-          data={metasConfiguracoes.data}
-          ano={goalsPanelYear}
-          mes={goalsPanelMonth}
-          isLoading={metasConfiguracoes.isLoading}
-          isSaving={managerIsSaving}
-          error={metasConfiguracoes.error}
-          saveError={managerSaveError}
-          replicateError={replicarMetas.error}
-          isReplicating={replicarMetas.isPending}
-          onPeriodChange={(ano, mes) => {
-            setGoalsPanelYear(ano);
-            setGoalsPanelMonth(mes);
-          }}
-          onSave={salvarMetaFaturamento}
-          onRemove={removerMetaFaturamento}
-          onReplicatePreviousMonth={replicarMetasFaturamento}
-          onViewScope={(branchId) => {
-            const isParceiro = isParceiroLogistico(branchId);
-            setFiltros({
-              filiais: branchId !== 'GLOBAL' && !isParceiro ? [branchId] : [],
-              parceirosLogisticos: branchId !== 'GLOBAL' && isParceiro ? [branchId] : [],
-            });
-            paginacaoTabela.setPagina(1);
-            setGoalsPanelOpen(false);
-            window.requestAnimationFrame(() => {
-              faturamentoTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-          }}
-        />
-      ) : null}
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de faturamento.')} tipo={getTipoErro(overview.error)} />}
       {overview.isLoading && !overview.data && <LoadingKpiGrid count={8} className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-[0.8fr_2fr_2fr_1fr_1.1fr_1fr_2fr_1.25fr]" />}

@@ -167,8 +167,7 @@ export default function TopNav({ toolbarRef, panelRef }: TopNavProps) {
               onClick={() => setIsMenuOpen(true)} aria-expanded={isMenuOpen}
               aria-haspopup="dialog" aria-controls={panelId} className="top-nav__menu-button" />
             <div className={`top-nav__page-copy min-w-0 ${apresentacao ? 'border-r pr-3' : ''}`} style={apresentacao ? { borderColor: 'var(--color-border)' } : undefined}>
-              {!apresentacao && <span className="dashboard-nav-kicker">Dashboards Rodogarcia</span>}
-              <h1 className={`truncate font-bold leading-tight ${apresentacao ? 'text-sm' : 'text-lg sm:text-xl'}`} style={{ color: 'var(--color-text)' }}>
+              <h1 title={pageHeader.title === 'Home' ? 'Início' : pageHeader.title} className={`truncate font-bold leading-tight ${apresentacao ? 'text-sm' : 'text-lg sm:text-xl'}`} style={{ color: 'var(--color-text)' }}>
                 {pageHeader.title === 'Home' ? 'Início' : pageHeader.title}
               </h1>
               {!apresentacao && pageHeader.description && (
