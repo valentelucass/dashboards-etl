@@ -9,6 +9,9 @@ import com.dashboard.api.dto.performance.PerformanceDrilldownPointDTO;
 import com.dashboard.api.dto.performance.PerformanceEntregaRowDTO;
 import com.dashboard.api.dto.performance.PerformanceHistoricoPointDTO;
 import com.dashboard.api.dto.performance.PerformanceOverviewDTO;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.EficienciaFilial;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.EntregaAtencao;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.OcorrenciaAtraso;
 import com.dashboard.api.dto.performance.PerformanceSerieTemporalPointDTO;
 import com.dashboard.api.dto.performance.PerformanceStatusDistribuicaoDTO;
 import com.dashboard.api.dto.performance.PerformanceTabelaProjection;
@@ -22,6 +25,8 @@ import java.math.RoundingMode;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Set;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -139,6 +144,62 @@ public class PerformanceDashboardSqlRepository {
                 PerformanceMetricasUtils.percentual(longo(row, "finalizadas_com_comprovante"), finalizadas),
                 decimal(row, "valor_nf_sem_comprovante").setScale(2, RoundingMode.HALF_UP)
         );
+    }
+
+    public List<OcorrenciaAtraso> ocorrenciasAtraso(FiltroConsultaDTO filtro) {
+        QueryContext ctx = criarContexto(filtro);
+        return jdbcTemplate.query(ctx.baseCte() + PerformanceOperacaoSql.ocorrenciasAtraso(ctx.where()),
+                ctx.params(), (r, i) -> new OcorrenciaAtraso(r.getString("ocorrencia"), r.getLong("notas")));
+    }
+
+    public PaginaDTO<EntregaAtencao> entregasAtencao(FiltroConsultaDTO filtro, int pagina, int tamanho) {
+        QueryContext ctx = criarContexto(filtro);
+        int limite = ConsultaLimiteUtils.limitar(tamanho, TAMANHO_PADRAO, TAMANHO_MAXIMO);
+        int atual = Math.max(1, pagina);
+        ctx.params().addValue("offset", (long) (atual - 1) * limite).addValue("limite", limite);
+        return jdbcTemplate.query(ctx.baseCte() + PerformanceOperacaoSql.entregasAtencao(ctx.where()),
+                ctx.params(), rs -> {
+                    List<EntregaAtencao> linhas = new java.util.ArrayList<>();
+                    long total = 0;
+                    while (rs.next()) {
+                        total = rs.getLong("total");
+                        if (rs.getObject("numero_minuta") == null) continue;
+                        linhas.add(new EntregaAtencao(rs.getLong("numero_minuta"), rs.getString("pagador"),
+                                rs.getString("destino"), rs.getObject("data_previsao_entrega", LocalDate.class),
+                                rs.getString("status_norm"), rs.getString("alerta"), rs.getString("ultima_ocorrencia")));
+                    }
+                    return new PaginaDTO<>(linhas, total, (int) Math.ceil((double) total / limite), atual, limite);
+                });
+    }
+
+    public List<EficienciaFilial> eficienciaFiliais(FiltroConsultaDTO filtro) {
+        QueryContext ctx = criarContexto(filtro);
+        Set<LocalDate> feriados = Set.copyOf(jdbcTemplate.query(
+                "SELECT data FROM dbo.dim_calendario WHERE is_feriado_nacional = 1",
+                ctx.params(), (r, i) -> r.getObject(1, LocalDate.class)));
+        PerformanceEficiencia calculo = new PerformanceEficiencia(filtro.dataInicio(), filtro.dataFim(),
+                LocalDateTime.now(ZONE_ID_BRASILIA), feriados);
+        String sql = baseCte(ctx.colunas(), true) + PerformanceOperacaoSql.eficiencia(ctx.where());
+        return jdbcTemplate.query(sql, ctx.params(), rs -> {
+            Long anterior = null;
+            List<PerformanceEficiencia.Evento> eventos = new java.util.ArrayList<>();
+            PerformanceEficiencia.Frete frete = null;
+            while (rs.next()) {
+                long numero = rs.getLong("numero_minuta");
+                if (anterior == null || numero != anterior) {
+                    if (frete != null) calculo.adicionar(frete, eventos);
+                    eventos.clear();
+                    frete = new PerformanceEficiencia.Frete(rs.getBoolean("is_finalizada"), rs.getBoolean("is_no_prazo"),
+                            rs.getObject("data_finalizacao", LocalDate.class));
+                    anterior = numero;
+                }
+                LocalDateTime hora = rs.getObject("ocorrido_em", LocalDateTime.class);
+                if (hora != null) eventos.add(new PerformanceEficiencia.Evento(rs.getInt("codigo"), rs.getString("nota_fiscal"),
+                        hora, rs.getString("filial"), rs.getBoolean("entrega")));
+            }
+            if (frete != null) calculo.adicionar(frete, eventos);
+            return calculo.resultados();
+        });
     }
 
     public List<PerformanceSerieTemporalPointDTO> buscarSerieTemporal(
@@ -483,6 +544,8 @@ public class PerformanceDashboardSqlRepository {
     }
 
     private static void adicionarFiltrosTabela(QueryContext ctx, FiltroConsultaDTO filtro) {
+        adicionarFiltroTextoQualquer(ctx.whereBuilder(), ctx.params(), "drillResponsavel", filtro.valores("drillResponsavel"), "responsavel_key", "responsavel");
+        adicionarFiltroTexto(ctx.whereBuilder(), ctx.params(), "drillRegiao", "regiao_destino", filtro.valores("drillRegiao"));
         adicionarBuscaTabela(ctx.whereBuilder(), ctx.params(), filtro.valores("tabelaBusca"));
         adicionarCodigoTabela(ctx.whereBuilder(), ctx.params(), filtro.valores("tabelaCodigo"));
         adicionarStatusTabela(ctx.whereBuilder(), ctx.params(), filtro.valores("tabelaStatus"));
@@ -1101,6 +1164,10 @@ public class PerformanceDashboardSqlRepository {
     }
 
     private static String baseCte(PerformanceViewColumns colunas) {
+        return baseCte(colunas, false);
+    }
+
+    private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia) {
         exigirColuna(colunas, "Responsável Região Destino Key");
         String responsavelRegiao = textoNullableSql(colunas, "Responsável pela Região de Destino");
         String filialEmissora = textoNullableSql(colunas, "Filial Emissora", "Filial");
@@ -1123,6 +1190,9 @@ public class PerformanceDashboardSqlRepository {
                 WITH fonte AS (
                     SELECT
                         TRY_CONVERT(BIGINT, [Nº Minuta]) AS numero_minuta,
+                        [Pagador] AS pagador,
+                        [NF] AS notas_fiscais,
+                        [UF Destino] AS uf_destino,
                         [Data frete] AS data_frete,
                         COALESCE(prazo_reentrega.data, CAST([Previsão de Entrega] AS date)) AS data_previsao_entrega,
                         CAST([Data de Finalização] AS date) AS data_finalizacao,
@@ -1166,16 +1236,12 @@ public class PerformanceDashboardSqlRepository {
                     ) prazo_reentrega
                     WHERE TRY_CONVERT(BIGINT, [Nº Minuta]) IS NOT NULL
                       AND ([Tipo Frete] IS NULL OR [Tipo Frete] NOT IN (N'Substitute', N'Complementary'))
-                      AND (
-                          (prazo_reentrega.data >= :dataInicio AND prazo_reentrega.data < :dataFim)
-                          OR (([Tipo Frete] IS NULL OR [Tipo Frete] <> N'Redelivery' OR [CT-e Emissão] IS NULL)
-                              AND [Previsão de Entrega] >= :dataInicio AND [Previsão de Entrega] < :dataFim)
-                      )
+                      AND (%s)
                       AND (:pagadoresVazio = 1 OR base_raw.[Pagador] IN (:pagadores))
                 ),
                 minutas AS (
                     SELECT
-                        numero_minuta, data_frete, data_finalizacao_performance,
+                        numero_minuta, data_frete, data_finalizacao_performance, pagador, notas_fiscais, uf_destino,
                         data_previsao_entrega,
                         data_finalizacao,
                         responsavel_regiao_destino,
@@ -1216,7 +1282,12 @@ public class PerformanceDashboardSqlRepository {
                 regiaoDestino,
                 cidadeDestino,
                 comprovanteAnexado,
-                performanceDiferencaDias
+                performanceDiferencaDias,
+                periodoPorOcorrencia ? PerformanceOperacaoSql.PERIODO_OCORRENCIA : """
+                        (prazo_reentrega.data >= :dataInicio AND prazo_reentrega.data < :dataFim)
+                        OR (([Tipo Frete] IS NULL OR [Tipo Frete] <> N'Redelivery' OR [CT-e Emissão] IS NULL)
+                          AND [Previsão de Entrega] >= :dataInicio AND [Previsão de Entrega] < :dataFim)
+                        """
         );
     }
 

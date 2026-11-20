@@ -7,6 +7,9 @@ import com.dashboard.api.dto.performance.PerformanceDrilldownPointDTO;
 import com.dashboard.api.dto.performance.PerformanceEntregaRowDTO;
 import com.dashboard.api.dto.performance.PerformanceHistoricoPointDTO;
 import com.dashboard.api.dto.performance.PerformanceOverviewDTO;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.EficienciaFilial;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.EntregaAtencao;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.OcorrenciaAtraso;
 import com.dashboard.api.dto.performance.PerformanceSerieTemporalPointDTO;
 import com.dashboard.api.dto.performance.PerformanceStatusDistribuicaoDTO;
 import com.dashboard.api.dto.performance.PerformanceTabelaProjection;
@@ -51,6 +54,28 @@ public class PerformanceController {
             @RequestParam MultiValueMap<String, String> params
     ) {
         return ResponseEntity.ok(service.buscarOverview(filtro(dataInicio, dataFim, params, pagadores)));
+    }
+
+    @GetMapping("/ocorrencias-atraso")
+    public ResponseEntity<List<OcorrenciaAtraso>> ocorrenciasAtraso(@RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim, @RequestParam(required = false) List<String> pagadores,
+            @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(service.ocorrenciasAtraso(filtro(dataInicio, dataFim, params, pagadores)));
+    }
+
+    @GetMapping("/entregas-atencao")
+    public ResponseEntity<PaginaDTO<EntregaAtencao>> entregasAtencao(@RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim, @RequestParam(defaultValue = "1") int pagina,
+            @RequestParam(defaultValue = "10") int tamanhoPagina,
+            @RequestParam(required = false) List<String> pagadores, @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(service.entregasAtencao(filtro(dataInicio, dataFim, params, pagadores), pagina, tamanhoPagina));
+    }
+
+    @GetMapping("/eficiencia-filiais")
+    public ResponseEntity<List<EficienciaFilial>> eficienciaFiliais(@RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim, @RequestParam(required = false) List<String> pagadores,
+            @RequestParam MultiValueMap<String, String> params) {
+        return ResponseEntity.ok(service.eficienciaFiliais(filtro(dataInicio, dataFim, params, pagadores)));
     }
 
     @GetMapping("/serie-temporal")

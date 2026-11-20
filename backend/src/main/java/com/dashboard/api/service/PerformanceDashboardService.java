@@ -8,6 +8,9 @@ import com.dashboard.api.dto.performance.PerformanceDrilldownPointDTO;
 import com.dashboard.api.dto.performance.PerformanceEntregaRowDTO;
 import com.dashboard.api.dto.performance.PerformanceHistoricoPointDTO;
 import com.dashboard.api.dto.performance.PerformanceOverviewDTO;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.EficienciaFilial;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.EntregaAtencao;
+import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.OcorrenciaAtraso;
 import com.dashboard.api.dto.performance.PerformanceSerieTemporalPointDTO;
 import com.dashboard.api.dto.performance.PerformanceStatusDistribuicaoDTO;
 import com.dashboard.api.dto.performance.PerformanceTabelaProjection;
@@ -40,6 +43,18 @@ public class PerformanceDashboardService {
 
     public PerformanceOverviewDTO buscarOverview(FiltroConsultaDTO filtro) {
         return repository.buscarOverview(filtro);
+    }
+
+    public List<OcorrenciaAtraso> ocorrenciasAtraso(FiltroConsultaDTO filtro) {
+        return repository.ocorrenciasAtraso(filtro);
+    }
+
+    public PaginaDTO<EntregaAtencao> entregasAtencao(FiltroConsultaDTO filtro, int pagina, int tamanho) {
+        return repository.entregasAtencao(filtro, pagina, tamanho);
+    }
+
+    public List<EficienciaFilial> eficienciaFiliais(FiltroConsultaDTO filtro) {
+        return repository.eficienciaFiliais(filtro);
     }
 
     public List<PerformanceSerieTemporalPointDTO> buscarSerieTemporal(
