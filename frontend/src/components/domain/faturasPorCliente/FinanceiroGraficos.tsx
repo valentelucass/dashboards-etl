@@ -62,7 +62,7 @@ function ContasPorVencimento({ filtro }: Props) {
     if (faixa) setCliente(selecionada.nome);
     else setFaixa(selecionada.nome);
   };
-  return <ChartWrapper chartKey="faturasAging"
+  return <ChartWrapper chartKey="faturasAging" altura="100%"
     titulo={['Contas a receber por faixa de vencimento', faixa, cliente].filter(Boolean).join(' · ')}
     option={opcoes} isLoading={consulta.isLoading} isEmpty={!linhas.some(d => d.titulos > 0)}
     emptyMessage="Nenhum título em aberto para os filtros selecionados."
@@ -84,12 +84,14 @@ function ContasPorVencimento({ filtro }: Props) {
 function ClientesEmAtraso({ filtro }: Props) {
   const consulta = useClientesEmAtraso(filtro);
   return <ChartCard chartKey="faturasClientesEmAtraso" titulo="Clientes com títulos em atraso"
+    contentClassName="lg:[contain:size]"
     isLoading={consulta.isLoading} isEmpty={!consulta.data?.length}
     emptyMessage="Nenhum cliente com título vencido em aberto para os filtros selecionados."
     erro={consulta.isError ? getApiErrorMessage(consulta.error, 'Erro ao carregar os clientes com títulos em atraso.') : null}>
-    <div className="max-w-full overflow-x-auto">
+    <div role="region" aria-label="Lista de clientes com títulos em atraso" tabIndex={0}
+      className="max-h-[350px] max-w-full overflow-auto focus-visible:outline-offset-[-2px] lg:h-full lg:max-h-none">
       <table aria-label="Dez clientes com mais títulos em atraso" className="w-full text-sm" style={{ color: 'var(--color-text)' }}>
-        <thead className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+        <thead className="sticky top-0 z-10 bg-[var(--color-card)] text-xs" style={{ color: 'var(--color-text-muted)' }}>
           <tr>{['Cliente', 'Títulos', 'Maior atraso', 'R$ em atraso'].map((coluna, i) =>
             <th key={coluna} scope="col" className={'px-2 py-2 ' + (i ? 'text-right' : 'text-left')}>{coluna}</th>)}</tr>
         </thead>

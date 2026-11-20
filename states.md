@@ -1,3 +1,7 @@
+## 20/11/2026 — Lista de clientes em atraso
+
+Em Financeiro e Recebíveis, o gráfico por vencimento define a altura da linha no desktop. A lista de clientes em atraso tem rolagem própria e mantém os títulos das colunas visíveis. No celular, os cartões ficam empilhados e a lista também pode ser rolada.
+
 ## 19/11/2026 — Histórico de acessos e ficha do usuário
 
 Em Gestão de usuários, Acessos de hoje mostra cinco rotas por página. As setas ficam acima da lista e permitem ir diretamente à primeira ou à última página. As contagens e o tempo em foco representam o dia inteiro. O botão Ver mais da tabela abre uma ficha de consulta com conta e atividade, filiais e permissões, em um diálogo centralizado no desktop e uma folha no celular.
