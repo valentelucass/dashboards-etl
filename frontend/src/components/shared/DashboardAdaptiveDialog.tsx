@@ -23,5 +23,6 @@ export default function DashboardAdaptiveDialog({
 
   return session.sheet
     ? <BottomSheet label={label} isOpen={isOpen} height={sheetHeight} {...props} />
-    : <Dialog aria-label={label} isOpen={isOpen} width={width} maxHeight={maxHeight} {...props} />;
+    : <Dialog aria-label={label} isOpen={isOpen} width={width} maxHeight={maxHeight} {...props}
+        className={['dashboard-centered-dialog', props.className].filter(Boolean).join(' ')} />;
 }

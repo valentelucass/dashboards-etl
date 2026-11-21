@@ -18,7 +18,8 @@ import DashboardAdaptiveDialog from '../components/shared/DashboardAdaptiveDialo
 import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList';
 import { Selector } from '@astryxdesign/core/Selector';
 import { FormPasswordField, FormTextField } from '../components/shared/FormTextField';
-import { CircleHelp, Eye, KeyRound, MoreHorizontal, Pencil, Upload, UserCheck, UserX, Users, X } from 'lucide-react';
+import { CircleHelp, KeyRound, MoreHorizontal, Pencil, Upload, UserCheck, UserX, Users, X } from 'lucide-react';
+import DirectoryDetailsDialog, { DirectoryDetailsButton } from '../components/admin/DirectoryDetailsDialog';
 import type { LucideIcon } from 'lucide-react';
 import { PresenceHistoryContent } from '../components/admin/PresenceHistory';
 import TooltipKpi from '../components/shared/TooltipKpi';
@@ -56,6 +57,7 @@ import {
   createEmptyPermissionOverrideState,
   PAPEL_ADMIN_PLATAFORMA,
   PAPEL_DESENVOLVEDOR,
+  permissionNames,
   permissionSummary,
 } from '../utils/accessControl';
 import { getApiErrorMessage } from '../utils/apiError';
@@ -63,7 +65,7 @@ import { formatarDataHoraMinuto } from '../utils/formatadores';
 import { getPasswordPolicyErrors, PASSWORD_POLICY_HINT } from '../utils/passwordPolicy';
 import { AlertDialog } from '@astryxdesign/core/AlertDialog';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuDivider, DropdownMenuItem } from '@astryxdesign/core/DropdownMenu';
-import { Popover } from '@astryxdesign/core/Popover';
+import DirectoryList from '../components/admin/DirectoryList';
 
 interface UsuarioRow extends UsuarioAdmin {
   presencaAtual: boolean | null;
@@ -71,10 +73,9 @@ interface UsuarioRow extends UsuarioAdmin {
   acoes: string;
   detalhes: string;
   papelResumo: string;
-  permissoesResumo: string;
-  negacoesResumo: string;
-  concessoesResumo: string;
-  filiaisResumo: string;
+  permissoes: string[];
+  negacoes: string[];
+  concessoes: string[];
   senhaResumo: string;
 }
 
@@ -248,15 +249,16 @@ function timestampAtividade(valor: string | null): number {
 function AccessSummaryItem({
   label,
   value,
-  expandable = false,
+  items,
   className = '',
 }: {
   label: string;
   value: string;
-  expandable?: boolean;
+  items?: string[];
   className?: string;
 }) {
-  const canExpand = expandable && value.length > 76;
+  const [open, setOpen] = useState(false);
+  const canExpand = items && (items.length > 1 || value.length > 76);
 
   return (
     <div className={`min-w-0 rounded-xl border px-3 py-2 ${className}`} style={SURFACE_STYLE}>
@@ -264,19 +266,19 @@ function AccessSummaryItem({
       <div className="mt-1 flex min-w-0 items-center gap-1.5">
         <span className="min-w-0 flex-1 truncate text-sm font-medium" title={value} style={{ color: 'var(--color-text)' }}>{value}</span>
         {canExpand && (
-          <Popover presentation="adaptive" label={label} alignment="start" width="min(28rem, calc(100vw - 24px))" padding={3}
-      content={<div>
-              <h4 className="text-sm font-bold">{label}</h4>
-              <p className="mt-2 text-sm leading-6" style={{ color: 'var(--color-text-subtle)' }}>{value}</p>
-        </div>}>
-      {trigger => (
-        <DashboardButton {...trigger} type="button" className={`shrink-0 rounded-md p-1 ${FOCUS_RING_CLASS}`} aria-label={`Ver todas as ${label.toLowerCase()}`} title={`Ver todas as ${label.toLowerCase()}`} style={{ color: 'var(--color-primary)' }}>
-                <MoreHorizontal size={17} aria-hidden="true" />
-              </DashboardButton>
-      )}
-    </Popover>
+          <Button type="button" label={`Ver todas as ${label.toLowerCase()}`} aria-haspopup="dialog" isIconOnly variant="ghost"
+            size="sm" icon={<MoreHorizontal size={17} />} onClick={() => setOpen(true)} />
         )}
       </div>
+      {open && items && <DashboardAdaptiveDialog label={label} isOpen purpose="info" sheetHeight="hug" width={560} padding={0} onOpenChange={setOpen}>
+        <div className="admin-detail-frame">
+          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-4 py-3">
+            <h2 className="text-base font-bold">{label} ({items.length})</h2>
+            <Button type="button" label="Fechar lista" variant="ghost" size="sm" isIconOnly icon={<X size={18} />} onClick={() => setOpen(false)} />
+          </header>
+          <div className="min-h-0 overflow-y-auto px-4 py-3"><DirectoryList label={label} items={items} /></div>
+        </div>
+      </DashboardAdaptiveDialog>}
     </div>
   );
 }
@@ -477,14 +479,6 @@ function formatEscopoFiliaisTipo(value: UsuarioAdmin['escopoFiliaisTipo']) {
   }
 }
 
-function DetailItem({ label, value, className = '' }: { label: string; value: string; className?: string }) {
-  return (
-    <div className={`min-w-0 rounded-xl border px-3 py-2 ${className}`} style={SOFT_PANEL_STYLE}>
-      <dt className="text-xs text-[var(--color-text-subtle)]">{label}</dt>
-      <dd className="mt-1 wrap-anywhere text-sm font-medium">{value || 'Nenhuma'}</dd>
-    </div>
-  );
-}
 
 function renderUsuarioIdentityCell(row: UsuarioRow) {
   return (
@@ -526,56 +520,29 @@ function renderUltimaTelaCell(row: UsuarioRow) {
 }
 
 function UsuarioDetailsDialog({ row, onClose }: { row: UsuarioRow; onClose: () => void }) {
-  return (
-    <DashboardAdaptiveDialog label={`Detalhes de ${row.nome}`} isOpen onOpenChange={open => { if (!open) onClose(); }}
-      purpose="info" sheetHeight="hug" width="min(54rem, calc(100dvw - 2rem))" maxHeight="calc(100dvh - 2rem)" padding={0}>
-      <div className="admin-directory-dialog-body">
-        <header className="flex items-start gap-3 border-b px-4 py-4 sm:px-6" style={{ borderColor: 'var(--color-border)' }}>
-          <Users size={19} className="mt-1 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h2 className="wrap-anywhere text-base font-bold">{row.nome}</h2>
-              {renderStatusBadge(row.ativo)}
-            </div>
-            <p className="mt-1 wrap-anywhere text-sm text-[var(--color-text-subtle)]">{row.email}</p>
-          </div>
-          <Button label="Fechar detalhes do usuário" isIconOnly variant="ghost" size="sm" icon={<X size={18} />} onClick={onClose} />
-        </header>
-        <div className="grid gap-5 px-4 py-4 sm:px-6 sm:py-5">
-          <section>
-            <h3 className="mb-2 text-sm font-bold">Conta e atividade</h3>
-            <dl className="grid gap-2 sm:grid-cols-3">
-              <DetailItem label="Setor" value={row.setorNome} />
-              <DetailItem label="Papel" value={row.papelResumo || 'Sem papel'} />
-              <DetailItem label="Senha" value={row.senhaResumo} />
-              <div className="min-w-0 rounded-xl border px-3 py-2" style={SOFT_PANEL_STYLE}>
-                <dt className="text-xs text-[var(--color-text-subtle)]">Presença</dt>
-                <dd className="mt-1">{renderOnlineBadge(row.presencaAtual, row.propriaConta)}</dd>
-              </div>
-              <DetailItem label="Última tela" value={row.ultimaRotaAcessada ?? 'Sem registro'} />
-              <DetailItem label="Última atividade" value={formatUltimaAtividade(row.ultimaAtividade)} />
-            </dl>
-          </section>
-          <section>
-            <h3 className="mb-2 text-sm font-bold">Filiais</h3>
-            <dl className="grid gap-2 sm:grid-cols-3">
-              <DetailItem label="Escopo" value={formatEscopoFiliaisTipo(row.escopoFiliaisTipo)} />
-              <DetailItem label="Filiais efetivas" value={row.filiaisResumo || 'Acesso total'} />
-              <DetailItem label="Filiais próprias" value={formatFiliaisResumo(row.filiaisPermitidasUsuario, row.escopoFiliaisTipo === 'TODAS')} />
-            </dl>
-          </section>
-          <section>
-            <h3 className="mb-2 text-sm font-bold">Permissões</h3>
-            <dl className="grid gap-2 sm:grid-cols-2">
-              <DetailItem label="Permissões efetivas" value={row.permissoesResumo || 'Sem permissões'} className="sm:col-span-2" />
-              <DetailItem label="Concessões individuais" value={row.concessoesResumo} />
-              <DetailItem label="Negações individuais" value={row.negacoesResumo} />
-            </dl>
-          </section>
-        </div>
-      </div>
-    </DashboardAdaptiveDialog>
-  );
+  return <DirectoryDetailsDialog name={row.nome} subtitle={row.email} icon={<Users size={19} />}
+    badge={renderStatusBadge(row.ativo)} closeLabel="Fechar detalhes do usuário" onClose={onClose}
+    sections={[
+      { title: 'Conta e atividade', fields: [
+        { label: 'Setor', value: row.setorNome },
+        { label: 'Papel', value: row.papelResumo || 'Sem papel' },
+        { label: 'Senha', value: row.senhaResumo },
+        { label: 'Presença', value: renderOnlineBadge(row.presencaAtual, row.propriaConta) },
+        { label: 'Última tela', value: row.ultimaRotaAcessada ?? 'Sem registro' },
+        { label: 'Última atividade', value: formatUltimaAtividade(row.ultimaAtividade) },
+      ] },
+      { title: 'Filiais', fields: [
+        { label: 'Escopo', value: formatEscopoFiliaisTipo(row.escopoFiliaisTipo) },
+        { label: 'Filiais efetivas', items: row.filiaisPermitidasEfetivas, empty: 'Acesso total' },
+        { label: 'Filiais próprias', items: row.escopoFiliaisTipo === 'TODAS' ? [] : row.filiaisPermitidasUsuario,
+          empty: row.escopoFiliaisTipo === 'TODAS' ? 'Acesso total' : 'Nenhuma' },
+      ] },
+      { title: 'Permissões', fields: [
+        { label: 'Permissões efetivas', items: row.permissoes, empty: 'Sem permissões' },
+        { label: 'Concessões individuais', items: row.concessoes, empty: 'Nenhuma' },
+        { label: 'Negações individuais', items: row.negacoes, empty: 'Nenhuma' },
+      ] },
+    ]} />;
 }
 
 export default function AdminUsuariosPage() {
@@ -666,6 +633,7 @@ export default function AdminUsuariosPage() {
     }
     return proximo;
   }, [baseline, catalogo.data, form.papel, overrideState]);
+  const permissoesEfetivasNomes = permissionNames(permissoesEfetivasPreview, catalogo.data ?? []);
 
   const negacoesPreview = useMemo(
     () => mapStateToNegacoes(overrideState)
@@ -692,14 +660,9 @@ export default function AdminUsuariosPage() {
         ultimaRotaAcessada: resumoSessoes.data?.usuariosOnlineDetalhes.find(item => item.id === usuario.id)?.ultimaRotaAcessada ?? usuario.ultimaRotaAcessada,
         detalhes: usuario.id,
         papelResumo: papeis.data?.find((papel) => papel.nome === usuario.papel)?.descricao ?? formatRoleName(usuario.papel),
-        permissoesResumo: permissionSummary(usuario.permissoesEfetivas, catalogo.data ?? []),
-        negacoesResumo: usuario.permissoesNegadas
-          .map((chave) => catalogo.data?.find((item) => item.chave === chave)?.nome ?? chave)
-          .join(', '),
-        concessoesResumo: usuario.permissoesConcedidas
-          .map((chave) => catalogo.data?.find((item) => item.chave === chave)?.nome ?? chave)
-          .join(', '),
-        filiaisResumo: formatFiliaisResumo(usuario.filiaisPermitidasEfetivas, usuario.filiaisPermitidasEfetivas.length === 0),
+        permissoes: permissionNames(usuario.permissoesEfetivas, catalogo.data ?? []),
+        negacoes: usuario.permissoesNegadas.map(chave => catalogo.data?.find(item => item.chave === chave)?.nome ?? chave),
+        concessoes: usuario.permissoesConcedidas.map(chave => catalogo.data?.find(item => item.chave === chave)?.nome ?? chave),
         senhaResumo: `${formatPasswordStatus(usuario.statusSenha)} • ${usuario.algoritmoSenha}${usuario.passwordResetRequestedAt ? ' • Redefinição solicitada' : ''}`,
         acoes: usuario.id,
       })),
@@ -918,10 +881,7 @@ export default function AdminUsuariosPage() {
   const detalhe = detalheId ? linhas.find(row => row.id === detalheId) : undefined;
 
   function renderUsuarioDetailsButton(row: UsuarioRow) {
-    return <DashboardButton type="button" aria-haspopup="dialog" aria-label={`Ver detalhes de ${row.nome}`}
-      className="rounded-lg border px-2.5 py-1.5" style={SOFT_PANEL_STYLE} onClick={() => setDetalheId(row.id)}>
-      <Eye size={14} aria-hidden="true" />Ver mais
-    </DashboardButton>;
+    return <DirectoryDetailsButton name={row.nome} onClick={() => setDetalheId(row.id)} />;
   }
 
   function renderActionMenu(row: UsuarioRow) {
@@ -1181,11 +1141,13 @@ export default function AdminUsuariosPage() {
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <AccessSummaryItem label="Setor" value={setorSelecionado?.nome ?? 'Selecione um setor'} />
                 <AccessSummaryItem label="Papel" value={formatRoleName(form.papel)} />
-                <AccessSummaryItem label="Filiais efetivas" value={formatFiliaisResumo(filiaisEfetivasPreview, escopoComAcessoTotal)} />
+                <AccessSummaryItem label="Filiais efetivas" value={formatFiliaisResumo(filiaisEfetivasPreview, escopoComAcessoTotal)}
+                  items={escopoComAcessoTotal ? undefined : filiaisEfetivasPreview} />
                 <AccessSummaryItem label="Baseline herdado" value={permissionSummary(baseline, catalogo.data ?? []) || 'Sem permissões'} />
                 <AccessSummaryItem label="Negações" value={negacoesPreview} />
                 <AccessSummaryItem label="Concessões individuais" value={concessoesPreview} />
-                <AccessSummaryItem label="Permissões efetivas" value={permissionSummary(permissoesEfetivasPreview, catalogo.data ?? []) || 'Sem permissões'} expandable className="sm:col-span-2" />
+                <AccessSummaryItem label="Permissões efetivas" value={permissoesEfetivasNomes.join(', ') || 'Sem permissões'}
+                  items={permissoesEfetivasNomes} className="sm:col-span-2" />
               </div>
             </div>
 

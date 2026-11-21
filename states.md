@@ -1,3 +1,7 @@
+## 21/11/2026 — Fichas de usuários e setores
+
+As duas tabelas abrem o “Ver mais” no mesmo modelo de ficha. No desktop o modal fica centralizado na janela, e no celular abre como folha. O resumo mostra valores únicos diretamente. Listas de filiais e permissões podem ser consultadas em páginas de cinco itens, com retorno ao resumo. A prévia de acesso do formulário de usuários também permite consultar as filiais e permissões efetivas por página.
+
 ## 21/11/2026 — Navegação lateral
 
 O controle de expansão usa um ícone de painel lateral. Com o menu aberto, o ícone e o texto “Recolher menu” ficam alinhados à esquerda. As setas verticais indicam a rolagem da lista.

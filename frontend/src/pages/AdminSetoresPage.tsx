@@ -2,9 +2,9 @@ import { useMediaQuery } from '@astryxdesign/core/hooks';
 import '../components/admin/admin-directory.css';
 import { TableText } from '../components/shared/DashboardTable';
 import { Badge } from '@astryxdesign/core/Badge';
-import DashboardButton from "../components/shared/DashboardButton";
+import DirectoryDetailsDialog, { DirectoryDetailsButton } from '../components/admin/DirectoryDetailsDialog';
 import { useMemo, useState } from 'react';
-import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Building2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
@@ -22,16 +22,14 @@ import {
 import { usePageHeader } from '../contexts/PageHeaderContext';
 import { useFiliais } from '../hooks/queries/useDimensoes';
 import type { PermissionMap, SetorAdmin, SetorPayload } from '../types/access';
-import { createEmptyPermissionMap, permissionSummary } from '../utils/accessControl';
+import { createEmptyPermissionMap, permissionNames } from '../utils/accessControl';
 import { getApiErrorMessage } from '../utils/apiError';
 import { AlertDialog } from '@astryxdesign/core/AlertDialog';
 import { DropdownMenu, DropdownMenuDivider, DropdownMenuItem } from '@astryxdesign/core/DropdownMenu';
-import { Popover } from '@astryxdesign/core/Popover';
 
 interface SetorRow extends SetorAdmin {
   detalhes: string;
-  permissoesResumo: string;
-  filiaisResumo: string;
+  permissoes: string[];
   acoes: string;
 }
 
@@ -42,55 +40,9 @@ const FORM_INICIAL: SetorPayload = {
   filiaisPermitidas: [],
 };
 
-const SECONDARY_BUTTON_STYLE = {
-  backgroundColor: 'var(--color-bg)',
-  borderColor: 'var(--color-border)',
-  color: 'var(--color-text)',
-};
-
-const SOFT_PANEL_STYLE = {
-  backgroundColor: 'var(--color-bg)',
-  borderColor: 'var(--color-border)',
-};
-
-const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
-
 function renderSistemaBadge(sistema: boolean) {
   return (
     <Badge label={sistema ? 'Sistema' : 'Manual'} variant={sistema ? 'info' : 'neutral'} />
-  );
-}
-
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border px-3 py-2" style={SOFT_PANEL_STYLE}>
-      <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>
-        {label}
-      </div>
-      <div className="mt-1 break-words text-sm font-medium" style={{ color: 'var(--color-text)' }}>
-        {value || 'Nenhum'}
-      </div>
-    </div>
-  );
-}
-
-function DetailTextBlock({ label, value, fallback }: { label: string; value: string; fallback: string }) {
-  return (
-    <div className="space-y-1">
-      <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-subtle)' }}>
-        {label}
-      </div>
-      <div
-        className="max-h-24 overflow-y-auto rounded-xl border px-3 py-2 text-xs leading-relaxed"
-        style={{
-          backgroundColor: 'var(--color-bg)',
-          borderColor: 'var(--color-border)',
-          color: 'var(--color-text)',
-        }}
-      >
-        {value || fallback}
-      </div>
-    </div>
   );
 }
 
@@ -122,52 +74,25 @@ function renderSetorAccessCell(row: SetorRow) {
           : 'Nenhuma filial'}</TableText>
       </p>
       <p style={{ color: 'var(--color-text-muted)' }}>
-        <TableText>{row.permissoesResumo || 'Sem permissões'}</TableText>
+        <TableText>{row.permissoes.join(', ') || 'Sem permissões'}</TableText>
       </p>
     </div>
   );
 }
 
-function renderSetorDetailsPopover(row: SetorRow) {
-  return (
-    <Popover presentation="adaptive" label={"Detalhes de " + row.nome} alignment="end" width="min(30rem, calc(100vw - 24px))" padding={3}
-      content={<div className="max-h-[min(34rem,70dvh)] overflow-y-auto">
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="truncate text-sm font-bold" style={{ color: 'var(--color-text)' }}>
-                {row.nome}
-              </h3>
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                {row.descricao || 'Sem descrição'}
-              </p>
-            </div>
-            {renderSistemaBadge(row.sistema)}
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-2">
-            <DetailItem label="Usuários" value={`${row.totalUsuarios} vinculado(s)`} />
-            <DetailItem label="Origem" value={row.sistema ? 'Sistema' : 'Manual'} />
-          </div>
-
-          <DetailTextBlock label="Descrição" value={row.descricao ?? ''} fallback="Sem descrição" />
-          <DetailTextBlock label="Filiais permitidas" value={row.filiaisResumo} fallback="Nenhuma filial" />
-          <DetailTextBlock label="Baseline de acesso" value={row.permissoesResumo} fallback="Sem permissões" />
-        </div>
-        </div>}>
-      {trigger => (
-        <DashboardButton {...trigger}
-          type="button"
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-all duration-150 hover:-translate-y-px hover:bg-[var(--color-bg)] ${FOCUS_RING_CLASS}`}
-          style={SECONDARY_BUTTON_STYLE}
-          aria-label={`Ver detalhes de ${row.nome}`}
-        >
-          <Eye size={14} />
-          Ver mais
-        </DashboardButton>
-      )}
-    </Popover>
-  );
+function SetorDetailsDialog({ row, onClose }: { row: SetorRow; onClose: () => void }) {
+  return <DirectoryDetailsDialog name={row.nome} icon={<Building2 size={19} />} badge={renderSistemaBadge(row.sistema)}
+    closeLabel="Fechar detalhes do setor" onClose={onClose}
+    sections={[
+      { title: 'Setor', fields: [
+        { label: 'Descrição', value: row.descricao || 'Sem descrição' },
+        { label: 'Usuários', value: row.totalUsuarios },
+      ] },
+      { title: 'Acesso', fields: [
+        { label: 'Filiais permitidas', items: row.filiaisPermitidas, empty: 'Nenhuma filial' },
+        { label: 'Baseline de acesso', items: row.permissoes, empty: 'Sem permissões' },
+      ] },
+    ]} />;
 }
 
 export default function AdminSetoresPage() {
@@ -178,6 +103,7 @@ export default function AdminSetoresPage() {
   const atualizarSetor = useAtualizarSetor();
   const excluirSetor = useExcluirSetor();
 
+  const [detalheId, setDetalheId] = useState<string | null>(null);
   const [editing, setEditing] = useState<SetorAdmin | null>(null);
   const [form, setForm] = useState<SetorPayload>(FORM_INICIAL);
   const [erro, setErro] = useState('');
@@ -195,12 +121,17 @@ export default function AdminSetoresPage() {
       (setores.data ?? []).map((setor) => ({
         ...setor,
         detalhes: setor.id,
-        permissoesResumo: permissionSummary(setor.templatePermissoes, catalogo.data ?? []),
-        filiaisResumo: setor.filiaisPermitidas.join(', '),
+        permissoes: permissionNames(setor.templatePermissoes, catalogo.data ?? []),
         acoes: setor.id,
       })),
     [catalogo.data, setores.data],
   );
+
+  const detalhe = linhas.find(row => row.id === detalheId);
+
+  function renderDetailsButton(row: SetorRow) {
+    return <DirectoryDetailsButton name={row.nome} onClick={() => setDetalheId(row.id)} />;
+  }
 
   function resetForm() {
     setEditing(null);
@@ -276,7 +207,7 @@ export default function AdminSetoresPage() {
       label: 'Detalhes',
       largura: '120px',
       ordenavel: false,
-      formato: (_, row) => renderSetorDetailsPopover(row),
+      formato: (_, row) => renderDetailsButton(row),
     },
     {
       chave: 'acoes',
@@ -296,7 +227,7 @@ export default function AdminSetoresPage() {
           {renderSetorIdentityCell(row)}
           {renderSetorAccessCell(row)}
           <div className="flex flex-wrap items-center gap-2">
-            {renderSetorDetailsPopover(row)}
+            {renderDetailsButton(row)}
             {renderActionMenu(row)}
           </div>
         </div>
@@ -364,6 +295,7 @@ export default function AdminSetoresPage() {
         isLoading={setores.isLoading}
         colunas={isMobileSetoresTable ? colunasSetoresMobile : colunasSetoresDesktop}
       />
+      {detalhe && <SetorDetailsDialog row={detalhe} onClose={() => setDetalheId(null)} />}
       {exclusao && (
         <AlertDialog isOpen title="Excluir setor?" description={'Confirme a exclusão do setor ' + exclusao.nome + '.'}
           actionLabel="Excluir" onOpenChange={open => { if (!open) setExclusao(null); }}

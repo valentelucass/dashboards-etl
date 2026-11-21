@@ -146,9 +146,12 @@ export function buildPermissionMapFromCatalog(catalog: PermissionCatalogItem[]):
   }, createEmptyPermissionMap());
 }
 
-export function permissionSummary(map: PermissionMap, catalog: PermissionCatalogItem[]): string {
+export function permissionNames(map: PermissionMap, catalog: PermissionCatalogItem[]): string[] {
   return catalog
     .filter((item) => map[item.chave])
-    .map((item) => item.nome)
-    .join(', ');
+    .map((item) => item.nome);
+}
+
+export function permissionSummary(map: PermissionMap, catalog: PermissionCatalogItem[]): string {
+  return permissionNames(map, catalog).join(', ');
 }

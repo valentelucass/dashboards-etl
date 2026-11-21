@@ -1,3 +1,22 @@
+.admin-detail-frame {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  max-block-size: calc(100dvh - 2rem - 2px);
+}
+
+.admin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: .5rem;
+}
+
+@media (max-width: 639px) {
+  .admin-detail-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.25rem), 1fr));
+  }
+}
+
 .admin-directory-dialog-body {
   min-inline-size: 0;
   min-block-size: 0;

@@ -27,6 +27,11 @@ textarea {
   overflow-y: auto;
 }
 
+dialog:is(.dashboard-centered-dialog, .astryx-alert-dialog):modal {
+  inset: 0;
+  margin: auto;
+}
+
 /* O navegador mantém o desfoque atrás das superfícies modais do Astryx. */
 dialog:modal::backdrop {
   -webkit-backdrop-filter: blur(5px);
