@@ -313,6 +313,21 @@ class ColetasAgregadosSqlRepositoryTest {
                 .doesNotContain(":regiaoLogisticaSelecionada");
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void redeAgregaPorResponsavelDeOrigemComARegraDePerformance() {
+        var repository = new ColetasAgregadosSqlRepository(jdbcTemplate,
+                new DashboardExportSqlBuilder(PeriodoOffsetDateTimeHelper.padrao()), escopoSemRestricao());
+        repository.desempenhoDiarioDaRede(new FiltroConsultaDTO(
+                LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 21), Map.of()), "SJK | PARCEIRO");
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbcTemplate).query(sql.capture(), params.capture(), any(RowMapper.class));
+        assertThat(sql.getValue()).contains("$.pck_prn_drt_nickname", "PARTITION BY [ID]",
+                "[Finalizacao] <= [Agendamento]", "N'finalizada', N'coletada'", "p.parceiro = :parceiro");
+        assertThat(params.getValue().getValue("parceiro")).isEqualTo("SJK | PARCEIRO");
+    }
+
     private static EscopoFilialService escopoSemRestricao() {
         return new EscopoFilialService(null, null) {
             @Override

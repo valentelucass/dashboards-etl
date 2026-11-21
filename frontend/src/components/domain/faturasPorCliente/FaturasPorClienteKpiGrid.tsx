@@ -1,10 +1,9 @@
 import KpiCard from '../../shared/KpiCard';
-import DashboardLoading from '../../shared/DashboardLoading';
+import FinanceiroKpiLayout from './FinanceiroKpiLayout';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary } from '../../../constants/kpiDictionary';
 import type { FaturasPorClienteOverview } from '../../../types/faturasPorCliente';
 import { formatarMoeda, formatarNumero, formatarPorcentagem } from '../../../utils/formatadores';
-import './financeiro-kpis.css';
 
 interface FaturasPorClienteKpiGridProps {
   overview?: FaturasPorClienteOverview;
@@ -39,13 +38,5 @@ function financialCards(overview: FaturasPorClienteOverview) {
 }
 
 export default function FaturasPorClienteKpiGrid({ overview }: FaturasPorClienteKpiGridProps) {
-  const cards = overview ? financialCards(overview) : Array.from({ length: 9 }, (_, index) =>
-    <DashboardLoading key={index} variant="card" label="" />);
-  return <div className="financeiro-kpis mb-4" role={overview ? undefined : 'status'}
-    aria-label={overview ? undefined : 'Carregando indicadores'}>
-    <div className="financeiro-kpi-grid">
-      <div className="financeiro-kpi-group">{cards.slice(0, 5)}</div>
-      <div className="financeiro-kpi-group">{cards.slice(5)}</div>
-    </div>
-  </div>;
+  return <FinanceiroKpiLayout cards={overview && financialCards(overview)} />;
 }

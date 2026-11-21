@@ -35,6 +35,11 @@ class PerformanceEficienciaTest {
         assertEquals(100d,r.get(0).eft()); assertNull(r.get(0).otif());
         assertEquals(100d,r.get(1).efe()); assertEquals(100d,r.get(2).efd()); assertEquals(100d,r.get(2).otif());
         assertEquals(0d,r.get(3).eft()); assertNull(r.get(3).efe());
+        assertEquals(0, r.get(0).otifTotal());
+        assertEquals(1, r.get(2).otifNoPrazo());
+        assertEquals(1, r.get(2).otifTotal());
+        assertEquals(1, r.get(2).efdEficientes());
+        assertEquals(1, r.get(2).efdTotal());
         assertTrue(r.stream().allMatch(x->x.semInformacao()==0));
     }
 

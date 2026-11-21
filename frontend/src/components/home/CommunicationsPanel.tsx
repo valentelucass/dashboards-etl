@@ -1,3 +1,4 @@
+import NoticeListLoading from './NoticeListLoading';
 import DashboardLoading from '../shared/DashboardLoading';
 import { ClickableCard } from '@astryxdesign/core/ClickableCard';
 import { Banner } from '@astryxdesign/core/Banner';
@@ -180,7 +181,7 @@ export default function CommunicationsPanel(props: CommunicationsPanelProps) {
         <div className="home-fields home-notice-list" role="tabpanel" id={sectionId + '-panel'} aria-labelledby={sectionId + '-' + tab}>
           {error && !showForm && <Banner status="error" title={error} />}
           {leitura.isError && <Banner status="error" title="Não foi possível registrar a leitura. Abra o comunicado novamente para tentar." />}
-          {isLoading && <DashboardLoading variant="section" label="Carregando comunicações" />}
+          {isLoading && <NoticeListLoading />}
           {!isLoading && visible.length === 0 && (
             <EmptyState title="Nenhum comunicado nesta aba" icon={<Megaphone size={24} />} isCompact />
           )}

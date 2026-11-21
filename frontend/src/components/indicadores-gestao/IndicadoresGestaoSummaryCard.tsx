@@ -1,4 +1,4 @@
-import DashboardLoading from '../shared/DashboardLoading';
+import ScorecardLoading from './ScorecardLoading';
 import type { ReactNode } from 'react';
 import { ProgressBar } from '@astryxdesign/core/ProgressBar';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -32,7 +32,7 @@ export default function IndicadoresGestaoSummaryCard({
   progressPct,
   icon,
 }: IndicadoresGestaoSummaryCardProps) {
-  if (tone === 'loading') return <DashboardLoading variant="card" label={`Carregando ${title}`} />;
+  if (tone === 'loading') return <ScorecardLoading title={title} />;
   const style = getGoalToneStyle(tone);
   const widthPct = Math.max(0, Math.min(progressPct ?? 0, 100));
 

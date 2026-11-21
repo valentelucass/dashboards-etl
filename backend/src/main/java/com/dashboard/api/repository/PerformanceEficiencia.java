@@ -275,8 +275,12 @@ final class PerformanceEficiencia {
 
     List<EficienciaFilial> resultados() {
         List<EficienciaFilial> linhas = new ArrayList<>();
-        resultado.forEach((nome, f) -> linhas.add(new EficienciaFilial(nome, f.etapas[0].percentual(),
-                f.etapas[1].percentual(), f.etapas[2].percentual(), f.otif.percentual(), f.semInformacao)));
+        resultado.forEach((nome, f) -> {
+            Contagem destino = f.etapas[Tipo.EFD.ordinal()];
+            linhas.add(new EficienciaFilial(nome, f.etapas[0].percentual(), f.etapas[1].percentual(),
+                    destino.percentual(), f.otif.percentual(), f.semInformacao,
+                    f.otif.eficientes, f.otif.total, destino.eficientes, destino.total));
+        });
         return linhas;
     }
 

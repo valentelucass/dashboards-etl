@@ -116,15 +116,37 @@ dialog:modal::backdrop {
   transition: background-color .15s;
 }
 
-@media (min-width: 64rem) and (width < 96rem) {
-  .performance-kpi-grid > :first-child .dashboard-kpi-card [title] { white-space: normal; }
+.performance-kpi-strip {
+  container: performance-kpis / inline-size;
 }
 
-@media (min-width: 96rem) {
+.performance-kpi-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container performance-kpis (37rem <= width < 44rem) {
+  .performance-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .performance-kpi-grid > :last-child { grid-column: span 2; }
+}
+
+@container performance-kpis (44rem <= width < 56rem) {
+  .performance-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container performance-kpis (56rem <= width < 89rem) {
   .performance-kpi-grid {
-    --kpi-column: calc((100% - 11rem) / 12);
-    /* A nona coluna faz parte de Comprovante Anexado e cede espaço ao primeiro cartão. */
-    grid-template-columns: max(9rem, var(--kpi-column)) repeat(7, minmax(0, var(--kpi-column))) minmax(4.5rem, 1fr) repeat(3, minmax(0, var(--kpi-column)));
+    grid-template-columns: minmax(9rem, 1fr) repeat(2, minmax(0, .9fr)) minmax(7.75rem, 1fr) minmax(10.75rem, 1.3fr) minmax(6.75rem, 1fr);
+  }
+  .performance-kpi-grid > :nth-child(n+7) { grid-column: span 2; }
+}
+
+@container performance-kpis (min-width: 89rem) {
+  .performance-kpi-grid {
+    column-gap: .75rem;
+    grid-template-columns: minmax(9rem, 1.05fr) minmax(6.75rem, .85fr) minmax(6.25rem, .85fr) minmax(7.75rem, .9fr)
+      minmax(10.75rem, 1.3fr) minmax(6.75rem, 1fr) minmax(10rem, 1fr) minmax(11rem, 1.1fr) minmax(14.5rem, 1.45fr);
   }
 }
 
@@ -696,13 +718,6 @@ dialog:modal::backdrop {
   color: var(--color-text);
 }
 
-.dashboard-route-loading {
-  display: grid;
-  place-items: center;
-  min-height: 100dvh;
-  background: var(--color-bg);
-}
-
 .dashboard-loading {
   display: grid;
   align-content: center;
@@ -728,11 +743,8 @@ dialog:modal::backdrop {
 }
 
 .dashboard-loading--card {
-  min-height: 3.75rem;
-}
-
-.dashboard-route-loading > .dashboard-loading {
-  width: min(18rem, 80vw);
+  gap: .375rem;
+  min-height: 3.25rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1023,4 +1035,50 @@ table.cotacoes-resumo-table {
   --container-padding-inline-start: 0px;
   --container-padding-inline-end: 0px;
   min-inline-size: 0;
+}
+
+.dashboard-loading-plot {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 1rem;
+  height: 100%;
+  min-height: inherit;
+  padding: 1rem;
+}
+.dashboard-loading-plot-area { min-height: 0; display: grid; place-items: center; }
+.dashboard-loading-axes {
+  align-self: stretch;
+  justify-self: stretch;
+  border-block-end: 1px solid var(--color-border);
+  border-inline-start: 1px solid var(--color-border);
+  padding: .5rem .75rem;
+}
+.dashboard-loading-guides, .dashboard-loading-bars {
+  height: 100%;
+  display: grid;
+  align-content: space-around;
+}
+.dashboard-loading-bars {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6%;
+  align-content: end;
+  grid-template-rows: 75%;
+}
+.dashboard-loading-bars.is-horizontal {
+  grid-template-columns: 75%;
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  align-content: stretch;
+}
+.dashboard-loading-ring {
+  width: min(65%, 12rem);
+  aspect-ratio: 1;
+  mask-image: radial-gradient(circle, transparent 44%, #000 45%);
+}
+
+.dashboard-loading-gauge {
+  width: min(86%, 22rem);
+  aspect-ratio: 2;
+  mask-image: radial-gradient(ellipse 50% 100% at bottom, transparent 65%, #000 66%);
+  overflow: hidden;
+  border-radius: 100% 100% 0 0 / 200% 200% 0 0;
 }

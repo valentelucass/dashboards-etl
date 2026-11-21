@@ -1,3 +1,4 @@
+import ChartLoading, { MetricLoading } from '../../shared/ChartLoading';
 import { useMemo } from 'react';
 import AstryxDashboardChart from '../../charts/AstryxDashboardChart';
 import { useEchartsTheme } from '../../charts/useEchartsTheme';
@@ -50,7 +51,14 @@ export default function ManifestosGaugeCard({
   const option = useMemo(() => buildManifestosHalfDonutOption(dados.global, corDestaque, isDark), [corDestaque, dados.global, isDark]);
 
   return (
-    <ChartCard titulo={titulo} isLoading={isLoading}>
+    <ChartCard titulo={titulo} isLoading={isLoading} loadingContent={
+      <div className="flex min-h-[350px] items-center max-[900px]:flex-col">
+        <div className="h-[300px] w-full min-w-0 flex-1 max-[900px]:min-h-[252px]"><ChartLoading gauge /></div>
+        <div className="grid min-w-[112px] basis-[22%] gap-4 pl-4 max-[900px]:w-full max-[900px]:pl-0">
+          {[0, 1, 2].map(i => <MetricLoading key={i} />)}
+        </div>
+      </div>
+    }>
       <div className="flex h-full min-h-[350px] items-center justify-between gap-0 max-[900px]:min-h-[360px] max-[900px]:flex-col">
         <TooltipKpi
           definition={definitions.geral}

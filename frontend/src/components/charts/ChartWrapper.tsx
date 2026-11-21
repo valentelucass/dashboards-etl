@@ -1,3 +1,5 @@
+import ChartLoading from '../shared/ChartLoading';
+import DashboardLoading from '../shared/DashboardLoading';
 import { memo, useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
@@ -59,18 +61,22 @@ function ChartWrapperInner({
   const resolvedSideContentChartClassName = sideContentChartClassName ?? '2xl:col-span-2';
   const resolvedSideContentAsideClassName = sideContentAsideClassName ?? '2xl:col-span-1';
 
-  return (
-    <ChartCard titulo={titulo} actions={actions} isLoading={isLoading} isEmpty={isEmpty} emptyMessage={emptyMessage} erro={erro} className={className} contentClassName={contentClassName} chartKey={chartKey}>
-      <div className={sideContent ? resolvedSideContentLayoutClassName : 'h-full min-h-0'}>
-        <div className={`h-full min-h-0 ${sideContent ? resolvedSideContentChartClassName : ''} ${chartClassName ?? ''}`} style={chartStyle}>
-          <AstryxDashboardChart option={option} label={titulo} minCategoryWidth={minCategoryWidth} style={chartStyle} onEvents={onEvents} />
-        </div>
-        {sideContent ? (
-          <div className={`min-h-0 ${resolvedSideContentAsideClassName}`}>
-            {sideContent}
-          </div>
-        ) : null}
+  const chartContent = (
+    <div className={sideContent ? resolvedSideContentLayoutClassName : 'h-full min-h-0'}>
+      <div className={`h-full min-h-0 ${sideContent ? resolvedSideContentChartClassName : ''} ${chartClassName ?? ''}`} style={chartStyle}>
+        {isLoading ? <ChartLoading option={option} /> :
+          <AstryxDashboardChart option={option} label={titulo} minCategoryWidth={minCategoryWidth} style={chartStyle} onEvents={onEvents} />}
       </div>
+      {sideContent && <div className={`min-h-0 ${resolvedSideContentAsideClassName}`}>
+        {isLoading ? <DashboardLoading label="" variant="section" /> : sideContent}
+      </div>}
+    </div>
+  );
+
+  return (
+    <ChartCard titulo={titulo} actions={actions} isLoading={isLoading} loadingContent={chartContent}
+      isEmpty={isEmpty} emptyMessage={emptyMessage} erro={erro} className={className} contentClassName={contentClassName} chartKey={chartKey}>
+      {chartContent}
     </ChartCard>
   );
 }

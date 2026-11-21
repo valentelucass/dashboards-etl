@@ -1,3 +1,4 @@
+import TableLoading from './TableLoading';
 import { Spinner } from '@astryxdesign/core/Spinner';
 import DashboardLoading from './DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -516,7 +517,7 @@ export default function AnalyticalDataTable<T>({
   }
 
   if (isLoading) {
-    return <Card padding={4} className="dashboard-table-card"><DashboardLoading variant="section" label={titulo ? 'Carregando ' + titulo : 'Carregando tabela'} /></Card>;
+    return <TableLoading title={titulo} columns={colunas} pageSize={tamanhoPagina} filters />;
   }
 
   return (

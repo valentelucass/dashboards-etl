@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class NavegacaoDiaService {
     private static final Set<String> ROTAS = Set.of("/", "/coletas", "/manifestos", "/faturamento",
-            "/performance", "/customer-service", "/tracking", "/faturas-por-cliente", "/contas-a-pagar", "/cotacoes",
+            "/performance", "/rede-credenciada", "/customer-service", "/tracking", "/faturas-por-cliente", "/contas-a-pagar", "/cotacoes",
             "/indicadores-gestao-a-vista", "/executivo", "/etl-saude", "/painel/integracoes",
             "/admin/usuarios", "/admin/setores");
     private final NavegacaoDiaSqlRepository repository;

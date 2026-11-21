@@ -1,3 +1,6 @@
+import ChartLoading, { MetricLoading } from '../components/shared/ChartLoading';
+import { LoadingTableRows } from '../components/shared/TableLoading';
+import { kpiLoadingLayouts } from '../components/shared/dashboardKpiLayouts';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSegments from '../components/shared/DashboardSegments';
 import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from '../components/shared/DashboardTable';
@@ -536,6 +539,10 @@ function FaturamentoEvolutionCard({
       chartKey={chartKey}
       actions={<DashboardSegments label="Agrupar por período" options={PERIOD_LEVELS} value={drillLevel} onChange={onDrillLevelChange} />}
       isLoading={isLoading}
+      loadingContent={<div className="flex h-full flex-col gap-4 lg:flex-row">
+        <div className="grid w-full shrink-0 content-start gap-3 lg:w-[13rem]">{indicadores.map(item => <MetricLoading key={item.label} />)}</div>
+        <div className="min-h-[350px] min-w-0 flex-1"><ChartLoading /></div>
+      </div>}
       isEmpty={dados.length === 0}
       className="h-full"
     >
@@ -620,6 +627,7 @@ function TopClientesTableCard({
   return (
     <ChartCard
       titulo="Top 10 Clientes"
+    loadingContent={<table aria-hidden="true" className="w-full table-fixed"><tbody><LoadingTableRows columns={5} rows={8} /></tbody></table>}
       isLoading={isLoading}
       isEmpty={rows.length === 0}
       className="h-full"
@@ -1055,7 +1063,7 @@ export default function FaturamentoPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de faturamento.')} tipo={getTipoErro(overview.error)} />}
-      {overview.isLoading && !overview.data && <LoadingKpiGrid count={8} className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-[0.8fr_2fr_2fr_1fr_1.1fr_1fr_2fr_1.25fr]" />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid {...kpiLoadingLayouts.faturamento} />}
       {overview.data && (
         <FaturamentoKpiGrid
           overview={overview.data}

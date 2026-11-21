@@ -1,3 +1,4 @@
+import { kpiLoadingLayouts } from '../components/shared/dashboardKpiLayouts';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSelector from "../components/shared/DashboardSelector";
 import DashboardButton from "../components/shared/DashboardButton";
@@ -278,7 +279,7 @@ export default function ContasAPagarPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de contas a pagar.')} tipo={getTipoErro(overview.error)} />}
-      {overview.isLoading && !overview.data && <LoadingKpiGrid count={6} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid {...kpiLoadingLayouts.contas} />}
       {overview.data && <ContasAPagarKpiGrid overview={overview.data} temTitulos={conciliacao.some(grupo => grupo.total > 0)} />}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

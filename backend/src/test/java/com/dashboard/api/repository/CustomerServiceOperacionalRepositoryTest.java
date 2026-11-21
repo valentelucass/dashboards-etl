@@ -3,7 +3,7 @@ package com.dashboard.api.repository;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.customerservice.CustomerServiceContaDTO;
 import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.Coletas;
-import com.dashboard.api.repository.ComprovantesArquivadosRepository.Cobertura;
+import com.dashboard.api.dto.CoberturaArquivamentosDTO;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import java.sql.ResultSet;
 import java.time.LocalDate;
@@ -57,7 +57,7 @@ class CustomerServiceOperacionalRepositoryTest {
 
     @Test
     void coberturaIncompletaNaoViraAusenciaDeOcorrenciasOuArquivamentos() {
-        when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new Cobertura(inicio,corte,2,3,false));
+        when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new CoberturaArquivamentosDTO(inicio,corte,2,3,false));
         when(jdbc.queryForObject(contains("customer_service_cobertura_ocorrencias"), same(params), eq(Long.class))).thenReturn(2L);
         var dados = repo.consultar(periodo,conta,corte);
         assertThat(dados.arquivadas()).isNull();
@@ -70,7 +70,7 @@ class CustomerServiceOperacionalRepositoryTest {
 
     @Test
     void validaProprietarioEFilialEmTodasAsLinhasAntesDeVincularArquivosEEventos() {
-        when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new Cobertura(inicio,corte,3,3,true));
+        when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new CoberturaArquivamentosDTO(inicio,corte,3,3,true));
         when(jdbc.queryForObject(contains("customer_service_cobertura_ocorrencias"), same(params), eq(Long.class))).thenReturn(3L);
         var dados = repo.consultar(periodo,conta,corte);
         assertThat(dados.ocorrenciasPorTipo()).isEmpty();

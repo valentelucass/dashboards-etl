@@ -1,3 +1,4 @@
+import { faturamentoKpis } from '../../shared/dashboardKpiLayouts';
 import KpiCard, { type KpiValorTone } from '../../shared/KpiCard';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary } from '../../../constants/kpiDictionary';
@@ -82,7 +83,7 @@ export default function FaturamentoKpiGrid({
   const tendenciaValorTone = temProjecao ? (tendenciaPercentual < 0 ? 'negative' : 'positive') : 'neutral';
 
   return (
-    <div className="mb-4 grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-[0.8fr_2fr_2fr_1fr_1.1fr_1fr_2fr_1.25fr]">
+    <div className={faturamentoKpis}>
       <TooltipKpi definition={KpiDictionary.faturamento.totalMinutas}>
         <KpiCard label="Minutas" valor={formatarNumero(overview.totalFretes)} />
       </TooltipKpi>

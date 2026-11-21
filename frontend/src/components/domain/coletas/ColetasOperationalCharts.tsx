@@ -1,3 +1,5 @@
+import ChartLoading, { StatusBarsLoading } from '../../shared/ChartLoading';
+import { Skeleton } from '@astryxdesign/core/Skeleton';
 import { useMemo, type ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
 import { Button } from '@astryxdesign/core/Button';
@@ -21,7 +23,7 @@ export function ColetasStatusChart({ data, isLoading, erro }: {
   const total = Math.max(1, data.reduce((sum, row) => sum + row.total, 0));
   return (
     <ChartCard titulo="Distribuição por Status" chartKey="coletasStatus"
-      className="2xl:col-span-2" isLoading={isLoading} isEmpty={data.length === 0} erro={erro}>
+      loadingContent={<StatusBarsLoading count={4} />} className="2xl:col-span-2" isLoading={isLoading} isEmpty={data.length === 0} erro={erro}>
       <div className="dashboard-coletas-status">
         {data.map(row => (
           <ProgressBar key={row.status} label={row.status} value={row.total} max={total}
@@ -66,6 +68,10 @@ export function ColetasRegionChart({ data, isLoading, visao, actions, onEvents, 
   return (
     <ChartCard titulo={titulo} chartKey="coletasOrigem"
       className="2xl:col-span-3" actions={actions} isLoading={isLoading} isEmpty={data.length === 0} erro={erro}
+      loadingContent={<div className="dashboard-coletas-regions">
+        <div className="h-[300px]"><ChartLoading option={option} /></div>
+        {!porCidade && <div className="dashboard-coletas-region-actions">{[0, 1, 2].map(i => <Skeleton key={i} width={90} height={28} />)}</div>}
+      </div>}
       emptyMessage={porCidade ? 'Nenhuma cidade encontrada para os filtros selecionados.' : 'Nenhuma região de coleta encontrada no período.'}>
       <div className="dashboard-coletas-regions">
         <AstryxDashboardChart option={option} label={porCidade ? 'Coletas e peso taxado por cidade' : 'Coletas e peso taxado por região'}

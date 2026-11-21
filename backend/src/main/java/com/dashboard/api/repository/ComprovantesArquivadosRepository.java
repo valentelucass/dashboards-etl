@@ -1,6 +1,7 @@
 package com.dashboard.api.repository;
 
 import com.dashboard.api.config.ConsultaAnalitica;
+import com.dashboard.api.dto.CoberturaArquivamentosDTO;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -12,16 +13,13 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class ComprovantesArquivadosRepository {
-    public record Cobertura(LocalDate dataInicial, LocalDate dataFinal, long diasCobertos,
-            long diasSolicitados, boolean completa) {}
-
     private final NamedParameterJdbcOperations jdbc;
 
     public ComprovantesArquivadosRepository(@ConsultaAnalitica NamedParameterJdbcOperations jdbc) {
         this.jdbc = jdbc;
     }
 
-    public Cobertura coberturaArquivos(LocalDate inicio, LocalDate fim) {
+    public CoberturaArquivamentosDTO coberturaArquivos(LocalDate inicio, LocalDate fim) {
         long solicitados = ChronoUnit.DAYS.between(inicio, fim) + 1;
         var params = new MapSqlParameterSource("inicio", inicio).addValue("fim", fim);
         try {
@@ -33,14 +31,14 @@ public class ComprovantesArquivadosRepository {
                 Date primeira = rs.getDate("primeira");
                 Date ultima = rs.getDate("ultima");
                 long dias = rs.getLong("dias");
-                return new Cobertura(primeira == null ? null : primeira.toLocalDate(),
+                return new CoberturaArquivamentosDTO(primeira == null ? null : primeira.toLocalDate(),
                         ultima == null ? null : ultima.toLocalDate(), dias, solicitados, dias == solicitados);
             });
         } catch (DataAccessException ex) {
             // A previous publication can still serve pickups and attached receipts.
             Throwable causa = ex.getMostSpecificCause();
             if (causa instanceof SQLException sql && (sql.getErrorCode() == 208 || sql.getErrorCode() == 5313)) {
-                return new Cobertura(null, null, 0, solicitados, false);
+                return new CoberturaArquivamentosDTO(null, null, 0, solicitados, false);
             }
             throw ex;
         }

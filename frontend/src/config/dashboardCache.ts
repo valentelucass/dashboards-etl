@@ -8,7 +8,7 @@ export const DIMENSION_CACHE_QUERY_LIMIT = 40;
 export const DASHBOARD_DOMAINS = new Set([
   'coletas', 'faturamento', 'fretes', 'manifestos', 'performance', 'tracking',
   'faturas-por-cliente', 'contas-a-pagar', 'cotacoes', 'indicadores-gestao-a-vista',
-  'executivo', 'etl-saude', 'integracoes', 'customer-service',
+  'executivo', 'etl-saude', 'integracoes', 'customer-service', 'rede-credenciada',
 ]);
 
 export function dashboardDomain(key: QueryKey): string | null {

@@ -3,6 +3,7 @@ export const PERMISSION_KEYS = [
   'manifestos',
   'fretes',
   'performance',
+  'redeCredenciada',
   'customerService',
   'tracking',
   'faturasPorCliente',

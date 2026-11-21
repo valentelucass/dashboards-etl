@@ -1,4 +1,4 @@
-import DashboardLoading from './DashboardLoading';
+import ChartLoading from './ChartLoading';
 import { Banner } from '@astryxdesign/core/Banner';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Button } from '@astryxdesign/core/Button';
@@ -13,6 +13,7 @@ interface ChartCardProps {
   children: ReactNode;
   actions?: ReactNode;
   isLoading?: boolean;
+  loadingContent?: ReactNode;
   isEmpty?: boolean;
   emptyMessage?: string;
   erro?: string | null;
@@ -121,6 +122,7 @@ export default function ChartCard({
   children,
   actions,
   isLoading,
+  loadingContent,
   isEmpty,
   emptyMessage,
   erro,
@@ -141,7 +143,9 @@ export default function ChartCard({
 
       <div className={`min-h-0 flex-1 overflow-hidden ${contentClassName}`}>
         {isLoading ? (
-          <DashboardLoading variant="section" label={'Carregando gráfico: ' + titulo} className="min-h-[350px]" />
+          <div role="status" aria-label={'Carregando gráfico: ' + titulo} className="h-full min-w-0">
+            {loadingContent ?? <div className="h-full min-h-[350px]"><ChartLoading /></div>}
+          </div>
         ) : erro ? (
           <div className="flex h-full min-h-[350px] items-center justify-center">
             <Banner status="error" title={erro} />

@@ -1,3 +1,4 @@
+import ChartLoading, { MetricLoading } from '../../shared/ChartLoading';
 import { useMemo } from 'react';
 import AstryxDashboardChart from '../../charts/AstryxDashboardChart';
 import { useEchartsTheme } from '../../charts/useEchartsTheme';
@@ -131,6 +132,7 @@ export default function ManifestosCustoEvolutionCard({
     () => dados ? buildManifestosCustoEvolutionOption(dados, isDark) : {},
     [dados, isDark],
   );
+  const costLayout = 'grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-[12rem_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,1fr)_12rem]';
   const serieVazia = !dados || dados.serieDiaria.length === 0;
   const metaIndisponivel = dados && !metaCustoDisponivel(dados);
   const contextoGrafico = useMemo(() => dados ? montarContextoGrafico(dados) : [], [dados]);
@@ -150,12 +152,17 @@ export default function ManifestosCustoEvolutionCard({
         </span>
       ) : undefined}
       isLoading={isLoading}
+      loadingContent={<div className={costLayout}>
+        <div className="grid content-start gap-4">{[0, 1, 2].map(i => <MetricLoading key={i} />)}</div>
+        <div className="min-h-[350px] min-w-0"><ChartLoading /></div>
+        <div className="grid content-start gap-3 sm:grid-cols-2 lg:col-span-2 xl:col-span-1 xl:grid-cols-1"><MetricLoading /><MetricLoading /></div>
+      </div>}
       isEmpty={serieVazia}
       emptyMessage="Nenhum custo diário disponível para o período selecionado."
       className="h-full"
       contentClassName="overflow-y-auto pr-1 xl:overflow-hidden xl:pr-0"
     >
-      <div className="grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-[12rem_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,1fr)_12rem]">
+      <div className={costLayout}>
         <aside className="flex min-h-0 flex-col gap-2 lg:overflow-y-auto lg:pr-1 xl:overflow-visible xl:pr-0" aria-label="Indicadores contextuais do gráfico de custo">
           {contextoGrafico.map((item, index) => (
             <MiniKpiRow key={item.label} item={item} isLast={index === contextoGrafico.length - 1} />

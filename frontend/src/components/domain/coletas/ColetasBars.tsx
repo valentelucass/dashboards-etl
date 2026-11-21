@@ -1,3 +1,4 @@
+import ChartLoading from '../../shared/ChartLoading';
 import { Chart, ChartAxis, ChartGrid, bar } from '@astryxdesign/charts';
 import ChartCard from '../../shared/ChartCard';
 import type { ChartDictionaryKey } from '../../../constants/chartDictionary';
@@ -19,7 +20,7 @@ export default function ColetasBars({ data, ...props }: ColetasBarsProps) {
   const max = Math.max(1, Math.ceil(highest / (step / 2)) * (step / 2));
 
   return (
-    <ChartCard {...props}>
+    <ChartCard {...props} loadingContent={<div className="h-[350px]"><ChartLoading bars legend={false} /></div>}>
       <Chart
         aria-label={props.titulo}
         data={data}

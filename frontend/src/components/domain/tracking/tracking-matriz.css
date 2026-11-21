@@ -41,3 +41,8 @@
 @media (max-width: 440px) {
   .tracking-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.tracking-loading-metric { display: grid; justify-items: end; gap: .35rem; min-width: 0; }
+@media (max-width: 850px) {
+  .tracking-loading-metric { justify-items: start; }
+}

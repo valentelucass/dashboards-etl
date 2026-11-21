@@ -1,3 +1,5 @@
+import ChartLoading, { MetricLoading } from '../components/shared/ChartLoading';
+import { kpiLoadingLayouts } from '../components/shared/dashboardKpiLayouts';
 import DashboardHeaderViews from '../components/shared/DashboardHeaderViews';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSegments from '../components/shared/DashboardSegments';
@@ -559,6 +561,11 @@ function FunilComercialCard({
         </div>
       )}
       isLoading={isLoading}
+      loadingContent={<div className="flex h-full flex-col justify-center gap-4 px-4">{rows.map(row => (
+        <div key={row.key} className="grid items-center gap-3 md:grid-cols-[1fr_190px]">
+          <MetricLoading bar /><Card padding={3}><MetricLoading /></Card>
+        </div>
+      ))}</div>}
       isEmpty={funil.length === 0 || total === 0}
       className={KPI_CARD_HEIGHT_CLASS}
     >
@@ -652,6 +659,14 @@ function TaxasConversaoCard({
       )}
       isLoading={isLoading}
       erro={erro}
+      loadingContent={<div className="grid h-full gap-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(17rem,1fr)]">
+        <div className="grid auto-rows-fr gap-2">{chartMetrics.map(metric =>
+          <div key={metric} className="min-h-40"><ChartLoading /></div>)}</div>
+        <div className="grid auto-rows-fr gap-2">{blocos.map(item =>
+          <Card key={item.nome} padding={2} className="grid grid-cols-[4.4rem_1fr] gap-2">
+            <MetricLoading /><div className="grid grid-cols-2 gap-2">{[0, 1, 2, 3].map(i => <MetricLoading key={i} />)}</div>
+          </Card>)}</div>
+      </div>}
       isEmpty={!hasData}
       className="h-full min-h-0"
       contentClassName="flex flex-col"
@@ -909,7 +924,7 @@ export default function CotacoesPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de cotações.')} tipo={getTipoErro(overview.error)} />}
-      {overview.isLoading && !overview.data && <LoadingKpiGrid count={8} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid {...kpiLoadingLayouts.cotacoes} />}
       {overview.data && <CotacoesKpiGrid overview={overview.data} />}
 
       <div role="tabpanel" id={viewPanelId} aria-labelledby={viewPanelId + '-' + activeView} className="min-w-0">

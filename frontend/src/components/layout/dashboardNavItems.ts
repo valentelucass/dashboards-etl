@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity, BarChart3, Building2, ClipboardList, CreditCard, HeartPulse, House,
-  Headset, LayoutDashboard, MapPinned, Truck, UserCog, Users,
+  Headset, LayoutDashboard, MapPinned, Network, Truck, UserCog, Users,
 } from 'lucide-react';
 import { ADMIN_NAV_ITEMS, DASHBOARD_NAV_ITEMS, isAdministrativeDashboardNavItem } from '../../utils/accessControl';
 import type { NavItem } from '../../utils/accessControl';
@@ -13,6 +13,7 @@ const icons: Record<string, LucideIcon> = {
   '/manifestos': LayoutDashboard,
   '/faturamento': Truck,
   '/performance': BarChart3,
+  '/rede-credenciada': Network,
   '/customer-service': Headset,
   '/tracking': MapPinned,
   '/faturas-por-cliente': Users,

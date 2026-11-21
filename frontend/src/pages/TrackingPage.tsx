@@ -1,3 +1,4 @@
+import { kpiLoadingLayouts } from '../components/shared/dashboardKpiLayouts';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import { DashboardInput } from '../components/shared/DashboardTextEntry';
 import TrackingMatriz from '../components/domain/tracking/TrackingMatriz';
@@ -272,7 +273,7 @@ export default function TrackingPage() {
       </FilterBar>
 
       {dashboard.isError && <MensagemErro mensagem={getApiErrorMessage(dashboard.error, 'Erro ao carregar localização de cargas.')} tipo={getTipoErro(dashboard.error)} />}
-      {dashboard.isLoading && !dashboard.data && <LoadingKpiGrid count={6} className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6" />}
+      {dashboard.isLoading && !dashboard.data && <LoadingKpiGrid {...kpiLoadingLayouts.tracking} />}
       {dashboard.data && <TrackingKpiGrid overview={dashboard.data.overview} />}
 
       <div className="mb-6">

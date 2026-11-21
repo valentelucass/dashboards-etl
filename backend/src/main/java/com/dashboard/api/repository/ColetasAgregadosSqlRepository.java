@@ -13,6 +13,7 @@ import com.dashboard.api.dto.coletas.ColetasStatusDistribuicaoDTO;
 import com.dashboard.api.dto.coletas.ColetasTrendPointDTO;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.Coletas;
+import com.dashboard.api.dto.redecredenciada.RedeCredenciadaOperacionalDTO.Coleta;
 import com.dashboard.api.model.coletas.ColetaStatusPendente;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import com.dashboard.api.util.TemporalJsonUtils;
@@ -105,6 +106,25 @@ public class ColetasAgregadosSqlRepository {
                 decimal(rs.getBigDecimal("peso_taxado_total")),
                 decimal(rs.getBigDecimal("valor_nf_total"))
         ));
+    }
+
+    public List<Coleta> desempenhoDiarioDaRede(FiltroConsultaDTO filtro, String parceiro) {
+        DashboardExportSqlBuilder.ExportSql fonte = source(filtro);
+        MapSqlParameterSource params = copiarParams(fonte);
+        String porParceiro = "";
+        if (parceiro != null && !parceiro.isBlank()) {
+            porParceiro = " AND p.parceiro = :parceiro ";
+            params.addValue("parceiro", parceiro.trim());
+        }
+        String sql = baseDeduplicadaSql(fonte) + """
+                SELECT CAST([Solicitacao] AS date) dia, p.parceiro, COUNT_BIG(*) finalizadas,
+                       SUM(CASE WHEN [Finalizacao] <= [Agendamento] THEN 1 ELSE 0 END) no_prazo
+                FROM base_metricas
+                CROSS APPLY (VALUES (TRIM(JSON_VALUE([Metadata], '$.pck_prn_drt_nickname')))) p(parceiro)
+                WHERE status_normalizado IN (N'finalizada', N'coletada') AND p.parceiro LIKE N'%| PARCEIRO%'
+                """ + porParceiro + " GROUP BY CAST([Solicitacao] AS date), p.parceiro ORDER BY dia, p.parceiro";
+        return jdbcTemplate.query(sql, params, (rs, row) -> new Coleta(rs.getDate("dia").toLocalDate(),
+                rs.getString("parceiro"), rs.getLong("finalizadas"), rs.getLong("no_prazo")));
     }
 
     public Coletas desempenhoDoCliente(FiltroConsultaDTO filtro, List<String> documentos) {

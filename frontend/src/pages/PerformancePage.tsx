@@ -1,6 +1,6 @@
-import DashboardLoading from '../components/shared/DashboardLoading';
+import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSegments from '../components/shared/DashboardSegments';
-import { Card } from '@astryxdesign/core/Card';
+import { kpiLoadingLayouts } from '../components/shared/dashboardKpiLayouts';
 import DashboardSelector from "../components/shared/DashboardSelector";
 import DashboardButton from "../components/shared/DashboardButton";
 import { escapeHtml } from '../utils/escapeHtml';
@@ -459,32 +459,6 @@ function buildAgingOption(dados: PerformanceAgingPoint[], isDark: boolean): ECha
   });
 }
 
-function PerformanceKpiSkeleton() {
-  return (
-    <div
-      className="performance-kpi-grid mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6"
-      role="status" aria-label="Carregando indicadores"
-    >
-      {Array.from({ length: 9 }).map((_, index) => (
-        <Card key={index} padding={3}
-          className={`${index === 8 ? 'sm:col-span-2 lg:col-span-2' : index >= 6 ? 'lg:col-span-2' : 'lg:col-span-1'} h-[102px] grid gap-2`}>
-          <DashboardLoading label="" variant="section" />
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function kpiGridSpan(label: string): string {
-  if (label === 'Valor NF sem Comprovante') {
-    return 'sm:col-span-2 lg:col-span-2';
-  }
-
-  return label === 'Peso Taxado (t)' || label === 'Comprovante Anexado'
-    ? 'lg:col-span-2'
-    : 'lg:col-span-1';
-}
-
 function kpiValorToneClassName(tone?: GoalTone): string {
   if (tone === 'positive') return 'text-positive';
   if (tone === 'warning') return 'text-warning';
@@ -893,24 +867,24 @@ export default function PerformancePage() {
       )}
 
       {overview.isLoading ? (
-        <PerformanceKpiSkeleton />
+        <LoadingKpiGrid {...kpiLoadingLayouts.performance} />
       ) : (
-        <div
-          className="performance-kpi-grid mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6"
-        >
-          {kpis.map((kpi) => (
-            <div key={kpi.label} className={`min-w-0 ${kpiGridSpan(kpi.label)}`}>
-              <TooltipKpi definition={kpi.definition} className="h-full">
-                <KpiCard
-                  label={kpi.label}
-                  valor={kpi.valor}
-                  className={kpi.definition === KpiDictionary.performance.percentualPerformance ? '[&_[title]]:whitespace-normal' : undefined}
-                  valorClassName={kpiValorClassName(kpi.label, kpi.tone)}
-                  helperText={kpi.helperText}
-                />
-              </TooltipKpi>
-            </div>
-          ))}
+        <div className={kpiLoadingLayouts.performance.containerClassName}>
+          <div className={kpiLoadingLayouts.performance.className}>
+            {kpis.map((kpi) => (
+              <div key={kpi.label} className="min-w-0">
+                <TooltipKpi definition={kpi.definition} className="h-full">
+                  <KpiCard
+                    label={kpi.label}
+                    valor={kpi.valor}
+                    className={kpi.definition === KpiDictionary.performance.percentualPerformance ? '[&_[title]]:whitespace-normal' : undefined}
+                    valorClassName={kpiValorClassName(kpi.label, kpi.tone)}
+                    helperText={kpi.helperText}
+                  />
+                </TooltipKpi>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -1,3 +1,4 @@
+import { LoadingTableRows } from '../../shared/TableLoading';
 import { useState } from 'react';
 import { ChevronUp } from 'lucide-react';
 import ChartWrapper from '../../charts/ChartWrapper';
@@ -85,6 +86,7 @@ function ClientesEmAtraso({ filtro }: Props) {
   const consulta = useClientesEmAtraso(filtro);
   return <ChartCard chartKey="faturasClientesEmAtraso" titulo="Clientes com títulos em atraso"
     contentClassName="lg:[contain:size]"
+    loadingContent={<table aria-hidden="true" className="w-full table-fixed"><tbody><LoadingTableRows columns={4} rows={8} /></tbody></table>}
     isLoading={consulta.isLoading} isEmpty={!consulta.data?.length}
     emptyMessage="Nenhum cliente com título vencido em aberto para os filtros selecionados."
     erro={consulta.isError ? getApiErrorMessage(consulta.error, 'Erro ao carregar os clientes com títulos em atraso.') : null}>

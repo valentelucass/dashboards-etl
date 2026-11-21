@@ -4,6 +4,16 @@ A página `/customer-service` exige uma única conta ativa. O cadastro associa C
 
 As entregas seguem a previsão e a regra de OTIF da Performance. As coletas seguem a solicitação. O arquivamento exige número de arquivamento até a data de corte. As ocorrências seguem a data do registro e avarias e extravios contam minutas distintas. O financeiro segue a emissão do CT-e ou a data do serviço para fretes a faturar sem CT-e, considerando a liquidação bancária até o corte. O painel lê as publicações 061 e 062 do ETL.
 
+## 21/11/2026 — Prévia da Rede Credenciada
+
+A nova página reúne nove indicadores e tem permissão de acesso própria. A prévia usa as contagens de OTIF e EFD da tela de Performance por filial da ocorrência. A coleta usa a região de origem e os comprovantes, a região de destino. Cada minuta finalizada conta uma vez. O relatório de comprovantes do ESL identifica o arquivamento pelo número e pela data em que o arquivo foi criado.
+
+O comparativo financeiro usa a data de emissão da consolidação. A diferença corresponde ao valor cobrado menos o calculado. O filtro de situação afeta os indicadores financeiros. O percentual proposto compara as cobranças vinculadas ao frete bruto das mesmas minutas, com deduplicação. A lista de parceiros, a atribuição do serviço e as regras comerciais de fechamento, ônus e bônus aguardam validação.
+
+## 21/11/2026 — Rodapé de Performance
+
+O ranking de ocorrências em atraso mantém os rótulos de acessibilidade dentro da sua área de rolagem. Com a lista longa, a página termina no rodapé e a última ocorrência continua acessível pela rolagem do cartão.
+
 ## 20/11/2026 — Performance das etapas por filial
 
 O cartão OTIF mantém a pontualidade das entregas finalizadas. Responsável, região de destino e cidade podem ser selecionados diretamente ou detalhados a partir das barras. A lista de minutas em atenção usa a previsão, o status e a última ocorrência. O ranking agrupa as notas em aberto e atrasadas pela última ocorrência do ESL.
@@ -66,7 +76,7 @@ Os modais do Dashboard desfocam o fundo nos temas claro e escuro, respeitando a 
 
 Coletas, Contas a Pagar, Cotações, Faturamento, Faturas por Cliente, Localização de Cargas e Manifestos usam cores no valor dos KPIs conforme a situação do indicador. O SLA considera a meta exibida no histórico de Coletas. A conversão por quantidade usa as faixas de 35% e 60% da tabela de Cotações. Em Localização, a previsão vencida usa as mesmas faixas do Executivo. Faturamento e Manifestos comparam receita e custo com as metas aplicáveis. Totais e medidas sem referência seguem com a cor de texto do tema.
 
-Na linha de nove cartões de Performance, Total de Entregas aproveita parte da largura de Comprovante Anexado. A grade de carregamento usa as mesmas colunas. Os dois rótulos ficaram inteiros nas oito larguras verificadas entre 390 e 1920 px, com o menu expandido e recolhido. A conferência das cores usou exemplos de metas atingidas, pendências, atrasos e períodos sem dados. Os 410 testes da interface passaram.
+A faixa de Performance distribui os nove cartões conforme a largura disponível ao lado do menu. Em uma linha, OTIF e Em Atraso aproveitam parte do espaço de Peso Taxado e Comprovante Anexado. A última coluna reserva espaço para o valor em reais. A grade de carregamento segue a mesma distribuição.
 
 ## 19/11/2026 — Responsividade do Dashboard e fichas de presença
 
@@ -391,6 +401,8 @@ VM atual: `ROD-SRVW-001`; conta Windows local `ROD-SRVW-001\suporte`. Scripts e 
 - Cadastros de usuário e setor, permissões, filtros, seletores, botões, campos de texto e tabelas usam componentes Astryx. Importadores usam o FileInput do Astryx. Campos numéricos usam NumberInput e o seletor de competência usa mês e ano com o mesmo valor de referência da API.
 
 ## Arquitetura e Padrões
+
+O carregamento usa skeletons Astryx por rota e por consulta. Os indicadores acompanham a quantidade, a distribuição em colunas e os cartões largos da página. Em Localização de Cargas, a matriz reserva as linhas por responsável, região e minuta. As tabelas reservam as colunas da consulta e os gráficos mantêm a área do desenho e dos resumos durante a espera.
 
 - Revisão Astryx em DEV em 18/11/2026. O Início usa cards, abas, botões, campos de formulário, anexos, confirmações e diálogos do Astryx. Comunicações acompanha a largura disponível, com títulos e ações em linhas próprias e sem rolagem horizontal. O cartão abre e recolhe o texto completo, com curtidas e comentários como ações independentes. O Início abre com saudação, solicitação de melhoria e comunicações. A saudação usa o mesmo recuo lateral do cartão de solicitação e mantém a altura compacta. O menu lateral é a entrada para os dashboards conforme as permissões. Curtir, Comentar, Editar e Arquivar animam apenas os próprios ícones ao passar o cursor ou navegar por teclado. O coração pulsa em vermelho, Comentar anima três pontos dentro do balão azul, Editar traça uma linha com o lápis âmbar e Arquivar movimenta a tampa violeta. O contador de comunicados fica no canto superior direito do botão do sino. A seta superior do menu ocupa espaço apenas enquanto pode ser usada. As 15 rotas do menu foram verificadas em desktop e celular com dados de exemplo. Popovers, menus administrativos, filtros móveis, tooltips, estados de espera e importadores foram migrados nas superfícies compartilhadas. A ordem das camadas do CSS aplica o reset antes do Astryx para manter os espaçamentos e as variantes originais dos componentes.
 - Campos de texto multilinha usam limite de altura de 15 rem ou 45% da altura visível, o que for menor, com rolagem interna. Campos de texto, campos numéricos e áreas de texto do Astryx exibem o foco no contêiner do controle.

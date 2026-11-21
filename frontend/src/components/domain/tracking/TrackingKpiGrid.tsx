@@ -1,3 +1,4 @@
+import { trackingKpis, trackingCarteiraSpan } from '../../shared/dashboardKpiLayouts';
 import KpiCard, { type KpiValorTone } from '../../shared/KpiCard';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary } from '../../../constants/kpiDictionary';
@@ -26,11 +27,11 @@ export default function TrackingKpiGrid({ overview }: TrackingKpiGridProps) {
       className: 'col-span-1 md:col-span-1 xl:col-span-1',
     },
     { definition: KpiDictionary.tracking.pesoTaxado, label: 'Peso Taxado', valor: formatarPeso(overview.pesoTaxadoTotal), className: 'col-span-1 md:col-span-1 xl:col-span-1' },
-    { definition: KpiDictionary.tracking.valorCarteira, label: 'Val. Carteira', valor: formatarMoeda(overview.valorFreteEmCarteira), className: 'col-span-2 md:col-span-2 xl:col-span-2' },
+    { definition: KpiDictionary.tracking.valorCarteira, label: 'Val. Carteira', valor: formatarMoeda(overview.valorFreteEmCarteira), className: trackingCarteiraSpan },
   ];
 
   return (
-    <div className="mb-4 grid grid-cols-2 items-stretch gap-4 md:grid-cols-3 lg:grid-cols-6">
+    <div className={trackingKpis}>
       {cards.map((card) => (
         <TooltipKpi key={card.label} definition={card.definition} className={card.className}>
           <KpiCard label={card.label} valor={card.valor} valorTone={card.valorTone} />

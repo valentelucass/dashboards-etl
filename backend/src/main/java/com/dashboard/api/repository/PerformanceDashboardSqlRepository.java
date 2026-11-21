@@ -518,7 +518,7 @@ public class PerformanceDashboardSqlRepository {
                     SELECT numero_minuta, data_frete, data_previsao_entrega AS previsao_entrega,
                            data_finalizacao_performance AS data_finalizacao, responsavel AS filial_performance,
                            filial_emissora, responsavel_regiao_destino, regiao_destino, cidade_destino AS destino_cidade,
-                           performance_diferenca_dias, is_finalizada, is_no_prazo, is_fora_prazo, data_extracao,
+                           comprovante_anexado, performance_diferenca_dias, is_finalizada, is_no_prazo, is_fora_prazo, data_extracao,
                            CASE WHEN is_no_prazo = 1 THEN N'NO PRAZO'
                                 WHEN is_fora_prazo = 1 THEN N'FORA DO PRAZO'
                                 WHEN is_finalizada = 1 THEN N'SEM DADO'

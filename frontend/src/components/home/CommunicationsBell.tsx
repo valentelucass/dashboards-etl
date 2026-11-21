@@ -1,4 +1,4 @@
-import DashboardLoading from '../shared/DashboardLoading';
+import NoticeListLoading from './NoticeListLoading';
 import './home.css';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -35,7 +35,7 @@ export default function CommunicationsBell({ className }: { className?: string }
               icon={<X size={16} />} onClick={() => setOpen(false)} />
           </div>
           <div aria-label="Lista de comunicações" className="home-fields max-h-[min(24rem,60dvh)] overflow-y-auto">
-            {query.isPending && <DashboardLoading variant="section" label="Carregando comunicações" />}
+            {query.isPending && <NoticeListLoading compact />}
             {query.isError && (
               <Banner role="alert" status="error" title="Não foi possível atualizar as comunicações."
                 endContent={<Button label="Tentar novamente" variant="ghost" size="sm" onClick={() => void query.refetch()} />} />

@@ -1,3 +1,4 @@
+import TrackingMatrixLoading from './TrackingMatrixLoading';
 import { Card } from '@astryxdesign/core/Card';
 import { ToggleButton } from '@astryxdesign/core/ToggleButton';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -25,11 +26,11 @@ function Paginacao({ pagina, total, rotulo, mudar }: {
   </nav>;
 }
 
-function PainelConsulta({ carregando, erro, vazio, mensagem, tentar, children }: {
-  carregando: boolean; erro: unknown; vazio: boolean; mensagem: string; tentar: () => void; children: ReactNode;
+function PainelConsulta({ carregando, erro, vazio, mensagem, tentar, children, minutas = false }: {
+  carregando: boolean; erro: unknown; vazio: boolean; mensagem: string; tentar: () => void; children: ReactNode; minutas?: boolean;
 }) {
   if (erro) return <div role="alert" className="tracking-aviso">{getApiErrorMessage(erro, 'Não foi possível carregar estes dados.')} <DashboardButton onClick={tentar}>Tentar novamente</DashboardButton></div>;
-  if (carregando) return <p role="status" className="tracking-aviso">Carregando…</p>;
+  if (carregando) return <TrackingMatrixLoading minutas={minutas} />;
   if (vazio) return <p className="tracking-aviso">{mensagem}</p>;
   return children;
 }
@@ -77,7 +78,7 @@ function Fretes({ filtro, sigla, regiao }: { filtro: TrackingFiltro; sigla: stri
   const dados = consulta.data;
   return <>
     <h4>Fretes de {regiao}</h4>
-    <PainelConsulta erro={consulta.error} carregando={consulta.isLoading} vazio={!dados?.conteudo.length} mensagem="Nenhum frete nesta região para os filtros selecionados." tentar={() => void consulta.refetch()}>
+    <PainelConsulta minutas erro={consulta.error} carregando={consulta.isLoading} vazio={!dados?.conteudo.length} mensagem="Nenhum frete nesta região para os filtros selecionados." tentar={() => void consulta.refetch()}>
       {dados?.conteudo.map((frete: TrackingFrete) => <article key={frete.numeroMinuta} className="tracking-linha" aria-label={`Minuta ${frete.numeroMinuta}`}>
         <div className="tracking-resumo">
           <div className="tracking-identificador tracking-minuta">

@@ -1,3 +1,4 @@
+import { kpiLoadingLayouts } from '../components/shared/dashboardKpiLayouts';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import DashboardSegments from '../components/shared/DashboardSegments';
 import DashboardSelector from "../components/shared/DashboardSelector";
@@ -353,7 +354,7 @@ export default function ColetasPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores de coletas.')} tipo={getTipoErro(overview.error)} />}
-      {overview.isLoading && !overview.data && <LoadingKpiGrid count={9} intermediateRows={[5, 4]} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid {...kpiLoadingLayouts.coletas} />}
       {overview.data && <ColetasKpiGrid overview={overview.data} metaAgendamento={historicoPerformance.at(-1)?.metaPercentual} />}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-6">

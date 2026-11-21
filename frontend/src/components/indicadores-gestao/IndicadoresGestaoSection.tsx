@@ -175,7 +175,7 @@ export default function IndicadoresGestaoSection<T>({
       {extra}
 
       <div className="mb-5">
-        {goalTone === 'loading' ? <LoadingKpiGrid count={kpis.length} /> : <KpiGrid count={4}>
+        {goalTone === 'loading' ? <LoadingKpiGrid count={kpis.length} gridCount={4} /> : <KpiGrid count={4}>
           {kpis.map((kpi) => (
             <TooltipKpi key={kpi.label} definition={kpi.definition}>
               <KpiCard

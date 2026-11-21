@@ -1,3 +1,4 @@
+import { kpiLoadingLayouts } from '../components/shared/dashboardKpiLayouts';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import { escapeHtml } from '../utils/escapeHtml';
 import { useMemo, useState } from 'react';
@@ -473,7 +474,7 @@ export default function EtlSaudePage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar indicadores do ETL.')} tipo={getTipoErro(overview.error)} />}
-      {overview.isLoading && !overview.data && <LoadingKpiGrid count={5} className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5" />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid {...kpiLoadingLayouts.etl} />}
       {overview.data && <EtlSaudeKpiGrid overview={overview.data} />}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

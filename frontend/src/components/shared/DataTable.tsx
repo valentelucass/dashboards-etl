@@ -1,4 +1,4 @@
-import DashboardLoading from './DashboardLoading';
+import TableLoading from './TableLoading';
 import DashboardSelector from "./DashboardSelector";
 import DashboardButton from "./DashboardButton";
 import { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, TableText } from './DashboardTable';
@@ -189,7 +189,7 @@ export default function DataTable<T>({
   }, [paginaSegura, totalPaginas]);
 
   if (isLoading) {
-    return <Card padding={4} className="dashboard-table-card"><DashboardLoading variant="section" label={titulo ? 'Carregando ' + titulo : 'Carregando tabela'} /></Card>;
+    return <TableLoading title={titulo} columns={colunas} pageSize={tamanhoPagina} header={mostrarCabecalho} controls={Boolean(acoesCabecalho) || paginacaoAtiva} pager={paginacaoAtiva} />;
   }
 
   return (

@@ -76,6 +76,17 @@ export const KpiDictionary = {
     notaFiscal: { titulo: 'Valor das NFs', descricao: 'Valor das mercadorias informado nas notas fiscais dos fretes.', calculo: 'Soma do valor de notas das minutas da conta, no período das entregas.' },
     frete: { titulo: 'Valor dos fretes', descricao: 'Valor dos serviços de transporte das minutas da conta.', calculo: 'Soma do valor de frete com impostos, no período das entregas.' },
   },
+  redeCredenciada: {
+    otif: { titulo: 'OTIF · Entregas no prazo', descricao: 'Pontualidade das entregas finalizadas pela filial parceira da ocorrência.', calculo: 'Entregas no prazo divididas pelas entregas finalizadas com filial identificada no período.' },
+    efd: { titulo: 'EFD · Eficiência de destino', descricao: 'Eficiência da filial responsável pela ocorrência de destino.', calculo: 'Etapas eficientes divididas pelas etapas avaliadas. A meta de destino é de 48 horas, descontados fins de semana e feriados nacionais.' },
+    coletas: { titulo: 'Performance de coleta', descricao: 'Coletas finalizadas no prazo pela região de origem da solicitação.', calculo: 'Coletas finalizadas até o agendamento divididas pelas coletas finalizadas. O responsável territorial é o critério usado nesta prévia.' },
+    anexados: { titulo: 'Comprovantes anexados', descricao: 'Entregas finalizadas com comprovante anexado no cadastro de fretes.', calculo: 'Entregas com anexo divididas pelas finalizadas, por previsão de entrega e responsável pela região de destino. A consulta usa a situação atual do anexo.' },
+    arquivados: { titulo: 'Comprovantes arquivados', descricao: 'Entregas com número de arquivamento no relatório de comprovantes até o fim do período.', calculo: 'Entregas distintas com arquivamento divididas pelas entregas finalizadas na região. O cálculo exige cobertura do período consultado.' },
+    participacao: { titulo: 'Frete da rede sobre o frete Rodogarcia', descricao: 'Participação do custo do parceiro no valor dos fretes Rodogarcia vinculados à consolidação.', calculo: 'Valor cobrado nas consolidações vinculadas dividido pelo valor final desses fretes com impostos. Cada frete entra uma vez na base, dentro dos filtros.' },
+    cobrado: { titulo: 'Valor cobrado pelo parceiro', descricao: 'Cobrança das transportadoras no relatório de consolidação do ESL.', calculo: 'Soma do valor cobrado nas consolidações emitidas no período e nas situações selecionadas.' },
+    calculado: { titulo: 'Valor calculado pelo sistema', descricao: 'Valor de frete apurado pelo ESL nas consolidações selecionadas.', calculo: 'Soma dos valores calculados pelo ESL. Uma consolidação cujo sistema calculou zero contribui com R$ 0,00.' },
+    diferenca: { titulo: 'Diferença total', descricao: 'Desvio entre a cobrança do parceiro e o cálculo do ESL.', calculo: 'Valor cobrado menos valor calculado. Um resultado positivo indica cobrança acima do cálculo.' },
+  },
   administracao: {
     navegacaoHoje: {
       titulo: 'Tempo registrado em foco hoje',

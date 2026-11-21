@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { rememberedDashboardHref, rememberDashboardSearch } from './dashboardNavigation';
 
 describe('retorno pelo menu', () => {
-  it('lembra a conta apenas no retorno a Customer Service', () => {
-    const entries = rememberDashboardSearch([], '/customer-service', '?f.clienteCS=7');
-    expect(rememberedDashboardHref(entries, '/customer-service')).toBe('/customer-service?f.clienteCS=7');
+  it.each([
+    ['/customer-service', '?f.clienteCS=7'],
+    ['/rede-credenciada', '?dataInicio=2026-11-01&f.parceirosRede=Parceiro+A'],
+  ])('lembra os filtros apenas ao retornar a %s', (pagina, filtros) => {
+    const entries = rememberDashboardSearch([], pagina, filtros);
+    expect(rememberedDashboardHref(entries, pagina)).toBe(pagina + filtros);
     expect(rememberedDashboardHref(entries, '/performance')).toBe('/performance');
   });
   it('lembra período e filtros sem transportar filtros para outra página', () => {

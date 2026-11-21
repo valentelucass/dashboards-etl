@@ -1,4 +1,5 @@
-import DashboardLoading from '../../shared/DashboardLoading';
+import { manifestosKpis, kpiLoadingLayouts } from '../../shared/dashboardKpiLayouts';
+import { LoadingKpiGrid } from '../../shared/DashboardLoading';
 import KpiCard, { type KpiValorTone } from '../../shared/KpiCard';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary, type KpiDefinition } from '../../../constants/kpiDictionary';
@@ -45,28 +46,28 @@ export default function ManifestosKpiGrid({ kpis, custosEvolucao, isLoading }: M
       ]
     : [];
 
-  return (
-    <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-12" aria-busy={isLoading}>
-      {isLoading
-        ? Array.from({ length: 10 }, (_, index) => <DashboardLoading key={index} label="" variant="card" />)
-        : cards.map((card) => {
-          const compact = card.size === 'compact';
-          const className = card.size === 'wide'
-            ? 'col-span-2 md:col-span-2 lg:col-span-2'
-            : compact
-              ? `col-span-1 lg:col-span-1 ${card.layoutClassName ?? ''}`
-              : 'col-span-1 md:col-span-2 lg:col-span-1';
+  if (isLoading) return <LoadingKpiGrid {...kpiLoadingLayouts.manifestos} />;
 
-          return (
-            <TooltipKpi key={card.label} definition={card.definition} className={className}>
-              <KpiCard
-                label={card.label}
-                valor={card.valor}
-                valorTone={card.valorTone}
-              />
-            </TooltipKpi>
-          );
-        })}
+  return (
+    <div className={manifestosKpis} aria-busy={isLoading}>
+      {cards.map((card) => {
+        const compact = card.size === 'compact';
+        const className = card.size === 'wide'
+          ? 'col-span-2 md:col-span-2 lg:col-span-2'
+          : compact
+            ? `col-span-1 lg:col-span-1 ${card.layoutClassName ?? ''}`
+            : 'col-span-1 md:col-span-2 lg:col-span-1';
+
+        return (
+          <TooltipKpi key={card.label} definition={card.definition} className={className}>
+            <KpiCard
+              label={card.label}
+              valor={card.valor}
+              valorTone={card.valorTone}
+            />
+          </TooltipKpi>
+        );
+      })}
     </div>
   );
 }

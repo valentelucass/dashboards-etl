@@ -13,5 +13,6 @@ public final class PerformanceOperacionalDTO {
             LocalDate previsaoEntrega, String status, String alerta, String ultimaOcorrencia) {}
 
     public record EficienciaFilial(String filial, Double efe, Double eft, Double efd,
-            Double otif, long semInformacao) {}
+            Double otif, long semInformacao, long otifNoPrazo, long otifTotal,
+            long efdEficientes, long efdTotal) {}
 }

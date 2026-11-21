@@ -1,3 +1,5 @@
+import { Skeleton } from '@astryxdesign/core/Skeleton';
+import { LoadingTableRows } from '../../shared/TableLoading';
 import DashboardLoading from '../../shared/DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
 import { Collapsible } from '@astryxdesign/core/Collapsible';
@@ -222,7 +224,10 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim, cliente = '
         </div>
       </div>
       {recentes.isError && <p role="alert" className="text-sm text-negative">{getApiErrorMessage(recentes.error, 'Não foi possível carregar a última execução.')}</p>}
-      {recentes.isLoading && <DashboardLoading label="Carregando última execução…" />}
+      {recentes.isLoading && <article className="rounded-xl border" style={surface} role="status" aria-label="Carregando última execução">
+        <div className="border-b px-4 py-3"><Skeleton width={160} height={16} /></div>
+        <div className="grid gap-4 p-4 md:grid-cols-3">{[0, 1, 2].map(i => <DashboardLoading key={i} variant="section" label="" />)}</div>
+      </article>}
       {!recentes.isError && semContratoProgresso && <p role="status" className="rounded-lg border px-3 py-2 text-sm" style={surface}>A fonte ainda não informa o progresso dos ciclos em andamento. Os quadros abaixo mostram o último ciclo registrado, mesmo que novos documentos estejam sendo processados.</p>}
       {!recentes.isError && cards.map((ciclo) => (
         <article key={ciclo.cliente} className="rounded-xl border" style={surface} aria-label={`Último ciclo de ${ciclo.cliente}`}>
@@ -263,7 +268,10 @@ export default function CiclosIntegracaoPanel({ dataInicio, dataFim, cliente = '
           </div>
         </div>
         {erroHistorico ? <p role="alert" className="px-4 py-3 text-sm text-negative">{erroHistorico}</p>
-          : historico.isLoading ? <DashboardLoading label="Carregando histórico…" />
+          : historico.isLoading ? <div role="status" className="overflow-hidden">
+            <span className="sr-only">Carregando histórico…</span>
+            <table aria-hidden="true" className="w-full min-w-[1120px] table-fixed"><tbody><LoadingTableRows columns={7} /></tbody></table>
+          </div>
             : ciclos.length === 0 ? <p className="px-4 py-4 text-center text-sm" style={muted}>{origem === 'API_ESL' ? 'Nenhum ciclo da API ESL disponível para estes filtros. Este histórico atualmente audita o processo SFTP; isso não significa ausência de consumo da API em outros processos.' : 'Nenhuma execução encontrada para o período e filtros selecionados.'}</p>
               : <>
                 <div className="overflow-x-auto">

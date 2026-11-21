@@ -12,7 +12,7 @@ const cabecalho = 'sticky top-0 z-10 bg-[var(--color-card)] text-xs text-[var(--
 const linha = 'border-b border-[var(--color-border)]';
 const coluna = 'px-2 py-2.5';
 const numero = `${coluna} whitespace-nowrap text-right tabular-nums`;
-const rolagem = 'h-full min-h-0 overflow-auto overscroll-contain';
+const rolagem = 'relative h-full min-h-0 overflow-auto overscroll-contain';
 
 function OcorrenciasAtraso({ filtro }: { filtro: PerformanceFiltro }) {
   const consulta = usePerformanceOcorrenciasAtraso(filtro);

@@ -19,6 +19,8 @@ class NavegacaoDiaServiceTest {
     @Test void registraSomentePaginaConhecidaSemFiltrosOuConteudoPrivado() {
         service.registrar("pessoa@teste.invalid", new PresencaNavegacaoRequest("/cotacoes", true, FLUXO));
         verify(repository).registrar("pessoa@teste.invalid", "/cotacoes", true, FLUXO);
+        service.registrar("pessoa@teste.invalid", new PresencaNavegacaoRequest("/rede-credenciada", true, FLUXO));
+        verify(repository).registrar("pessoa@teste.invalid", "/rede-credenciada", true, FLUXO);
         service.registrar("pessoa@teste.invalid", new PresencaNavegacaoRequest("/customer-service", true, FLUXO));
         verify(repository).registrar("pessoa@teste.invalid", "/customer-service", true, FLUXO);
         for (String rota : List.of("/cotacoes?cliente=segredo", "/api/auth/login", "https://site.invalid", "/usuario/123")) {

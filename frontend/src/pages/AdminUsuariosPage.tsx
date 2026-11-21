@@ -154,6 +154,7 @@ function renderPasswordStatusBadge(status: UsuarioAdmin['statusSenha'], algoritm
 }
 
 interface SummaryCardProps {
+  loading: boolean;
   label: string;
   detail: string;
   value: number;
@@ -169,7 +170,7 @@ interface SummaryCardProps {
   };
 }
 
-function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, listTitle, usuarios, emptyMessage, acaoUsuario }: SummaryCardProps) {
+function SummaryCard({ loading, label, detail, value, accent, iconSurface, icon: Icon, listTitle, usuarios, emptyMessage, acaoUsuario }: SummaryCardProps) {
   const [open, setOpen] = useState(false);
   const pagina = usePresencePage(usuarios);
 
@@ -198,7 +199,7 @@ function SummaryCard({ label, detail, value, accent, iconSurface, icon: Icon, li
         </div>
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold leading-none" style={{ color: accent }}>{value}</span>
+            {loading ? <DashboardLoading label={'Carregando ' + label} className="w-8" /> : <span className="text-2xl font-bold leading-none" style={{ color: accent }}>{value}</span>}
             <span className="truncate text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{label}</span>
           </div>
           <div className="mt-1 truncate text-xs" style={{ color: 'var(--color-text-muted)' }}>{detail}</div>
@@ -1049,9 +1050,10 @@ export default function AdminUsuariosPage() {
       <Card padding={0} className="dashboard-admin-card">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 min-[560px]:grid-cols-2 xl:grid-cols-4 xl:gap-4">
-            <SummaryCard label="Total" detail="usuários cadastrados" value={resumoUsuarios.totalUsuarios} accent="var(--color-primary)" iconSurface="rgba(33, 71, 138, 0.14)" icon={Users} listTitle="Todos os usuários" usuarios={usuariosOrdenadosPorNome} emptyMessage="Nenhum usuário cadastrado." />
-            <SummaryCard label="Ativos" detail="com acesso liberado" value={resumoUsuarios.usuariosAtivos} accent="#10b981" iconSurface="rgba(16, 185, 129, 0.14)" icon={UserCheck} listTitle="Usuários ativos" usuarios={usuariosAtivos} emptyMessage="Nenhum usuário ativo." />
+            <SummaryCard loading={resumoSessoes.isLoading} label="Total" detail="usuários cadastrados" value={resumoUsuarios.totalUsuarios} accent="var(--color-primary)" iconSurface="rgba(33, 71, 138, 0.14)" icon={Users} listTitle="Todos os usuários" usuarios={usuariosOrdenadosPorNome} emptyMessage="Nenhum usuário cadastrado." />
+            <SummaryCard loading={resumoSessoes.isLoading} label="Ativos" detail="com acesso liberado" value={resumoUsuarios.usuariosAtivos} accent="#10b981" iconSurface="rgba(16, 185, 129, 0.14)" icon={UserCheck} listTitle="Usuários ativos" usuarios={usuariosAtivos} emptyMessage="Nenhum usuário ativo." />
             <SummaryCard
+              loading={usuarios.isLoading}
               label="Solicitações"
               detail="aguardando redefinição"
               value={usuariosComSolicitacaoRedefinicao.length}

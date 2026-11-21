@@ -1,3 +1,4 @@
+import { etlKpis, etlSucessoSpan } from '../../shared/dashboardKpiLayouts';
 import KpiCard from '../../shared/KpiCard';
 import TooltipKpi from '../../shared/TooltipKpi';
 import { KpiDictionary, type KpiDefinition } from '../../../constants/kpiDictionary';
@@ -74,12 +75,12 @@ export default function EtlSaudeKpiGrid({ overview }: EtlSaudeKpiGridProps) {
       label: 'Taxa Sucesso',
       valor: formatarPorcentagem(overview.taxaSucesso),
       valorClassName: valorClass(toneTaxaSucesso(overview.taxaSucesso)),
-      className: 'sm:col-span-2 lg:col-span-1',
+      className: etlSucessoSpan,
     },
   ];
 
   return (
-    <div className="mb-4 grid grid-cols-1 items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-5">
+    <div className={etlKpis}>
       {cards.map((card) => (
         <TooltipKpi key={card.label} definition={card.definition} className={card.className}>
           <KpiCard

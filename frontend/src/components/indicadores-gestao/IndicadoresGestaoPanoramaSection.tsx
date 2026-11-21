@@ -1,3 +1,4 @@
+import { Skeleton } from '@astryxdesign/core/Skeleton';
 import DashboardLoading from '../shared/DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
 import type { ReactNode } from 'react';
@@ -68,7 +69,13 @@ export default function IndicadoresGestaoPanoramaSection({
           </div>
           <div className="gestao-comparison-lanes">
             {items.map((item) => {
-              if (item.tone === 'loading') return <DashboardLoading key={item.id} variant="section" label={`Carregando ${item.title}`} />;
+              if (item.tone === 'loading') return (
+                <article key={item.id} className="gestao-comparison-lane" role="status" aria-label={'Carregando ' + item.title}>
+                  <div className="gestao-lane-heading"><h4>{item.title}</h4><Skeleton width={42} height={16} /></div>
+                  <Skeleton width="100%" height={8} />
+                  <div className="gestao-lane-detail"><Skeleton width="55%" height={12} /><Skeleton width={64} height={20} /></div>
+                </article>
+              );
               const style = getGoalToneStyle(item.tone);
               const progressPct = Math.max(0, Math.min(item.progressPct ?? 0, 100));
 

@@ -1,3 +1,4 @@
+import { kpiLoadingLayouts } from '../components/shared/dashboardKpiLayouts';
 import { LoadingKpiGrid } from '../components/shared/DashboardLoading';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Card } from '@astryxdesign/core/Card';
@@ -343,7 +344,7 @@ export default function ExecutivoPage() {
       </FilterBar>
 
       {overview.isError && <MensagemErro mensagem={getApiErrorMessage(overview.error, 'Erro ao carregar visão executiva.')} tipo={getTipoErro(overview.error)} />}
-      {overview.isLoading && !overview.data && <LoadingKpiGrid count={7} singleRowDesktop intermediateRows={[3, 4]} />}
+      {overview.isLoading && !overview.data && <LoadingKpiGrid {...kpiLoadingLayouts.executivo} />}
       {overview.data && <ExecutivoKpiGrid overview={overview.data} />}
       {!overview.isLoading && !overview.data && !overview.isError && (
         <Card padding={3} className="mb-6">

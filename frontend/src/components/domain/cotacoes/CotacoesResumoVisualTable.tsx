@@ -1,3 +1,4 @@
+import { LoadingTableRows } from '../../shared/TableLoading';
 import { Spinner } from '@astryxdesign/core/Spinner';
 import DashboardLoading from '../../shared/DashboardLoading';
 import { Badge } from '@astryxdesign/core/Badge';
@@ -229,12 +230,12 @@ function InsightsBar({ insights }: { insights: InsightConfig[] }) {
   );
 }
 
-function LoadingInsightsBar() {
+function LoadingInsightsBar({ label }: { label: string }) {
   return (
     <div
       className="rounded-xl border px-3 py-2.5"
       style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
-      aria-hidden="true"
+      role="status" aria-label={label}
     >
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
@@ -294,7 +295,7 @@ export default function CotacoesResumoVisualTable({
           )}
         </div>
 
-        {isInitialLoading ? <LoadingInsightsBar /> : insights.length > 0 && <InsightsBar insights={insights} />}
+        {isInitialLoading ? <LoadingInsightsBar label={config.loadingMessage} /> : insights.length > 0 && <InsightsBar insights={insights} />}
 
         <div className="cotacoes-ranking-controls flex min-w-0 flex-wrap items-center gap-3">
           <div className="w-full min-w-0 sm:w-64">
@@ -318,7 +319,7 @@ export default function CotacoesResumoVisualTable({
       </div>
 
       <div className="overflow-x-auto px-4 pb-4 sm:px-5">
-        <Table density="compact" hasHover isStriped aria-label={config.titlePrefix + ' ' + config.titleHighlight} className="cotacoes-resumo-table text-sm">
+        <Table density="compact" hasHover isStriped aria-busy={isInitialLoading} aria-label={config.titlePrefix + ' ' + config.titleHighlight} className="cotacoes-resumo-table text-sm">
           <colgroup>
             {RESUMO_COLUMNS.map((column) => (
               <col key={column.key} className={`cotacoes-col-${column.key}`} />
@@ -338,13 +339,7 @@ export default function CotacoesResumoVisualTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isInitialLoading && (
-              <TableRow>
-                <TableCell colSpan={8} className="px-3 py-8 text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                  <DashboardLoading variant="section" label={config.loadingMessage} />
-                </TableCell>
-              </TableRow>
-            )}
+            {isInitialLoading && <LoadingTableRows columns={RESUMO_COLUMNS.length} />}
 
             {!isInitialLoading && errorMessage && (
               <TableRow>
