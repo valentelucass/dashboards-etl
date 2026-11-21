@@ -1,3 +1,7 @@
+## 21/11/2026 — Navegação lateral
+
+O controle de expansão usa um ícone de painel lateral. Com o menu aberto, o ícone e o texto “Recolher menu” ficam alinhados à esquerda. As setas verticais indicam a rolagem da lista.
+
 ## 21/11/2026 — Customer Service
 
 A página `/customer-service` exige uma única conta ativa. O cadastro associa CNPJs completos à conta e começa vazio até a entrega da lista de Key Accounts. O cliente e o botão de apresentação ficam no cabeçalho. Os três slides mostram entregas e coletas, comprovantes e ocorrências, e financeiro.

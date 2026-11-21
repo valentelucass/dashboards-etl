@@ -499,6 +499,10 @@ dialog:modal::backdrop {
   min-height: 30px;
 }
 
+.dashboard-side-footer[data-collapsed="false"] > .dashboard-side-toggle {
+  justify-content: flex-start;
+}
+
 .dashboard-side-nav .dashboard-side-scroll > button,
 .dashboard-side-footer[data-collapsed="true"] > .dashboard-side-toggle {
   width: 32px;

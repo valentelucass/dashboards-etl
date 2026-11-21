@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Avatar } from '@astryxdesign/core/Avatar';
 import { Button } from '@astryxdesign/core/Button';
 import { SideNav } from '@astryxdesign/core/SideNav';
@@ -65,9 +65,9 @@ export function DashboardSideNavView({ sections, nome, setor }: DashboardSideNav
             <Button label="Descer menu lateral" size="sm" variant="ghost" isIconOnly isDisabled={!scrollState.down}
               icon={<ChevronDown size={16} aria-hidden="true" />} onClick={() => scrollMenu(1)} />
           </div>}
-          <Button label={collapsed ? 'Expandir menu' : 'Minimizar menu'} variant="ghost" isIconOnly={collapsed} className="dashboard-side-toggle"
+          <Button label={collapsed ? 'Expandir menu' : 'Recolher menu'} variant="ghost" isIconOnly={collapsed} className="dashboard-side-toggle"
             width={collapsed ? undefined : '100%'}
-            icon={collapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronLeft size={16} aria-hidden="true" />}
+            icon={collapsed ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
             aria-expanded={!collapsed} onClick={() => onCollapsedChange(!collapsed)} />
           {nome && <div className="dashboard-side-profile" data-collapsed={collapsed} title={collapsed ? nome : undefined}>
             <Avatar name={nome} size="sm" />
