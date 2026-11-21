@@ -1,3 +1,9 @@
+## 21/11/2026 — Customer Service
+
+A página `/customer-service` exige uma única conta ativa. O cadastro associa CNPJs completos à conta e começa vazio até a entrega da lista de Key Accounts. O cliente e o botão de apresentação ficam no cabeçalho. Os três slides mostram entregas e coletas, comprovantes e ocorrências, e financeiro.
+
+As entregas seguem a previsão e a regra de OTIF da Performance. As coletas seguem a solicitação. O arquivamento exige número de arquivamento até a data de corte. As ocorrências seguem a data do registro e avarias e extravios contam minutas distintas. O financeiro segue a emissão do CT-e ou a data do serviço para fretes a faturar sem CT-e, considerando a liquidação bancária até o corte. O painel lê as publicações 061 e 062 do ETL.
+
 ## 20/11/2026 — Performance das etapas por filial
 
 O cartão OTIF mantém a pontualidade das entregas finalizadas. Responsável, região de destino e cidade podem ser selecionados diretamente ou detalhados a partir das barras. A lista de minutas em atenção usa a previsão, o status e a última ocorrência. O ranking agrupa as notas em aberto e atrasadas pela última ocorrência do ESL.

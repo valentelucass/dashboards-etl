@@ -49,6 +49,41 @@ const integracoesBase = {
 } as const;
 
 export const chartDictionary = {
+  csEvolucao: {
+    ...performanceBase, descricao: 'Evolução da pontualidade do cliente.',
+    calculoTecnico: '100 vezes a soma de entregas no prazo dividida pela soma das finalizadas em cada intervalo.',
+    calculoNegocio: 'Os períodos sem finalizações ficam sem percentual.', agrupamento: 'Data prevista de entrega, consolidada por dia, mês ou ano conforme a duração do período.',
+  },
+  csStatus: {
+    ...performanceBase, descricao: 'Quantidade de minutas em cada status operacional.',
+    calculoTecnico: 'Contagem de minutas da conta por status normalizado.',
+    calculoNegocio: 'Cada entrega é atribuída a um único status.', agrupamento: 'Status atual da entrega.',
+  },
+  csComprovantes: {
+    descricao: 'Cobertura documental das entregas finalizadas do cliente.',
+    tabelasOrigem: 'Fretes da Performance e relatório de comprovantes do ESL.',
+    cruzamentos: 'A minuta identifica o frete nas duas fontes.',
+    calculoTecnico: 'Minutas com anexo ou com número de arquivamento divididas pelas minutas finalizadas.',
+    calculoNegocio: 'O número de arquivamento comprova que o frete foi arquivado. Cada minuta conta uma única vez em cada indicador.',
+    agrupamento: 'Cliente selecionado e período da previsão de entrega.',
+  },
+  csOcorrencias: {
+    descricao: 'Avarias, extravios e distribuição dos registros de ocorrência.',
+    tabelasOrigem: 'Relatório de ocorrências do ESL e fretes.', cruzamentos: 'Vínculo dos registros de ocorrência às minutas da conta.',
+    calculoTecnico: 'Os destaques contam minutas distintas com registro explícito de avaria ou extravio, parcial ou total. Uma minuta com os dois motivos conta uma vez no total combinado.',
+    calculoNegocio: 'O detalhamento mostra o número de registros de cada tipo, inclusive eventos operacionais como saída e entrega.', agrupamento: 'Tipo e data da ocorrência.',
+  },
+  csFaturamento: {
+    ...faturasClienteBase, descricao: 'Quanto já foi faturado e quanto falta faturar.',
+    calculoTecnico: 'Soma dos valores dos fretes elegíveis, classificados pela vinculação à fatura.',
+    calculoNegocio: 'Os dois valores seguem os critérios do Financeiro e Recebíveis.', agrupamento: 'Cliente e situação de faturamento.',
+  },
+  csRecebimentos: {
+    ...faturasClienteBase, descricao: 'Situação dos recebimentos do cliente na data de corte.',
+    calculoTecnico: 'Separação das parcelas pelo vencimento, saldo e liquidações bancárias reconhecidas até o corte.',
+    calculoNegocio: 'Pagamentos parciais reduzem o valor em aberto. Parcelas sem vencimento aparecem separadamente.',
+    agrupamento: 'Cliente e posição na data de corte.',
+  },
   coletasSerie: {
     ...coletasBase,
     descricao: 'Acompanha o volume diário de solicitações de coleta e separa o que avançou, foi cancelado ou permaneceu em tratativa no período filtrado.',

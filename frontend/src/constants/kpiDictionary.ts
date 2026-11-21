@@ -68,6 +68,14 @@ const regraHorarioCorteCwbNhb =
   'Na linha CWB-NHB, o corte operacional vigente é 22h.';
 
 export const KpiDictionary = {
+  customerService: {
+    entregas: { titulo: 'Total de entregas', descricao: 'Minutas de entrega da conta selecionada.', calculo: periodoPerformance },
+    otif: { titulo: 'OTIF de entrega', descricao: 'Percentual de entregas finalizadas dentro do prazo.', calculo: 'Entregas no prazo divididas pelas entregas finalizadas da conta no período da previsão.' },
+    coleta: { titulo: 'Performance de coleta', descricao: 'Percentual das coletas finalizadas que atenderam ao prazo.', calculo: 'Coletas finalizadas no prazo divididas pelas finalizadas da conta, no período da solicitação.' },
+    peso: { titulo: 'Peso transportado', descricao: 'Peso real dos fretes considerados na operação do cliente.', calculo: 'Soma do peso real em quilogramas. A unidade exibida acompanha o volume.' },
+    notaFiscal: { titulo: 'Valor das NFs', descricao: 'Valor das mercadorias informado nas notas fiscais dos fretes.', calculo: 'Soma do valor de notas das minutas da conta, no período das entregas.' },
+    frete: { titulo: 'Valor dos fretes', descricao: 'Valor dos serviços de transporte das minutas da conta.', calculo: 'Soma do valor de frete com impostos, no período das entregas.' },
+  },
   administracao: {
     navegacaoHoje: {
       titulo: 'Tempo registrado em foco hoje',

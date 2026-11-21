@@ -12,6 +12,7 @@ import com.dashboard.api.dto.coletas.ColetasRegiaoOrigemDTO;
 import com.dashboard.api.dto.coletas.ColetasStatusDistribuicaoDTO;
 import com.dashboard.api.dto.coletas.ColetasTrendPointDTO;
 import com.dashboard.api.dto.FiltroConsultaDTO;
+import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.Coletas;
 import com.dashboard.api.model.coletas.ColetaStatusPendente;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import com.dashboard.api.util.TemporalJsonUtils;
@@ -104,6 +105,17 @@ public class ColetasAgregadosSqlRepository {
                 decimal(rs.getBigDecimal("peso_taxado_total")),
                 decimal(rs.getBigDecimal("valor_nf_total"))
         ));
+    }
+
+    public Coletas desempenhoDoCliente(FiltroConsultaDTO filtro, List<String> documentos) {
+        var fonte = source(filtro);
+        var params = copiarParams(fonte).addValue("documentos", documentos);
+        return jdbcTemplate.queryForObject(baseDeduplicadaSql(fonte) + """
+                SELECT COUNT_BIG(*) finalizadas,
+                       COUNT_BIG(CASE WHEN [Finalizacao] <= [Agendamento] THEN 1 END) no_prazo
+                FROM base_metricas
+                WHERE [Cliente Doc] IN (:documentos) AND status_normalizado IN (N'finalizada', N'coletada')
+                """, params, (rs, row) -> new Coletas(rs.getLong("finalizadas"), rs.getLong("no_prazo")));
     }
 
     public List<ColetasTrendPointDTO> buscarSerieTemporal(FiltroConsultaDTO filtro) {

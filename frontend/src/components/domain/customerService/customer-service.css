@@ -1,0 +1,97 @@
+.cs-pagina, .cs-apresentacao { color: var(--color-text); font-variant-numeric: tabular-nums; }
+.cs-conteudo { container-type: inline-size; }
+.cs-botao, .cs-medida, .cs-slide-nav, .cs-slide-cabecalho, .cs-acoes-cabecalho { display: flex; align-items: center; }
+.cs-acoes-cabecalho { --cs-altura-controle:var(--header-control-height,2rem); gap:.55rem; min-width:0; }
+.cs-acoes-cabecalho :is(.cs-conta .dashboard-core-selector, .cs-botao) {
+  box-sizing:border-box;
+  block-size:var(--cs-altura-controle);
+  min-block-size:var(--cs-altura-controle);
+  padding-block:0;
+}
+.cs-acoes-cabecalho .cs-botao { flex:none; min-height:2rem; white-space:nowrap; }
+.cs-conta { min-width:0; width:clamp(11rem,20vw,22rem); display:grid; gap:.05rem; }
+.cs-conta label, .cs-pagina small, .cs-apresentacao small, .cs-aux, .cs-slide-periodo { color: var(--color-text-subtle); font-size: .8rem; }
+.cs-conta .dashboard-core-selector, .cs-conta [role="combobox"] { min-width:0; width:100%; max-width:100%; }
+.cs-conta [role="combobox"] { block-size:100%; min-block-size:0; padding-block:0; overflow:hidden; }
+.cs-conta [role="combobox"] > span:first-child { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.cs-botao { justify-content: center; gap: .4rem; min-height: 2.25rem; padding: .4rem .8rem; border: 1px solid var(--color-border); border-radius: .55rem; background: var(--color-card); color: var(--color-text); font-size: .83rem; font-weight: 600; cursor: pointer; }
+.cs-botao:focus-visible, .cs-lista-ocorrencias:focus-visible { outline: 2px solid var(--color-text); outline-offset: 3px; }
+.cs-botao:disabled { cursor: default; opacity: .45; }
+.cs-botao-principal { background: var(--color-text); color: var(--color-card); }
+.cs-paineis, .cs-mensagem { grid-column: 1 / -1; }
+.cs-paineis, .cs-operacao { display: grid; gap: .85rem; min-width: 0; }
+.cs-mensagem { padding: 1rem; display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; border: 1px solid var(--color-border); border-radius: .75rem; background: var(--color-card); color: var(--color-text-subtle); }
+.cs-vazio { min-height: 8rem; justify-content: center; text-align: center; }
+.cs-kpis { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; }
+.cs-kpis .dashboard-kpi-card [title] { white-space: normal; }
+.cs-kpis .dashboard-kpi-value { overflow-wrap: anywhere; }
+.cs-operacao-graficos, .cs-dupla { display: grid; gap: .85rem; grid-template-columns:minmax(0,1fr); }
+.cs-medida, .cs-fin-valores > div, .cs-slide-cabecalho { justify-content: space-between; gap: .7rem; }
+.cs-status { list-style: none; margin: 0; padding: .4rem 0; display: grid; gap: .8rem; }
+.cs-status li { display: grid; grid-template-columns:minmax(0,1fr) auto; gap:.2rem .65rem; }
+.cs-status .cs-medida { grid-column:1/-1; font-size:.9rem; }
+.cs-status small { line-height:1; }
+.cs-trilho { align-self:center; background:var(--color-border); height:.4rem; border-radius:1rem; overflow:hidden; }
+.cs-trilho span { display:block; height:100%; background: #3b82c4; border-radius:inherit; }
+.cs-comprovantes { display:grid; gap:1.4rem; padding:.5rem 0; }
+.cs-comprovantes .cs-trilho { margin:.4rem 0; }
+.cs-comprovantes .cs-trilho span { background:#238a78; }
+.cs-valor { font-size:clamp(1.22rem,2vw,1.75rem); line-height:1.25; }
+.cs-sinistros { display:flex; flex-wrap:wrap; gap:.6rem clamp(1.25rem,3vw,3rem); padding: .25rem 0 .8rem; }
+.cs-sinistros > div { display:grid; gap:.1rem; }
+.cs-sinistros span { font-size:.85rem; color:var(--color-text-subtle); }
+.cs-lista-ocorrencias { overflow:auto; max-height:15rem; }
+.cs-lista-ocorrencias table { width:100%; font-size:.83rem; border-collapse:separate; border-spacing:0; }
+.cs-lista-ocorrencias th, .cs-lista-ocorrencias td { text-align:left; font-weight:400; padding:.4rem .1rem; border-bottom:1px solid var(--color-border); }
+.cs-lista-ocorrencias th:last-child, .cs-lista-ocorrencias td { text-align:right; }
+.cs-lista-ocorrencias thead th { font-weight:600; position:sticky; top:0; background:var(--color-card); }
+.cs-fin-valores { margin:0; }
+.cs-composicao { display:flex; width:100%; height:.65rem; border-radius:1rem; overflow:hidden; margin:.7rem 0 .4rem; background:var(--color-border); }
+.cs-ponto { display:inline-block; width:.48rem; height:.48rem; border-radius:50%; margin-right:.45rem; vertical-align:.06rem; }
+.cs-fin-valores > div { display:flex; align-items:baseline; padding:.7rem 0; border-bottom:1px solid var(--color-border); }
+.cs-fin-valores > div:last-child { border-bottom:0; }
+.cs-fin-valores dd { margin:0; font-size:clamp(1.02rem,1.5vw,1.4rem); font-weight:650; text-align:right; }
+.cs-fin-valores small { display:block; font-weight:400; }
+.cs-nota { margin:.6rem 0 0; color:var(--color-text-subtle); font-size:.82rem; }
+.cs-apresentacao[open] { display:block; position:fixed; inset:0; width:100vw; height:100dvh; max-width:none; max-height:none; margin:0; padding:0; border:0; background:var(--color-bg, var(--color-card)); }
+.cs-apresentacao::backdrop { background:var(--color-card); }
+.cs-palco { max-width:110rem; height:100%; margin:0 auto; padding:clamp(.8rem,2vw,2rem) clamp(.9rem,3vw,3.5rem); display:grid; grid-template-rows:auto minmax(0,1fr) auto; gap:1rem; container-type:inline-size; }
+.cs-slide-cabecalho { border-bottom:1px solid var(--color-border); padding-bottom:.65rem; }
+.cs-slide-cabecalho > div { display:grid; gap:.2rem; }
+.cs-slide-conta { font-weight:650; font-size:clamp(1.05rem,2vw,1.65rem); overflow-wrap:anywhere; }
+.cs-slide-corpo { overflow:auto; min-width:0; padding:.3rem .2rem; }
+.cs-slide-corpo > h2 { font-size:clamp(1.35rem,3vw,2.45rem); font-weight:700; margin:0 0 1rem; line-height:1.1; }
+.cs-slide-nav { gap:1rem; justify-content:space-between; border-top:1px solid var(--color-border); padding-top:.6rem; }
+.cs-slide-nav > span { color:var(--color-text-subtle); font-size:.85rem; }
+@container (min-width:38rem) { .cs-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@container (min-width:54rem) { .cs-dupla { grid-template-columns:repeat(2,minmax(0,1fr)); } .cs-operacao-graficos { grid-template-columns:minmax(0,1.7fr) minmax(0,1fr); } }
+@container (min-width:54rem) {
+  .cs-slide-corpo .cs-dupla { font-size:clamp(1rem,1.35vw,1.3rem); }
+  .cs-slide-corpo .cs-dupla .dashboard-chart-card { padding:clamp(1rem,2vw,2.2rem); }
+  .cs-slide-corpo .cs-dupla .dashboard-chart-heading { margin-bottom:1.1rem; }
+  .cs-slide-corpo .cs-comprovantes { gap:2.4rem; }
+  .cs-slide-corpo .cs-valor, .cs-slide-corpo .cs-fin-valores dd { font-size:clamp(1.45rem,2.4vw,2.65rem); }
+  .cs-slide-corpo .cs-dupla small, .cs-slide-corpo .cs-aux, .cs-slide-corpo .cs-nota, .cs-slide-corpo .cs-sinistros span { font-size:clamp(.96rem,1.2vw,1.25rem); }
+  .cs-slide-corpo .cs-fin-valores > div { padding:clamp(.9rem,1.25vw,1.35rem) 0; }
+  .cs-slide-corpo .cs-lista-ocorrencias { max-height:min(43vh,28rem); }
+  .cs-slide-corpo .cs-lista-ocorrencias table { font-size:clamp(.98rem,1.25vw,1.3rem); }
+  .cs-slide-corpo .cs-lista-ocorrencias th, .cs-slide-corpo .cs-lista-ocorrencias td { padding-block:.6rem; }
+}
+@container (min-width:66rem) { .cs-kpis { grid-template-columns:repeat(4,minmax(0,.85fr)) repeat(2,minmax(0,1.3fr)); } }
+@container (max-width:22rem) { .cs-kpis { grid-template-columns:minmax(0,1fr); } }
+@container dashboard-header (width < 53rem) {
+  .top-nav .top-nav__bar:has(.top-nav__filters .cs-acoes-cabecalho) { grid-template-columns:minmax(0,1fr) auto; row-gap:.35rem; }
+  .top-nav__bar:has(.cs-acoes-cabecalho) > .top-nav__right { grid-row:1; grid-column:2; border-inline-start:0; padding-inline-start:0; }
+  .top-nav__bar:has(.cs-acoes-cabecalho) > .top-nav__filters { grid-column:1/-1; grid-row:2; }
+  .dashboard-header-toolbar:has(.cs-acoes-cabecalho) > .dashboard-filter-actions { flex:1 1 0; min-width:0; padding-inline-start:0; border:0; }
+  .dashboard-header-toolbar:has(.cs-acoes-cabecalho) > .dashboard-filter-date { display:flex; }
+  .cs-acoes-cabecalho { width:100%; }
+  .cs-conta { flex:1; max-width:21rem; }
+}
+@container dashboard-header (width < 34rem) {
+  .dashboard-header-toolbar:has(.cs-acoes-cabecalho) > .dashboard-filter-date { display:none; }
+  .cs-acoes-cabecalho { --cs-altura-controle:2.75rem; gap:.25rem; }
+  .cs-acoes-cabecalho .cs-botao { min-width:44px; min-height:44px; padding:.4rem; }
+  .cs-acoes-cabecalho .cs-botao span { display:none; }
+}
+@media(max-width:36rem){ .cs-kpis .dashboard-kpi-card{padding-inline:.55rem;} .cs-kpis .dashboard-kpi-value{font-size:1.12rem;} }

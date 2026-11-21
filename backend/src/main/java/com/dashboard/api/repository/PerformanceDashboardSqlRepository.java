@@ -500,6 +500,17 @@ public class PerformanceDashboardSqlRepository {
 
     record ConsultaEntregas(String sql, MapSqlParameterSource params) {}
 
+    ConsultaEntregas entregasDoCliente(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo,
+            List<String> documentos) {
+        QueryContext ctx = criarContexto(filtro, escopo);
+        ctx.params().addValue("documentos", documentos);
+        String sql = baseCte(ctx.colunas(), false, true) + """
+                , entregas_cliente AS (
+                    SELECT * FROM entregas WHERE 1 = 1
+                """ + ctx.where() + ")\n";
+        return new ConsultaEntregas(sql, ctx.params());
+    }
+
     ConsultaEntregas entregasDaGestao(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo) {
         QueryContext ctx = criarContexto(filtro, escopo);
         String sql = ctx.baseCte() + """
@@ -1168,6 +1179,10 @@ public class PerformanceDashboardSqlRepository {
     }
 
     private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia) {
+        return baseCte(colunas, periodoPorOcorrencia, false);
+    }
+
+    private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia, boolean porCliente) {
         exigirColuna(colunas, "Responsável Região Destino Key");
         String responsavelRegiao = textoNullableSql(colunas, "Responsável pela Região de Destino");
         String filialEmissora = textoNullableSql(colunas, "Filial Emissora", "Filial");
@@ -1208,6 +1223,7 @@ public class PerformanceDashboardSqlRepository {
                         %s AS cidade_destino,
                         TRY_CONVERT(DECIMAL(18, 3), [Kg Taxado]) AS peso_taxado,
                         TRY_CONVERT(DECIMAL(18, 2), [Valor NF]) AS valor_nota_fiscal,
+                        %s
                         %s AS comprovante_anexado,
                         CASE
                             WHEN LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(100), [Status])))) IN (N'finished', N'finalizado', N'finalizada', N'delivered', N'entregue') THEN N'Finalizada'
@@ -1239,6 +1255,7 @@ public class PerformanceDashboardSqlRepository {
                       AND ([Tipo Frete] IS NULL OR [Tipo Frete] NOT IN (N'Substitute', N'Complementary'))
                       AND (%s)
                       AND (:pagadoresVazio = 1 OR base_raw.[Pagador] IN (:pagadores))
+                      %s
                 ),
                 minutas AS (
                     SELECT
@@ -1253,6 +1270,7 @@ public class PerformanceDashboardSqlRepository {
                         cidade_destino,
                         COALESCE(peso_taxado, 0) AS peso_taxado,
                         COALESCE(valor_nota_fiscal, 0) AS valor_nota_fiscal,
+                        %s
                         comprovante_anexado,
                         status_norm,
                         data_extracao,
@@ -1282,13 +1300,16 @@ public class PerformanceDashboardSqlRepository {
                 responsavelKey,
                 regiaoDestino,
                 cidadeDestino,
+                porCliente ? "[Kg Real] AS peso_real_kg, [Valor Total do Serviço] AS valor_total_servico," : "",
                 comprovanteAnexado,
                 performanceDiferencaDias,
                 periodoPorOcorrencia ? PerformanceOperacaoSql.PERIODO_OCORRENCIA : """
                         (prazo_reentrega.data >= :dataInicio AND prazo_reentrega.data < :dataFim)
                         OR (([Tipo Frete] IS NULL OR [Tipo Frete] <> N'Redelivery' OR [CT-e Emissão] IS NULL)
                           AND [Previsão de Entrega] >= :dataInicio AND [Previsão de Entrega] < :dataFim)
-                        """
+                        """,
+                porCliente ? "AND base_raw.[Pagador Doc] IN (:documentos)" : "",
+                porCliente ? "peso_real_kg, valor_total_servico, valor_nota_fiscal AS valor_nf_cliente," : ""
         );
     }
 

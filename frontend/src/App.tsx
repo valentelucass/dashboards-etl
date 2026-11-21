@@ -15,6 +15,7 @@ const ColetasPage = lazy(() => import('./pages/ColetasPage'));
 const ManifestosPage = lazy(() => import('./pages/ManifestosPage'));
 const FaturamentoPage = lazy(() => import('./pages/FaturamentoPage'));
 const PerformancePage = lazy(() => import('./pages/PerformancePage'));
+const CustomerServicePage = lazy(() => import('./pages/CustomerServicePage'));
 const TrackingPage = lazy(() => import('./pages/TrackingPage'));
 const FaturasPorClientePage = lazy(() => import('./pages/FaturasPorClientePage'));
 const ContasAPagarPage = lazy(() => import('./pages/ContasAPagarPage'));
@@ -83,6 +84,10 @@ export default function App() {
 
               <Route element={<RotaProtegida permissao="performance" />}>
                 <Route path="/performance" element={<PerformancePage />} />
+              </Route>
+
+              <Route element={<RotaProtegida permissao="customerService" />}>
+                <Route path="/customer-service" element={<CustomerServicePage />} />
               </Route>
 
               <Route element={<RotaProtegida permissao="tracking" />}>
