@@ -8,6 +8,7 @@ import com.dashboard.api.repository.acesso.PermissaoRepository;
 import com.dashboard.api.repository.acesso.SetorPermissaoTemplateRepository;
 import com.dashboard.api.repository.acesso.UsuarioPapelVinculoRepository;
 import com.dashboard.api.repository.acesso.UsuarioPermissaoOverrideRepository;
+import com.dashboard.api.security.PermissaoCatalogo;
 import com.dashboard.api.security.acesso.UsuarioSupremo;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ public class PermissaoResolverService {
     public static final String PAPEL_ADMIN_PLATAFORMA = "admin_plataforma";
     public static final String PAPEL_ADMIN_ACESSO = "admin_acesso";
     public static final String PAPEL_USUARIO_COMUM = "usuario_comum";
+    private static final Set<String> CHAVES_SUPORTADAS = Set.copyOf(PermissaoCatalogo.mapaVazio().keySet());
 
     private final PermissaoRepository permissaoRepository;
     private final SetorPermissaoTemplateRepository templateRepository;
@@ -52,7 +54,10 @@ public class PermissaoResolverService {
         String papel = papel(Objects.requireNonNull(usuario.getId(), "usuario.id é obrigatório."));
         boolean acessoTotal = PAPEL_ADMIN_PLATAFORMA.equals(papel) || usuarioSupremo.papel().equals(papel);
         boolean administrador = acessoTotal || PAPEL_ADMIN_ACESSO.equals(papel);
-        return new AcessoResolvidoDTO(papel, administrador, acessoTotal, resolverPermissoes(usuario, acessoTotal));
+        Map<String, Boolean> permissoes = resolverPermissoes(usuario, acessoTotal);
+        // O banco pode já conter permissões de uma versão posterior da API.
+        permissoes.keySet().retainAll(CHAVES_SUPORTADAS);
+        return new AcessoResolvidoDTO(papel, administrador, acessoTotal, permissoes);
     }
 
     private Map<String, Boolean> resolverPermissoes(UsuarioEntity usuario, boolean acessoTotal) {

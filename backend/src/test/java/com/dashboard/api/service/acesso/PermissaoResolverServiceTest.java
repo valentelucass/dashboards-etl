@@ -17,9 +17,12 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +44,35 @@ class PermissaoResolverServiceTest {
                 overrideRepository,
                 new UsuarioSupremo("supremo@empresa.com", "Senha@123456", "Supremo", "desenvolvedor", 1000, false)
         );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"desenvolvedor", "admin_plataforma", "usuario_comum"})
+    void sessaoMantemAsPermissoesConhecidasMesmoComUmRecursoDeOutraVersao(String papelNome) {
+        SetorEntity setor = new SetorEntity();
+        setor.setId(10L);
+        UsuarioEntity usuario = new UsuarioEntity();
+        usuario.setId(20L);
+        usuario.setSetor(setor);
+        PapelEntity papel = new PapelEntity();
+        papel.setNome(papelNome);
+        papel.setNivel(10);
+        UsuarioPapelVinculo vinculo = new UsuarioPapelVinculo();
+        vinculo.setPapel(papel);
+
+        PermissaoEntity conhecida = new PermissaoEntity();
+        conhecida.setId(30L);
+        conhecida.setChaveLegado("coletas");
+        PermissaoEntity futura = new PermissaoEntity();
+        futura.setId(40L);
+        futura.setChaveLegado("recursoDaProximaVersao");
+        when(permissaoRepository.findAllByAtivoTrue()).thenReturn(List.of(conhecida, futura));
+        when(papelVinculoRepository.findAllByUsuarioId(20L)).thenReturn(List.of(vinculo));
+        if (PermissaoResolverService.PAPEL_USUARIO_COMUM.equals(papelNome)) {
+            when(templateRepository.findAllBySetorId(10L)).thenReturn(List.of(
+                    new SetorPermissaoTemplate(setor, conhecida), new SetorPermissaoTemplate(setor, futura)));
+        }
+        assertEquals(Map.of("coletas", true), service.permissoesEfetivas(usuario));
     }
 
     @Test
