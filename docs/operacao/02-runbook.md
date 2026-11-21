@@ -1,5 +1,22 @@
 # Runbook de Diagnostico
 
+## O total do painel divergiu ou ficou lento depois de um lote
+
+Identifique ambiente, banco, período, filtros, conta e recibo do ETL. Em `DASHBOARDS`, confirme para onde aponta o sinônimo utilizado pela aplicação. Duas interfaces DEV e PROD podem ler a mesma publicação. O produtor mantém a regra e os objetos publicados. A API do painel lê o contrato local. [Vínculos do relatório preparado](../../database/migrations/V073__usar_leituras_operacionais_preparadas.sql)
+
+```sql
+SELECT SCHEMA_NAME(schema_id) AS esquema, name AS sinonimo, base_object_name AS destino
+FROM sys.synonyms
+WHERE schema_id = SCHEMA_ID(N'dbo') AND name = N'vw_fretes_powerbi';
+
+SELECT COUNT_BIG(*) AS fretes, SUM([Valor Total do Serviço]) AS total
+FROM dbo.vw_fretes_powerbi;
+```
+
+Com a mesma janela e a mesma publicação, comparar o resultado com a contagem e a soma da fonte publicada. Registrar o total na precisão original antes de formatá-lo em reais. Para uma divergência com totais iguais, usar a comparação por linha e multiplicidade do ETL. Para investigar lentidão, medir separadamente a execução do SQL, a API e a tela, repetindo a mesma ação após aquecimento.
+
+Em 20/11/2026, a fonte e o consumidor concordaram nas 57.870 linhas e no total até o centavo. A mediana da consulta de conferência foi de 110 ms no lote 46, 126,5 ms no 47 e 125 ms no 48. São tempos da consulta de totalização. Uma resposta HTTP 200 em um endereço de saúde confirma a disponibilidade daquele endereço.
+
 ## 1. A API nao sobe localmente
 
 Sintomas:
