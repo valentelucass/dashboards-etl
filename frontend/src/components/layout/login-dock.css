@@ -149,8 +149,8 @@
   44%, 63% { fill: var(--color-negative-fill); }
 }
 @keyframes login-dock-transfer {
-  0%, 43%, 66%, 100% { transform: translate3d(0, 0, 0); }
-  52%, 58% { transform: translate3d(calc(-49 * var(--dx)), calc(-24 * var(--dy)), 0); }
+  0%, 43%, 66%, 100% { transform: translate3d(calc(20 * var(--dx)), calc(9.77 * var(--dy)), 0); }
+  52%, 58% { transform: translate3d(calc(-24 * var(--dx)), calc(-11.73 * var(--dy)), 0); }
 }
 @keyframes login-dock-lift {
   0%, 50%, 61%, 100% { transform: translateY(0); }

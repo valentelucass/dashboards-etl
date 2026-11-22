@@ -71,7 +71,7 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'qa@exemplo.test' } });
     fireEvent.click(screen.getByRole('button', { name: 'Solicitar redefinição de senha' }));
     expect(screen.queryByLabelText('Senha')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Solicitar redefinição', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Solicitar redefinição' }));
     expect(await screen.findByText(/a solicitação de redefinição foi registrada/i)).toBeTruthy();
     expect(mocks.solicitarRedefinicaoSenha).toHaveBeenCalledWith({ email: 'qa@exemplo.test' });
     fireEvent.click(screen.getByRole('button', { name: 'Voltar ao login' }));
