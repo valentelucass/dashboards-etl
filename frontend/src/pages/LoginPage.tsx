@@ -5,7 +5,7 @@ import { isAxiosError } from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@astryxdesign/core/Button';
 import { Banner } from '@astryxdesign/core/Banner';
-import { Mail } from 'lucide-react';
+import { ArrowRight, Mail } from 'lucide-react';
 import DashboardAuthLayout from '../components/layout/DashboardAuthLayout';
 import { FormPasswordField, FormTextField } from '../components/shared/FormTextField';
 import { useAutenticacao } from '../contexts/AutenticacaoContext';
@@ -152,14 +152,14 @@ export default function LoginPage() {
     }
   }
 
-  const title = trocaObrigatoria ? 'Defina sua nova senha' : solicitandoRedefinicao ? 'Solicitar redefinição de senha' : 'Acesso à Plataforma';
+  const title = trocaObrigatoria ? 'Defina sua nova senha' : solicitandoRedefinicao ? 'Solicitar redefinição de senha' : 'Entrar no painel';
   const description = trocaObrigatoria
     ? 'Crie uma senha privada para concluir seu acesso.'
-    : solicitandoRedefinicao ? 'Informe seu e-mail corporativo para avisar o administrador.' : 'Entre com seu e-mail e senha corporativos.';
+    : solicitandoRedefinicao ? 'Informe seu e-mail corporativo para avisar o administrador.' : 'Use sua conta corporativa.';
   const alternarSenha = () => setMostrarSenha(value => !value);
 
   return (
-    <DashboardAuthLayout title={title} description={description}>
+    <DashboardAuthLayout title={title} description={description} dock={!trocaObrigatoria}>
       <form onSubmit={trocaObrigatoria ? handleNovaSenhaObrigatoria : solicitandoRedefinicao ? handleSolicitarRedefinicao : handleLogin} className="dashboard-auth-form">
         {carregandoSessao && <DashboardLoading label="Validando sessão salva…" />}
         {erro && <Banner status="error" title={erro} role="alert" />}
@@ -185,6 +185,7 @@ export default function LoginPage() {
         )}
 
         <Button type="submit" variant="primary" width="100%" isLoading={carregando}
+          endContent={!trocaObrigatoria && <ArrowRight aria-hidden="true" size={17} />}
           className="dashboard-form-submit"
           label={trocaObrigatoria ? 'Salvar nova senha e entrar' : solicitandoRedefinicao ? 'Solicitar redefinição' : 'Acessar plataforma'} />
 

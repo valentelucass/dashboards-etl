@@ -1,3 +1,7 @@
+## 22/11/2026 — Login Doca 04
+
+A página de login apresenta o terminal isométrico em um ciclo de chegada do caminhão, abertura da cancela e da doca, movimentação da empilhadeira e saída. As vias atravessam a janela e a van cruza quando o caminhão está na doca. Os veículos se movem em camadas independentes. O cartão usa a paleta interna e um visor azul que acompanha as etapas da operação. O ciclo inicia automaticamente e pode ser pausado no visor. Com movimento reduzido, a manobra é mais curta e lenta.
+
 ## 22/11/2026 — Controles da apresentação
 
 A barra da apresentação usa botões de ícone do Astryx para voltar, avançar e sair. As setas continuam visíveis no início e no fim da sequência, com a direção indisponível desabilitada. As sequências padrão e salvas usam os mesmos controles.
