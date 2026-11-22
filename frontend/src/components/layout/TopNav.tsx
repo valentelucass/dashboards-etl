@@ -1,6 +1,5 @@
 import DashboardMobileNav from './DashboardMobileNav';
 import './dashboard-mobile-nav.css';
-import DashboardButton from "../shared/DashboardButton";
 import { Button } from '@astryxdesign/core/Button';
 import { getDashboardNavSections } from './dashboardNavItems';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
@@ -24,8 +23,6 @@ import type { NavItem } from '../../utils/accessControl';
 import { filterPresentationPages, type PresentationPage } from '../../utils/presentationSequence';
 import PresentationSequencesModal from '../presentation/PresentationSequencesModal';
 import CommunicationsBell from '../home/CommunicationsBell';
-
-const focusRingClass = 'outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-card)]';
 
 interface TopNavProps {
   toolbarRef: React.RefCallback<HTMLDivElement>;
@@ -183,19 +180,18 @@ export default function TopNav({ toolbarRef, panelRef }: TopNavProps) {
 
           <div className={`top-nav__right flex shrink-0 items-center ${apresentacao ? 'gap-1.5 pl-3' : 'gap-2'}`}>
             {apresentacao && (
-              <div className="flex items-center gap-1 border-l pl-3" style={{ borderColor: 'var(--color-border)' }}>
+              <div role="group" aria-label="Controles da apresentação" className="flex items-center gap-1 border-l pl-3" style={{ borderColor: 'var(--color-border)' }}>
                 <span className="hidden pr-1 text-[10px] font-semibold lg:inline" style={{ color: 'var(--color-text-muted)' }}>
                   {apresentacao.indice + 1}/{apresentacao.paginas.length}
                 </span>
-                <DashboardButton type="button" onClick={() => navegarApresentacao(-1)} disabled={apresentacao.indice === 0} title="Página anterior" aria-label="Página anterior" className={`flex h-6 w-6 items-center justify-center rounded disabled:opacity-40 ${focusRingClass}`}>
-                  <ChevronLeft size={14} />
-                </DashboardButton>
-                <DashboardButton type="button" onClick={() => navegarApresentacao(1)} disabled={apresentacao.indice === apresentacao.paginas.length - 1} title="Próxima página" aria-label="Próxima página" className={`flex h-6 w-6 items-center justify-center rounded disabled:opacity-40 ${focusRingClass}`}>
-                  <ChevronRight size={14} />
-                </DashboardButton>
-                <DashboardButton type="button" onClick={() => void sairApresentacao()} title="Sair da apresentação (Esc)" aria-label="Sair da apresentação" className={`flex h-6 w-6 items-center justify-center rounded text-red-500 ${focusRingClass}`}>
-                  <X size={14} />
-                </DashboardButton>
+                <Button label="Página anterior" tooltip="Página anterior" variant="ghost" size="sm" isIconOnly
+                  icon={<ChevronLeft size={17} aria-hidden="true" />} isDisabled={apresentacao.indice === 0}
+                  onClick={() => navegarApresentacao(-1)} />
+                <Button label="Próxima página" tooltip="Próxima página" variant="ghost" size="sm" isIconOnly
+                  icon={<ChevronRight size={17} aria-hidden="true" />} isDisabled={apresentacao.indice === apresentacao.paginas.length - 1}
+                  onClick={() => navegarApresentacao(1)} />
+                <Button label="Sair da apresentação" tooltip="Sair da apresentação (Esc)" variant="ghost" size="sm" isIconOnly
+                  icon={<X size={17} aria-hidden="true" className="text-red-500" />} onClick={() => void sairApresentacao()} />
               </div>
             )}
 
