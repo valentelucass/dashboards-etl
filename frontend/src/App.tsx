@@ -49,7 +49,7 @@ function RotaLogin() {
     return <Navigate to={firstAccessibleRoute(usuario)} replace />;
   }
 
-  return <LoginPage />;
+  return <Suspense fallback={<DashboardRouteLoading />}><LoginPage /></Suspense>;
 }
 
 export default function App() {

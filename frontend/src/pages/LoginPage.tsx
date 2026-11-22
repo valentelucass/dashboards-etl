@@ -152,10 +152,10 @@ export default function LoginPage() {
     }
   }
 
-  const title = trocaObrigatoria ? 'Defina sua nova senha' : solicitandoRedefinicao ? 'Solicitar redefinição de senha' : 'Entrar no painel';
+  const title = trocaObrigatoria ? 'Defina sua nova senha' : solicitandoRedefinicao ? 'Solicitar redefinição de senha' : undefined;
   const description = trocaObrigatoria
     ? 'Crie uma senha privada para concluir seu acesso.'
-    : solicitandoRedefinicao ? 'Informe seu e-mail corporativo para avisar o administrador.' : 'Use sua conta corporativa.';
+    : solicitandoRedefinicao ? 'Informe seu e-mail corporativo para avisar o administrador.' : undefined;
   const alternarSenha = () => setMostrarSenha(value => !value);
 
   return (

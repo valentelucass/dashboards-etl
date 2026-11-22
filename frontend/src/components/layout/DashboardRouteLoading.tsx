@@ -10,6 +10,7 @@ import { kpiLoadingLayouts } from '../shared/dashboardKpiLayouts';
 import TrackingMatrixLoading from '../domain/tracking/TrackingMatrixLoading';
 import ScorecardLoading from '../indicadores-gestao/ScorecardLoading';
 import FinanceiroKpiLayout from '../domain/faturasPorCliente/FinanceiroKpiLayout';
+import DashboardAuthLayout from './DashboardAuthLayout';
 import '../home/home.css';
 import './auth-mobile.css';
 
@@ -110,7 +111,17 @@ function PagePreview({ path }: { path: string }) {
       <Skeleton height={90} /><Fields count={3} />
     </Card></div>;
   }
-  if (['/login', '/auth/trocar-senha', '/alterar-senha', '/acesso-negado'].includes(path)) return <div className="dashboard-auth dashboard-auth-responsive">
+  if (path === '/login') return <div inert className="login-dock-skeleton">
+    <DashboardAuthLayout dock>
+      <div className="dashboard-auth-form">
+        {['email', 'senha'].map(field => <div key={field} className="grid gap-1">
+          <Skeleton width={100} height={20} /><Skeleton width="100%" height={44} />
+        </div>)}
+        <Skeleton width="100%" height={44} /><Skeleton width={178} height={40} />
+      </div>
+    </DashboardAuthLayout>
+  </div>;
+  if (['/auth/trocar-senha', '/alterar-senha', '/acesso-negado'].includes(path)) return <div className="dashboard-auth dashboard-auth-responsive">
     <div className="dashboard-auth-toolbar"><Skeleton width={32} height={32} /></div>
     <div className="dashboard-auth-body"><div className="dashboard-auth-stack">
       <span className="dashboard-brand-wordmark dashboard-auth-brand"><img src="/logo.png" alt="" width={231} height={43} /></span>

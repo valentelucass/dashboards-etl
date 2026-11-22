@@ -119,7 +119,7 @@
 .login-dock-van { animation-name: login-dock-traffic; animation-timing-function: linear; }
 .login-dock-gate { animation-name: login-dock-gate-open; }
 .login-dock-rail span { animation-name: login-dock-route; }
-.login-dock[data-dock-paused] :is(.login-dock-scene, .login-dock-rail) * { animation-play-state: paused; }
+:is(.login-dock[data-dock-paused], .login-dock-skeleton) :is(.login-dock-scene, .login-dock-rail) * { animation-play-state: paused; }
 @keyframes login-dock-gate-open {
   0%, 48%, 60%, 100% { transform: rotate(0); }
   6%, 42%, 67%, 94% { transform: rotate(55deg); }

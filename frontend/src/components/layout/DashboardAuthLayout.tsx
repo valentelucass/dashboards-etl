@@ -9,9 +9,9 @@ import { Text } from '@astryxdesign/core/Text';
 import { Moon, Pause, Play, Sun, Truck } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
-export default function DashboardAuthLayout({ title, description, children, dock = false }: {
-  title: string;
-  description: string;
+export default function DashboardAuthLayout({ title = 'Entrar no painel', description = 'Use sua conta corporativa.', children, dock = false }: {
+  title?: string;
+  description?: string;
   children: ReactNode;
   dock?: boolean;
 }) {
