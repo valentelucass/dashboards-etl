@@ -18,6 +18,24 @@
 .cs-botao:focus-visible, .cs-lista-ocorrencias:focus-visible { outline: 2px solid var(--color-text); outline-offset: 3px; }
 .cs-botao:disabled { cursor: default; opacity: .45; }
 .cs-botao-principal { background: var(--color-text); color: var(--color-card); }
+.cs-acoes-cabecalho .cs-gerenciar-carteira { inline-size:var(--cs-altura-controle); padding-inline:0; }
+.cs-importacao { display:grid; min-width:0; gap:.9rem; color:var(--color-text); }
+.cs-importacao h2 { font-size:1.25rem; font-weight:650; }
+.cs-importacao p { margin:0; font-size:.9rem; color:var(--color-text-subtle); }
+.cs-importacao .cs-modelo { justify-self:start; }
+.cs-arquivo-campos { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,2fr); gap:.85rem; }
+.cs-arquivo-campos label { display:grid; gap:.3rem; font-size:.85rem; font-weight:600; }
+.cs-arquivo-campos input { width:100%; min-width:0; padding:.5rem; border:1px solid var(--color-border); border-radius:.5rem; background:var(--color-card); color:var(--color-text); }
+.cs-previa { border-block:1px solid var(--color-border); padding:.75rem 0; }
+.cs-previa h3 { font-weight:650; }
+.cs-impacto { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; margin-top:.8rem; }
+.cs-impacto dt { color:var(--color-text-subtle); font-size:.8rem; }
+.cs-impacto dd { font-size:1.2rem; font-weight:650; }
+.cs-confirmacao { display:flex; align-items:flex-start; gap:.5rem; font-size:.9rem; }
+.cs-confirmacao input { margin-top:.25rem; }
+.cs-importacao .cs-importacao-erro { color:var(--color-danger,var(--color-text)); }
+.cs-importacao-acoes { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.5rem; }
+@media(max-width:34rem) { .cs-arquivo-campos { grid-template-columns:minmax(0,1fr); } }
 .cs-paineis, .cs-mensagem { grid-column: 1 / -1; }
 .cs-paineis, .cs-operacao { display: grid; gap: .85rem; min-width: 0; }
 .cs-mensagem { padding: 1rem; display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; border: 1px solid var(--color-border); border-radius: .75rem; background: var(--color-card); color: var(--color-text-subtle); }

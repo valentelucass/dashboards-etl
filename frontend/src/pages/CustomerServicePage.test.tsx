@@ -2,14 +2,23 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import * as api from '../api/endpoints/customerService';
+import { usePermissions } from '../hooks/usePermissions';
+import { createEmptyPermissionMap } from '../utils/accessControl';
 import { FiltroProvider } from '../contexts/FiltroContext';
 import { FilterHeaderContext } from '../contexts/FilterHeaderContext';
 import { PageHeaderProvider } from '../contexts/PageHeaderContext';
 import CustomerServicePage from './CustomerServicePage';
 
+vi.mock('../hooks/usePermissions');
+vi.mock('../components/shared/DashboardAdaptiveDialog', () => ({
+  default: ({label, children}: {label:string; children:ReactNode}) => <dialog open aria-label={label}>{children}</dialog>,
+}));
+
+const acessoLeitura = {isAdminPlataforma:false, isAdminAcesso:false, isDesenvolvedor:false, permissions:createEmptyPermissionMap(),
+  canAccess:() => true, hasRole:() => false, setorNome:'Customer Service'};
 const clientes = [{ id: 1, nome: 'Conta Norte' }, { id: 2, nome: 'Conta Sul' }];
 const periodo = { dataInicio: '2026-11-01', dataFim: '2026-11-21' };
 const operacao: api.OperacaoCliente = {
@@ -25,6 +34,7 @@ const financeiro: api.FinanceiroCliente = {
   fretes: 4, fretesFaturados: 3, fretesPendentes: 1, fretesFaturadosSemParcela: 1, dataCorte: periodo.dataFim,
 };
 beforeEach(() => {
+  vi.mocked(usePermissions).mockReturnValue(acessoLeitura);
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} unobserve() {} });
   vi.spyOn(api, 'buscarContasCS').mockResolvedValue(clientes);
@@ -57,6 +67,7 @@ it.each(['', '&f.clienteCS=999', '&f.clienteCS=1&f.clienteCS=2'])('exige uma ún
   expect(api.buscarOperacaoCS).not.toHaveBeenCalled();
   expect(api.buscarFinanceiroCS).not.toHaveBeenCalled();
   expect(screen.queryByText('Faturado')).toBeNull();
+  expect(screen.queryByRole('button', {name: 'Importar carteira Key Account'})).toBeNull();
 });
 
 it('distingue cadastro pendente de falha na consulta e permite tentar novamente', async () => {
@@ -136,4 +147,64 @@ it('apresenta os três assuntos identificando sempre o cliente e o período', as
   fireEvent.keyDown(document.body, {key: 'Escape'});
   expect(screen.queryByRole('dialog')).toBeNull();
   await waitFor(() => expect(document.activeElement).toBe(iniciar));
+});
+
+const previa: api.ResumoCarteiraCS = {competencia: '2026-11', versaoAtual: 7, hashCarteira: 'versao-da-planilha',
+  grupos: 2, cnpjs: 10, adicionados: 2, removidos: 1, transferidos: 1, semAlteracao: false};
+const arquivo = new File(['teste de envio'], 'carteira.xlsx');
+
+async function abrirImportacao() {
+  vi.mocked(usePermissions).mockReturnValue({...acessoLeitura, isAdminPlataforma:true});
+  abrir('&f.clienteCS=1');
+  await screen.findByText('Faturado');
+  fireEvent.click(screen.getByRole('button', {name:'Importar carteira Key Account'}));
+  const dialogo = within(await screen.findByRole('dialog', {name:'Importar carteira Key Account'}));
+  fireEvent.change(dialogo.getByLabelText('Mês da carteira'), {target:{value:'2026-11'}});
+  return dialogo;
+}
+
+it('um administrador confere o impacto, confirma as saídas e recarrega a lista sem reexibir a conta anterior', async () => {
+  vi.spyOn(api, 'baixarModeloCarteiraCS').mockResolvedValue();
+  vi.spyOn(api, 'conferirCarteiraCS').mockResolvedValue(previa);
+  vi.spyOn(api, 'aplicarCarteiraCS').mockResolvedValue({...previa, versaoAtual:8});
+  const dialogo = await abrirImportacao();
+  fireEvent.click(dialogo.getByRole('button', {name:'Baixar modelo Excel'}));
+  await waitFor(() => expect(api.baixarModeloCarteiraCS).toHaveBeenCalledOnce());
+  fireEvent.change(dialogo.getByLabelText('Planilha Excel'), {target:{files:[arquivo]}});
+  fireEvent.click(dialogo.getByRole('button', {name:'Conferir planilha'}));
+  expect((await dialogo.findByRole('button', {name:'Confirmar carteira'}) as HTMLButtonElement).disabled).toBe(true);
+  expect(api.conferirCarteiraCS).toHaveBeenCalledWith(arquivo, '2026-11');
+  expect(dialogo.getByText('CNPJs que saem').parentElement?.textContent).toContain('1');
+  expect(api.aplicarCarteiraCS).not.toHaveBeenCalled();
+  fireEvent.click(dialogo.getByRole('checkbox'));
+  vi.mocked(api.buscarContasCS).mockResolvedValue([{id:2,nome:'Conta Sul'}]);
+  fireEvent.click(dialogo.getByRole('button', {name:'Confirmar carteira'}));
+  await dialogo.findByText(/Carteira de 11\/2026 confirmada/);
+  expect(api.aplicarCarteiraCS).toHaveBeenCalledWith(arquivo, previa);
+  expect(api.buscarContasCS).toHaveBeenCalledTimes(2);
+  expect(screen.queryByText('Faturado')).toBeNull();
+  fireEvent.click(dialogo.getByRole('button', {name:'Fechar'}));
+  expect(await screen.findByText('Selecione um cliente para consultar os indicadores.')).toBeTruthy();
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', {name:'Importar carteira Key Account'})));
+});
+
+it('rejeita extensão inválida, descarta a prévia ao trocar o mês e exige nova conferência após conflito', async () => {
+  vi.spyOn(api, 'conferirCarteiraCS').mockResolvedValue({...previa, removidos:0, transferidos:0, semAlteracao:true});
+  vi.spyOn(api, 'aplicarCarteiraCS').mockRejectedValue(new Error('A carteira foi alterada por outro administrador.'));
+  const dialogo = await abrirImportacao();
+  const input = dialogo.getByLabelText('Planilha Excel');
+  fireEvent.change(input, {target:{files:[new File([''], 'lista.csv')]}});
+  expect(dialogo.getByRole('alert').textContent).toContain('.xlsx');
+  expect((dialogo.getByRole('button', {name:'Conferir planilha'}) as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.change(input, {target:{files:[arquivo]}});
+  fireEvent.click(dialogo.getByRole('button', {name:'Conferir planilha'}));
+  await dialogo.findByRole('button', {name:'Confirmar carteira'});
+  fireEvent.change(dialogo.getByLabelText('Mês da carteira'), {target:{value:'2026-12'}});
+  expect(dialogo.queryByRole('button', {name:'Confirmar carteira'})).toBeNull();
+  fireEvent.click(dialogo.getByRole('button', {name:'Conferir planilha'}));
+  fireEvent.click(await dialogo.findByRole('button', {name:'Confirmar carteira'}));
+  expect((await dialogo.findByRole('alert')).textContent).toContain('outro administrador');
+  expect(dialogo.queryByRole('button', {name:'Confirmar carteira'})).toBeNull();
+  expect(dialogo.getByRole('button', {name:'Conferir planilha'})).toBeTruthy();
+  expect(api.buscarContasCS).toHaveBeenCalledTimes(1);
 });

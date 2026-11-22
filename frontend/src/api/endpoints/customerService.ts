@@ -1,4 +1,5 @@
 import clienteAxios from '../clienteAxios';
+import { salvarBlobComoArquivo } from '../downloadArquivo';
 
 export interface ContaCustomerService {
   id: number;
@@ -58,5 +59,42 @@ export async function buscarOperacaoCS(params: PeriodoConta, signal?: AbortSigna
 
 export async function buscarFinanceiroCS(params: PeriodoConta, signal?: AbortSignal) {
   const { data } = await clienteAxios.get<FinanceiroCliente>(base + '/financeiro', { params, signal });
+  return data;
+}
+
+export interface ResumoCarteiraCS {
+  competencia: string;
+  versaoAtual: number;
+  hashCarteira: string;
+  grupos: number;
+  cnpjs: number;
+  adicionados: number;
+  removidos: number;
+  transferidos: number;
+  semAlteracao: boolean;
+}
+
+const carteira = '/api/admin/customer-service/carteira';
+
+export async function baixarModeloCarteiraCS() {
+  const { data } = await clienteAxios.get<Blob>(carteira + '/modelo', {responseType: 'blob'});
+  salvarBlobComoArquivo(data, 'Carteira-Key-Account.xlsx');
+}
+
+export async function conferirCarteiraCS(arquivo: File, competencia: string) {
+  const formulario = new FormData();
+  formulario.append('arquivo', arquivo);
+  formulario.append('competencia', competencia);
+  const { data } = await clienteAxios.post<ResumoCarteiraCS>(carteira + '/previa', formulario);
+  return data;
+}
+
+export async function aplicarCarteiraCS(arquivo: File, previa: ResumoCarteiraCS) {
+  const formulario = new FormData();
+  formulario.append('arquivo', arquivo);
+  formulario.append('competencia', previa.competencia);
+  formulario.append('versaoAtual', String(previa.versaoAtual));
+  formulario.append('hashCarteira', previa.hashCarteira);
+  const { data } = await clienteAxios.post<ResumoCarteiraCS>(carteira + '/aplicar', formulario);
   return data;
 }

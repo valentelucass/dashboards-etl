@@ -47,9 +47,9 @@ class CustomerServiceFinanceiroRepositoryTest {
         var params = ArgumentCaptor.forClass(SqlParameterSource.class);
         verify(jdbc).queryForObject(sql.capture(), params.capture(),
                 org.mockito.ArgumentMatchers.<RowMapper<CustomerServiceFinanceiroDTO>>any());
-        assertThat(sql.getValue()).contains("(:escopoFiliais)", "base.cliente_cnpj IN (:documentos)",
+        assertThat(sql.getValue()).contains("(:escopoFiliais)", "base.cliente_cnpj IN (" + CustomerServiceDocumentos.SELECAO + ")",
                 "p.cliente_cnpj = f.cliente_cnpj", "p.liquidacao <= :corte");
-        assertThat(params.getValue().getValue("documentos")).isEqualTo(documentos);
+        assertThat(params.getValue().getValue("documentos")).isEqualTo("[\"00000000000001\",\"00000000000002\"]");
         assertThat(params.getValue().getValue("escopoFiliais")).isEqualTo(List.of("rec"));
         assertThat(params.getValue().getValue("corte")).isEqualTo(fim);
     }

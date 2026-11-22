@@ -25,7 +25,7 @@ public class CustomerServiceClientesService {
                 SELECT c.id, c.nome
                 FROM acesso.customer_service_contas c
                 WHERE c.ativa = 1 AND EXISTS (
-                    SELECT 1 FROM acesso.customer_service_documentos d WHERE d.conta_id = c.id
+                    SELECT 1 FROM acesso.customer_service_documentos d WHERE d.conta_id = c.id AND d.ativo = 1
                 )
                 ORDER BY c.nome, c.id
                 """, (rs, row) -> new Opcao(rs.getLong("id"), rs.getString("nome")));
@@ -40,7 +40,7 @@ public class CustomerServiceClientesService {
         return jdbc.query("""
                 SELECT c.nome, d.documento
                 FROM acesso.customer_service_contas c
-                JOIN acesso.customer_service_documentos d ON d.conta_id = c.id
+                JOIN acesso.customer_service_documentos d ON d.conta_id = c.id AND d.ativo = 1
                 WHERE c.ativa = 1 AND c.id = ?
                 ORDER BY d.documento
                 """, rs -> {

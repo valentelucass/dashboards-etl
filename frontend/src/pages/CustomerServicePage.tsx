@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { skipToken, useQuery } from '@tanstack/react-query';
-import { Presentation } from 'lucide-react';
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FileUp, Presentation } from 'lucide-react';
 import { buscarContasCS, buscarFinanceiroCS, buscarOperacaoCS, type ContaCustomerService } from '../api/endpoints/customerService';
 import { useFiltro } from '../contexts/FiltroContext';
 import { usePageHeader } from '../contexts/PageHeaderContext';
@@ -11,6 +11,8 @@ import ApresentacaoConta from '../components/domain/customerService/Apresentacao
 import OperacaoConta from '../components/domain/customerService/OperacaoConta';
 import QualidadeConta from '../components/domain/customerService/QualidadeConta';
 import FinanceiroConta from '../components/domain/customerService/FinanceiroConta';
+import ImportarCarteira from '../components/domain/customerService/ImportarCarteira';
+import { usePermissions } from '../hooks/usePermissions';
 import { formatarData } from '../utils/formatadores';
 import '../components/domain/customerService/customer-service.css';
 
@@ -23,7 +25,7 @@ function Fonte({ assunto, erro, tentar, children }: { assunto: string; erro: boo
   return children;
 }
 
-function RelatorioConta({ conta, seletor, pendencia }: { conta?: ContaCustomerService; seletor: ReactNode; pendencia: ReactNode }) {
+function RelatorioConta({ conta, seletor, pendencia, administracao }: { conta?: ContaCustomerService; seletor: ReactNode; pendencia: ReactNode; administracao: ReactNode }) {
   const {dataInicio, dataFim, setDataInicio, setDataFim, setDataRange} = useFiltro();
   const consulta = conta ? {clienteId: conta.id, dataInicio, dataFim} : undefined;
   const [apresentando, setApresentando] = useState(false);
@@ -58,6 +60,7 @@ function RelatorioConta({ conta, seletor, pendencia }: { conta?: ContaCustomerSe
           disabled={!conta || !(op.data || fin.data)} onClick={() => setApresentando(true)}>
           <Presentation size={17} aria-hidden="true" /><span>Apresentar cliente</span>
         </button>
+        {administracao}
       </div>} />
     <div className="cs-conteudo">
       {!conta ? pendencia : apresentando ? <ApresentacaoConta key={dataInicio + '/' + dataFim} conta={conta.nome}
@@ -70,7 +73,12 @@ function RelatorioConta({ conta, seletor, pendencia }: { conta?: ContaCustomerSe
 export default function CustomerServicePage() {
   usePageHeader({title: 'Customer Service', description: 'Atendimento, entregas e financeiro do cliente.'});
   const { filtros, setFiltro } = useFiltro();
-  const catalogo = useQuery({queryKey: ['customer-service', 'clientes'], queryFn: ({signal}) => buscarContasCS(signal), retry: false});
+  const permissoes = usePermissions();
+  const podeImportar = permissoes.canAccess('customerService') && (permissoes.isAdminPlataforma || permissoes.isDesenvolvedor);
+  const [importando, setImportando] = useState(false);
+  const abrirImportacao = useRef<HTMLButtonElement>(null);
+  const queryClient = useQueryClient();
+  const catalogo = useQuery({queryKey: ['customer-service', 'clientes'], queryFn: ({signal}) => buscarContasCS(signal), retry: false, placeholderData: undefined});
   const contas = catalogo.isSuccess ? catalogo.data : [];
   const quantidadePorNome = new Map<string, number>();
   for (const conta of contas) {
@@ -87,10 +95,25 @@ export default function CustomerServicePage() {
       </option>)}
     </DashboardSelector>
   </div>;
-  return <RelatorioConta key={selecionada?.id ?? 'vazio'} conta={selecionada} seletor={seletor}
+  function atualizarCarteira() {
+    setFiltro('clienteCS', []);
+    queryClient.removeQueries({predicate: consulta => consulta.queryKey[0] === 'customer-service' && consulta.queryKey[1] !== 'clientes'});
+    void queryClient.resetQueries({queryKey: ['customer-service', 'clientes']});
+  }
+  function fecharImportacao() {
+    setImportando(false);
+    requestAnimationFrame(() => abrirImportacao.current?.focus());
+  }
+  return <><RelatorioConta key={selecionada?.id ?? 'vazio'} conta={selecionada} seletor={seletor}
+    administracao={podeImportar && <button type="button" ref={abrirImportacao} className="cs-botao cs-gerenciar-carteira"
+      aria-label="Importar carteira Key Account" title="Importar carteira Key Account" onClick={() => setImportando(true)}>
+      <FileUp size={17} aria-hidden="true" />
+    </button>}
     pendencia={<div className="cs-mensagem cs-vazio" role={catalogo.isError ? 'alert' : 'status'}>
           {catalogo.isPending ? 'Carregando clientes…' : catalogo.isError ? 'Não foi possível carregar a lista de clientes.'
             : contas.length ? 'Selecione um cliente para consultar os indicadores.' : 'Nenhum cliente Key Account disponível para a sua conta.'}
           {catalogo.isError && <button type="button" className="cs-botao" onClick={() => void catalogo.refetch()}>Tentar novamente</button>}
-    </div>} />;
+    </div>} />
+    {podeImportar && importando && <ImportarCarteira fechar={fecharImportacao} atualizar={atualizarCarteira} />}
+  </>;
 }

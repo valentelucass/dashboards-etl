@@ -32,13 +32,11 @@ public class CustomerServiceFinanceiroRepository {
     }
 
     public CustomerServiceFinanceiroDTO consultar(FiltroConsultaDTO periodo, List<String> documentos, LocalDate corte) {
-        if (documentos == null || documentos.isEmpty()) {
-            throw new IllegalArgumentException("A conta precisa ter ao menos um CNPJ autorizado.");
-        }
+        String documentosJson = CustomerServiceDocumentos.json(documentos, false);
         var fonte = sqlBuilder.buildFilteredSource(DashboardExportDefinition.FATURAS_POR_CLIENTE,
                 periodo, escopo.escopoAtual(), Set.of());
-        var parametros = fonte.params().addValue("documentos", documentos).addValue("corte", corte);
-        return jdbc.queryForObject(consulta.formatted(fonte.sql()), parametros, (rs, linha) ->
+        var parametros = fonte.params().addValue("documentos", documentosJson).addValue("corte", corte);
+        return jdbc.queryForObject(consulta.formatted(fonte.sql(), CustomerServiceDocumentos.SELECAO), parametros, (rs, linha) ->
                 new CustomerServiceFinanceiroDTO(rs.getBigDecimal("faturado"), rs.getBigDecimal("pendente"),
                         rs.getBigDecimal("a_vencer"), rs.getBigDecimal("em_atraso"), rs.getBigDecimal("pago"),
                         rs.getBigDecimal("sem_vencimento"), rs.getLong("fretes"), rs.getLong("fretes_faturados"),

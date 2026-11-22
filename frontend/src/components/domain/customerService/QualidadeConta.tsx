@@ -10,9 +10,10 @@ export default function QualidadeConta({ dados }: { dados: OperacaoCliente }) {
         {([['Anexados', dados.anexadas], ['Arquivados', dados.arquivadas]] as const).map(([titulo, quantidade]) => <div key={titulo}>
           <div className="cs-medida"><span>{titulo}</span><strong className="cs-valor">{exibirTaxa(quantidade, dados.finalizadas)}</strong></div>
           <div className="cs-trilho" aria-hidden="true"><span style={{width: (taxa(quantidade, dados.finalizadas) ?? 0) + '%'}} /></div>
-          <small>{quantidade === null ? 'Arquivamento sem cobertura para o período' : formatarNumero(quantidade) + ' de ' + formatarNumero(dados.finalizadas) + ' entregas finalizadas'}</small>
+          <small>{quantidade === null ? 'Dados de arquivamento indisponíveis' : formatarNumero(quantidade) + ' de ' + formatarNumero(dados.finalizadas) + ' entregas finalizadas'}</small>
         </div>)}
       </div>
+      <p className="cs-nota">A situação é a de hoje, inclusive quando o comprovante foi anexado ou arquivado depois do período.</p>
     </ChartCard>
     <ChartCard titulo="Ocorrências por tipo" chartKey="csOcorrencias">
       <div className="cs-sinistros">
@@ -20,6 +21,7 @@ export default function QualidadeConta({ dados }: { dados: OperacaoCliente }) {
         <div><span>Avarias</span><strong className="cs-valor">{dados.avarias === null ? '—' : formatarNumero(dados.avarias)}</strong></div>
         <div><span>Extravios</span><strong className="cs-valor">{dados.extravios === null ? '—' : formatarNumero(dados.extravios)}</strong></div>
       </div>
+      <p className="cs-nota">Cada minuta conta uma vez no total de avarias e extravios confirmados. A tabela mostra as baixas de entrega ou coleta, finalizações do transporte e aberturas de tratativa lançadas no período.</p>
       {dados.ocorrenciasPorTipo === null ? <p className="cs-aux">Ocorrências sem cobertura para o período.</p>
         : !dados.ocorrenciasPorTipo.length ? <p className="cs-aux">Nenhuma ocorrência no período.</p>
         : <div role="region" tabIndex={0} aria-label="Tipos de ocorrência" className="cs-lista-ocorrencias"><table>

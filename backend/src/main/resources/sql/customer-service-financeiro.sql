@@ -1,7 +1,7 @@
 WITH fretes AS (
     SELECT base.unique_id, base.cliente_cnpj, base.cnpj_parcela, base.documento_fatura, base.data_base_prazo,
            base.valor_faturado_rateado, base.valor_a_faturar, base.peso_acumulado, base.peso_atual, base.peso_total
-    %s AND base.cliente_cnpj IN (:documentos)
+    %s AND base.cliente_cnpj IN (%s)
 ), por_frete AS (
     SELECT f.unique_id, f.documento_fatura, f.data_base_prazo, f.valor_faturado_rateado, f.valor_a_faturar,
            COUNT_BIG(p.parcela_id) AS parcelas,

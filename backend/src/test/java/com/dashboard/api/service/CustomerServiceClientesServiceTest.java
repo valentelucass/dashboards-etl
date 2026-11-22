@@ -22,9 +22,9 @@ class CustomerServiceClientesServiceTest {
         var jdbc = new JdbcTemplate(fonte);
         jdbc.execute("CREATE SCHEMA acesso");
         jdbc.execute("CREATE TABLE acesso.customer_service_contas(id bigint primary key, nome varchar(200), ativa bit)");
-        jdbc.execute("CREATE TABLE acesso.customer_service_documentos(conta_id bigint, documento varchar(14) primary key)");
+        jdbc.execute("CREATE TABLE acesso.customer_service_documentos(conta_id bigint, documento varchar(14) primary key, ativo bit)");
         jdbc.update("INSERT INTO acesso.customer_service_contas VALUES (1,'Alfa',1),(2,'Alfa',1),(3,'Antiga',0),(4,'Sem documentos',1)");
-        jdbc.update("INSERT INTO acesso.customer_service_documentos VALUES (1,'00000000000101'),(1,'00000000000201'),(2,'00000000000301'),(3,'00000000000401')");
+        jdbc.update("INSERT INTO acesso.customer_service_documentos VALUES (1,'00000000000101',1),(1,'00000000000201',1),(2,'00000000000301',1),(3,'00000000000401',1),(1,'00000000000501',0),(4,'00000000000601',0)");
         when(escopo.escopoAtual()).thenReturn(EscopoFilialService.EscopoFilial.comAcessoTotal());
         clientes = new CustomerServiceClientesService(jdbc, escopo);
     }

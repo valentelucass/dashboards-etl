@@ -36,7 +36,6 @@ public class CustomerServiceOperacionalController {
         periodo.validar(dataInicio, dataFim);
         var cliente = clientes.exigirCliente(clienteId);
         var hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
-        return operacional.consultar(new FiltroConsultaDTO(dataInicio, dataFim, Map.of()), cliente,
-                dataFim.isBefore(hoje) ? dataFim : hoje);
+        return operacional.consultar(new FiltroConsultaDTO(dataInicio, dataFim, Map.of()), cliente, hoje);
     }
 }

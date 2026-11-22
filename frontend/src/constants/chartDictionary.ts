@@ -64,14 +64,14 @@ export const chartDictionary = {
     tabelasOrigem: 'Fretes da Performance e relatório de comprovantes do ESL.',
     cruzamentos: 'A minuta identifica o frete nas duas fontes.',
     calculoTecnico: 'Minutas com anexo ou com número de arquivamento divididas pelas minutas finalizadas.',
-    calculoNegocio: 'O número de arquivamento comprova que o frete foi arquivado. Cada minuta conta uma única vez em cada indicador.',
+    calculoNegocio: 'Mostra a situação atual, inclusive anexos e arquivamentos posteriores ao período. Cada minuta com número de arquivamento conta uma vez como arquivada.',
     agrupamento: 'Cliente selecionado e período da previsão de entrega.',
   },
   csOcorrencias: {
     descricao: 'Avarias, extravios e distribuição dos registros de ocorrência.',
     tabelasOrigem: 'Relatório de ocorrências do ESL e fretes.', cruzamentos: 'Vínculo dos registros de ocorrência às minutas da conta.',
-    calculoTecnico: 'Os destaques contam minutas distintas com registro explícito de avaria ou extravio, parcial ou total. Uma minuta com os dois motivos conta uma vez no total combinado.',
-    calculoNegocio: 'O detalhamento mostra o número de registros de cada tipo, inclusive eventos operacionais como saída e entrega.', agrupamento: 'Tipo e data da ocorrência.',
+    calculoTecnico: 'Os destaques contam minutas com confirmação específica de avaria ou extravio da carga. Uma minuta com os dois motivos conta uma vez no total combinado. O código 138, isoladamente, registra a finalização sem identificar a causa.',
+    calculoNegocio: 'O detalhamento conta os registros de baixa de entrega ou coleta, finalização do transporte e abertura de tratativa, pela data do lançamento.', agrupamento: 'Tipo e data do lançamento da ocorrência.',
   },
   csFaturamento: {
     ...faturasClienteBase, descricao: 'Quanto já foi faturado e quanto falta faturar.',

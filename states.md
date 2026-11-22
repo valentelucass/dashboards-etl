@@ -14,11 +14,11 @@ As duas tabelas abrem o “Ver mais” no mesmo modelo de ficha. No desktop o mo
 
 O controle de expansão usa um ícone de painel lateral. Com o menu aberto, o ícone e o texto “Recolher menu” ficam alinhados à esquerda. As setas verticais indicam a rolagem da lista.
 
-## 21/11/2026 — Customer Service
+## 22/11/2026 — Customer Service
 
-A página `/customer-service` exige uma única conta ativa. O cadastro associa CNPJs completos à conta e começa vazio até a entrega da lista de Key Accounts. O cliente e o botão de apresentação ficam no cabeçalho. Os três slides mostram entregas e coletas, comprovantes e ocorrências, e financeiro.
+A página `/customer-service` exige a seleção de uma conta ativa. A carteira mensal associa cada CNPJ completo a um único grupo. O administrador da plataforma ou desenvolvedor com acesso à tela importa a lista completa em Excel e confere as inclusões, saídas e transferências antes de aplicar. Um CNPJ ausente deixa de compor o grupo, e um grupo sem CNPJs ativos sai do seletor. A primeira carteira de novembro reúne 55 CNPJs em duas contas. O cliente e o botão de apresentação ficam no cabeçalho. Os três slides mostram entregas e coletas, comprovantes e ocorrências, e financeiro.
 
-As entregas seguem a previsão e a regra de OTIF da Performance. As coletas seguem a solicitação. O arquivamento exige número de arquivamento até a data de corte. As ocorrências seguem a data do registro e avarias e extravios contam minutas distintas. O financeiro segue a emissão do CT-e ou a data do serviço para fretes a faturar sem CT-e, considerando a liquidação bancária até o corte. O painel lê as publicações 061 e 062 do ETL.
+O pagador define a conta nas entregas e no financeiro. As entregas seguem a previsão e a regra de OTIF da Performance. As coletas seguem o cliente da solicitação. Para as entregas finalizadas no período, o painel mostra a situação atual dos comprovantes, inclusive os arquivados depois do fim do período. As ocorrências seguem a data do lançamento e entram quando a ação do ESL dá baixa na entrega ou coleta, finaliza o transporte ou abre uma tratativa. Avarias e extravios confirmados contam minutas distintas. O código 138 finaliza o transporte e só permite atribuir a causa quando a minuta tem um registro específico. O financeiro segue a emissão do CT-e ou a data do serviço para fretes a faturar sem CT-e, considerando a liquidação bancária até o corte. O painel lê as publicações 061 e 062 do ETL.
 
 ## 21/11/2026 — Prévia da Rede Credenciada
 

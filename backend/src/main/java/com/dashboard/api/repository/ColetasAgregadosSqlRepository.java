@@ -127,15 +127,15 @@ public class ColetasAgregadosSqlRepository {
                 rs.getString("parceiro"), rs.getLong("finalizadas"), rs.getLong("no_prazo")));
     }
 
-    public Coletas desempenhoDoCliente(FiltroConsultaDTO filtro, List<String> documentos) {
+    public Coletas desempenhoDoCliente(FiltroConsultaDTO filtro, String documentos) {
         var fonte = source(filtro);
         var params = copiarParams(fonte).addValue("documentos", documentos);
         return jdbcTemplate.queryForObject(baseDeduplicadaSql(fonte) + """
                 SELECT COUNT_BIG(*) finalizadas,
                        COUNT_BIG(CASE WHEN [Finalizacao] <= [Agendamento] THEN 1 END) no_prazo
                 FROM base_metricas
-                WHERE [Cliente Doc] IN (:documentos) AND status_normalizado IN (N'finalizada', N'coletada')
-                """, params, (rs, row) -> new Coletas(rs.getLong("finalizadas"), rs.getLong("no_prazo")));
+                WHERE [Cliente Doc] IN (%s) AND status_normalizado IN (N'finalizada', N'coletada')
+                """.formatted(CustomerServiceDocumentos.SELECAO), params, (rs, row) -> new Coletas(rs.getLong("finalizadas"), rs.getLong("no_prazo")));
     }
 
     public List<ColetasTrendPointDTO> buscarSerieTemporal(FiltroConsultaDTO filtro) {

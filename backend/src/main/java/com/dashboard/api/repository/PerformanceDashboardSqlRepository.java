@@ -501,7 +501,7 @@ public class PerformanceDashboardSqlRepository {
     record ConsultaEntregas(String sql, MapSqlParameterSource params) {}
 
     ConsultaEntregas entregasDoCliente(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo,
-            List<String> documentos) {
+            String documentos) {
         QueryContext ctx = criarContexto(filtro, escopo);
         ctx.params().addValue("documentos", documentos);
         String sql = baseCte(ctx.colunas(), false, true) + """
@@ -1308,7 +1308,7 @@ public class PerformanceDashboardSqlRepository {
                         OR (([Tipo Frete] IS NULL OR [Tipo Frete] <> N'Redelivery' OR [CT-e Emissão] IS NULL)
                           AND [Previsão de Entrega] >= :dataInicio AND [Previsão de Entrega] < :dataFim)
                         """,
-                porCliente ? "AND base_raw.[Pagador Doc] IN (:documentos)" : "",
+                porCliente ? "AND base_raw.[Pagador Doc] IN (" + CustomerServiceDocumentos.SELECAO + ")" : "",
                 porCliente ? "peso_real_kg, valor_total_servico, valor_nota_fiscal AS valor_nf_cliente," : ""
         );
     }
