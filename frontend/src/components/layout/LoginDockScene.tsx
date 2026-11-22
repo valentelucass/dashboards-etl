@@ -113,16 +113,24 @@ export default memo(function LoginDockScene() {
       {[17,56].map(x => { const [cx,cy] = project(x,132,16);return <circle key={x} cx={cx} cy={cy} r="2.2" fill="#fff4c1" />; })}
     </Vehicle>
     {/* The forklift and gatehouse are on the near side of the truck lane. */}
-    <Vehicle kind="forklift" bounds={[420, 244, 74, 64]}>
-      <Box x={149} y={-29} width={26} depth={15} height={10} colors={['#f4c27f','#d5a05e','#a8794d']} />
-      <Box x={152} y={-28} z={10} width={13} depth={13} height={11} colors={['#84989b','#3a505a','#455f68']} />
-      <Box x={150} y={-30} z={21} width={19} depth={17} height={2} colors={['#e9b77d','#bc8e60','#ac8058']} />
-      <Box x={147} y={-28} width={2} depth={12} height={24} colors={['#526871','#324752','#384e58']} />
+    <Vehicle kind="forklift" bounds={[418, 240, 95, 76]}>
+      {/* Paint the load behind the mast. Its pallet rests on both tines at every lift height. */}
       <g className="login-dock-forks">
-        {[-26,-19].map(y => <Box key={y} x={132} y={y} z={2} width={16} depth={2} height={2} colors={['#8ca0a0','#647777','#50666e']} />)}
-        <Box x={132} y={-29} z={4} width={14} depth={14} height={12} colors={['#e0bc91','#ae8b6b','#bf9c7a']} />
+        {[-27, -17].map(y => <Box key={y} x={132} y={y} z={2} width={34} depth={2} height={2}
+          colors={['#b3c1ca', '#7f909a', '#6b7c86']} />)}
+        <Box x={135} y={-29} z={4} width={15} depth={16} height={2} colors={['#b89569', '#866947', '#987750']} />
+        <Box x={136} y={-28} z={6} width={12} depth={13} height={12} colors={['#e0bc91', '#ae8b6b', '#bf9c7a']} />
+        <polygon fill="#ebd4ae" points={[point(141,-28,18),point(143,-28,18),point(143,-15,18),point(141,-15,18)].join(' ')} />
       </g>
-      {[153,171].map(x => {const [cx,cy]=project(x,-13,3);return <circle key={x} cx={cx} cy={cy} r="3.3" fill="#253741" />;})}
+      <Box x={165} y={-29} width={3} depth={16} height={29} colors={['#879aa4', '#455660', '#364650']} />
+      <Box x={168} y={-29} z={4} width={28} depth={16} height={9} colors={['#efb66b', '#c38b4b', '#b87c40']} />
+      <Box x={186} y={-29} z={13} width={10} depth={16} height={4} colors={['#f1bc74', '#bf8647', '#aa713b']} />
+      {[[-28, 170], [-28, 183], [-15, 170], [-15, 183]].map(([y,x]) =>
+        <Box key={`${x}-${y}`} x={x} y={y} z={13} width={2} depth={2} height={13} colors={['#84949f', '#455660', '#334550']} />)}
+      <Box x={169} y={-30} z={26} width={18} depth={18} height={2} colors={['#687b88', '#435660', '#354650']} />
+      {[172, 191].map(x => { const [cx,cy]=project(x,-13,4); return <g key={x}>
+        <circle cx={cx} cy={cy} r="4" fill="#23343e" /><circle cx={cx} cy={cy} r="1.5" fill="#81919c" />
+      </g>; })}
     </Vehicle>
     <svg className="login-dock-layer" viewBox={viewBox} focusable="false">
     <Box x={97} y={144} width={24} depth={19} height={21} colors={['#adc2b7','#78918d','#638089']} />
