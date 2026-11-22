@@ -26,7 +26,7 @@ function RelatorioConta({ conta, seletor, pendencia, administracao }: { conta?: 
     placeholderData: undefined, retry: false });
   const fin = useQuery({ queryKey: [...chave, 'financeiro'], queryFn: consulta ? ({signal}) => buscarFinanceiroCS(consulta, signal) : skipToken,
     placeholderData: undefined, retry: false });
-  const slides = op.data && fin.data ? [
+  const slides = op.isSuccess && fin.isSuccess && !op.isFetching && !fin.isFetching ? [
     { titulo: 'Entregas e coletas', conteudo: <OperacaoConta dados={op.data} inicio={dataInicio} fim={dataFim} /> },
     { titulo: 'Comprovantes e ocorrências', conteudo: <QualidadeConta dados={op.data} /> },
     { titulo: 'Financeiro', conteudo: <FinanceiroConta dados={fin.data} /> },

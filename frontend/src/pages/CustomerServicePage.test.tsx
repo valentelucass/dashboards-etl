@@ -52,10 +52,10 @@ function PainelComCabecalho() {
   </FilterHeaderContext.Provider>;
 }
 
-function abrir(query = '') {
+function abrir(query = '', client = new QueryClient()) {
   const url = '/customer-service?dataInicio=' + periodo.dataInicio + '&dataFim=' + periodo.dataFim + query;
   return render(<MemoryRouter initialEntries={[url]} future={{v7_startTransition: true, v7_relativeSplatPath: true}}>
-    <QueryClientProvider client={new QueryClient()}><FiltroProvider><PageHeaderProvider>
+    <QueryClientProvider client={client}><FiltroProvider><PageHeaderProvider>
       <PainelComCabecalho />
     </PageHeaderProvider></FiltroProvider></QueryClientProvider>
   </MemoryRouter>);
@@ -102,6 +102,23 @@ it('mostra uma falha e repete só a consulta que faltou antes de liberar o relat
   expect(screen.getByText('OTIF de entrega')).toBeTruthy();
   expect(api.buscarFinanceiroCS).toHaveBeenCalledTimes(2);
   expect(api.buscarOperacaoCS).toHaveBeenCalledOnce();
+});
+
+it('aguarda as duas atualizações quando a conta já tem dados antigos em cache', async () => {
+  const client = new QueryClient();
+  const chave = ['customer-service', 2, periodo.dataInicio, periodo.dataFim];
+  client.setQueryData([...chave, 'operacional'], operacao);
+  client.setQueryData([...chave, 'financeiro'], financeiro);
+  let atualizarFinanceiro!: (valor: api.FinanceiroCliente) => void;
+  vi.mocked(api.buscarFinanceiroCS).mockImplementation(() => new Promise(resolve => { atualizarFinanceiro = resolve; }));
+  abrir('&f.clienteCS=2', client);
+  await waitFor(() => expect(api.buscarFinanceiroCS).toHaveBeenCalledOnce());
+  expect(screen.getByRole('status', {name: 'Carregando relatório do cliente'})).toBeTruthy();
+  expect(screen.queryByText('Faturado')).toBeNull();
+  expect(screen.queryByText('OTIF de entrega')).toBeNull();
+  await act(async () => atualizarFinanceiro({...financeiro, pago: 222}));
+  await screen.findByText(/222,00/);
+  expect(screen.getByText('OTIF de entrega')).toBeTruthy();
 });
 
 it('distingue cadastro pendente de falha na consulta e permite tentar novamente', async () => {
