@@ -1,6 +1,15 @@
 import type { EChartsOption } from 'echarts';
+import type { ReactNode } from 'react';
+import { Card } from '@astryxdesign/core/Card';
 import { readDashboardChart } from '../charts/dashboardChartData';
 import { Skeleton } from '@astryxdesign/core/Skeleton';
+
+export function ChartPlaceholder({ className = '', round = false, children }: { className?: string; round?: boolean; children?: ReactNode }) {
+  return <Card padding={4} className={'min-w-0 ' + className}>
+    <div className="mb-3 border-b border-[var(--color-border)] pb-3"><Skeleton width="43%" height={20} /></div>
+    {children ?? <div className="h-[350px]"><ChartLoading round={round} /></div>}
+  </Card>;
+}
 
 export function MetricLoading({ bar = false }: { bar?: boolean }) {
   return <div className="grid min-w-0 content-center gap-2" aria-hidden="true">

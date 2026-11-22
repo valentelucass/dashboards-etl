@@ -61,13 +61,47 @@ function abrir(query = '') {
   </MemoryRouter>);
 }
 
-it.each(['', '&f.clienteCS=999', '&f.clienteCS=1&f.clienteCS=2'])('exige uma única conta cadastrada (%s)', async query => {
+it.each(['&f.clienteCS=999', '&f.clienteCS=1&f.clienteCS=2'])('não exibe outra conta para um link inválido (%s)', async query => {
   abrir(query);
   expect(await screen.findByText('Selecione um cliente para consultar os indicadores.')).toBeTruthy();
   expect(api.buscarOperacaoCS).not.toHaveBeenCalled();
   expect(api.buscarFinanceiroCS).not.toHaveBeenCalled();
   expect(screen.queryByText('Faturado')).toBeNull();
   expect(screen.queryByRole('button', {name: 'Importar carteira Key Account'})).toBeNull();
+});
+
+it('abre com a primeira conta e mantém o skeleton até ter a carteira e as duas fontes', async () => {
+  let receberContas!: (valor: api.ContaCustomerService[]) => void;
+  let receberFinanceiro!: (valor: api.FinanceiroCliente) => void;
+  vi.mocked(api.buscarContasCS).mockImplementation(() => new Promise(resolve => { receberContas = resolve; }));
+  vi.mocked(api.buscarFinanceiroCS).mockImplementation(() => new Promise(resolve => { receberFinanceiro = resolve; }));
+  abrir();
+  const carregamento = () => screen.queryByRole('status', {name: 'Carregando relatório do cliente'});
+  expect(carregamento()).toBeTruthy();
+  expect(api.buscarOperacaoCS).not.toHaveBeenCalled();
+  await act(async () => receberContas(clientes));
+  await waitFor(() => expect(api.buscarOperacaoCS).toHaveBeenCalledWith({...periodo, clienteId: 1}, expect.any(AbortSignal)));
+  expect(screen.getByRole('combobox', {name: /Cliente Key Account/}).textContent).toContain('Conta Norte');
+  expect(carregamento()).toBeTruthy();
+  expect(screen.queryByText('OTIF de entrega')).toBeNull();
+  expect((screen.getByRole('button', {name: 'Apresentar cliente'}) as HTMLButtonElement).disabled).toBe(true);
+  await act(async () => receberFinanceiro(financeiro));
+  await screen.findByText('Faturado');
+  expect(carregamento()).toBeNull();
+  expect(screen.getByText('OTIF de entrega')).toBeTruthy();
+});
+
+it('mostra uma falha e repete só a consulta que faltou antes de liberar o relatório', async () => {
+  vi.mocked(api.buscarFinanceiroCS).mockRejectedValueOnce(new Error()).mockResolvedValue(financeiro);
+  abrir();
+  const alerta = await screen.findByRole('alert');
+  expect(alerta.textContent).toContain('Conta Norte');
+  expect(screen.queryByText('OTIF de entrega')).toBeNull();
+  fireEvent.click(within(alerta).getByRole('button', {name: 'Tentar novamente'}));
+  await screen.findByText('Faturado');
+  expect(screen.getByText('OTIF de entrega')).toBeTruthy();
+  expect(api.buscarFinanceiroCS).toHaveBeenCalledTimes(2);
+  expect(api.buscarOperacaoCS).toHaveBeenCalledOnce();
 });
 
 it('distingue cadastro pendente de falha na consulta e permite tentar novamente', async () => {
@@ -106,11 +140,13 @@ it('ao trocar de conta retira os números anteriores e ignora uma resposta finan
     ? new Promise(resolve => { terminarOperacao = resolve; })
     : Promise.resolve(operacao));
   abrir('&f.clienteCS=1');
-  await screen.findByText('90,00%');
+  await waitFor(() => expect(api.buscarFinanceiroCS).toHaveBeenCalledWith({...periodo, clienteId: 1}, expect.any(AbortSignal)));
+  expect(screen.queryByText('90,00%')).toBeNull();
   fireEvent.click(screen.getByRole('combobox', {name: /Cliente Key Account/}));
   fireEvent.click(await screen.findByRole('option', {name: /Conta Sul/}));
-  await screen.findByText(/888,00/);
-  expect(screen.queryByText('90,00%')).toBeNull();
+  await waitFor(() => expect(api.buscarOperacaoCS).toHaveBeenCalledWith({...periodo, clienteId: 2}, expect.any(AbortSignal)));
+  expect(screen.getByRole('status', {name: 'Carregando relatório do cliente'})).toBeTruthy();
+  expect(screen.queryByText(/888,00/)).toBeNull();
   expect(vi.mocked(api.buscarFinanceiroCS).mock.calls[0][1]?.aborted).toBe(true);
   await act(async () => {
     terminarFinanceiro(financeiro);
@@ -118,6 +154,16 @@ it('ao trocar de conta retira os números anteriores e ignora uma resposta finan
   });
   expect(await screen.findByText('50,00%')).toBeTruthy();
   expect(screen.getByText('Pago').parentElement?.textContent).toContain('888,00');
+});
+
+it('explica a falta de cobertura das ocorrências depois que as duas fontes terminam', async () => {
+  vi.mocked(api.buscarOperacaoCS).mockResolvedValue({...operacao, avarias:null, extravios:null, fretesComAvariaOuExtravio:null, ocorrenciasPorTipo:null});
+  abrir();
+  await screen.findByText('Faturado');
+  expect(screen.getByText(/A base de ocorrências ainda não cobre todos os dias/)).toBeTruthy();
+  expect(screen.queryByText('Nenhuma ocorrência no período.')).toBeNull();
+  expect(screen.queryByText('Fretes com avaria ou extravio')).toBeNull();
+  expect(screen.queryByRole('status', {name: 'Carregando relatório do cliente'})).toBeNull();
 });
 
 it('apresenta os três assuntos identificando sempre o cliente e o período', async () => {
@@ -182,9 +228,10 @@ it('um administrador confere o impacto, confirma as saídas e recarrega a lista 
   await dialogo.findByText(/Carteira de 11\/2026 confirmada/);
   expect(api.aplicarCarteiraCS).toHaveBeenCalledWith(arquivo, previa);
   expect(api.buscarContasCS).toHaveBeenCalledTimes(2);
-  expect(screen.queryByText('Faturado')).toBeNull();
   fireEvent.click(dialogo.getByRole('button', {name:'Fechar'}));
-  expect(await screen.findByText('Selecione um cliente para consultar os indicadores.')).toBeTruthy();
+  await waitFor(() => expect(screen.getByRole('combobox', {name:/Cliente Key Account/}).textContent).toContain('Conta Sul'));
+  await screen.findByText('Faturado');
+  expect(api.buscarFinanceiroCS).toHaveBeenLastCalledWith({...periodo, clienteId: 2}, expect.any(AbortSignal));
   await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', {name:'Importar carteira Key Account'})));
 });
 

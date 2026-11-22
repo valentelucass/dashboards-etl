@@ -2,8 +2,8 @@ import { Card } from '@astryxdesign/core/Card';
 import { Skeleton } from '@astryxdesign/core/Skeleton';
 import { useLocation } from 'react-router-dom';
 import DashboardLoading, { LoadingKpiGrid } from '../shared/DashboardLoading';
-import type { ReactNode } from 'react';
-import ChartLoading, { MetricLoading, StatusBarsLoading } from '../shared/ChartLoading';
+import ChartLoading, { ChartPlaceholder, MetricLoading, StatusBarsLoading } from '../shared/ChartLoading';
+import CarregamentoConta from '../domain/customerService/CarregamentoConta';
 import { LoadingTableRows } from '../shared/TableLoading';
 import NoticeListLoading from '../home/NoticeListLoading';
 import { kpiLoadingLayouts } from '../shared/dashboardKpiLayouts';
@@ -22,13 +22,6 @@ const dashboards: Record<string, DashboardProfile | undefined> = {
   '/performance': 'performance', '/executivo': 'executivo', '/etl-saude': 'etl',
   '/indicadores-gestao-a-vista': 'gestao', '/painel/integracoes': 'integracoes',
 };
-
-function ChartPlaceholder({ className = '', round = false, children }: { className?: string; round?: boolean; children?: ReactNode }) {
-  return <Card padding={4} className={'min-w-0 ' + className}>
-    <div className="mb-3 border-b border-[var(--color-border)] pb-3"><Skeleton width="43%" height={20} /></div>
-    {children ?? <div className="h-[350px]"><ChartLoading round={round} /></div>}
-  </Card>;
-}
 
 function PreviewCharts({ profile }: { profile: DashboardProfile }) {
   switch (profile) {
@@ -90,6 +83,7 @@ function Fields({ count, className = '' }: { count: number; className?: string }
 }
 
 function PagePreview({ path }: { path: string }) {
+  if (path === '/customer-service') return <div className="cs-conteudo"><CarregamentoConta /></div>;
   const profile = dashboards[path];
   if (profile) return <DashboardPreview profile={profile} />;
   if (path === '/') return <div className="home-page">
