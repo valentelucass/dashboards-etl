@@ -88,7 +88,7 @@ export default memo(function LoginDockScene() {
     <Bay x={-95} number="03" /><Bay x={2} number="04" /><Bay x={109} number="05" />
     <Box x={-115} y={-131} z={99} width={355} depth={76} height={5} colors={['var(--dock-roof)','var(--dock-siding)','var(--dock-steel)']} />
     {[108,142].map(x => <Box key={x} x={x} y={-113} z={104} width={23} depth={13} height={7} colors={['#90a7a5','#829998','#687f84']} />)}
-    {[-100, 2, 106, 214].map(x => <Box key={x} x={x} y={-46} width={4} depth={4} height={17} colors={['#f6dfa3','#d6b575','#ae9466']} />)}
+    {[-100, 2, 214].map(x => <Box key={x} x={x} y={-46} width={4} depth={4} height={17} colors={['#f6dfa3','#d6b575','#ae9466']} />)}
     {[[-109,112],[244,73]].map(([x,y])=>{const [cx,cy]=project(x,y);return <g key={x}>
       <ellipse cx={cx} cy={cy} rx="12" ry="4" fill="#344954" />
       <path d={`M${cx} ${cy}v-34l7 -3`} fill="none" stroke="#81989b" strokeWidth="2" />
