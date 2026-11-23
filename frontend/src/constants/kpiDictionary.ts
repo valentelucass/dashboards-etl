@@ -59,7 +59,7 @@ const filtrosLocalizacao =
   'O período usa a data do frete. Filial atual, status e número da minuta restringem a consulta. No Armazém reúne No Galpão, Pendente e cargas sem status.';
 
 const baseGestaoPerformance =
-  'Usa as mesmas minutas e a mesma previsão de entrega da tela Performance. Reentregas com CT-e têm prazo de dois dias úteis. Fretes complementares e de substituição ficam fora da contagem.';
+  'A filial base corresponde ao responsável pela região de destino na tela Performance. As duas telas usam as mesmas minutas e a mesma previsão de entrega. Reentregas com CT-e têm prazo de dois dias úteis. Fretes complementares e de substituição ficam fora da contagem.';
 
 const baseGestaoCubagem =
   'Considera minutas válidas, não canceladas, com valor operacional e fora das exceções oficiais ativas de pagadores sem cubagem em dbo.cliente_excecao_cubagem, além do flag legado de exclusão publicado na fato. Cada minuta aparece uma única vez.';

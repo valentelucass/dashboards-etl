@@ -523,7 +523,7 @@ export const chartDictionary = {
 
   gestaoPerformanceRanking: {
     tabelasOrigem: 'dbo.vw_fretes_powerbi, dbo.dim_calendario',
-    cruzamentos: 'A mesma seleção de minutas da tela Performance aplica o calendário de dias úteis às reentregas.',
+    cruzamentos: 'A filial base seleciona as minutas pelo responsável pela região de destino, como no filtro Responsáveis da tela Performance. As reentregas seguem o calendário de dias úteis.',
     descricao: 'Ranqueia a performance de entrega no prazo por responsável, região ou cidade conforme o nível de drill-down selecionado na gestão à vista.',
     calculoTecnico:
       '100 × SUM(is_no_prazo) / SUM(is_finalizada), com duas casas decimais. Mostra até 50 grupos por consulta.',

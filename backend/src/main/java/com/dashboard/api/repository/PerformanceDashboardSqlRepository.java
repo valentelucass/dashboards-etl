@@ -516,7 +516,8 @@ public class PerformanceDashboardSqlRepository {
     }
 
     ConsultaEntregas entregasDaGestao(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo) {
-        QueryContext ctx = criarContexto(filtro, escopo);
+        QueryContext ctx = criarContextoComum(filtro, escopo);
+        adicionarFiltroChave(ctx.whereBuilder(), ctx.params(), "filiais", "responsavel_key", filtro.valores("filiais"));
         String sql = ctx.baseCte() + """
                 , performance AS (
                     SELECT numero_minuta, data_frete, data_previsao_entrega AS previsao_entrega,
@@ -537,6 +538,12 @@ public class PerformanceDashboardSqlRepository {
     }
 
     private QueryContext criarContexto(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo) {
+        QueryContext ctx = criarContextoComum(filtro, escopo);
+        adicionarFiltroTexto(ctx.whereBuilder(), ctx.params(), "filiais", "filial_emissora", filtro.valores("filiais"));
+        return ctx;
+    }
+
+    private QueryContext criarContextoComum(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
         List<String> pagadores = valoresDistintos(filtro.valores("pagadores"));
         int pagadoresVazio = pagadores.isEmpty() ? 1 : 0;
@@ -550,7 +557,6 @@ public class PerformanceDashboardSqlRepository {
 
         aplicarEscopo(ctx, escopo);
         adicionarFiltroTexto(ctx.whereBuilder(), ctx.params(), "status", "status_norm", filtro.valores("status"));
-        adicionarFiltroTexto(ctx.whereBuilder(), ctx.params(), "filiais", "filial_emissora", filtro.valores("filiais"));
         adicionarFiltroChave(ctx.whereBuilder(), ctx.params(), "responsaveis", "responsavel_key", filtro.valores("responsaveis"));
         adicionarFiltroTexto(ctx.whereBuilder(), ctx.params(), "regioesDestino", "regiao_destino", filtro.valores("regioesDestino"));
         adicionarFiltroTexto(ctx.whereBuilder(), ctx.params(), "cidadesDestino", "cidade_destino", filtro.valores("cidadesDestino"));

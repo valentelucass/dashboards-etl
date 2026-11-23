@@ -1,3 +1,7 @@
+## 23/11/2026 — Filial responsável na Performance da Gestão à Vista
+
+No cartão, no ranking, no detalhe e na exportação da Performance da Gestão à Vista, a filial base corresponde ao responsável pela região de destino. A seleção de várias filiais e as permissões de acesso usam a mesma chave do filtro Responsáveis da tela Performance. O percentual divide as entregas no prazo pelas finalizadas no período de previsão selecionado.
+
 ## 23/11/2026 — Cobertura da Rede Credenciada e do Customer Service
 
 Na Rede Credenciada, os cinco indicadores operacionais ocupam a primeira linha e os quatro financeiros ocupam a segunda em telas largas. Em espaços menores, as colunas se adaptam à largura disponível. A abertura da rota e o carregamento dos dados usam a mesma prévia dos nove cartões, gráficos e tabelas. Os indicadores dos filtros selecionados aparecem juntos quando as consultas terminam.

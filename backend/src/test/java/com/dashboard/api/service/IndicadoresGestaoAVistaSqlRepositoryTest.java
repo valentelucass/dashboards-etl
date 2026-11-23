@@ -48,6 +48,8 @@ class IndicadoresGestaoAVistaSqlRepositoryTest {
 
         assertThat(performanceSql)
                 .contains("FROM dbo.vw_fretes_powerbi", "WHERE rn = 1", "NULLIF(SUM(is_finalizada), 0)")
+                .contains("AND responsavel_key IN (:filiais)")
+                .doesNotContain("LOWER(filial_emissora) IN (:filiais)")
                 .contains("SUM(CAST(is_no_prazo AS BIGINT))", "OFFSET 0 ROWS FETCH NEXT :limitePerformanceDrilldown")
                 .doesNotContain("dbo.fato_gestao_vista_fretes");
 
@@ -104,6 +106,22 @@ class IndicadoresGestaoAVistaSqlRepositoryTest {
                 .doesNotContain("AND YEAR(")
                 .doesNotContain("WHERE MONTH(")
                 .doesNotContain("AND MONTH(");
+    }
+
+    @Test
+    void filialBaseDaPerformanceTambemRespeitaAsFiliaisPermitidasAoUsuario() {
+        var jdbc = new CapturandoNamedParameterJdbcTemplate();
+        var repository = new IndicadoresGestaoAVistaSqlRepository(jdbc, PeriodoOffsetDateTimeHelper.padrao(),
+                new PerformanceDashboardSqlRepository(jdbc, new ValidadorPeriodoService(), null));
+        var filtro = new FiltroConsultaDTO(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 23),
+                Map.of("filiais", List.of("CPQ", "AGU")));
+        var escopo = new EscopoFilialService.EscopoFilial(false, List.of("CPQ"));
+        repository.buscarPerformanceEntregaSerie(filtro, escopo);
+        repository.buscarPerformanceEntregaExportacao(filtro, escopo);
+        repository.contarPerformanceEntregaLinhas(filtro, escopo);
+        assertThat(jdbc.sqls).hasSize(3).allSatisfy(sql -> assertThat(sql)
+                .contains("AND responsavel_key IN (:escopoFiliais)", "AND responsavel_key IN (:filiais)")
+                .doesNotContain("LOWER(filial_emissora) IN (:filiais)"));
     }
 
     @Test
