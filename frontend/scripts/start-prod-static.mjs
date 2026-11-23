@@ -13,6 +13,7 @@ const host = process.env.FRONTEND_HOST || '127.0.0.1';
 const port = Number(process.env.FRONTEND_PORT || 5173);
 const buildInfo = validateStaticBuild();
 const buildId = buildInfo.buildId;
+const assetDirectories = publishedAssetDirectories();
 
 const blockedDevPaths = [
   /^\/@vite(?:\/|$)/,
@@ -102,6 +103,39 @@ function validateStaticBuild() {
   return readBuildInfo();
 }
 
+// As abas abertas continuam importando módulos da versão em que iniciaram.
+// Somente as distribuições ligadas pelo manifesto da versão ativa participam.
+function publishedAssetDirectories() {
+  const directories = new Map();
+  const releases = path.dirname(path.dirname(publicDir));
+  let id = buildId;
+  let dist = publicDir;
+  while (path.basename(dist) === 'frontend' && path.basename(path.dirname(dist)) === id && !directories.has(id)) {
+    try {
+      const info = JSON.parse(fs.readFileSync(path.join(dist, 'build-info.json'), 'utf8'));
+      if (info.buildId !== id) break;
+      directories.set(id, dist);
+      const manifest = JSON.parse(fs.readFileSync(path.join(path.dirname(dist), 'build-manifest.json'), 'utf8'));
+      if (manifest.buildId !== id || !/^\d{8}T\d{6}-[a-f0-9]{8}$/.test(manifest.previousBuild)) break;
+      id = manifest.previousBuild;
+      dist = path.join(releases, id, 'frontend');
+    } catch {
+      // A limpeza de uma distribuição antiga não impede a inicialização da atual.
+      break;
+    }
+  }
+  return directories;
+}
+
+function noStore(response) {
+  response.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  response.setHeader('CDN-Cache-Control', 'no-store');
+  response.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
+  response.setHeader('Surrogate-Control', 'no-store');
+  response.setHeader('Pragma', 'no-cache');
+  response.setHeader('Expires', '0');
+}
+
 function applySecurityHeaders(request, response) {
   const pathname = requestPath(request.url);
   response.setHeader('X-Content-Type-Options', 'nosniff');
@@ -117,12 +151,7 @@ function applySecurityHeaders(request, response) {
   if (pathname.startsWith('/assets/')) {
     response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   } else {
-    response.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    response.setHeader('CDN-Cache-Control', 'no-store');
-    response.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
-    response.setHeader('Surrogate-Control', 'no-store');
-    response.setHeader('Pragma', 'no-cache');
-    response.setHeader('Expires', '0');
+    noStore(response);
   }
 }
 
@@ -144,6 +173,21 @@ const server = http.createServer((request, response) => {
     return;
   }
 
+  if (pathname === '/assets' || pathname.startsWith('/assets/')) {
+    const version = /^\/assets\/[\w.-]+-(\d{8}T\d{6}-[a-f0-9]{8})-[\w-]+\.\w+$/.exec(pathname)?.[1];
+    return handler(request, response, {
+      public: assetDirectories.get(version) ?? publicDir,
+      directoryListing: false,
+      cleanUrls: false,
+    }, {
+      sendError(_file, res, _json, _root, _methods, _config, { statusCode }) {
+        noStore(res);
+        res.writeHead(statusCode, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Arquivo indisponível');
+      },
+    });
+  }
+
   return handler(request, response, {
     public: publicDir,
     directoryListing: false,
@@ -154,5 +198,5 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`[OK] Frontend estatico servido em http://${host}:${port} | build=${buildId}`);
+  console.log(`[OK] Frontend estatico servido em http://${host}:${server.address().port} | build=${buildId}`);
 });

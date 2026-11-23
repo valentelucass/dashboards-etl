@@ -1,3 +1,7 @@
+## 23/11/2026 — Acesso à Gestão à Vista após publicação
+
+O servidor estático atende os arquivos versionados das abas abertas a partir das distribuições anteriores indicadas no manifesto. Se um arquivo já saiu do disco, retorna 404 sem cache. Quando a importação falha e o painel confirma uma nova versão, a aba recarrega a mesma rota e seus filtros uma única vez. Nas demais falhas de exibição, o menu e a recarga manual permanecem disponíveis.
+
 ## 22/11/2026 — Login Doca 04
 
 O carregamento de `/login` usa o mesmo cenário, visor e cartão do formulário. Os campos e as ações aparecem como placeholders Astryx enquanto a sessão ou a página carrega.

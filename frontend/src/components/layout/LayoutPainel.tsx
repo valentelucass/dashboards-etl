@@ -1,5 +1,6 @@
 import { Link } from '@astryxdesign/core/Link';
 import DashboardRouteLoading from './DashboardRouteLoading';
+import DashboardPageBoundary from './DashboardPageBoundary';
 import DashboardSideNav from './DashboardSideNav';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { CalendarClock, Code2, Mail } from 'lucide-react';
@@ -121,11 +122,13 @@ export default function LayoutPainel() {
       <div className="dashboard-main-column flex min-w-0 flex-1 flex-col">
         <TopNav toolbarRef={setToolbar} panelRef={setPanel} />
         <main className="flex-1 w-full overflow-auto px-3 py-3 sm:px-5 sm:py-4">
-          <Suspense fallback={<DashboardRouteLoading />}>
-            <FilterHeaderContext.Provider value={filterHeader}>
-              <Outlet />
-            </FilterHeaderContext.Provider>
-          </Suspense>
+          <DashboardPageBoundary>
+            <Suspense fallback={<DashboardRouteLoading />}>
+              <FilterHeaderContext.Provider value={filterHeader}>
+                <Outlet />
+              </FilterHeaderContext.Provider>
+            </Suspense>
+          </DashboardPageBoundary>
         </main>
         <footer className="dashboard-footer mt-auto border-t" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
           <div className="dashboard-footer-content">
