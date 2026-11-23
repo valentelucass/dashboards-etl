@@ -26,21 +26,22 @@ public class RedeCredenciadaOperacionalRepository {
         String arquivo = coberturaCompleta ? "COUNT_BIG(a.minuta)" : "CAST(NULL AS bigint)";
         String documentos = coberturaCompleta ? """
                 LEFT JOIN dbo.rede_credenciada_arquivos a
-                    ON a.minuta = f.numero_minuta AND a.primeiro_arquivamento < :dataFim
+                    ON a.minuta = f.numero_minuta
                 """ : "";
         String porParceiro = "";
         if (parceiro != null && !parceiro.isBlank()) {
-            porParceiro = " AND f.responsavel_regiao_destino = :parceiro ";
+            porParceiro = " AND p.parceiro = :parceiro ";
             fonte.params().addValue("parceiro", parceiro.trim());
         }
         String sql = fonte.sql() + """
-                SELECT f.previsao_entrega dia, f.responsavel_regiao_destino parceiro, COUNT_BIG(*) finalizadas,
+                SELECT f.previsao_entrega dia, p.parceiro, COUNT_BIG(*) finalizadas,
                        SUM(f.comprovante_anexado) anexadas, %s arquivadas
                 FROM performance f
+                CROSS APPLY acesso.rede_executor_entrega(f.numero_minuta, f.manifesto_entrega, f.responsavel_regiao_destino, f.data_frete) p
                 %s
-                WHERE f.is_finalizada = 1 AND f.responsavel_regiao_destino LIKE N'%%| PARCEIRO%%'
+                WHERE f.is_finalizada = 1
                 %s
-                GROUP BY f.previsao_entrega, f.responsavel_regiao_destino
+                GROUP BY f.previsao_entrega, p.parceiro
                 ORDER BY dia, parceiro
                 """.formatted(arquivo, documentos, porParceiro);
         return jdbc.query(sql, fonte.params(), (rs, linha) -> new Entrega(rs.getDate("dia").toLocalDate(),

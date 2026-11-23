@@ -59,6 +59,7 @@ export function resumirRede(
   const porParceiro = new Map<string, ContadoresOperacionais>();
   const porTransportadora = new Map<string, ValoresConsolidacao>();
   const porDia = new Map<string, ValoresConsolidacao>();
+  const conferencia = new Map<string, ValoresConsolidacao>();
   const escolha = new Set(selecionados);
   function contadores(nome: string) {
     const item = porParceiro.get(nome) ?? contadoresOperacionais();
@@ -86,6 +87,12 @@ export function resumirRede(
   }
   for (const linha of custos?.linhas ?? []) {
     if (escolha.size && !escolha.has(linha.parceiro)) continue;
+    if (linha.conferencia) {
+      const grupo = conferencia.get(linha.conferencia) ?? valoresConsolidacao();
+      somarConsolidacao(grupo, linha);
+      conferencia.set(linha.conferencia, grupo);
+      continue;
+    }
     const transportadora = porTransportadora.get(linha.parceiro) ?? valoresConsolidacao();
     somarConsolidacao(transportadora, linha);
     porTransportadora.set(linha.parceiro, transportadora);
@@ -104,5 +111,5 @@ export function resumirRede(
   });
   const dias = [...porDia.entries()].sort(([a], [b]) => a.localeCompare(b))
     .map(([dia, valores]) => ({ dia, ...valoresFinanceiros(valores) }));
-  return { parceiros, dias, total, taxas: taxasOperacionais(total, arquivosCompletos) };
+  return { parceiros, dias, conferencia, total, taxas: taxasOperacionais(total, arquivosCompletos) };
 }

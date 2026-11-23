@@ -1,8 +1,12 @@
 WITH base AS (
-    SELECT c.*,
+    SELECT c.data_emissao, c.ordem, c.consolidacao, c.parceiro_id, c.situacao, c.filial_emissora,
+           c.minuta, c.cobrado, c.calculado, c.frete_rodogarcia, p.nome_fantasia AS parceiro,
+           CASE WHEN c.situacao = N'Bloqueada' THEN N'Bloqueada'
+                WHEN c.calculado = 0 THEN N'Cálculo zerado' END AS conferencia,
            MIN(CASE WHEN /* acesso */ 1=1 THEN 1 ELSE 0 END)
                OVER (PARTITION BY c.consolidacao) AS permitida
     FROM dbo.dashboard_rede_credenciada_consolidacoes AS c
+    JOIN acesso.rede_parceiros p ON p.cnpj = c.parceiro_id COLLATE Latin1_General_100_BIN2
     WHERE c.data_emissao BETWEEN :dataInicio AND :dataFim
       AND c.consolidacao IS NOT NULL
 ), selecionadas AS (
@@ -16,12 +20,12 @@ WITH base AS (
            ROW_NUMBER() OVER (PARTITION BY s.consolidacao
                               ORDER BY s.data_emissao DESC, s.ordem) AS linha_consolidacao,
            MAX(s.tem_frete) OVER (PARTITION BY s.consolidacao) AS tem_vinculo,
-           ROW_NUMBER() OVER (PARTITION BY s.filial_emissora, s.minuta
+           ROW_NUMBER() OVER (PARTITION BY s.conferencia, s.filial_emissora, s.minuta
                               ORDER BY s.tem_frete DESC, s.data_emissao DESC,
                                        s.consolidacao DESC, s.ordem) AS linha_frete
     FROM selecionadas AS s
 )
-SELECT GROUPING(data_emissao) AS total, data_emissao, situacao, parceiro,
+SELECT GROUPING(data_emissao) AS total, data_emissao, situacao, parceiro, conferencia,
        COUNT_BIG(CASE WHEN linha_consolidacao = 1 THEN 1 END) AS consolidacoes,
        COALESCE(SUM(CASE WHEN linha_consolidacao = 1 THEN cobrado END), 0) * 100 AS cobrado_centavos,
        COALESCE(SUM(CASE WHEN linha_consolidacao = 1 THEN calculado END), 0) * 100 AS calculado_centavos,
@@ -34,5 +38,5 @@ SELECT GROUPING(data_emissao) AS total, data_emissao, situacao, parceiro,
        COALESCE(SUM(CASE WHEN linha_consolidacao = 1 AND tem_vinculo = 1 THEN cobrado END), 0) * 100 AS cobrado_vinculado_centavos,
        COUNT_BIG(CASE WHEN linha_consolidacao = 1 AND tem_vinculo = 0 THEN 1 END) AS sem_frete
 FROM numeradas
-GROUP BY GROUPING SETS ((data_emissao, situacao, parceiro), ())
+GROUP BY GROUPING SETS ((data_emissao, situacao, parceiro, conferencia), (conferencia))
 ORDER BY data_emissao, situacao, parceiro;

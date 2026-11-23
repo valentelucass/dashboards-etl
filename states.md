@@ -28,11 +28,11 @@ A página `/customer-service` exige a seleção de uma conta ativa. A carteira m
 
 O pagador define a conta nas entregas e no financeiro. As entregas seguem a previsão e a regra de OTIF da Performance. As coletas seguem o cliente da solicitação. Para as entregas finalizadas no período, o painel mostra a situação atual dos comprovantes, inclusive os arquivados depois do fim do período. As ocorrências seguem a data do lançamento e entram quando a ação do ESL dá baixa na entrega ou coleta, finaliza o transporte ou abre uma tratativa. Avarias e extravios confirmados contam minutas distintas. O código 138 finaliza o transporte e só permite atribuir a causa quando a minuta tem um registro específico. O financeiro segue a emissão do CT-e ou a data do serviço para fretes a faturar sem CT-e, considerando a liquidação bancária até o corte. O painel lê as publicações 061 e 062 do ETL.
 
-## 21/11/2026 — Prévia da Rede Credenciada
+## 23/11/2026 — Rede Credenciada
 
-A nova página reúne nove indicadores e tem permissão de acesso própria. A prévia usa as contagens de OTIF e EFD da tela de Performance por filial da ocorrência. A coleta usa a região de origem e os comprovantes, a região de destino. Cada minuta finalizada conta uma vez. O relatório de comprovantes do ESL identifica o arquivamento pelo número e pela data em que o arquivo foi criado.
+O departamento de parcerias mantém a carteira por CNPJ. A rotina `acesso.atualizar_rede_parceiros` recebe a lista completa em JSON com cnpj, razao, fantasia, ativo e aliases opcionais. Preserva empresas inativas e nomes anteriores para o histórico. As consolidações seguem a emissão e o CNPJ da transportadora. Bloqueadas e cálculos zerados aparecem em conferência. O percentual compara a cobrança vinculada ao frete bruto das mesmas minutas e soma cada frete uma vez.
 
-O comparativo financeiro usa a data de emissão da consolidação. A diferença corresponde ao valor cobrado menos o calculado. O filtro de situação afeta os indicadores financeiros. O percentual proposto compara as cobranças vinculadas ao frete bruto das mesmas minutas, com deduplicação. A lista de parceiros, a atribuição do serviço e as regras comerciais de fechamento, ônus e bônus aguardam validação.
+A coleta usa o agente confirmado pelo relatório do ESL ou, na ausência dele, o executor do manifesto de coleta. A entrega usa o manifesto de entrega. Sem manifesto de entrega e sem retirada pelo cliente (ocorrência 136), o executor é o parceiro da região de destino. A situação informada em cada lista vale para novos serviços desde o dia da atualização. Antes da primeira lista, a operação identificada no ESL sustenta o histórico. OTIF e EFD reutilizam os prazos e as datas de Performance. Comprovantes anexados e arquivados refletem a situação atual das entregas selecionadas.
 
 ## 21/11/2026 — Rodapé de Performance
 

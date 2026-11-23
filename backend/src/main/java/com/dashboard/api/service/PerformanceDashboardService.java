@@ -57,6 +57,10 @@ public class PerformanceDashboardService {
         return repository.eficienciaFiliais(filtro);
     }
 
+    public List<EficienciaFilial> eficienciaDaRede(FiltroConsultaDTO filtro) {
+        return repository.eficienciaFiliais(filtro, true);
+    }
+
     public List<PerformanceSerieTemporalPointDTO> buscarSerieTemporal(
             FiltroConsultaDTO filtro,
             String nivel,

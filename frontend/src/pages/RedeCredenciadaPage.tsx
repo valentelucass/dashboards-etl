@@ -104,7 +104,7 @@ export default function RedeCredenciadaPage() {
         <Indicador tipo="efd" valor={exibirTaxa(taxas.efd)} icone={<MapPin size={17} />}
           helperText={infoDesempenho || fracao(total.efdEficientes, total.efdTotal, 'etapas de destino')} />
         <Indicador tipo="coletas" valor={exibirTaxa(taxas.coleta)} icone={<Truck size={17} />}
-          helperText={infoOperacao || fracao(total.coletasNoPrazo, total.coletas, 'coletas finalizadas')} />
+          helperText={infoOperacao || (total.coletas ? fracao(total.coletasNoPrazo, total.coletas, 'coletas finalizadas') : 'Sem coletas com parceiro executor identificado')} />
         <Indicador tipo="anexados" valor={exibirTaxa(taxas.anexado)} icone={<FileCheck2 size={17} />}
           helperText={infoOperacao || fracao(total.anexadas, total.entregas, 'entregas finalizadas')} />
         <Indicador tipo="arquivados" valor={exibirTaxa(taxas.arquivado)} icone={<Archive size={17} />}
@@ -114,11 +114,21 @@ export default function RedeCredenciadaPage() {
         <Indicador tipo="cobrado" valor={exibirMoeda(valores.cobrado)} icone={<CircleDollarSign size={17} />}
           helperText={infoCustos || (financeiro?.semCobrado ? 'Existem cobranças sem valor informado' : `${formatarNumero(financeiro?.consolidacoes ?? 0)} consolidações`)} />
         <Indicador tipo="calculado" valor={exibirMoeda(valores.calculado)} icone={<Calculator size={17} />}
-          helperText={infoCustos || (financeiro?.semCalculado ? 'Existem cálculos sem valor informado' : `${formatarNumero(financeiro?.calculadoZero ?? 0)} consolidações com cálculo de R$ 0,00`)} />
+          helperText={infoCustos || (financeiro?.semCalculado ? 'Existem cálculos sem valor informado' : 'Consolidações incluídas na análise')} />
         <Indicador tipo="diferenca" valor={exibirMoeda(valores.diferenca)} icone={<Scale size={17} />}
           helperText={infoCustos || 'Cobrado menos calculado pelo sistema'} />
       </section>
-      <p className="rede-previa">Prévia para conferência. OTIF e EFD medem a filial que registrou a ocorrência. Coletas e comprovantes usam o responsável pela região. A participação compara a cobrança ao valor final dos fretes vinculados. Os critérios de bônus e ônus aguardam validação.</p>
+      {resumo.conferencia.size > 0 && <section className="rede-conferencia" aria-label="Consolidações em conferência">
+        <h2>Consolidações em conferência</h2>
+        <div className="rede-tabela"><table><thead><tr>
+          <th scope="col">Motivo</th><th scope="col">Consolidações</th><th scope="col">Cobrado</th><th scope="col">Calculado</th>
+        </tr></thead><tbody>
+          {[...resumo.conferencia.entries()].map(([motivo, grupo]) => <tr key={motivo}>
+            <th scope="row">{motivo}</th><td>{formatarNumero(grupo.consolidacoes)}</td>
+            <td>{exibirMoeda(valoresFinanceiros(grupo).cobrado)}</td><td>{exibirMoeda(valoresFinanceiros(grupo).calculado)}</td>
+          </tr>)}
+        </tbody></table></div>
+      </section>}
       <PaineisRede resumo={resumo} carregandoDesempenho={desempenho.isLoading}
         erroDesempenho={desempenho.isError ? infoDesempenho : undefined} carregandoCustos={custos.isLoading}
         erroCustos={custos.isLoading ? undefined : infoCustos || undefined}

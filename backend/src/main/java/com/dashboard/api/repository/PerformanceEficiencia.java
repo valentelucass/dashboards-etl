@@ -20,7 +20,9 @@ import java.util.TreeMap;
 /** Cada percurso é lido na ordem operacional. NFs da mesma passagem formam uma única medição. */
 final class PerformanceEficiencia {
     record Evento(int codigo, String nota, LocalDateTime hora, String filial, boolean entrega) {}
-    record Frete(boolean finalizado, boolean noPrazo, LocalDate finalizacao) {}
+    record Frete(boolean finalizado, boolean noPrazo, LocalDate finalizacao, String parceiro) {
+        Frete(boolean finalizado, boolean noPrazo, LocalDate finalizacao) { this(finalizado, noPrazo, finalizacao, null); }
+    }
     private enum Tipo { EFE, EFT, EFD }
     private record Visita(Tipo tipo, String origem, int numero) {}
     private record PassagemFiscal(String nota, String origem, int visitasNaFilial, Etapa etapa) {}
@@ -77,15 +79,18 @@ final class PerformanceEficiencia {
                 }
             });
         }
-        passagens.forEach((visita, etapa) -> medir(visita.tipo(), etapa, frete.finalizado()));
-        for (PassagemFisica visita : conciliarTransbordos(transbordos)) {
-            medir(Tipo.EFT, visita.etapa, frete.finalizado());
+        passagens.forEach((visita, etapa) -> {
+            if (frete.parceiro() == null || visita.tipo() == Tipo.EFD) medir(visita.tipo(), etapa, frete);
+        });
+        if (frete.parceiro() == null) {
+            for (PassagemFisica visita : conciliarTransbordos(transbordos)) medir(Tipo.EFT, visita.etapa, frete);
         }
         if (frete.finalizado()) {
             LocalDate data = entrega == null ? frete.finalizacao() : entrega.hora().toLocalDate();
             if (noPeriodo(data)) {
                 String filial = entrega != null && entrega.filial() != null ? entrega.filial()
                         : distribuicao == null ? null : distribuicao.filial();
+                if (frete.parceiro() != null) filial = frete.parceiro();
                 Filial totais = filial(filial);
                 if (filial == null) totais.semInformacao++;
                 else totais.otif.contar(frete.noPrazo());
@@ -232,13 +237,13 @@ final class PerformanceEficiencia {
         }
     }
 
-    private void medir(Tipo tipo, Etapa etapa, boolean finalizado) {
+    private void medir(Tipo tipo, Etapa etapa, Frete frete) {
         Evento fimConfirmado = etapa.notaSemSaida ? null : etapa.fim;
         Evento registro = fimConfirmado == null ? etapa.inicio : fimConfirmado;
         if (registro == null || !noPeriodo(registro.hora().toLocalDate())) return;
-        Filial filial = filial(registro.filial());
+        Filial filial = filial(frete.parceiro() != null ? frete.parceiro() : registro.filial());
         if (registro.filial() == null || etapa.notaSemInicio ||
-                (fimConfirmado == null && (finalizado || etapa.avancou)) ||
+                (fimConfirmado == null && (frete.finalizado() || etapa.avancou)) ||
                 registro.hora().isBefore(etapa.inicio.hora())) {
             filial.semInformacao++;
             return;

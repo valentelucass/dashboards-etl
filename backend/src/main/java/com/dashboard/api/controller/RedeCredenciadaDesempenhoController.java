@@ -5,7 +5,6 @@ import com.dashboard.api.dto.performance.PerformanceOperacionalDTO.EficienciaFil
 import com.dashboard.api.service.PerformanceDashboardService;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,8 +24,7 @@ public class RedeCredenciadaDesempenhoController {
 
     @GetMapping("/desempenho")
     public List<Desempenho> desempenho(@RequestParam LocalDate dataInicio, @RequestParam LocalDate dataFim) {
-        return performance.eficienciaFiliais(new FiltroConsultaDTO(dataInicio, dataFim, Map.of())).stream()
-                .filter(linha -> linha.filial().toLowerCase(Locale.ROOT).contains("| parceiro"))
+        return performance.eficienciaDaRede(new FiltroConsultaDTO(dataInicio, dataFim, Map.of())).stream()
                 .map(Desempenho::daFilial)
                 .toList();
     }

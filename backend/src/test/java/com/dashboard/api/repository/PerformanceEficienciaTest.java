@@ -22,6 +22,19 @@ class PerformanceEficienciaTest {
         return new PerformanceEficiencia.Evento(codigo, nf, LocalDateTime.parse(hora), filial, codigo == 1);
     }
 
+    @Test void redeCreditaEtapaEEntregaAoExecutorMesmoComBaixaRegistradaNaMatriz() {
+        var c = calculo("2026-11-01", "2026-11-19", "2026-11-19T18:00");
+        c.adicionar(new PerformanceEficiencia.Frete(true, true, LocalDate.of(2026,11,18), "Parceiro A"),
+                List.of(ev(101, "1", "2026-11-17T08:00", "Filial B"),
+                        ev(55, "1", "2026-11-18T07:00", "Filial B"),
+                        ev(1, "1", "2026-11-18T12:00", "Filial B")));
+        var resultado = c.resultados();
+        assertEquals(1, resultado.size());
+        assertEquals("Parceiro A", resultado.get(0).filial());
+        assertEquals(1, resultado.get(0).otifNoPrazo());
+        assertEquals(1, resultado.get(0).efdEficientes());
+    }
+
     @Test void reproduzDoisTransbordosEContaOtifSomenteNoDestino() {
         var c = calculo("2026-11-01", "2026-11-19", "2026-11-19T18:00");
         c.adicionar(FINALIZADO, List.of(

@@ -63,7 +63,7 @@ export default function PaineisRede({ resumo, carregandoDesempenho, erroDesempen
     </div>
     <ChartCard titulo="Indicadores por parceiro" chartKey="redeIndicadoresParceiro" isLoading={carregandoTabela} isEmpty={!resumo.parceiros.length}
       emptyMessage="Nenhum parceiro encontrado nas fontes disponíveis para este período.">
-      <p className="rede-legenda">OTIF e EFD seguem a data e a filial da ocorrência. Coletas entram pela data da solicitação e região de origem. Comprovantes usam a previsão de entrega e região de destino. Custos seguem a emissão da consolidação.</p>
+      <p className="rede-legenda">OTIF e EFD seguem a data da ocorrência. Coletas usam a solicitação, comprovantes usam a previsão da entrega e custos usam a emissão da consolidação.</p>
       <div className="rede-tabela" role="region" aria-label="Indicadores por parceiro" tabIndex={0}>
         <table>
           <thead><tr>{['Parceiro', 'OTIF', 'EFD', 'Coleta', 'Anexados', 'Arquivados', 'Cobrado', 'Calculado', 'Diferença'].map(titulo => <th key={titulo} scope="col">{titulo}</th>)}</tr></thead>

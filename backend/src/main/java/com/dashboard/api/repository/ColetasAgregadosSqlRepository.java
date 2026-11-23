@@ -119,9 +119,13 @@ public class ColetasAgregadosSqlRepository {
         String sql = baseDeduplicadaSql(fonte) + """
                 SELECT CAST([Solicitacao] AS date) dia, p.parceiro, COUNT_BIG(*) finalizadas,
                        SUM(CASE WHEN [Finalizacao] <= [Agendamento] THEN 1 ELSE 0 END) no_prazo
-                FROM base_metricas
-                CROSS APPLY (VALUES (TRIM(JSON_VALUE([Metadata], '$.pck_prn_drt_nickname')))) p(parceiro)
-                WHERE status_normalizado IN (N'finalizada', N'coletada') AND p.parceiro LIKE N'%| PARCEIRO%'
+                FROM base_metricas c
+                JOIN dbo.rede_agentes_coleta a ON a.coleta_id = c.[ID]
+                LEFT JOIN acesso.rede_manifestos_parceiros m ON a.tem_agente = 0 AND m.manifesto = c.[Numero Manifesto]
+                CROSS APPLY acesso.rede_parceiro_no_servico(
+                    CASE WHEN a.tem_agente = 1 THEN a.documento COLLATE Latin1_General_100_BIN2 ELSE m.cnpj END,
+                    CAST(c.[Solicitacao] AS date)) p
+                WHERE status_normalizado IN (N'finalizada', N'coletada')
                 """ + porParceiro + " GROUP BY CAST([Solicitacao] AS date), p.parceiro ORDER BY dia, p.parceiro";
         return jdbcTemplate.query(sql, params, (rs, row) -> new Coleta(rs.getDate("dia").toLocalDate(),
                 rs.getString("parceiro"), rs.getLong("finalizadas"), rs.getLong("no_prazo")));

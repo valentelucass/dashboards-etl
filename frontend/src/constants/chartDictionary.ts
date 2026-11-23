@@ -87,10 +87,10 @@ export const chartDictionary = {
   redeRankingOtif: {
     descricao: 'As cinco filiais parceiras com maior pontualidade nas entregas finalizadas.',
     tabelasOrigem: 'Fretes e ocorrências de entrega do painel de Performance.',
-    cruzamentos: 'A minuta associa a entrega à filial que registrou a ocorrência.',
+    cruzamentos: 'O manifesto identifica o executor. Na ausência de manifesto de entrega e retirada pelo cliente, vale o parceiro da região de destino.',
     calculoTecnico: 'No prazo dividido pelas finalizadas com filial parceira identificada.',
     calculoNegocio: 'O maior percentual ocupa a primeira posição. Uma filial sem entregas avaliadas fica fora da classificação.',
-    agrupamento: 'Filial da ocorrência de entrega, pela data da ocorrência.',
+    agrupamento: 'Parceiro executor, pela data da ocorrência.',
   },
   redeCustosDiarios: {
     descricao: 'Compara, em reais, o valor cobrado pela rede ao valor calculado pelo ESL.',
@@ -103,7 +103,7 @@ export const chartDictionary = {
   redeIndicadoresParceiro: {
     descricao: 'Exibe lado a lado desempenho, comprovantes e valores financeiros dos parceiros.',
     tabelasOrigem: 'Performance, coletas, comprovantes e consolidações do ESL.',
-    cruzamentos: 'A linha reúne os nomes idênticos nas fontes. A coleta usa a região de origem, o comprovante usa a região de destino e o custo usa a transportadora.',
+    cruzamentos: 'A carteira de parcerias identifica o executor da coleta e da entrega e a transportadora responsável pela cobrança.',
     calculoTecnico: 'Percentuais a partir dos numeradores e denominadores de cada indicador. Os valores financeiros são somados por transportadora.',
     calculoNegocio: 'O traço indica que a fonte não fornece uma medição para aquele parceiro e período.',
     agrupamento: 'Parceiro identificado na fonte de cada indicador.',

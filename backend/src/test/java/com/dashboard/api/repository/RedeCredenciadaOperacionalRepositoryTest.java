@@ -36,7 +36,7 @@ class RedeCredenciadaOperacionalRepositoryTest {
     }
 
     @Test
-    void restringeArquivamentoAoFimDoPeriodoEUsaEscopoAtual() {
+    void usaExecutorDaEntregaESituacaoAtualDoArquivoMesmoAposOPeriodo() {
         var filtro = new FiltroConsultaDTO(inicio, fim, Map.of());
         var permitido = EscopoFilialService.EscopoFilial.semAcesso();
         var fonte = new PerformanceDashboardSqlRepository.ConsultaEntregas("WITH performance AS (...) ", new MapSqlParameterSource());
@@ -45,8 +45,8 @@ class RedeCredenciadaOperacionalRepositoryTest {
         rede.entregas(filtro, "ABC | PARCEIRO", true);
         var sql = ArgumentCaptor.forClass(String.class);
         verify(jdbc).query(sql.capture(), any(MapSqlParameterSource.class), any(RowMapper.class));
-        assertThat(sql.getValue()).contains("a.primeiro_arquivamento < :dataFim", "f.responsavel_regiao_destino = :parceiro",
-                "COUNT_BIG(a.minuta)", "f.is_finalizada = 1");
+        assertThat(sql.getValue()).contains("acesso.rede_executor_entrega", "p.parceiro = :parceiro",
+                "COUNT_BIG(a.minuta)", "f.is_finalizada = 1").doesNotContain("a.primeiro_arquivamento <");
         assertThat(fonte.params().getValue("parceiro")).isEqualTo("ABC | PARCEIRO");
     }
 

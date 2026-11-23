@@ -25,6 +25,19 @@ describe('Rede Credenciada', () => {
     expect(resultado.parceiros.map(p => p.nome)).toEqual(['SOR']);
   });
 
+  it('mantém bloqueios e cálculos zerados na conferência e fora das séries financeiras', () => {
+    const linha = {dia: '2026-10-29', status: 'Faturada', parceiro: 'Parceiro anterior', consolidacoes: 1,
+      cobradoCentavos: 4491, calculadoCentavos: 5240, semCobrado: 0, semCalculado: 0, calculadoZero: 0};
+    const custos = {diasCobertos: 1, diasSolicitados: 1,
+      totais: {...linha, freteVinculadoCentavos: 10000, fretesVinculados: 1, cobradoVinculadoCentavos: 4491, consolidacoesSemFrete: 0},
+      linhas: [linha, {...linha, status: 'Bloqueada', conferencia: 'Bloqueada', calculadoCentavos: 0},
+        {...linha, conferencia: 'Cálculo zerado', calculadoCentavos: 0}]};
+    const resumo = resumirRede([], undefined, custos, []);
+    expect(resumo.dias).toEqual([{dia: linha.dia, cobrado: 44.91, calculado: 52.4, diferenca: expect.closeTo(-7.49)}]);
+    expect(resumo.conferencia.size).toBe(2);
+    expect(resumo.conferencia.get('Bloqueada')?.consolidacoes).toBe(1);
+  });
+
   it('preserva cálculo de custo zero, dados faltantes e diferença negativa', () => {
     const valores = {consolidacoes: 1, cobradoCentavos: 0, calculadoCentavos: 150, semCobrado: 0, semCalculado: 0, calculadoZero: 0};
     expect(valoresFinanceiros(valores)).toEqual({ cobrado: 0, calculado: 1.5, diferenca: -1.5 });

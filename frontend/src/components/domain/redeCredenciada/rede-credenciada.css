@@ -29,8 +29,9 @@
   .rede-kpis .dashboard-kpi-value { font-size: 1.5rem; }
   .rede-kpis .dashboard-kpi-value[data-long-value] { font-size: 1.25rem; }
 }
-.rede-previa, .rede-legenda { color: var(--color-text-subtle); font-size: .8rem; line-height: 1.5; }
-.rede-previa { margin: 0; padding-inline-start: .75rem; border-inline-start: 3px solid var(--color-border); }
+.rede-legenda { color: var(--color-text-subtle); font-size: .8rem; line-height: 1.5; }
+.rede-conferencia { padding: 1rem; border: 1px solid var(--color-border); border-radius: .75rem; background: var(--color-card); }
+.rede-conferencia h2 { font-size: .9rem; font-weight: 600; }
 .rede-tabela { max-height: 30rem; overflow: auto; margin-top: .65rem; }
 .rede-tabela table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .8rem; font-variant-numeric: tabular-nums; }
 .rede-tabela td, .rede-tabela th { padding: .65rem .7rem; white-space: nowrap; border-bottom: 1px solid var(--color-border); text-align: right; }

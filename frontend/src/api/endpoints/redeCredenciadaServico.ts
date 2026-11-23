@@ -43,7 +43,7 @@ export interface CustosRede {
     cobradoVinculadoCentavos: number;
     consolidacoesSemFrete: number;
   };
-  linhas: (ValoresConsolidacao & {dia: string; status: string; parceiro: string})[];
+  linhas: (ValoresConsolidacao & {dia: string; status: string; parceiro: string; conferencia?: string | null})[];
 }
 
 const BASE = '/api/painel/rede-credenciada';

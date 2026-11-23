@@ -75,13 +75,14 @@ final class PerformanceOperacaoSql {
                 """.formatted(filtros);
     }
 
-    static String eficiencia(String filtros) {
+    static String eficiencia(String filtros, boolean rede) {
+        String executor = rede ? "CROSS APPLY acesso.rede_executor_entrega(f.numero_minuta, f.manifesto_entrega, f.responsavel_regiao_destino, f.data_frete) p" : "";
         return """
                 , elegiveis AS (
-                    SELECT numero_minuta, tipo_frete, data_finalizacao, is_finalizada, is_no_prazo
-                    FROM entregas WHERE status_norm <> N'Cancelada' %s
+                    SELECT f.numero_minuta, f.tipo_frete, f.data_finalizacao, f.is_finalizada, f.is_no_prazo, %s AS parceiro
+                    FROM entregas f %s WHERE status_norm <> N'Cancelada' %s
                 )
-                SELECT e.numero_minuta, e.data_finalizacao, e.is_finalizada, e.is_no_prazo,
+                SELECT e.numero_minuta, e.data_finalizacao, e.is_finalizada, e.is_no_prazo, e.parceiro,
                        o.codigo, NULLIF(TRIM(o.nota_fiscal), N'') AS nota_fiscal, o.ocorrido_em,
                        NULLIF(TRIM(o.filial), N'') AS filial, CASE WHEN %s THEN 1 ELSE 0 END AS entrega
                 FROM elegiveis e
@@ -90,6 +91,7 @@ final class PerformanceOperacaoSql {
                          CASE o.codigo WHEN 110 THEN 0 WHEN 102 THEN 1 WHEN 103 THEN 2
                                        WHEN 101 THEN 3 WHEN 55 THEN 4 ELSE 5 END,
                          o.data_particao, o.escopo, o.ordem
-                """.formatted(filtros, entrega("e.tipo_frete"), marco("e.tipo_frete"));
+                """.formatted(rede ? "p.parceiro" : "CAST(NULL AS nvarchar(250))", executor, filtros,
+                        entrega("e.tipo_frete"), marco("e.tipo_frete"));
     }
 }

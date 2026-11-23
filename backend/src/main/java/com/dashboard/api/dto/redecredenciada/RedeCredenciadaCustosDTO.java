@@ -10,7 +10,7 @@ public record RedeCredenciadaCustosDTO(
     public record Linha(
             LocalDate dia, String status, String parceiro, long consolidacoes,
             long cobradoCentavos, long calculadoCentavos, long semCobrado, long semCalculado,
-            long calculadoZero, long cobradoZero) {}
+            long calculadoZero, long cobradoZero, String conferencia) {}
 
     public record Totais(
             long consolidacoes, long cobradoCentavos, long calculadoCentavos, long semCobrado,

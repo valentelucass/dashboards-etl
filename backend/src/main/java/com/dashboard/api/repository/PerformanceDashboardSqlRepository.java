@@ -173,13 +173,17 @@ public class PerformanceDashboardSqlRepository {
     }
 
     public List<EficienciaFilial> eficienciaFiliais(FiltroConsultaDTO filtro) {
+        return eficienciaFiliais(filtro, false);
+    }
+
+    public List<EficienciaFilial> eficienciaFiliais(FiltroConsultaDTO filtro, boolean rede) {
         QueryContext ctx = criarContexto(filtro);
         Set<LocalDate> feriados = Set.copyOf(jdbcTemplate.query(
                 "SELECT data FROM dbo.dim_calendario WHERE is_feriado_nacional = 1",
                 ctx.params(), (r, i) -> r.getObject(1, LocalDate.class)));
         PerformanceEficiencia calculo = new PerformanceEficiencia(filtro.dataInicio(), filtro.dataFim(),
                 LocalDateTime.now(ZONE_ID_BRASILIA), feriados);
-        String sql = baseCte(ctx.colunas(), true) + PerformanceOperacaoSql.eficiencia(ctx.where());
+        String sql = baseCte(ctx.colunas(), true) + PerformanceOperacaoSql.eficiencia(ctx.where(), rede);
         return jdbcTemplate.query(sql, ctx.params(), rs -> {
             Long anterior = null;
             List<PerformanceEficiencia.Evento> eventos = new java.util.ArrayList<>();
@@ -190,7 +194,7 @@ public class PerformanceDashboardSqlRepository {
                     if (frete != null) calculo.adicionar(frete, eventos);
                     eventos.clear();
                     frete = new PerformanceEficiencia.Frete(rs.getBoolean("is_finalizada"), rs.getBoolean("is_no_prazo"),
-                            rs.getObject("data_finalizacao", LocalDate.class));
+                            rs.getObject("data_finalizacao", LocalDate.class), rs.getString("parceiro"));
                     anterior = numero;
                 }
                 LocalDateTime hora = rs.getObject("ocorrido_em", LocalDateTime.class);
@@ -517,7 +521,7 @@ public class PerformanceDashboardSqlRepository {
                 , performance AS (
                     SELECT numero_minuta, data_frete, data_previsao_entrega AS previsao_entrega,
                            data_finalizacao_performance AS data_finalizacao, responsavel AS filial_performance,
-                           filial_emissora, responsavel_regiao_destino, regiao_destino, cidade_destino AS destino_cidade,
+                           filial_emissora, responsavel_regiao_destino, manifesto_entrega, regiao_destino, cidade_destino AS destino_cidade,
                            comprovante_anexado, performance_diferenca_dias, is_finalizada, is_no_prazo, is_fora_prazo, data_extracao,
                            CASE WHEN is_no_prazo = 1 THEN N'NO PRAZO'
                                 WHEN is_fora_prazo = 1 THEN N'FORA DO PRAZO'
@@ -1206,6 +1210,7 @@ public class PerformanceDashboardSqlRepository {
                     SELECT
                         TRY_CONVERT(BIGINT, [Nº Minuta]) AS numero_minuta,
                         [Tipo Frete] AS tipo_frete,
+                        %s AS manifesto_entrega,
                         [Pagador] AS pagador,
                         [NF] AS notas_fiscais,
                         [UF Destino] AS uf_destino,
@@ -1259,7 +1264,7 @@ public class PerformanceDashboardSqlRepository {
                 ),
                 minutas AS (
                     SELECT
-                        numero_minuta, tipo_frete, data_frete, data_finalizacao_performance, pagador, notas_fiscais, uf_destino,
+                        numero_minuta, tipo_frete, manifesto_entrega, data_frete, data_finalizacao_performance, pagador, notas_fiscais, uf_destino,
                         data_previsao_entrega,
                         data_finalizacao,
                         responsavel_regiao_destino,
@@ -1292,6 +1297,7 @@ public class PerformanceDashboardSqlRepository {
                     FROM minutas
                 )
                 """.formatted(
+                colunas.existe("Metadata") ? "NULLIF(TRY_CONVERT(bigint, JSON_VALUE([Metadata], '$.fit_fte_l_y_mft_sequence_code')),0)" : "CAST(NULL AS bigint)",
                 finalizacaoPerformance,
                 responsavelRegiao,
                 filialEmissora,

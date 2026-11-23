@@ -315,7 +315,7 @@ class ColetasAgregadosSqlRepositoryTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void redeAgregaPorResponsavelDeOrigemComARegraDePerformance() {
+    void redeExigeAgenteOuManifestoDeColetaEReutilizaAPontualidade() {
         var repository = new ColetasAgregadosSqlRepository(jdbcTemplate,
                 new DashboardExportSqlBuilder(PeriodoOffsetDateTimeHelper.padrao()), escopoSemRestricao());
         repository.desempenhoDiarioDaRede(new FiltroConsultaDTO(
@@ -323,8 +323,10 @@ class ColetasAgregadosSqlRepositoryTest {
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
         verify(jdbcTemplate).query(sql.capture(), params.capture(), any(RowMapper.class));
-        assertThat(sql.getValue()).contains("$.pck_prn_drt_nickname", "PARTITION BY [ID]",
-                "[Finalizacao] <= [Agendamento]", "N'finalizada', N'coletada'", "p.parceiro = :parceiro");
+        assertThat(sql.getValue()).contains("dbo.rede_agentes_coleta", "m.manifesto = c.[Numero Manifesto]",
+                "a.tem_agente = 0", "acesso.rede_parceiro_no_servico", "PARTITION BY [ID]",
+                "[Finalizacao] <= [Agendamento]", "N'finalizada', N'coletada'", "p.parceiro = :parceiro")
+                .doesNotContain("pck_prn_drt_nickname", "redespacho");
         assertThat(params.getValue().getValue("parceiro")).isEqualTo("SJK | PARCEIRO");
     }
 

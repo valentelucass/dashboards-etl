@@ -72,13 +72,13 @@ public class RedeCredenciadaCustosRepository {
             Totais totais = null;
             while (rs.next()) {
                 if (rs.getInt("total") == 1) {
-                    totais = lerTotais(rs);
+                    if (rs.getString("conferencia") == null) totais = lerTotais(rs);
                 } else {
                     linhas.add(lerLinha(rs));
                 }
             }
             if (totais == null) {
-                if (!linhas.isEmpty()) {
+                if (linhas.stream().anyMatch(linha -> linha.conferencia() == null)) {
                     throw new SQLException("Consulta de custos não retornou o total das consolidações.");
                 }
                 totais = new Totais(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -92,7 +92,7 @@ public class RedeCredenciadaCustosRepository {
         return new Linha(rs.getDate("data_emissao").toLocalDate(), rs.getString("situacao"),
                 rs.getString("parceiro"), rs.getLong("consolidacoes"), rs.getLong("cobrado_centavos"),
                 rs.getLong("calculado_centavos"), rs.getLong("sem_cobrado"), rs.getLong("sem_calculado"),
-                rs.getLong("calculado_zero"), rs.getLong("cobrado_zero"));
+                rs.getLong("calculado_zero"), rs.getLong("cobrado_zero"), rs.getString("conferencia"));
     }
 
     private static Totais lerTotais(ResultSet rs) throws SQLException {
