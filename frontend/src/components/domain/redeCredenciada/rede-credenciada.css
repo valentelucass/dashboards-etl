@@ -1,4 +1,4 @@
-.rede-painel { container: rede-credenciada / inline-size; display: grid; gap: 1rem; margin-top: .75rem; min-width: 0; }
+.rede-painel { container: rede-credenciada / inline-size; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-top: .75rem; min-width: 0; }
 .rede-kpis { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: .5rem; }
 .rede-kpis .dashboard-kpi-card { min-height: 5rem; }
 .rede-kpis .dashboard-kpi-card [title] { white-space: normal; }
@@ -12,17 +12,11 @@
 @container rede-credenciada (min-width: 32rem) {
   .rede-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-@container rede-credenciada (40rem <= width < 52rem) {
-  .rede-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
 /* Cinco indicadores operacionais e quatro financeiros ocupam duas faixas. */
-@container rede-credenciada (52rem <= width < 80rem) {
-  .rede-kpis { grid-template-columns: repeat(20, minmax(0, 1fr)); }
+@container rede-credenciada (min-width: 52rem) {
+  .rede-kpis { grid-template-columns: repeat(20, minmax(0, 1fr)); gap: .75rem; }
   .rede-kpis > div { grid-column: span 4; }
   .rede-kpis > div:nth-child(n+6) { grid-column: span 5; }
-}
-@container rede-credenciada (min-width: 80rem) {
-  .rede-kpis { grid-template-columns: repeat(5, minmax(0, .91fr)) minmax(0, 1.05fr) repeat(3, minmax(0, 1.18fr)); }
 }
 @container rede-credenciada (min-width: 96rem) {
   .rede-kpis .dashboard-kpi-card { padding-inline: .75rem; }
