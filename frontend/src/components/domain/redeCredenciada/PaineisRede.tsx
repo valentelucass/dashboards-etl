@@ -25,9 +25,8 @@ function siglaENome(valor: string | number) {
   return separador < 0 ? nome : `${nome.slice(0, separador)} · ${nome.slice(separador + 3).split(/\s+/)[0]}`;
 }
 
-export default function PaineisRede({ resumo, carregandoDesempenho, erroDesempenho, carregandoCustos, erroCustos, parcialCustos, aguardandoCustos, carregandoTabela }: {
-  resumo: Resumo; carregandoDesempenho: boolean; erroDesempenho?: string;
-  carregandoCustos: boolean; erroCustos?: string; parcialCustos: string; aguardandoCustos: string; carregandoTabela: boolean;
+export default function PaineisRede({ resumo, erroDesempenho, erroCustos, parcialCustos, aguardandoCustos }: {
+  resumo: Resumo; erroDesempenho?: string; erroCustos?: string; parcialCustos: string; aguardandoCustos: string;
 }) {
   const { isDark } = useEchartsTheme();
   const ranking = useMemo(() => resumo.parceiros
@@ -56,13 +55,13 @@ export default function PaineisRede({ resumo, carregandoDesempenho, erroDesempen
 
   return <>
     <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-      <ChartWrapper titulo="Top 5 filiais parceiras por OTIF" chartKey="redeRankingOtif" option={rankingOption} isLoading={carregandoDesempenho}
+      <ChartWrapper titulo="Top 5 filiais parceiras por OTIF" chartKey="redeRankingOtif" option={rankingOption}
         erro={erroDesempenho} isEmpty={!ranking.length} emptyMessage="Sem entrega finalizada com filial parceira identificada." />
-      <ChartWrapper titulo="Custo da rede por dia de emissão" chartKey="redeCustosDiarios" option={custosOption} isLoading={carregandoCustos}
+      <ChartWrapper titulo="Custo da rede por dia de emissão" chartKey="redeCustosDiarios" option={custosOption}
         actions={parcialCustos ? <small className="rede-legenda">{parcialCustos}</small> : undefined}
         erro={erroCustos} isEmpty={!resumo.dias.length} emptyMessage={aguardandoCustos || (parcialCustos ? 'Nenhuma consolidação nos dias publicados.' : 'Sem consolidações para os filtros selecionados.')} />
     </div>
-    <ChartCard titulo="Indicadores por parceiro" chartKey="redeIndicadoresParceiro" isLoading={carregandoTabela} isEmpty={!resumo.parceiros.length}
+    <ChartCard titulo="Indicadores por parceiro" chartKey="redeIndicadoresParceiro" isEmpty={!resumo.parceiros.length}
       emptyMessage="Nenhum parceiro encontrado nas fontes disponíveis para este período.">
       <p className="rede-legenda">OTIF e EFD seguem a data da ocorrência. Coletas usam a solicitação, comprovantes usam a previsão da entrega e custos usam a emissão da consolidação.</p>
       <div className="rede-tabela" role="region" aria-label="Indicadores por parceiro" tabIndex={0}>

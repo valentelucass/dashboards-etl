@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import DashboardLoading, { LoadingKpiGrid } from '../shared/DashboardLoading';
 import ChartLoading, { ChartPlaceholder, MetricLoading, StatusBarsLoading } from '../shared/ChartLoading';
 import CarregamentoConta from '../domain/customerService/CarregamentoConta';
+import CarregamentoRede from '../domain/redeCredenciada/CarregamentoRede';
 import { LoadingTableRows } from '../shared/TableLoading';
 import NoticeListLoading from '../home/NoticeListLoading';
 import { kpiLoadingLayouts } from '../shared/dashboardKpiLayouts';
@@ -83,6 +84,7 @@ function Fields({ count, className = '' }: { count: number; className?: string }
 }
 
 function PagePreview({ path }: { path: string }) {
+  if (path === '/rede-credenciada') return <CarregamentoRede />;
   if (path === '/customer-service') return <div className="cs-conteudo"><CarregamentoConta /></div>;
   const profile = dashboards[path];
   if (profile) return <DashboardPreview profile={profile} />;

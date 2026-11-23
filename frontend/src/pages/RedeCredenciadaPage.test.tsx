@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { EChartsOption } from 'echarts';
 import * as api from '../api/endpoints/redeCredenciadaServico';
+import DashboardRouteLoading from '../components/layout/DashboardRouteLoading';
 import { formatAxis, readDashboardChart } from '../components/charts/dashboardChartData';
 import { FiltroProvider } from '../contexts/FiltroContext';
 import { PageHeaderProvider } from '../contexts/PageHeaderContext';
@@ -65,6 +66,36 @@ function fontes() {
   });
   return {operacao, desempenho, custos};
 }
+
+it('reserva os nove cartões desde a abertura da rota', () => {
+  const {container} = render(<MemoryRouter initialEntries={['/rede-credenciada/']} future={{v7_startTransition: true, v7_relativeSplatPath: true}}>
+    <DashboardRouteLoading />
+  </MemoryRouter>);
+  expect(screen.getByRole('status', {name: 'Carregando página'})).toBeTruthy();
+  expect(container.querySelectorAll('.rede-kpis > .dashboard-loading-card')).toHaveLength(9);
+});
+
+it('mantém o desenho dos nove cartões até receber os custos do filtro selecionado', async () => {
+  const {custos} = fontes();
+  const lerCustos = custos.getMockImplementation()!;
+  let liberar!: () => void;
+  const aguardando = new Promise<void>(resolve => { liberar = resolve; });
+  custos.mockImplementation(async (...args) => {
+    if (args[2].length) await aguardando;
+    return lerCustos(...args);
+  });
+  const {container} = abrir('&f.situacoesConsolidacao=Liberada');
+  await waitFor(() => expect(custos).toHaveBeenCalledTimes(2));
+  const aviso = {name: 'Carregando Rede Credenciada'};
+  expect(screen.getByRole('status', aviso).getAttribute('aria-busy')).toBe('true');
+  expect(container.querySelectorAll('.rede-kpis > .dashboard-loading-card')).toHaveLength(9);
+  expect(container.querySelector('.rede-kpis .dashboard-kpi-card')).toBeNull();
+  await act(async () => { liberar(); });
+  await waitFor(() => expect(cartao('Valor cobrado pelo parceiro')).toContain('3,00'));
+  expect(cartao('OTIF · Entregas no prazo')).toContain('25,00%');
+  expect(screen.queryByRole('status', aviso)).toBeNull();
+  expect(container.querySelectorAll('.rede-kpis .dashboard-kpi-card')).toHaveLength(9);
+});
 
 it('a situação altera apenas os custos e o denominador financeiro vem da consulta filtrada', async () => {
   const {operacao, desempenho, custos} = fontes();

@@ -11,15 +11,14 @@ import KpiCard from '../components/shared/KpiCard';
 import TooltipKpi from '../components/shared/TooltipKpi';
 import { KpiDictionary } from '../constants/kpiDictionary';
 import PaineisRede from '../components/domain/redeCredenciada/PaineisRede';
+import CarregamentoRede from '../components/domain/redeCredenciada/CarregamentoRede';
 import { exibirMoeda, exibirTaxa, nomeCurto, percentual, resumirRede, valoresFinanceiros } from '../components/domain/redeCredenciada/indicadoresRede';
 import { formatarNumero } from '../utils/formatadores';
-import '../components/domain/redeCredenciada/rede-credenciada.css';
 
 const VAZIO: string[] = [];
 const CACHE = { staleTime: 5 * 60 * 1000, retry: 1 } as const;
 
-function fonte(situacao: {isLoading: boolean; isError: boolean}, nome: string) {
-  if (situacao.isLoading) return 'Carregando…';
+function fonte(situacao: {isError: boolean}, nome: string) {
   if (situacao.isError) return `Fonte indisponível · ${nome}`;
   return '';
 }
@@ -52,6 +51,7 @@ export default function RedeCredenciadaPage() {
     queryKey: [...base, 'custos', [...selecionados].sort(), [...situacoes].sort()],
     queryFn: ({signal}) => buscarCustosRede(periodo, selecionados, situacoes, signal)});
   const custos = temFiltroFinanceiro ? custosFiltrados : custosRede;
+  const carregando = desempenho.isLoading || operacao.isLoading || custos.isLoading;
   const dadosCustos = custos.data;
   const custosPublicados = dadosCustos && dadosCustos.diasCobertos > 0 ? dadosCustos : undefined;
   const parcialCustos = custosPublicados && custosPublicados.diasCobertos < custosPublicados.diasSolicitados
@@ -101,7 +101,7 @@ export default function RedeCredenciadaPage() {
       <AsyncMultiSelect label="Situação da consolidação · custos" placeholder="Todas as situações" opcoes={opcoesSituacoes}
         selecionados={situacoes} onChange={novas => setFiltro('situacoesConsolidacao', novas)} isLoading={custosRede.isLoading} />
     </FilterBar>
-    <div className="rede-painel">
+    {carregando ? <CarregamentoRede /> : <div className="rede-painel">
       <section className="rede-kpis" aria-label="Desempenho, comprovantes e custos">
         <Indicador tipo="otif" valor={exibirTaxa(taxas.otif)} icone={<PackageCheck size={17} />}
           helperText={infoDesempenho || fracao(total.otifNoPrazo, total.otifTotal, 'entregas finalizadas')} />
@@ -133,10 +133,8 @@ export default function RedeCredenciadaPage() {
           </tr>)}
         </tbody></table></div>
       </section>}
-      <PaineisRede resumo={resumo} carregandoDesempenho={desempenho.isLoading}
-        erroDesempenho={desempenho.isError ? infoDesempenho : undefined} carregandoCustos={custos.isLoading}
-        erroCustos={custos.isError ? infoCustos : undefined} parcialCustos={parcialCustos} aguardandoCustos={aguardandoCustos}
-        carregandoTabela={desempenho.isLoading && operacao.isLoading && custos.isLoading} />
-    </div>
+      <PaineisRede resumo={resumo} erroDesempenho={desempenho.isError ? infoDesempenho : undefined}
+        erroCustos={custos.isError ? infoCustos : undefined} parcialCustos={parcialCustos} aguardandoCustos={aguardandoCustos} />
+    </div>}
   </div>;
 }

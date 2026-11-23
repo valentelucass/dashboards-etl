@@ -1,6 +1,6 @@
 ## 23/11/2026 — Cobertura da Rede Credenciada e do Customer Service
 
-Na Rede Credenciada, os cinco indicadores operacionais ocupam a primeira linha e os quatro financeiros ocupam a segunda em telas largas. Em espaços menores, as colunas se adaptam à largura disponível.
+Na Rede Credenciada, os cinco indicadores operacionais ocupam a primeira linha e os quatro financeiros ocupam a segunda em telas largas. Em espaços menores, as colunas se adaptam à largura disponível. A abertura da rota e o carregamento dos dados usam a mesma prévia dos nove cartões, gráficos e tabelas. Os indicadores dos filtros selecionados aparecem juntos quando as consultas terminam.
 
 Quando a atualização do ESL ainda tem dias pendentes, a Rede Credenciada exibe os custos publicados e os comprovantes de arquivamento já confirmados. Nas duas telas, o arquivamento acompanha a situação atual, inclusive quando acontece depois do período da entrega. O Customer Service conta as finalizações e tratativas do catálogo de ações de 23/11 apenas nas datas publicadas. As telas distinguem período parcial, dias publicados sem movimento e período inteiro aguardando publicação.
 

@@ -1,6 +1,6 @@
 .rede-painel { container: rede-credenciada / inline-size; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-top: .75rem; min-width: 0; }
 .rede-kpis { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: .5rem; }
-.rede-kpis .dashboard-kpi-card { min-height: 5rem; }
+.rede-kpis .dashboard-kpi-card, .rede-kpis .dashboard-loading-card { min-height: 5.625rem; }
 .rede-kpis .dashboard-kpi-card [title] { white-space: normal; }
 .rede-kpis .dashboard-kpi-card > div:first-child { align-items: flex-start; }
 
@@ -15,8 +15,8 @@
 /* Cinco indicadores operacionais e quatro financeiros ocupam duas faixas. */
 @container rede-credenciada (min-width: 52rem) {
   .rede-kpis { grid-template-columns: repeat(20, minmax(0, 1fr)); gap: .75rem; }
-  .rede-kpis > div { grid-column: span 4; }
-  .rede-kpis > div:nth-child(n+6) { grid-column: span 5; }
+  .rede-kpis > * { grid-column: span 4; }
+  .rede-kpis > :nth-child(n+6) { grid-column: span 5; }
 }
 @container rede-credenciada (min-width: 96rem) {
   .rede-kpis .dashboard-kpi-card { padding-inline: .75rem; }
