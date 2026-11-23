@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { formatarData, formatarDataCurta, formatarDataHora, formatarDataHoraMinuto } from './formatadores';
+import { formatarData, formatarDataCurta, formatarDataHora, formatarDataHoraMinuto, instanteExtracaoRaster } from './formatadores';
 
 describe('formatadores de data/hora', () => {
+  it('mostra a extração Raster no horário de Brasília e respeita um fuso já informado', () => {
+    const esperado = '11/11/2026, 18:08:26';
+    for (const valor of ['2026-11-11T21:08:26.801', '2026-11-11T21:08:26.801Z', '2026-11-11T18:08:26.801-03:00']) {
+      expect(formatarDataHora(instanteExtracaoRaster(valor))).toBe(esperado);
+    }
+  });
   it('preserva o dia do calendário nas datas de cobertura e nos rótulos dos gráficos', () => {
     expect(formatarData('2026-01-01')).toBe('01/01/2026');
     expect(formatarDataCurta('2026-01-01')).toBe('01/01');

@@ -72,7 +72,7 @@ import type {
 } from '../types/indicadoresGestaoAVista';
 import { getApiErrorMessage } from '../utils/apiError';
 import { isParceiroLogistico } from '../utils/filiais';
-import { formatarData, formatarDataHora, formatarMoeda, formatarNumero, formatarPorcentagem } from '../utils/formatadores';
+import { formatarData, formatarDataHora, formatarMoeda, formatarNumero, formatarPorcentagem, instanteExtracaoRaster } from '../utils/formatadores';
 import {
   aggregateCubagemRanking,
   aggregateHorariosRanking,
@@ -573,7 +573,7 @@ export default function IndicadoresGestaoAVistaPage() {
     coletoresOverview.data?.updatedAt,
     cubagemOverview.data?.updatedAt,
     indenizacaoOverview.data?.updatedAt,
-    horariosOverview.data?.updatedAt,
+    horariosOverview.data?.updatedAt && instanteExtracaoRaster(horariosOverview.data.updatedAt),
   ]);
   usePageHeader({
     title: 'Indicadores de Gestão à Vista',
@@ -949,7 +949,7 @@ export default function IndicadoresGestaoAVistaPage() {
     },
     { chave: 'observacao', label: 'Observação', largura: '260px', filtravel: false },
     { chave: 'nomeArquivo', label: 'Fonte', largura: '220px', filtravel: false },
-    { chave: 'importadoEm', label: 'Extraído em', formato: (v) => v ? formatarDataHora(String(v)) : '—', filtravel: false },
+    { chave: 'importadoEm', label: 'Extraído em', formato: (v) => v ? formatarDataHora(instanteExtracaoRaster(String(v))) : '—', filtravel: false },
     { chave: 'importadoPor', label: 'Origem técnica', filtravel: false },
   ];
 
@@ -963,7 +963,7 @@ export default function IndicadoresGestaoAVistaPage() {
           Fonte Raster via SQL Server
         </div>
         <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          Última extração: {horariosOverview.data?.ultimaImportacaoEm ? formatarDataHora(horariosOverview.data.ultimaImportacaoEm) : '—'}
+          Última extração: {horariosOverview.data?.ultimaImportacaoEm ? formatarDataHora(instanteExtracaoRaster(horariosOverview.data.ultimaImportacaoEm)) : '—'}
         </div>
         <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
           Fonte: {horariosOverview.data?.ultimaImportacaoArquivo ?? 'Raster API - SQL Server'}

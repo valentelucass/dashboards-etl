@@ -55,6 +55,11 @@ function parseDataHoraApi(valor: string): Date | null {
   return Number.isNaN(data.getTime()) ? null : data;
 }
 
+// A captura do Raster é persistida em UTC em uma coluna SQL sem deslocamento.
+export function instanteExtracaoRaster(valor: string): string {
+  return /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(valor) ? valor.replace(' ', 'T') + 'Z' : valor;
+}
+
 export function formatarDataHoraMinuto(dataISO: string): string {
   const data = parseDataHoraApi(dataISO);
   if (!data) {
