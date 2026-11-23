@@ -29,6 +29,8 @@ export interface OperacaoCliente {
   extravios: number | null;
   fretesComAvariaOuExtravio: number | null;
   ocorrenciasPorTipo: { tipo: string; quantidade: number }[] | null;
+  coberturaOcorrencias?: { diasCobertos: number; diasSolicitados: number; ultimaData: string | null };
+  coberturaArquivos?: { diasCobertos: number; diasSolicitados: number; dataFinal: string | null; completa: boolean };
 }
 
 export interface FinanceiroCliente {

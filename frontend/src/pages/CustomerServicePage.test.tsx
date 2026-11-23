@@ -173,11 +173,21 @@ it('ao trocar de conta retira os números anteriores e ignora uma resposta finan
   expect(screen.getByText('Pago').parentElement?.textContent).toContain('888,00');
 });
 
+it('exibe as ocorrências e os arquivamentos já confirmados quando o último dia está pendente', async () => {
+  vi.mocked(api.buscarOperacaoCS).mockResolvedValue({...operacao, arquivadas: 2,
+    coberturaOcorrencias: {diasCobertos: 22, diasSolicitados: 23, ultimaData: '2026-11-22'},
+    coberturaArquivos: {diasCobertos: 22, diasSolicitados: 23, dataFinal: '2026-11-22', completa: false}});
+  abrir();
+  expect(await screen.findByText('Avaria parcial')).toBeTruthy();
+  expect(screen.getByText('Parcial de 22 de 23 dias publicados até 22/11/2026.')).toBeTruthy();
+  expect(screen.getByText(/Arquivamento parcial até/).textContent).toContain('22/11/2026');
+});
+
 it('explica a falta de cobertura das ocorrências depois que as duas fontes terminam', async () => {
   vi.mocked(api.buscarOperacaoCS).mockResolvedValue({...operacao, avarias:null, extravios:null, fretesComAvariaOuExtravio:null, ocorrenciasPorTipo:null});
   abrir();
   await screen.findByText('Faturado');
-  expect(screen.getByText(/A base de ocorrências ainda não cobre todos os dias/)).toBeTruthy();
+  expect(screen.getByText(/Aguardando a publicação das ocorrências/)).toBeTruthy();
   expect(screen.queryByText('Nenhuma ocorrência no período.')).toBeNull();
   expect(screen.queryByText('Fretes com avaria ou extravio')).toBeNull();
   expect(screen.queryByRole('status', {name: 'Carregando relatório do cliente'})).toBeNull();

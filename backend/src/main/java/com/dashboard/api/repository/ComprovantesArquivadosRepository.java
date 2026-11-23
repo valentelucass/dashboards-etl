@@ -20,7 +20,7 @@ public class ComprovantesArquivadosRepository {
     }
 
     public CoberturaArquivamentosDTO coberturaArquivos(LocalDate inicio, LocalDate fim) {
-        long solicitados = ChronoUnit.DAYS.between(inicio, fim) + 1;
+        long solicitados = Math.max(0, ChronoUnit.DAYS.between(inicio, fim) + 1);
         var params = new MapSqlParameterSource("inicio", inicio).addValue("fim", fim);
         try {
             return jdbc.queryForObject("""
@@ -32,7 +32,7 @@ public class ComprovantesArquivadosRepository {
                 Date ultima = rs.getDate("ultima");
                 long dias = rs.getLong("dias");
                 return new CoberturaArquivamentosDTO(primeira == null ? null : primeira.toLocalDate(),
-                        ultima == null ? null : ultima.toLocalDate(), dias, solicitados, dias == solicitados);
+                        ultima == null ? null : ultima.toLocalDate(), dias, solicitados, solicitados > 0 && dias == solicitados);
             });
         } catch (DataAccessException ex) {
             // A previous publication can still serve pickups and attached receipts.

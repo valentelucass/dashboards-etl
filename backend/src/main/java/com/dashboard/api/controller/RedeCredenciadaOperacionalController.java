@@ -7,6 +7,7 @@ import com.dashboard.api.repository.ComprovantesArquivadosRepository;
 import com.dashboard.api.repository.RedeCredenciadaOperacionalRepository;
 import com.dashboard.api.service.ValidadorPeriodoService;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,8 +38,9 @@ public class RedeCredenciadaOperacionalController {
             @RequestParam LocalDate dataFim, @RequestParam(required = false) String parceiro) {
         periodo.validar(dataInicio, dataFim);
         var filtro = new FiltroConsultaDTO(dataInicio, dataFim, Map.of());
-        var cobertura = comprovantes.coberturaArquivos(dataInicio, dataFim);
+        var hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+        var cobertura = comprovantes.coberturaArquivos(dataInicio, hoje);
         return new RedeCredenciadaOperacionalDTO(dataInicio, dataFim, cobertura,
-                rede.entregas(filtro, parceiro, cobertura.completa()), coletas.desempenhoDiarioDaRede(filtro, parceiro));
+                rede.entregas(filtro, parceiro, cobertura.diasCobertos() > 0), coletas.desempenhoDiarioDaRede(filtro, parceiro));
     }
 }

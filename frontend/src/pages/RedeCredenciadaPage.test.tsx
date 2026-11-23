@@ -72,7 +72,7 @@ it('a situação altera apenas os custos e o denominador financeiro vem da consu
   await waitFor(() => expect(cartao('Frete da rede sobre o frete Rodogarcia')).toContain('30,00%'));
   expect(cartao('OTIF · Entregas no prazo')).toContain('25,00%');
   expect(cartao('Comprovantes anexados')).toContain('0,00%');
-  expect(cartao('Comprovantes arquivados')).toContain('Cobertura de 4 de 21 dias');
+  expect(cartao('Comprovantes arquivados')).toContain('Parcial de 4 de 21 dias publicados');
   fireEvent.click(screen.getByRole('button', {name: /Filtros/}));
   fireEvent.click(screen.getByRole('button', {name: 'Remover filtro Situação da consolidação'}));
   await waitFor(() => expect(cartao('Frete da rede sobre o frete Rodogarcia')).toContain('90,00%'));
@@ -80,6 +80,19 @@ it('a situação altera apenas os custos e o denominador financeiro vem da consu
   expect(desempenho).toHaveBeenCalledTimes(1);
   expect(operacao).toHaveBeenCalledTimes(1);
   expect(custos).toHaveBeenCalledTimes(2);
+});
+
+it('renderiza valores, gráfico e comprovantes dos dias publicados enquanto o último dia está pendente', async () => {
+  const {custos, operacao} = fontes();
+  const lerCustos = custos.getMockImplementation()!;
+  custos.mockImplementation(async (...args) => ({...await lerCustos(...args), diasCobertos: 20, diasSolicitados: 21}));
+  operacao.mockResolvedValue({coberturaArquivos: {diasCobertos: 20, diasSolicitados: 21, completa: false},
+    entregas: [{data:'2026-11-14', parceiro:'Parceiro A', finalizadas:4, anexadas:4, arquivadas:3}], coletas: []});
+  abrir('');
+  await waitFor(() => expect(cartao('Valor cobrado pelo parceiro')).toMatch(/9,00/));
+  expect(cartao('Valor cobrado pelo parceiro')).toContain('Parcial de 20 de 21 dias publicados');
+  expect(cartao('Comprovantes arquivados')).toContain('75,00%');
+  expect(readDashboardChart(graficos.get('redeCustosDiarios')!).rows).toHaveLength(1);
 });
 
 it('a seleção de parceiro aplica os pesos e mantém sem medição onde a fonte não incluiu o parceiro', async () => {

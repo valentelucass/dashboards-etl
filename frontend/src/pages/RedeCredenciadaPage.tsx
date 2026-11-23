@@ -53,9 +53,9 @@ export default function RedeCredenciadaPage() {
     queryFn: ({signal}) => buscarCustosRede(periodo, selecionados, situacoes, signal)});
   const custos = temFiltroFinanceiro ? custosFiltrados : custosRede;
   const dadosCustos = custos.data;
-  const coberturaCustos = dadosCustos !== undefined && dadosCustos.diasSolicitados > 0 &&
-    dadosCustos.diasCobertos === dadosCustos.diasSolicitados;
-  const custosCompletos = coberturaCustos ? dadosCustos : undefined;
+  const custosPublicados = dadosCustos && dadosCustos.diasCobertos > 0 ? dadosCustos : undefined;
+  const parcialCustos = custosPublicados && custosPublicados.diasCobertos < custosPublicados.diasSolicitados
+    ? `Parcial de ${custosPublicados.diasCobertos} de ${custosPublicados.diasSolicitados} dias publicados` : '';
   const opcoesSituacoes = useMemo(() => [...new Set(custosRede.data?.linhas.map(l => l.status))]
     .sort((a, b) => a.localeCompare(b, 'pt-BR')), [custosRede.data]);
   const opcoes = useMemo(() => {
@@ -68,20 +68,24 @@ export default function RedeCredenciadaPage() {
       value, label: nomeCurto(value), description: value.split('|')[1]?.trim(),
     }));
   }, [desempenho.data, operacao.data, custosRede.data]);
-  const resumo = useMemo(() => resumirRede(desempenho.data ?? [], operacao.data, custosCompletos, selecionados),
-    [desempenho.data, operacao.data, custosCompletos, selecionados]);
+  const resumo = useMemo(() => resumirRede(desempenho.data ?? [], operacao.data, custosPublicados, selecionados),
+    [desempenho.data, operacao.data, custosPublicados, selecionados]);
   const { total, taxas } = resumo;
-  const valores = valoresFinanceiros(custosCompletos?.totais);
-  const financeiro = custosCompletos?.totais;
+  const financeiro = custosPublicados?.totais;
+  const valores = valoresFinanceiros(financeiro);
   const participacao = financeiro && financeiro.semCobrado === 0
     ? percentual(financeiro.cobradoVinculadoCentavos, financeiro.freteVinculadoCentavos) : null;
   const infoDesempenho = fonte(desempenho, 'Performance');
   const infoOperacao = fonte(operacao, 'Coletas e comprovantes');
-  const infoCustos = fonte(custos, 'Consolidação') || (dadosCustos && !coberturaCustos
-    ? `Cobertura de ${dadosCustos.diasCobertos} de ${dadosCustos.diasSolicitados} dias` : '');
+  const aguardandoCustos = dadosCustos?.diasCobertos === 0 ? 'Aguardando a publicação dos custos deste período' : '';
+  const infoCustos = fonte(custos, 'Consolidação') || aguardandoCustos || parcialCustos;
   const coberturaArquivos = operacao.data?.coberturaArquivos;
-  const infoArquivos = infoOperacao || (coberturaArquivos && !coberturaArquivos.completa
-    ? `Cobertura de ${coberturaArquivos.diasCobertos} de ${coberturaArquivos.diasSolicitados} dias` : '');
+  let infoArquivos = infoOperacao;
+  if (!infoArquivos && coberturaArquivos && !coberturaArquivos.completa) {
+    infoArquivos = coberturaArquivos.diasCobertos > 0
+      ? `Parcial de ${coberturaArquivos.diasCobertos} de ${coberturaArquivos.diasSolicitados} dias publicados`
+      : 'Aguardando a publicação dos arquivamentos deste período';
+  }
 
   usePageHeader({title: 'Rede Credenciada', description: 'Desempenho, comprovantes e custos dos parceiros logísticos.'});
 
@@ -131,7 +135,7 @@ export default function RedeCredenciadaPage() {
       </section>}
       <PaineisRede resumo={resumo} carregandoDesempenho={desempenho.isLoading}
         erroDesempenho={desempenho.isError ? infoDesempenho : undefined} carregandoCustos={custos.isLoading}
-        erroCustos={custos.isLoading ? undefined : infoCustos || undefined}
+        erroCustos={custos.isError ? infoCustos : undefined} parcialCustos={parcialCustos} aguardandoCustos={aguardandoCustos}
         carregandoTabela={desempenho.isLoading && operacao.isLoading && custos.isLoading} />
     </div>
   </div>;

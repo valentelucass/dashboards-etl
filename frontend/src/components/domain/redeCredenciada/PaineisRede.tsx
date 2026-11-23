@@ -25,9 +25,9 @@ function siglaENome(valor: string | number) {
   return separador < 0 ? nome : `${nome.slice(0, separador)} · ${nome.slice(separador + 3).split(/\s+/)[0]}`;
 }
 
-export default function PaineisRede({ resumo, carregandoDesempenho, erroDesempenho, carregandoCustos, erroCustos, carregandoTabela }: {
+export default function PaineisRede({ resumo, carregandoDesempenho, erroDesempenho, carregandoCustos, erroCustos, parcialCustos, aguardandoCustos, carregandoTabela }: {
   resumo: Resumo; carregandoDesempenho: boolean; erroDesempenho?: string;
-  carregandoCustos: boolean; erroCustos?: string; carregandoTabela: boolean;
+  carregandoCustos: boolean; erroCustos?: string; parcialCustos: string; aguardandoCustos: string; carregandoTabela: boolean;
 }) {
   const { isDark } = useEchartsTheme();
   const ranking = useMemo(() => resumo.parceiros
@@ -59,7 +59,8 @@ export default function PaineisRede({ resumo, carregandoDesempenho, erroDesempen
       <ChartWrapper titulo="Top 5 filiais parceiras por OTIF" chartKey="redeRankingOtif" option={rankingOption} isLoading={carregandoDesempenho}
         erro={erroDesempenho} isEmpty={!ranking.length} emptyMessage="Sem entrega finalizada com filial parceira identificada." />
       <ChartWrapper titulo="Custo da rede por dia de emissão" chartKey="redeCustosDiarios" option={custosOption} isLoading={carregandoCustos}
-        erro={erroCustos} isEmpty={!resumo.dias.length} emptyMessage="Sem consolidações para os filtros selecionados." />
+        actions={parcialCustos ? <small className="rede-legenda">{parcialCustos}</small> : undefined}
+        erro={erroCustos} isEmpty={!resumo.dias.length} emptyMessage={aguardandoCustos || (parcialCustos ? 'Nenhuma consolidação nos dias publicados.' : 'Sem consolidações para os filtros selecionados.')} />
     </div>
     <ChartCard titulo="Indicadores por parceiro" chartKey="redeIndicadoresParceiro" isLoading={carregandoTabela} isEmpty={!resumo.parceiros.length}
       emptyMessage="Nenhum parceiro encontrado nas fontes disponíveis para este período.">
@@ -75,7 +76,7 @@ export default function PaineisRede({ resumo, carregandoDesempenho, erroDesempen
           </tr>)}</tbody>
         </table>
       </div>
-      <p className="rede-legenda mt-3">O traço indica ausência de medição ou cobertura insuficiente para o período.</p>
+      <p className="rede-legenda mt-3">{parcialCustos && `Custos parciais. ${parcialCustos}. `}O traço indica ausência de medição para o período.</p>
     </ChartCard>
   </>;
 }

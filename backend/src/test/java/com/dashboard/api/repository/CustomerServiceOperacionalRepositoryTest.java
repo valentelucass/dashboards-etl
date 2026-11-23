@@ -5,6 +5,7 @@ import com.dashboard.api.dto.customerservice.CustomerServiceContaDTO;
 import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.Coletas;
 import com.dashboard.api.dto.CoberturaArquivamentosDTO;
 import com.dashboard.api.service.acesso.EscopoFilialService;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.util.List;
@@ -55,10 +56,14 @@ class CustomerServiceOperacionalRepositoryTest {
         }
     }
 
+    private void publicarDias(Date... dias) {
+        when(jdbc.queryForList(contains("customer_service_cobertura_ocorrencias"), same(params), eq(Date.class))).thenReturn(List.of(dias));
+    }
+
     @Test
-    void coberturaIncompletaNaoViraAusenciaDeOcorrenciasOuArquivamentos() {
-        when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new CoberturaArquivamentosDTO(inicio,corte,2,3,false));
-        when(jdbc.queryForObject(contains("customer_service_cobertura_ocorrencias"), same(params), eq(Long.class))).thenReturn(2L);
+    void semDiaPublicadoNaoViraZeroOcorrenciasOuArquivamentos() {
+        when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new CoberturaArquivamentosDTO(null,null,0,3,false));
+        publicarDias();
         var dados = repo.consultar(periodo,conta,corte);
         assertThat(dados.arquivadas()).isNull();
         assertThat(dados.avarias()).isNull();
@@ -69,9 +74,23 @@ class CustomerServiceOperacionalRepositoryTest {
     }
 
     @Test
+    void lacunaNoMeioDoPeriodoPreservaDiasCertificadosEOsArquivosConfirmados() {
+        when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new CoberturaArquivamentosDTO(inicio,corte,2,3,false));
+        publicarDias(Date.valueOf(inicio), Date.valueOf(corte));
+        var dados = repo.consultar(periodo,conta,corte);
+        assertThat(dados.coberturaOcorrencias().diasCobertos()).isEqualTo(2);
+        assertThat(dados.coberturaOcorrencias().diasSolicitados()).isEqualTo(3);
+        assertThat(dados.coberturaOcorrencias().ultimaData()).isEqualTo(corte);
+        assertThat(dados.ocorrenciasPorTipo()).isEmpty();
+        assertThat(params.getValue("diasPublicados")).isEqualTo(List.of(Date.valueOf(inicio), Date.valueOf(corte)));
+        verify(jdbc).query(contains("o.data_particao IN (:diasPublicados)"), same(params),any(ResultSetExtractor.class));
+        verify(jdbc).query(contains("LEFT JOIN dbo.rede_credenciada_arquivos"),same(params),any(ResultSetExtractor.class));
+    }
+
+    @Test
     void validaProprietarioEFilialEmTodasAsLinhasAntesDeVincularArquivosEEventos() {
         when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new CoberturaArquivamentosDTO(inicio,corte,3,3,true));
-        when(jdbc.queryForObject(contains("customer_service_cobertura_ocorrencias"), same(params), eq(Long.class))).thenReturn(3L);
+        publicarDias(Date.valueOf(inicio), Date.valueOf(inicio.plusDays(1)), Date.valueOf(corte));
         var dados = repo.consultar(periodo,conta,corte);
         assertThat(dados.ocorrenciasPorTipo()).isEmpty();
         assertThat(dados.avarias()).isZero();
@@ -104,22 +123,26 @@ class CustomerServiceOperacionalRepositoryTest {
 
         clearInvocations(jdbc);
         when(arquivos.coberturaArquivos(inicio,hoje)).thenReturn(new CoberturaArquivamentosDTO(inicio,ultimaPublicacao,9,11,false));
-        repo.consultar(historico,conta,hoje);
-        verify(jdbc,never()).query(contains("JOIN dbo.rede_credenciada_arquivos"),same(params),any(ResultSetExtractor.class));
+        var dados = repo.consultar(historico,conta,hoje);
+        assertThat(dados.coberturaArquivos().dataFinal()).isEqualTo(ultimaPublicacao);
+        assertThat(dados.coberturaArquivos().completa()).isFalse();
+        verify(jdbc).query(contains("JOIN dbo.rede_credenciada_arquivos"),same(params),any(ResultSetExtractor.class));
     }
 
     @Test
     void usaAcaoDoCadastroESeparaAvariasEExtraviosConfirmadosDeCarga() {
         when(arquivos.coberturaArquivos(inicio,corte)).thenReturn(new CoberturaArquivamentosDTO(inicio,corte,3,3,true));
-        when(jdbc.queryForObject(contains("customer_service_cobertura_ocorrencias"), same(params), eq(Long.class))).thenReturn(3L);
+        publicarDias(Date.valueOf(inicio), Date.valueOf(inicio.plusDays(1)), Date.valueOf(corte));
         repo.consultar(periodo,conta,corte);
 
         @SuppressWarnings("unchecked")
         var tratativas = (List<Integer>) params.getValue("tratativas");
         @SuppressWarnings("unchecked")
         var finalizacoes = (List<Integer>) params.getValue("finalizacoes");
-        assertThat(tratativas).hasSize(88).doesNotHaveDuplicates().contains(36,65,505,506).doesNotContain(22,127,138);
-        assertThat(finalizacoes).hasSize(19).doesNotHaveDuplicates().contains(1,138).doesNotContain(22,127);
+        assertThat(tratativas).hasSize(80).doesNotHaveDuplicates().contains(36,141,146,505,506)
+                .doesNotContain(19,21,44,46,53,58,104,127,138);
+        assertThat(finalizacoes).hasSize(22).doesNotHaveDuplicates().contains(1,29,60,61,63,65,138)
+                .doesNotContain(19,21,22,31,53,104,127);
         assertThat(tratativas).doesNotContainAnyElementsOf(finalizacoes);
         assertThat(params.getValue("avariasCarga")).isEqualTo(List.of(38,78,79));
         assertThat(params.getValue("extraviosCarga")).isEqualTo(List.of(23,37,80,81));

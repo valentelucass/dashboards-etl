@@ -21,10 +21,10 @@ public class RedeCredenciadaOperacionalRepository {
         this.escopo = escopo;
     }
 
-    public List<Entrega> entregas(FiltroConsultaDTO filtro, String parceiro, boolean coberturaCompleta) {
+    public List<Entrega> entregas(FiltroConsultaDTO filtro, String parceiro, boolean temArquivamentosPublicados) {
         var fonte = performance.entregasDaGestao(filtro, escopo.escopoAtual());
-        String arquivo = coberturaCompleta ? "COUNT_BIG(a.minuta)" : "CAST(NULL AS bigint)";
-        String documentos = coberturaCompleta ? """
+        String arquivo = temArquivamentosPublicados ? "COUNT_BIG(a.minuta)" : "CAST(NULL AS bigint)";
+        String documentos = temArquivamentosPublicados ? """
                 LEFT JOIN dbo.rede_credenciada_arquivos a
                     ON a.minuta = f.numero_minuta
                 """ : "";

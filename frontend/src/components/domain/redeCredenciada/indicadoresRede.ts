@@ -23,13 +23,13 @@ function contadoresOperacionais() {
 
 type ContadoresOperacionais = ReturnType<typeof contadoresOperacionais>;
 
-export function taxasOperacionais(contagem: ContadoresOperacionais, arquivosCompletos: boolean) {
+export function taxasOperacionais(contagem: ContadoresOperacionais, arquivosPublicados: boolean) {
   return {
     otif: percentual(contagem.otifNoPrazo, contagem.otifTotal),
     efd: percentual(contagem.efdEficientes, contagem.efdTotal),
     coleta: percentual(contagem.coletasNoPrazo, contagem.coletas),
     anexado: percentual(contagem.anexadas, contagem.entregas),
-    arquivado: arquivosCompletos && !contagem.semContagemArquivos ? percentual(contagem.arquivadas, contagem.entregas) : null,
+    arquivado: arquivosPublicados && !contagem.semContagemArquivos ? percentual(contagem.arquivadas, contagem.entregas) : null,
   };
 }
 
@@ -103,13 +103,13 @@ export function resumirRede(
   const nomes = [...new Set([...porParceiro.keys(), ...porTransportadora.keys()])]
     .filter(nome => escolha.size === 0 || escolha.has(nome)).sort((a, b) => a.localeCompare(b, 'pt-BR'));
   const total = contadoresOperacionais();
-  const arquivosCompletos = operacao?.coberturaArquivos.completa === true;
+  const arquivosPublicados = (operacao?.coberturaArquivos.diasCobertos ?? 0) > 0;
   const parceiros = nomes.map(nome => {
     const item = porParceiro.get(nome) ?? contadoresOperacionais();
     for (const chave of Object.keys(total) as (keyof typeof total)[]) total[chave] += item[chave];
-    return { nome, ...taxasOperacionais(item, arquivosCompletos), ...valoresFinanceiros(porTransportadora.get(nome)) };
+    return { nome, ...taxasOperacionais(item, arquivosPublicados), ...valoresFinanceiros(porTransportadora.get(nome)) };
   });
   const dias = [...porDia.entries()].sort(([a], [b]) => a.localeCompare(b))
     .map(([dia, valores]) => ({ dia, ...valoresFinanceiros(valores) }));
-  return { parceiros, dias, conferencia, total, taxas: taxasOperacionais(total, arquivosCompletos) };
+  return { parceiros, dias, conferencia, total, taxas: taxasOperacionais(total, arquivosPublicados) };
 }

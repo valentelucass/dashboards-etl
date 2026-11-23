@@ -4,11 +4,13 @@ import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.customerservice.CustomerServiceContaDTO;
 import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO;
+import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.CoberturaOcorrencias;
 import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.Dia;
 import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.Ocorrencia;
 import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.Status;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -21,16 +23,15 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class CustomerServiceOperacionalRepository {
-    // Cadastro de Ocorrências do ESL, conferido em 22/11/2026. A ação configurada
-    // identifica os eventos de atendimento. "Finaliza a performance" mede outro critério.
+    // Catálogo de ações do ESL fornecido pela operação em 23/11/2026.
     private static final List<Integer> TRATATIVAS = List.of(
-            3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 23, 26, 27,
-            28, 29, 30, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47,
-            57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 68, 71, 72, 73, 74, 76, 77, 78,
-            79, 80, 81, 82, 85, 87, 88, 90, 92, 93, 94, 96, 97, 98, 100, 104, 105,
-            106, 116, 117, 118, 119, 120, 121, 125, 129, 130, 131, 135, 145, 505, 506);
+            3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 23, 26, 27, 28,
+            30, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 47, 57, 59, 62, 64,
+            66, 68, 71, 72, 73, 74, 76, 77, 78, 79, 80, 81, 82, 85, 87, 88, 90, 92,
+            93, 94, 96, 97, 98, 100, 105, 106, 116, 117, 118, 119, 120, 121, 125, 129,
+            130, 131, 135, 141, 145, 146, 505, 506);
     private static final List<Integer> BAIXAS_OU_FINALIZACOES = List.of(
-            1, 2, 19, 24, 25, 50, 52, 53, 69, 112, 128, 132, 136, 137, 138, 139, 140, 142, 143);
+            1, 2, 24, 25, 29, 50, 52, 60, 61, 63, 65, 69, 112, 128, 132, 136, 137, 138, 139, 140, 142, 143);
     private static final List<Integer> AVARIAS_DE_CARGA = List.of(38, 78, 79);
     private static final List<Integer> EXTRAVIOS_DE_CARGA = List.of(23, 37, 80, 81);
 
@@ -57,21 +58,16 @@ public class CustomerServiceOperacionalRepository {
         var fonte = performance.entregasDoCliente(filtro, escopo, documentos);
         String vinculo = titularesDasMinutas(escopo, fonte.params());
         fonte.params().addValue("corteExclusivo", corte.plusDays(1));
-        boolean comArquivos = !corte.isBefore(filtro.dataInicio()) && arquivosDisponiveis(filtro.dataInicio(), corte, hoje);
+        var coberturaArquivos = comprovantes.coberturaArquivos(filtro.dataInicio(), hoje);
+        boolean comArquivos = !corte.isBefore(filtro.dataInicio()) && coberturaArquivos.diasCobertos() > 0;
         var entregas = lerEntregas(fonte, vinculo, comArquivos);
         var coleta = coletas.desempenhoDoCliente(filtro, documentos);
         var ocorrencias = lerOcorrencias(filtro.dataInicio(), corte, fonte.params(), vinculo);
         return new CustomerServiceOperacionalDTO(entregas.total, entregas.finalizadas, entregas.noPrazo,
                 coleta.finalizadas(), coleta.noPrazo(), entregas.anexadas, entregas.arquivadas,
                 entregas.peso, entregas.nf, entregas.frete, entregas.status, entregas.dias,
-                ocorrencias.avarias, ocorrencias.extravios, ocorrencias.afetadas, ocorrencias.tipos);
-    }
-
-    private boolean arquivosDisponiveis(LocalDate inicio, LocalDate corte, LocalDate hoje) {
-        var cobertura = comprovantes.coberturaArquivos(inicio, hoje);
-        if (cobertura.dataFinal() == null || cobertura.dataFinal().isBefore(corte)) return false;
-        LocalDate publicadaAte = cobertura.dataFinal().isBefore(hoje) ? cobertura.dataFinal() : hoje;
-        return cobertura.diasCobertos() == ChronoUnit.DAYS.between(inicio, publicadaAte) + 1;
+                ocorrencias.avarias, ocorrencias.extravios, ocorrencias.afetadas, ocorrencias.tipos,
+                ocorrencias.cobertura, coberturaArquivos);
     }
 
     // Arquivos e ocorrências identificam o frete pela minuta. Um número dividido com
@@ -147,18 +143,21 @@ public class CustomerServiceOperacionalRepository {
 
     private Incidentes lerOcorrencias(LocalDate inicio, LocalDate corte, MapSqlParameterSource params, String vinculo) {
         long dias = ChronoUnit.DAYS.between(inicio, corte) + 1;
-        if (dias <= 0) return new Incidentes(null, null, null, null);
+        if (dias <= 0) return Incidentes.semPublicacao(0);
+        List<Date> publicados;
         try {
-            Long prontos = jdbc.queryForObject("""
-                    SELECT COUNT_BIG(*) FROM dbo.customer_service_cobertura_ocorrencias
-                    WHERE dia>=:dataInicio AND dia<:corteExclusivo
-                    """, params, Long.class);
-            if (prontos == null || prontos != dias) return new Incidentes(null, null, null, null);
+            publicados = jdbc.queryForList("""
+                    SELECT dia FROM dbo.customer_service_cobertura_ocorrencias
+                    WHERE dia>=:dataInicio AND dia<:corteExclusivo ORDER BY dia
+                    """, params, Date.class);
         } catch (DataAccessException ex) {
             if (ex.getMostSpecificCause() instanceof SQLException sql &&
-                    (sql.getErrorCode() == 208 || sql.getErrorCode() == 5313)) return new Incidentes(null, null, null, null);
+                    (sql.getErrorCode() == 208 || sql.getErrorCode() == 5313)) return Incidentes.semPublicacao(dias);
             throw ex;
         }
+        if (publicados.isEmpty()) return Incidentes.semPublicacao(dias);
+        var cobertura = new CoberturaOcorrencias(publicados.size(), dias, publicados.get(publicados.size() - 1).toLocalDate());
+        params.addValue("diasPublicados", publicados);
         params.addValue("tratativas", TRATATIVAS).addValue("finalizacoes", BAIXAS_OU_FINALIZACOES)
                 .addValue("avariasCarga", AVARIAS_DE_CARGA).addValue("extraviosCarga", EXTRAVIOS_DE_CARGA);
         String sql = "WITH " + vinculo + """
@@ -167,7 +166,8 @@ public class CustomerServiceOperacionalRepository {
                         CASE WHEN o.codigo IN (:avariasCarga) THEN 1
                              WHEN o.codigo IN (:extraviosCarga) THEN 2 END classe
                     FROM dbo.dashboard_performance_ocorrencias o JOIN titulares t ON t.minuta=o.minuta
-                    WHERE o.ocorrido_em>=:dataInicio AND o.ocorrido_em<:corteExclusivo
+                    WHERE o.data_particao IN (:diasPublicados)
+                      AND o.ocorrido_em>=:dataInicio AND o.ocorrido_em<:corteExclusivo
                       AND (o.codigo IN (:tratativas) OR o.codigo IN (:finalizacoes))
                 )
                 SELECT GROUPING(tipo) total, tipo, COUNT_BIG(*) qtd,
@@ -188,7 +188,7 @@ public class CustomerServiceOperacionalRepository {
                     tipos.add(new Ocorrencia(rs.getString("tipo"), rs.getLong("qtd")));
                 }
             }
-            return new Incidentes(avarias, extravios, afetadas, tipos);
+            return new Incidentes(avarias, extravios, afetadas, tipos, cobertura);
         });
     }
 
@@ -199,5 +199,9 @@ public class CustomerServiceOperacionalRepository {
         final List<Status> status = new ArrayList<>();
         final List<Dia> dias = new ArrayList<>();
     }
-    private record Incidentes(Long avarias, Long extravios, Long afetadas, List<Ocorrencia> tipos) {}
+    private record Incidentes(Long avarias, Long extravios, Long afetadas, List<Ocorrencia> tipos, CoberturaOcorrencias cobertura) {
+        static Incidentes semPublicacao(long dias) {
+            return new Incidentes(null, null, null, null, new CoberturaOcorrencias(0, dias, null));
+        }
+    }
 }
