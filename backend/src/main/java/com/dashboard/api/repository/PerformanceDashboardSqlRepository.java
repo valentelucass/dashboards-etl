@@ -183,7 +183,8 @@ public class PerformanceDashboardSqlRepository {
                 ctx.params(), (r, i) -> r.getObject(1, LocalDate.class)));
         PerformanceEficiencia calculo = new PerformanceEficiencia(filtro.dataInicio(), filtro.dataFim(),
                 LocalDateTime.now(ZONE_ID_BRASILIA), feriados);
-        String sql = baseCte(ctx.colunas(), true, false, rede) + PerformanceOperacaoSql.eficiencia(ctx.where(), rede);
+        String sql = baseCte(ctx.colunas(), true, rede ? VisaoEntregas.REDE : VisaoEntregas.PERFORMANCE)
+                + PerformanceOperacaoSql.eficiencia(ctx.where(), rede);
         return jdbcTemplate.query(sql, ctx.params(), rs -> {
             Long anterior = null;
             List<PerformanceEficiencia.Evento> eventos = new java.util.ArrayList<>();
@@ -508,7 +509,7 @@ public class PerformanceDashboardSqlRepository {
             String documentos) {
         QueryContext ctx = criarContexto(filtro, escopo);
         ctx.params().addValue("documentos", documentos);
-        String sql = baseCte(ctx.colunas(), false, true) + """
+        String sql = baseCte(ctx.colunas(), false, VisaoEntregas.CLIENTE) + """
                 , entregas_cliente AS (
                     SELECT * FROM entregas WHERE 1 = 1
                 """ + ctx.where() + ")\n";
@@ -522,7 +523,7 @@ public class PerformanceDashboardSqlRepository {
     ConsultaEntregas entregasPorResponsavel(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo, boolean rede) {
         QueryContext ctx = criarContextoComum(filtro, escopo);
         adicionarFiltroChave(ctx.whereBuilder(), ctx.params(), "filiais", "responsavel_key", filtro.valores("filiais"));
-        String sql = baseCte(ctx.colunas(), false, false, rede) + """
+        String sql = baseCte(ctx.colunas(), false, rede ? VisaoEntregas.REDE : VisaoEntregas.GESTAO) + """
                 , performance AS (
                     SELECT numero_minuta, data_frete, data_previsao_entrega AS previsao_entrega,
                            data_finalizacao_performance AS data_finalizacao, responsavel AS filial_performance,
@@ -1188,19 +1189,30 @@ public class PerformanceDashboardSqlRepository {
         return new PerformanceViewColumns(nomes);
     }
 
-    private static String baseCte(PerformanceViewColumns colunas) {
-        return baseCte(colunas, false);
+    private enum VisaoEntregas { PERFORMANCE, GESTAO, CLIENTE, REDE }
+
+    private static String comprovanteAnexadoSql(PerformanceViewColumns colunas, VisaoEntregas visao) {
+        if (visao != VisaoEntregas.PERFORMANCE) {
+            exigirColuna(colunas, "Comprovante Anexado");
+            return "CASE WHEN UPPER(LTRIM(RTRIM(CONVERT(nvarchar(20), [Comprovante Anexado])))) IN (N'SIM', N'TRUE', N'1') THEN 1 ELSE 0 END";
+        }
+
+        // Coluna 111 do relatório de Fretes 6389 do ESL, no registro vigente da própria minuta.
+        String data;
+        if (colunas.existe("Comprovante de Entrega")) {
+            data = "CONVERT(nvarchar(80), base_raw.[Comprovante de Entrega], 127)";
+        } else if (colunas.existe("Metadata")) {
+            data = "JSON_VALUE(base_raw.[Metadata], '$.fit_d_t_created_at')";
+        } else {
+            throw new IllegalStateException("A fonte de Performance não contém a data do Comprovante de Entrega do relatório de Fretes.");
+        }
+        return "CASE WHEN TRY_CONVERT(datetimeoffset(7), NULLIF(TRIM(" + data
+                + "), N''), 127) IS NOT NULL THEN 1 ELSE 0 END";
     }
 
-    private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia) {
-        return baseCte(colunas, periodoPorOcorrencia, false);
-    }
-
-    private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia, boolean porCliente) {
-        return baseCte(colunas, periodoPorOcorrencia, porCliente, false);
-    }
-
-    private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia, boolean porCliente, boolean rede) {
+    private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia, VisaoEntregas visao) {
+        boolean porCliente = visao == VisaoEntregas.CLIENTE;
+        boolean rede = visao == VisaoEntregas.REDE;
         exigirColuna(colunas, "Responsável Região Destino Key");
         String responsavelRegiao = textoNullableSql(colunas, "Responsável pela Região de Destino");
         String filialEmissora = textoNullableSql(colunas, "Filial Emissora", "Filial");
@@ -1209,18 +1221,12 @@ public class PerformanceDashboardSqlRepository {
         String cidadeDestino = textoComFallbackSql(colunas, "SEM_CIDADE", "Cidade Destino", "Destino");
         String performanceDiferencaDias = inteiroNullableSql(colunas, "Performance Diferença de Dias");
         String finalizacaoPerformance = dataNullableSql(colunas, "Finalização da Performance", "Data de Finalização");
-        exigirColuna(colunas, "Comprovante Anexado");
         exigirColuna(colunas, "Tipo Frete");
         exigirColuna(colunas, "CT-e Emissão");
         String manifesto = colunas.existe("Metadata")
                 ? "NULLIF(TRY_CONVERT(bigint, JSON_VALUE([Metadata], '$.fit_fte_l_y_mft_sequence_code')),0)"
                 : "CAST(NULL AS bigint)";
-        String comprovanteAnexado = """
-                CASE
-                    WHEN UPPER(LTRIM(RTRIM(CONVERT(NVARCHAR(20), [Comprovante Anexado])))) IN (N'SIM', N'TRUE', N'1') THEN 1
-                    ELSE 0
-                END
-                """;
+        String comprovanteAnexado = comprovanteAnexadoSql(colunas, visao);
 
         return """
                 WITH fonte AS (
@@ -1446,7 +1452,7 @@ public class PerformanceDashboardSqlRepository {
         }
 
         String baseCte() {
-            return PerformanceDashboardSqlRepository.baseCte(colunas);
+            return PerformanceDashboardSqlRepository.baseCte(colunas, false, VisaoEntregas.PERFORMANCE);
         }
     }
 
@@ -1456,7 +1462,8 @@ public class PerformanceDashboardSqlRepository {
         }
 
         boolean contratoObrigatorioValido() {
-            return existe("Comprovante Anexado")
+            return (existe("Comprovante de Entrega") || existe("Metadata"))
+                    && existe("Comprovante Anexado")
                     && existe("Responsável Região Destino Key")
                     && existe("Tipo Frete")
                     && existe("CT-e Emissão");

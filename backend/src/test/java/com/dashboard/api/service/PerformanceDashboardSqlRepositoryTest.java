@@ -45,7 +45,7 @@ class PerformanceDashboardSqlRepositoryTest {
         assertEquals(0L, pagina.getTotalElements());
         assertTrue(jdbcTemplate.sqls.stream().anyMatch(sql -> sql.contains("COUNT_BIG(1)")));
         assertTrue(jdbcTemplate.sqls.stream().anyMatch(sql -> sql.contains("OFFSET :offsetTabela ROWS FETCH NEXT :tamanhoTabela ROWS ONLY")));
-        assertTrue(jdbcTemplate.sqls.stream().anyMatch(sql -> sql.contains("[Comprovante Anexado]") && sql.contains("AS comprovante_anexado")));
+        assertTrue(jdbcTemplate.sqls.stream().anyMatch(sql -> sql.contains("$.fit_d_t_created_at") && sql.contains("AS comprovante_anexado")));
         assertTrue(jdbcTemplate.sqls.stream().anyMatch(sql -> sql.contains("[Performance Diferença de Dias]") && sql.contains("performance_diferenca_dias_publicada")));
         assertTrue(jdbcTemplate.sqls.stream().anyMatch(sql -> sql.contains("[Finalização da Performance]") && sql.contains("data_finalizacao_performance")));
         assertEquals(50L, jdbcTemplate.ultimoParametroLong("offsetTabela"));
@@ -53,7 +53,7 @@ class PerformanceDashboardSqlRepositoryTest {
     }
 
     @Test
-    void performanceExigeColunaComprovanteAnexadoNoContratoDaView() {
+    void performanceExigeDataDoFreteMesmoQuandoInventarioTemMarcacao() {
         CapturandoNamedParameterJdbcTemplate jdbcTemplate = new CapturandoNamedParameterJdbcTemplate(colunasSemComprovante());
         PerformanceDashboardSqlRepository repository = new PerformanceDashboardSqlRepository(
                 jdbcTemplate,
@@ -70,7 +70,7 @@ class PerformanceDashboardSqlRepositoryTest {
                 PageRequest.of(0, 20)
         ));
 
-        assertTrue(ex.getMessage().contains("Comprovante Anexado"));
+        assertTrue(ex.getMessage().contains("Comprovante de Entrega"));
     }
 
     @Test
@@ -120,6 +120,7 @@ class PerformanceDashboardSqlRepositoryTest {
 
     private static List<String> colunasSemComprovante() {
         return List.of(
+                "Comprovante Anexado",
                 "Nº Minuta",
                 "Previsão de Entrega",
                 "Tipo Frete",
@@ -140,8 +141,48 @@ class PerformanceDashboardSqlRepositoryTest {
 
     private static List<String> colunasPadrao() {
         List<String> colunas = new ArrayList<>(colunasSemComprovante());
-        colunas.add(7, "Comprovante Anexado");
+        colunas.add("Metadata");
         return List.copyOf(colunas);
+    }
+
+    @Test
+    void cartoesTabelaEExportacaoConsultamMesmaDataDoRelatorioDeFretes() {
+        var jdbc = new CapturandoNamedParameterJdbcTemplate();
+        var repository = new PerformanceDashboardSqlRepository(jdbc, new ValidadorPeriodoService(), escopoTotal());
+        var filtro = new FiltroConsultaDTO(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 24),
+                Map.of("tabelaColuna.comprovanteAnexado", List.of("Não")));
+
+        repository.buscarOverview(filtro);
+        String overview = jdbc.sqls.get(jdbc.sqls.size() - 1);
+        assertTrue(overview.contains("status_norm = N'Finalizada' AND comprovante_anexado = 1 THEN 1"));
+        assertTrue(overview.contains("status_norm = N'Finalizada' AND comprovante_anexado = 0 THEN valor_nota_fiscal"));
+        repository.buscarTabela(filtro, PageRequest.of(0, 20));
+        String tabela = jdbc.sqls.get(jdbc.sqls.size() - 1);
+        repository.buscarTabelaExportacao(filtro);
+        String exportacao = jdbc.sqls.get(jdbc.sqls.size() - 1);
+
+        for (String sql : List.of(overview, tabela, exportacao)) {
+            assertTrue(sql.contains("JSON_VALUE(base_raw.[Metadata], '$.fit_d_t_created_at')"));
+            assertTrue(sql.contains("TRY_CONVERT(datetimeoffset(7), NULLIF(TRIM("));
+            assertTrue(sql.contains("WHERE rn = 1"));
+            assertTrue(!sql.contains("[Comprovante Anexado]"));
+        }
+        assertTrue(tabela.contains("AND comprovante_anexado = 0"));
+        assertTrue(exportacao.contains("AND comprovante_anexado = 0"));
+    }
+
+    @Test
+    void dataPublicadaEmColunaPropriaTemPrioridadeSobreMetadataEInventario() {
+        var colunas = new ArrayList<>(colunasPadrao());
+        colunas.add("Comprovante de Entrega");
+        var jdbc = new CapturandoNamedParameterJdbcTemplate(colunas);
+        var repository = new PerformanceDashboardSqlRepository(jdbc, new ValidadorPeriodoService(), escopoTotal());
+        repository.buscarOverview(new FiltroConsultaDTO(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 24), Map.of()));
+
+        String sql = jdbc.sqls.get(jdbc.sqls.size() - 1);
+        assertTrue(sql.contains("base_raw.[Comprovante de Entrega]"));
+        assertTrue(!sql.contains("$.fit_d_t_created_at"));
+        assertTrue(!sql.contains("[Comprovante Anexado]"));
     }
 
     @Test
@@ -369,6 +410,13 @@ class PerformanceDashboardSqlRepositoryTest {
             sqls.add(sql);
             ultimoParametro = paramSource;
             return List.of();
+        }
+
+        @Override
+        public Map<String, Object> queryForMap(String sql, SqlParameterSource paramSource) {
+            sqls.add(sql);
+            ultimoParametro = paramSource;
+            return Map.of();
         }
 
         private long ultimoParametroLong(String nome) {

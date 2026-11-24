@@ -1,3 +1,9 @@
+## 24/11/2026 — Comprovantes de entrega na Performance
+
+Os dois cartões, a coluna da tabela e a exportação usam a data e a hora de “Comprovante de Entrega” do relatório de Fretes 6389 do ESL. O percentual considera as minutas finalizadas com anexo entre as finalizadas do período. A pendência soma o valor das NFs das finalizadas sem data de anexo. A previsão de entrega define o período e o anexo pode ter sido registrado depois.
+
+Na conferência de 01 a 24/11, a extração disponível indicou 10.335 comprovantes em 10.708 minutas finalizadas. A versão pública anterior indicava 8.607. A consulta direta ao ESL também identificou anexos posteriores à última captura de alguns dias de frete. O resultado do painel acompanha a captura de cada dia de serviço.
+
 ## 24/11/2026 — DRE em desenvolvimento
 
 A rota `/dre` segue a aba DRE do modelo de Custos. As 224 linhas preservam a ordem e os agrupamentos da planilha. A receita bruta usa a mesma base e data de referência de Faturamento, com filtro de empresa, filial, centro de custo e competência e com o escopo de acesso do usuário. A consulta de uma conta de receita abre os fretes que compõem o valor. A exportação em reais preserva os níveis da tabela e os filtros aplicados.

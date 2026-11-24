@@ -451,15 +451,15 @@ export const KpiDictionary = {
       titulo: 'Comprovante Anexado',
       descricao: 'Percentual de entregas finalizadas com comprovante anexado.',
       calculo:
-        'Finalizadas com Comprovante ÷ Total de Entregas Finalizadas × 100.',
-      observacao: `${periodoPerformance} ${percentualSemBase}`,
+        'Minutas finalizadas com data e hora na coluna Comprovante de Entrega do relatório de Fretes do ESL ÷ total de minutas finalizadas × 100.',
+      observacao: `${periodoPerformance} Anexos posteriores à entrega aparecem quando o frete é atualizado na extração. ${percentualSemBase}`,
     },
     valorNfSemComprovante: {
       titulo: 'Valor de NF sem Comprovante',
       descricao: 'Valor das notas fiscais de entregas finalizadas sem comprovante.',
       calculo:
-        'Soma do Valor das Notas Fiscais das Finalizadas sem Comprovante.',
-      observacao: periodoPerformance,
+        'Soma do valor das NFs das minutas finalizadas sem data e hora na coluna Comprovante de Entrega do relatório de Fretes do ESL. Cada minuta entra uma vez.',
+      observacao: `${periodoPerformance} A pendência sai quando a extração do frete traz a data de anexo.`,
     },
   },
 
