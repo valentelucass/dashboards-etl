@@ -3,6 +3,7 @@ import { rememberedDashboardHref, rememberDashboardSearch } from './dashboardNav
 
 describe('retorno pelo menu', () => {
   it.each([
+    ['/dre', '?f.competenciaDre=2026-09'],
     ['/customer-service', '?f.clienteCS=7'],
     ['/rede-credenciada', '?dataInicio=2026-11-01&f.parceirosRede=Parceiro+A'],
   ])('lembra os filtros apenas ao retornar a %s', (pagina, filtros) => {

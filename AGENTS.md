@@ -71,6 +71,10 @@ Quando o responsável pedir para subir ou publicar, inclua todas as novidades do
 * **Sem divergência silenciosa:** É proibido entregar uma mudança de cálculo mantendo tooltip desatualizado, ou alterar o texto do tooltip sem validar a regra real na camada de dados. A camada SQL/ETL é a fonte da verdade matemática; o `kpiDictionary.ts` é a fonte central da explicação apresentada ao usuário.
 * **Checklist de validação:** Toda mudança de KPI deve revisar os cards que consomem a definição, executar TypeScript, lint e testes do frontend e confirmar que o wrapper não alterou o comportamento responsivo de CSS Grid ou Flexbox.
 
+## Testes de regressão
+
+Antes de concluir uma alteração, execute os testes de regressão dos fluxos afetados e dos relatórios que compartilham a mesma regra. Para indicadores financeiros novos, compare os valores com o relatório de origem no mesmo período e com os mesmos filtros.
+
 ## Diretrizes de Sincronização de Estado (states.md)
 1. Antes de iniciar a implementação de qualquer código, você DEVE ler o arquivo `states.md` para compreender o contexto arquitetural e as regras de negócio vigentes, garantindo que as novas implementações não quebrem o estado atual.
 2. Leia a seção "Tarefas Pendentes" no `states.md` para entender o escopo exato do que precisa ser desenvolvido.

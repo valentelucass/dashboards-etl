@@ -8,6 +8,7 @@ export const PERMISSION_KEYS = [
   'tracking',
   'faturasPorCliente',
   'contasAPagar',
+  'dre',
   'cotacoes',
   'indicadoresGestaoAVista',
   'executivo',

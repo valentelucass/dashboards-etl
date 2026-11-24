@@ -20,6 +20,7 @@ const CustomerServicePage = lazy(() => import('./pages/CustomerServicePage'));
 const TrackingPage = lazy(() => import('./pages/TrackingPage'));
 const FaturasPorClientePage = lazy(() => import('./pages/FaturasPorClientePage'));
 const ContasAPagarPage = lazy(() => import('./pages/ContasAPagarPage'));
+const DrePage = lazy(() => import('./pages/DrePage'));
 const CotacoesPage = lazy(() => import('./pages/CotacoesPage'));
 const IndicadoresGestaoAVistaPage = lazy(() => import('./pages/IndicadoresGestaoAVistaPage'));
 const ExecutivoPage = lazy(() => import('./pages/ExecutivoPage'));
@@ -105,6 +106,10 @@ export default function App() {
 
               <Route element={<RotaProtegida permissao="contasAPagar" />}>
                 <Route path="/contas-a-pagar" element={<ContasAPagarPage />} />
+              </Route>
+
+              <Route element={<RotaProtegida permissao="dre" />}>
+                <Route path="/dre" element={<DrePage />} />
               </Route>
 
               <Route element={<RotaProtegida permissao="cotacoes" />}>

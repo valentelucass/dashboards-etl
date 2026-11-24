@@ -1,3 +1,9 @@
+## 24/11/2026 — DRE em desenvolvimento
+
+A rota `/dre` segue a aba DRE do modelo de Custos. As 224 linhas preservam a ordem e os agrupamentos da planilha. A receita bruta usa a mesma base e data de referência de Faturamento, com filtro de empresa, filial, centro de custo e competência e com o escopo de acesso do usuário. A consulta de uma conta de receita abre os fretes que compõem o valor. A exportação em reais preserva os níveis da tabela e os filtros aplicados.
+
+As demais fontes estão identificadas em cada conta para a conciliação com Custos. O orçamento, os custos e os resultados que dependem deles aparecem como indisponíveis. O acumulado só é exibido quando a origem tem histórico desde janeiro. O histórico consultado nesta entrega se inicia em 17/08/2026.
+
 ## 24/11/2026 — Título de Manifestos
 
 O cabeçalho e os menus de navegação usam o mesmo título para a rota de Manifestos.
@@ -736,6 +742,8 @@ O carregamento usa skeletons Astryx por rota e por consulta. Os indicadores acom
 - É proibido incluir saudações, conclusões, explicações fora dos bullets ou reescrever outras seções durante a resposta de planejamento.
 
 ## Tarefas Pendentes
+
+- [ ] [DRE] Conciliar um mês já fechado com Nicholas. Validar o orçamento por conta, a distribuição das despesas entre operação, administração e comercial e o rateio da frota por viagem. Ligar os filtros de projeto e fornecedor aos lançamentos conciliados.
 
 - [ ] [Capacidade do Dashboard] Qualificar o preparo incremental de Coletas com os lotes reais, conectar a fila ao ciclo contínuo e estender aos demais contratos das 11 fontes. Medir os painéis e filtros com ingestão concorrente e volume maior antes de trocar a leitura.
 
