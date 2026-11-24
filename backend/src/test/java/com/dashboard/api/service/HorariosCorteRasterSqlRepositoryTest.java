@@ -90,10 +90,19 @@ class HorariosCorteRasterSqlRepositoryTest {
         assertThat(sql).doesNotContain("WHERE COALESCE(v.data_hora_prev_ini, v.data_hora_real_ini)");
         assertThat(sql).doesNotContain("CAST(? AS DATE)");
         assertThat(sql).contains("N'E. South America Standard Time'",
-                "CAST(v.inicio_referencia AT TIME ZONE @fusoRaster AS DATE) AS dia_base_sm",
+                "CAST(v.inicio_referencia AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_base_sm_at",
                 "CAST(v.data_hora_real_ini AT TIME ZONE @fusoRaster AS DATETIME2(7))",
-                "rc.dia_base_sm AS data_corte", "CAST(rc.dia_base_sm AS DATETIME2(0))");
+                "CAST(rc.data_base_sm_at AS DATE) AS data_corte", "CAST(CAST(rc.data_base_sm_at AS DATE) AS DATETIME2(0))");
         assertThat(sql).doesNotContain("data_corte_base_at");
+    }
+
+    @Test
+    void preservaAHoraLocalDaSmNoDetalhamentoPaginado() throws ReflectiveOperationException {
+        var pagina = constanteSql("SQL_PAGINA");
+        assertThat(pagina).containsSubsequence("data_base_sm_at DATETIME2(7)",
+                "CAST(v.inicio_referencia AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_base_sm_at",
+                "INSERT INTO @rotas", "destino_sm, data_base_sm_at", "destino_sm, data_base_sm_at",
+                "CAST(rc.data_base_sm_at AS DATE) AS data_corte", "CAST(data_base_sm_at AS TIME(7)) AS sm_gerada");
     }
 
     @Test
