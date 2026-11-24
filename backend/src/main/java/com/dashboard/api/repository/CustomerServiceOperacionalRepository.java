@@ -87,11 +87,13 @@ public class CustomerServiceOperacionalRepository {
                     SELECT f.[Nº Minuta] minuta FROM dbo.vw_fretes_powerbi f
                     LEFT JOIN %s conta ON conta.documento = f.[Pagador Doc]
                     WHERE f.[Nº Minuta] IS NOT NULL
+                      AND EXISTS (SELECT 1 FROM dbo.vw_fretes_powerbi candidata
+                                  WHERE candidata.[Pagador Doc] IN (%s) AND candidata.[Nº Minuta] = f.[Nº Minuta])
                     GROUP BY f.[Nº Minuta]
                     HAVING MIN(CASE WHEN conta.documento IS NOT NULL %s THEN 1 ELSE 0 END) = 1
                        AND MAX(CASE WHEN f.[Tipo Frete] IS NULL OR f.[Tipo Frete] NOT IN (N'Substitute',N'Complementary') THEN 1 ELSE 0 END) = 1
                 )
-                """.formatted(CustomerServiceDocumentos.TABELA, filial);
+                """.formatted(CustomerServiceDocumentos.TABELA, CustomerServiceDocumentos.SELECAO, filial);
     }
 
     private Entregas lerEntregas(PerformanceDashboardSqlRepository.ConsultaEntregas fonte, String vinculo, boolean comArquivos) {

@@ -27,7 +27,7 @@ class RedeCredenciadaOperacionalRepositoryTest {
     void publicacaoAusenteDistingueSemCoberturaDeZeroArquivamentos() {
         var filtro = new FiltroConsultaDTO(inicio, fim, Map.of());
         var fonte = new PerformanceDashboardSqlRepository.ConsultaEntregas("WITH performance AS (...) ", new MapSqlParameterSource());
-        when(performance.entregasDaGestao(eq(filtro), any())).thenReturn(fonte);
+        when(performance.entregasPorResponsavel(eq(filtro), any(), eq(true))).thenReturn(fonte);
         rede.entregas(filtro, null, false);
         var sql = ArgumentCaptor.forClass(String.class);
         verify(jdbc).query(sql.capture(), any(MapSqlParameterSource.class), any(RowMapper.class));
@@ -41,7 +41,7 @@ class RedeCredenciadaOperacionalRepositoryTest {
         var permitido = EscopoFilialService.EscopoFilial.semAcesso();
         var fonte = new PerformanceDashboardSqlRepository.ConsultaEntregas("WITH performance AS (...) ", new MapSqlParameterSource());
         when(escopo.escopoAtual()).thenReturn(permitido);
-        when(performance.entregasDaGestao(filtro, permitido)).thenReturn(fonte);
+        when(performance.entregasPorResponsavel(filtro, permitido, true)).thenReturn(fonte);
         rede.entregas(filtro, "ABC | PARCEIRO", true);
         var sql = ArgumentCaptor.forClass(String.class);
         verify(jdbc).query(sql.capture(), any(MapSqlParameterSource.class), any(RowMapper.class));

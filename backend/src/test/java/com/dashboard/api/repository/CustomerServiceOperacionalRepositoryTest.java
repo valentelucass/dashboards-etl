@@ -97,6 +97,7 @@ class CustomerServiceOperacionalRepositoryTest {
         var consultas = ArgumentCaptor.forClass(String.class);
         verify(jdbc,times(2)).query(consultas.capture(),same(params),any(ResultSetExtractor.class));
         assertThat(consultas.getAllValues()).allSatisfy(sql -> assertThat(sql).contains("conta.documento = f.[Pagador Doc]",
+                "candidata.[Pagador Doc] IN (SELECT documento", "candidata.[Nº Minuta] = f.[Nº Minuta]",
                 "HAVING MIN(CASE WHEN conta.documento IS NOT NULL",
                 "f.[Responsável Região Destino Key] IN (:filiaisDaConta)", "THEN 1 ELSE 0 END) = 1"));
         assertThat(consultas.getAllValues().get(0)).contains("LEFT JOIN titulares", "ON a.minuta=t.minuta")

@@ -183,7 +183,7 @@ public class PerformanceDashboardSqlRepository {
                 ctx.params(), (r, i) -> r.getObject(1, LocalDate.class)));
         PerformanceEficiencia calculo = new PerformanceEficiencia(filtro.dataInicio(), filtro.dataFim(),
                 LocalDateTime.now(ZONE_ID_BRASILIA), feriados);
-        String sql = baseCte(ctx.colunas(), true) + PerformanceOperacaoSql.eficiencia(ctx.where(), rede);
+        String sql = baseCte(ctx.colunas(), true, false, rede) + PerformanceOperacaoSql.eficiencia(ctx.where(), rede);
         return jdbcTemplate.query(sql, ctx.params(), rs -> {
             Long anterior = null;
             List<PerformanceEficiencia.Evento> eventos = new java.util.ArrayList<>();
@@ -516,9 +516,13 @@ public class PerformanceDashboardSqlRepository {
     }
 
     ConsultaEntregas entregasDaGestao(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo) {
+        return entregasPorResponsavel(filtro, escopo, false);
+    }
+
+    ConsultaEntregas entregasPorResponsavel(FiltroConsultaDTO filtro, EscopoFilialService.EscopoFilial escopo, boolean rede) {
         QueryContext ctx = criarContextoComum(filtro, escopo);
         adicionarFiltroChave(ctx.whereBuilder(), ctx.params(), "filiais", "responsavel_key", filtro.valores("filiais"));
-        String sql = ctx.baseCte() + """
+        String sql = baseCte(ctx.colunas(), false, false, rede) + """
                 , performance AS (
                     SELECT numero_minuta, data_frete, data_previsao_entrega AS previsao_entrega,
                            data_finalizacao_performance AS data_finalizacao, responsavel AS filial_performance,
@@ -1193,6 +1197,10 @@ public class PerformanceDashboardSqlRepository {
     }
 
     private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia, boolean porCliente) {
+        return baseCte(colunas, periodoPorOcorrencia, porCliente, false);
+    }
+
+    private static String baseCte(PerformanceViewColumns colunas, boolean periodoPorOcorrencia, boolean porCliente, boolean rede) {
         exigirColuna(colunas, "Responsável Região Destino Key");
         String responsavelRegiao = textoNullableSql(colunas, "Responsável pela Região de Destino");
         String filialEmissora = textoNullableSql(colunas, "Filial Emissora", "Filial");
@@ -1204,6 +1212,9 @@ public class PerformanceDashboardSqlRepository {
         exigirColuna(colunas, "Comprovante Anexado");
         exigirColuna(colunas, "Tipo Frete");
         exigirColuna(colunas, "CT-e Emissão");
+        String manifesto = colunas.existe("Metadata")
+                ? "NULLIF(TRY_CONVERT(bigint, JSON_VALUE([Metadata], '$.fit_fte_l_y_mft_sequence_code')),0)"
+                : "CAST(NULL AS bigint)";
         String comprovanteAnexado = """
                 CASE
                     WHEN UPPER(LTRIM(RTRIM(CONVERT(NVARCHAR(20), [Comprovante Anexado])))) IN (N'SIM', N'TRUE', N'1') THEN 1
@@ -1252,7 +1263,7 @@ public class PerformanceDashboardSqlRepository {
                                 TRY_CONVERT(datetime2, CONVERT(NVARCHAR(64), [Data de extracao])) DESC,
                                 TRY_CONVERT(BIGINT, [ID]) DESC
                         ) AS rn
-                    FROM dbo.vw_fretes_powerbi base_raw
+                    FROM %s base_raw
                     OUTER APPLY (
                         SELECT cal.data
                         FROM dbo.dim_calendario cal
@@ -1303,7 +1314,7 @@ public class PerformanceDashboardSqlRepository {
                     FROM minutas
                 )
                 """.formatted(
-                colunas.existe("Metadata") ? "NULLIF(TRY_CONVERT(bigint, JSON_VALUE([Metadata], '$.fit_fte_l_y_mft_sequence_code')),0)" : "CAST(NULL AS bigint)",
+                rede ? "NULLIF(manifesto_entrega_consulta,0)" : manifesto,
                 finalizacaoPerformance,
                 responsavelRegiao,
                 filialEmissora,
@@ -1315,6 +1326,7 @@ public class PerformanceDashboardSqlRepository {
                 porCliente ? "[Kg Real] AS peso_real_kg, [Valor Total do Serviço] AS valor_total_servico," : "",
                 comprovanteAnexado,
                 performanceDiferencaDias,
+                rede ? "dbo.dashboard_fretes_rede" : "dbo.vw_fretes_powerbi",
                 periodoPorOcorrencia ? PerformanceOperacaoSql.PERIODO_OCORRENCIA : """
                         (prazo_reentrega.data >= :dataInicio AND prazo_reentrega.data < :dataFim)
                         OR (([Tipo Frete] IS NULL OR [Tipo Frete] <> N'Redelivery' OR [CT-e Emissão] IS NULL)

@@ -22,7 +22,7 @@ public class RedeCredenciadaOperacionalRepository {
     }
 
     public List<Entrega> entregas(FiltroConsultaDTO filtro, String parceiro, boolean temArquivamentosPublicados) {
-        var fonte = performance.entregasDaGestao(filtro, escopo.escopoAtual());
+        var fonte = performance.entregasPorResponsavel(filtro, escopo.escopoAtual(), true);
         String arquivo = temArquivamentosPublicados ? "COUNT_BIG(a.minuta)" : "CAST(NULL AS bigint)";
         String documentos = temArquivamentosPublicados ? """
                 LEFT JOIN dbo.rede_credenciada_arquivos a
