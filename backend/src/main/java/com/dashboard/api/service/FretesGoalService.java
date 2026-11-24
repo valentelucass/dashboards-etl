@@ -22,6 +22,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -69,14 +72,15 @@ public class FretesGoalService implements ApplicationRunner {
                 .filter(Objects::nonNull)
                 .forEach(filiaisFiltradas::add);
 
-        Set<String> branchIds = new LinkedHashSet<>(filiaisFiltradas);
+        Set<String> branchIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        branchIds.addAll(filiaisFiltradas);
         realizados.stream()
                 .map(FretesBranchRealizado::branchId)
                 .map(this::normalizarBranchId)
                 .filter(Objects::nonNull)
                 .forEach(branchIds::add);
 
-        Map<String, FretesBranchRealizado> realizadoPorFilial = new LinkedHashMap<>();
+        Map<String, FretesBranchRealizado> realizadoPorFilial = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         for (FretesBranchRealizado realizado : realizados) {
             String branchId = normalizarBranchId(realizado.branchId());
             if (branchId != null) {
@@ -312,7 +316,8 @@ public class FretesGoalService implements ApplicationRunner {
                         LinkedHashMap::new
                 ));
 
-        Set<String> branchIds = new LinkedHashSet<>(branchIdsBase);
+        Set<String> branchIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        branchIds.addAll(branchIdsBase);
         Set<String> filiaisComMetaEspecifica = goals.keySet().stream()
                 .map(GoalKey::branchId)
                 .filter(Objects::nonNull)
@@ -321,7 +326,7 @@ public class FretesGoalService implements ApplicationRunner {
             branchIds.addAll(filiaisComMetaEspecifica);
         }
 
-        Map<String, GoalTotals> result = new LinkedHashMap<>();
+        Map<String, GoalTotals> result = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         branchIds.forEach(branchId -> result.put(branchId, GoalTotals.zero()));
 
         for (String branchId : branchIds) {
@@ -565,6 +570,9 @@ public class FretesGoalService implements ApplicationRunner {
     }
 
     private record GoalKey(String branchId, int ano, int mes) {
+        private GoalKey {
+            if (branchId != null) branchId = branchId.trim().toUpperCase(Locale.ROOT);
+        }
     }
 
     private record YearMonthSlice(int ano, int mes) {

@@ -19,3 +19,11 @@ export const DEFAULT_PRESENTATION_SEQUENCE: PresentationPage[] = [
 export function filterPresentationPages(canAccess: (permission: PermissionKey) => boolean): PresentationPage[] {
   return DEFAULT_PRESENTATION_SEQUENCE.filter((page) => canAccess(page.permission));
 }
+
+export function destinoApresentacao(destino: string, dataInicio: string, dataFim: string): string {
+  const [path, busca] = destino.split('?');
+  const params = new URLSearchParams(busca);
+  params.set('dataInicio', dataInicio);
+  params.set('dataFim', dataFim);
+  return path + '?' + params.toString();
+}

@@ -110,7 +110,7 @@ public class FretesService {
         VisaoFretesRepository.FretesOverviewProjection overview = buscarOverviewAgregado(consulta);
         PeriodoDiasResumo diasPeriodo = buscarResumoDiasPeriodo(filtro.dataInicio(), filtro.dataFim());
         int totalFretes = overview != null ? overview.getTotalFretes() : 0;
-        FretesGoalSummaryDTO metas = buscarResumoMetas(filtro);
+        FretesGoalSummaryDTO metas = buscarResumoMetas(filtro, consulta);
         LocalDate referenciaFechadaTendencia = referenciaFechadaTendencia(filtro.dataFim());
 
         if (totalFretes == 0) {
@@ -185,7 +185,7 @@ public class FretesService {
 
     public FretesGoalSummaryDTO buscarResumoMetas(FiltroConsultaDTO filtro) {
         validadorPeriodo.validar(filtro.dataInicio(), filtro.dataFim());
-        return buscarResumoMetas(filtro, buscarRealizadosPorFilial(filtro));
+        return buscarResumoMetas(filtro, consulta(filtro));
     }
 
     public List<FretesTrendPointDTO> buscarSerieTemporal(LocalDate dataInicio, LocalDate dataFim) {
@@ -303,8 +303,12 @@ public class FretesService {
 
     private FretesGoalSummaryDTO buscarResumoMetas(
             FiltroConsultaDTO filtro,
-            Collection<FretesGoalService.FretesBranchRealizado> realizados
+            FretesConsulta consulta
     ) {
+        if (consulta.escopo().vazio() == 0 && consulta.filiaisParaMetas().isEmpty()) {
+            return fallbackResumoMetas(filtro, List.of());
+        }
+        var realizados = buscarRealizadosPorFilial(consulta);
         if (fretesGoalService == null) {
             return fallbackResumoMetas(filtro, realizados);
         }
@@ -313,7 +317,7 @@ public class FretesService {
                     filtro.dataInicio(),
                     filtro.dataFim(),
                     realizados,
-                    filtro.valores("filiais")
+                    consulta.filiaisParaMetas()
             );
         } catch (RuntimeException ex) {
             log.warn("Não foi possível carregar metas de fretes. O relatório seguirá sem metas configuradas. Motivo: {}", ex.getMessage());
@@ -513,8 +517,8 @@ public class FretesService {
                 .toList();
     }
 
-    private List<FretesGoalService.FretesBranchRealizado> buscarRealizadosPorFilial(FiltroConsultaDTO filtro) {
-        return buscarRealizadoFaturamentoPorFilial(consulta(filtro)).stream()
+    private List<FretesGoalService.FretesBranchRealizado> buscarRealizadosPorFilial(FretesConsulta consulta) {
+        return buscarRealizadoFaturamentoPorFilial(consulta).stream()
                 .map(row -> new FretesGoalService.FretesBranchRealizado(
                         row.getFilial(),
                         zero(row.getRealizadoFaturamento()).setScale(2, RoundingMode.HALF_UP)
@@ -523,10 +527,15 @@ public class FretesService {
     }
 
     private FretesConsulta consulta(FiltroConsultaDTO filtro) {
+        var acesso = escopoFilialService.escopoAtual();
+        var filiaisParaMetas = acesso.acessoTotal() ? filtro.valores("filiais") : acesso.filiaisOrdenadas().stream()
+                .filter(filial -> filtro.corresponde("filiais", filial))
+                .toList();
         return new FretesConsulta(
                 filtro.dataInicio(),
                 filtro.dataFim().plusDays(1),
-                DashboardQueryFilters.escopo(escopoFilialService.escopoAtual()),
+                filiaisParaMetas,
+                DashboardQueryFilters.escopo(acesso),
                 DashboardQueryFilters.of(filtro.valores("filiais")),
                 DashboardQueryFilters.of(filtro.valores("status")),
                 DashboardQueryFilters.of(filtro.valores("pagadores")),
@@ -651,6 +660,7 @@ public class FretesService {
     private record FretesConsulta(
             LocalDate dataInicio,
             LocalDate dataFimExclusivo,
+            List<String> filiaisParaMetas,
             DashboardQueryFilters.ParametroLista escopo,
             DashboardQueryFilters.ParametroLista filiais,
             DashboardQueryFilters.ParametroLista status,

@@ -26,6 +26,7 @@ import MensagemErro from '../components/ui/MensagemErro';
 import type { ChartDictionaryKey } from '../constants/chartDictionary';
 import { KpiDictionary } from '../constants/kpiDictionary';
 import { exportarFaturamentoCsv } from '../api/endpoints/faturamentoServico';
+import { useAutenticacao } from '../contexts/AutenticacaoContext';
 import { getApiErrorMessage, getTipoErro } from '../utils/apiError';
 import { useFiltro } from '../contexts/FiltroContext';
 import { usePageHeader } from '../contexts/PageHeaderContext';
@@ -703,6 +704,7 @@ function TopClientesTableCard({
 }
 
 export default function FaturamentoPage() {
+  const { usuario } = useAutenticacao();
   const [carregarOpcoesDeFiltro, setCarregarOpcoesDeFiltro] = useState(false);
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, setFiltros, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
@@ -878,14 +880,15 @@ export default function FaturamentoPage() {
   const metasPorFilial = useMemo(() => {
     const map = new Map<string, NonNullable<typeof metasData>['branches'][number]>();
     for (const branch of metasData?.branches ?? []) {
-      map.set(branch.branchId, branch);
+      map.set(branch.branchId.trim().toLowerCase(), branch);
     }
     return map;
   }, [metasData]);
-  const usarMetaGlobalNaTabela = (filtros.filiais?.length ?? 0) + (filtros.parceirosLogisticos?.length ?? 0) === 0;
+  const usarMetaGlobalNaTabela = !usuario?.filiaisPermitidasEfetivas?.length
+    && (filtros.filiais?.length ?? 0) + (filtros.parceirosLogisticos?.length ?? 0) === 0;
   const tabelaConteudo = useMemo(() => (
     (tabela.data?.conteudo ?? []).map((row) => {
-      const metaFilial = row.filial ? metasPorFilial.get(row.filial) : null;
+      const metaFilial = row.filial ? metasPorFilial.get(row.filial.trim().toLowerCase()) : null;
       const metaAplicada = usarMetaGlobalNaTabela && metasData
         ? metasData
         : metaFilial;

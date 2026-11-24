@@ -120,6 +120,7 @@ export default function FilterBar({
   const dimensionCount = Children.toArray(children).length;
   const hasFilterControls = Boolean(period || dimensionCount || hasActive);
   const inHeader = !isPresentationMode && Boolean(header?.toolbar && header.panel);
+  const toolbar = inHeader || isPresentationMode;
   const panelSummary = (header?.updatedAt || hasActive) && (
     <div className="dashboard-filter-summary">
       {header?.updatedAt && <LastUpdated dataExtracao={header.updatedAt} />}
@@ -151,7 +152,7 @@ export default function FilterBar({
         aria-label={!isAction && totalActive ? `Filtros, ${totalActive} selecionado(s)` : label}
         variant={isPresentationMode || inHeader ? 'ghost' : 'secondary'}
         size={isPresentationMode ? 'sm' : 'md'}
-        className={inHeader ? `dashboard-header-action dashboard-filter-toggle${isAction ? ' dashboard-panel-toggle' : ''}` : undefined}
+        className={toolbar ? `dashboard-header-action dashboard-filter-toggle${isAction ? ' dashboard-panel-toggle' : ''}` : undefined}
         aria-expanded={expanded} aria-controls={panelId}
         data-dashboard-filters-open={!isAction && open ? 'true' : undefined}
         onClick={event => {
@@ -188,15 +189,15 @@ export default function FilterBar({
   // ── barra recolhida (sempre visível) ──────────────────────────────
   const collapsedBar = (
     <div
-      className={inHeader ? 'dashboard-header-toolbar' : `dashboard-filter-card flex items-center border ${isPresentationMode ? 'h-8 gap-1.5 rounded-none border-0 bg-transparent px-0 shadow-none' : 'min-h-12 flex-wrap gap-x-3 gap-y-2 rounded-[20px] px-4 py-2 md:flex-nowrap md:py-0'}`}
+      className={toolbar ? 'dashboard-header-toolbar' : 'dashboard-filter-card flex min-h-12 flex-wrap items-center gap-x-3 gap-y-2 rounded-[20px] border px-4 py-2 md:flex-nowrap md:py-0'}
     >
-      {inHeader && pageActions}
+      {toolbar && pageActions}
       {/* Data compacta */}
       {showDate && (
         <>
           <div className="dashboard-filter-date flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>
             <Calendar size={13} className="shrink-0" aria-hidden="true" />
-            {inHeader ? (
+            {toolbar ? (
               <span className="dashboard-filter-date-values" title={fmtData(dataInicio, true) + ' → ' + fmtData(dataFim, true)}>
                 {compactPeriod(dataInicio, dataFim)}
               </span>
@@ -208,12 +209,12 @@ export default function FilterBar({
               </div>
             )}
           </div>
-          {!inHeader && <div className="hidden h-5 w-px shrink-0 sm:block" style={{ backgroundColor: 'var(--color-border)' }} aria-hidden="true" />}
+          {!toolbar && <div className="hidden h-5 w-px shrink-0 sm:block" style={{ backgroundColor: 'var(--color-border)' }} aria-hidden="true" />}
         </>
       )}
 
       {hasFilterControls && disclosureButton('filters')}
-      {!inHeader && pageActions}
+      {!toolbar && pageActions}
 
     </div>
   );

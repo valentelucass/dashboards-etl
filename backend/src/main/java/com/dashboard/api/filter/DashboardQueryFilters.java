@@ -30,7 +30,7 @@ public final class DashboardQueryFilters {
     }
 
     public static ParametroLista escopo(EscopoFilialService.EscopoFilial escopo) {
-        return escopo.acessoTotal() ? of(List.of()) : of(escopo.filiaisOrdenadas());
+        return escopo.acessoTotal() ? of(List.of()) : new ParametroLista(of(escopo.filiaisOrdenadas()).valores(), 0);
     }
 
     public static ParametroLista escopoFiliais(EscopoFilialService.EscopoFilial escopo) {

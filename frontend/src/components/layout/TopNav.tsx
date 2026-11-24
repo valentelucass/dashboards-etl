@@ -18,9 +18,10 @@ import {
 } from 'lucide-react';
 import { useAutenticacao } from '../../contexts/AutenticacaoContext';
 import { usePageHeader } from '../../contexts/PageHeaderContext';
+import { useFiltro } from '../../contexts/FiltroContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import type { NavItem } from '../../utils/accessControl';
-import { filterPresentationPages, type PresentationPage } from '../../utils/presentationSequence';
+import { destinoApresentacao, filterPresentationPages, type PresentationPage } from '../../utils/presentationSequence';
 import PresentationSequencesModal from '../presentation/PresentationSequencesModal';
 import CommunicationsBell from '../home/CommunicationsBell';
 
@@ -36,6 +37,10 @@ export default function TopNav({ toolbarRef, panelRef }: TopNavProps) {
   const { theme, setTheme } = useTheme();
   const { canAccess, isAdminAcesso } = usePermissions();
   const pageHeader = usePageHeader();
+  const { dataInicio, dataFim, obterLinkPainel } = useFiltro();
+  const abrirPaginaApresentacao = useCallback((path: string) => {
+    navigate(destinoApresentacao(obterLinkPainel(path), dataInicio, dataFim));
+  }, [navigate, obterLinkPainel, dataInicio, dataFim]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [apresentacao, setApresentacao] = useState<{ paginas: NavItem[]; indice: number } | null>(null);
   const [isPresentationManagerOpen, setIsPresentationManagerOpen] = useState(false);
@@ -54,9 +59,9 @@ export default function TopNav({ toolbarRef, panelRef }: TopNavProps) {
     if (paginas.length === 0) return;
     setIsMenuOpen(false);
     setApresentacao({ paginas, indice: 0 });
-    navigate(paginas[0].path);
+    abrirPaginaApresentacao(paginas[0].path);
     try { await document.documentElement.requestFullscreen(); } catch { /* O modo continua funcional sem fullscreen. */ }
-  }, [navigate, paginasApresentacao]);
+  }, [abrirPaginaApresentacao, paginasApresentacao]);
 
   const sairApresentacao = useCallback(async () => {
     setApresentacao(null);
@@ -74,8 +79,8 @@ export default function TopNav({ toolbarRef, panelRef }: TopNavProps) {
     const indice = apresentacao.indice + direcao;
     if (indice < 0 || indice >= apresentacao.paginas.length) return;
     setApresentacao({ ...apresentacao, indice });
-    navigate(apresentacao.paginas[indice].path);
-  }, [apresentacao, navigate]);
+    abrirPaginaApresentacao(apresentacao.paginas[indice].path);
+  }, [apresentacao, abrirPaginaApresentacao]);
 
   useEffect(() => {
     document.body.dataset.presentationMode = apresentacao ? 'true' : 'false';

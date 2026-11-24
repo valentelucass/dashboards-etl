@@ -358,7 +358,28 @@ class FretesServiceTest {
         };
     }
 
+    @Test
+    void metasUsamFiliaisPermitidasMesmoSemMovimentoEComFiltroVazio() {
+        var acesso = mock(EscopoFilialService.class);
+        when(acesso.escopoAtual()).thenReturn(new EscopoFilialService.EscopoFilial(false, List.of("SPO", "AGU")));
+        var restrito = new FretesService(new ValidadorPeriodoService(), repository, acesso,
+                PeriodoOffsetDateTimeHelper.padrao(), fretesGoalService, Clock.systemUTC());
+        var inicio = LocalDate.of(2026, 11, 1);
+        var fim = inicio.plusDays(23);
+        restrito.buscarResumoMetas(new FiltroConsultaDTO(inicio, fim, Map.of()));
+        assertThat(fretesGoalService.filiaisRecebidas).containsExactly("AGU", "SPO");
+        restrito.buscarResumoMetas(new FiltroConsultaDTO(inicio, fim, Map.of("filiais", List.of("agu", "CPQ"))));
+        assertThat(fretesGoalService.filiaisRecebidas).containsExactly("AGU");
+        fretesGoalService.filiaisRecebidas = null;
+        restrito.buscarResumoMetas(new FiltroConsultaDTO(inicio, fim, Map.of("filiais", List.of("CPQ"))));
+        assertThat(fretesGoalService.filiaisRecebidas).isNull();
+        when(acesso.escopoAtual()).thenReturn(EscopoFilialService.EscopoFilial.semAcesso());
+        restrito.buscarResumoMetas(new FiltroConsultaDTO(inicio, fim, Map.of()));
+        assertThat(fretesGoalService.filiaisRecebidas).isNull();
+    }
+
     private static final class FakeFretesGoalService extends FretesGoalService {
+        private List<String> filiaisRecebidas;
         private FretesGoalSummaryDTO summary;
         private List<FretesBranchRealizado> realizadosRecebidos = List.of();
 
@@ -374,6 +395,7 @@ class FretesServiceTest {
                 Collection<String> filiaisSelecionadas
         ) {
             realizadosRecebidos = new ArrayList<>(realizados);
+            filiaisRecebidas = List.copyOf(filiaisSelecionadas);
             if (summary != null) {
                 return summary;
             }

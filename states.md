@@ -1,3 +1,7 @@
+## 24/11/2026 — Apresentação e metas de Faturamento
+
+A apresentação mantém o período entre relatórios e alinha os filtros à direita. O Faturamento utiliza as filiais permitidas para calcular a meta inicial, inclusive quando alguma delas ainda não teve movimento. A atribuição da Vedacit a SPO é feita na publicação do ETL V2 pelo CNPJ do pagador.
+
 ## 24/11/2026 — Comprovantes de entrega na Performance
 
 Os dois cartões, a coluna da tabela e a exportação usam a data e a hora de “Comprovante de Entrega” do relatório de Fretes 6389 do ESL. O percentual considera as minutas finalizadas com anexo entre as finalizadas do período. A pendência soma o valor das NFs das finalizadas sem data de anexo. A previsão de entrega define o período e o anexo pode ter sido registrado depois.
