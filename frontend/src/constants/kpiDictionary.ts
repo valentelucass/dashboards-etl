@@ -66,6 +66,7 @@ const baseGestaoCubagem =
 
 const regraHorarioCorteCwbNhb =
   'Na linha CWB-NHB, o corte operacional vigente é 22h.';
+const periodoHorarioCorte = 'O período usa o dia da partida prevista no horário de Brasília. Se faltar a previsão, vale o dia da saída real.';
 
 export const KpiDictionary = {
   dre: {
@@ -1095,7 +1096,7 @@ export const KpiDictionary = {
         descricao: 'Percentual das saídas realizadas dentro do horário de corte.',
         calculo: 'Saídas no Horário ÷ Total de Saídas Programadas × 100.',
         observacao:
-          `Há tolerância de 10 minutos após o horário de corte da rota. ${regraHorarioCorteCwbNhb} SMs com justificativa ativa contam como no horário; ao excluir logicamente a justificativa, a SM volta ao status original de contabilização. ${percentualSemBase}`,
+          `${periodoHorarioCorte} Há tolerância de 10 minutos após o horário de corte da rota. ${regraHorarioCorteCwbNhb} SMs com justificativa ativa contam como no horário; ao excluir logicamente a justificativa, a SM volta ao status original de contabilização. ${percentualSemBase}`,
       },
     },
 
@@ -1254,7 +1255,7 @@ export const KpiDictionary = {
         calculo:
           'Contagem de Saídas com Início Real até Horário de Corte + 10 minutos, incluindo SMs com justificativa ativa.',
         observacao:
-          'A data-base é a partida programada; quando ela não existe, é usada a data do início real. A rota RJR → SPO possui corte operacional às 22h.',
+          `${periodoHorarioCorte} A rota RJR → SPO possui corte operacional às 22h.`,
       },
       saidasForaHorario: {
         titulo: 'Saídas Fora do Horário',
@@ -1266,6 +1267,7 @@ export const KpiDictionary = {
         descricao: 'Quantidade de viagens aptas à avaliação do horário de corte.',
         calculo:
           'Contagem de Viagens com Rota Mapeada, Horário de Corte e Início Real.',
+        observacao: periodoHorarioCorte,
       },
       percentualNoHorario: {
         titulo: 'Percentual no Horário',

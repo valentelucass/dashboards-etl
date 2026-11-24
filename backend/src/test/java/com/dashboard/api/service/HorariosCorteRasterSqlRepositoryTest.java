@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -78,7 +81,7 @@ class HorariosCorteRasterSqlRepositoryTest {
     void queryDeveFiltrarJanelaDaSmComPredicadosSargaveis() throws ReflectiveOperationException {
         String sql = sql();
 
-        assertThat(sql).contains("CAST(COALESCE(v.data_hora_prev_ini, v.data_hora_real_ini) AS DATETIME2(0)) AS data_base_sm_at");
+        assertThat(sql).contains("v.data_hora_prev_ini AS inicio_referencia", "v.data_hora_real_ini AS inicio_referencia");
         assertThat(sql).contains("WHERE v.data_hora_prev_ini >= :dataInicio");
         assertThat(sql).contains("AND v.data_hora_prev_ini < :dataFimExclusivo");
         assertThat(sql).contains("WHERE v.data_hora_prev_ini IS NULL");
@@ -86,9 +89,33 @@ class HorariosCorteRasterSqlRepositoryTest {
         assertThat(sql).contains("AND v.data_hora_real_ini < :dataFimExclusivo");
         assertThat(sql).doesNotContain("WHERE COALESCE(v.data_hora_prev_ini, v.data_hora_real_ini)");
         assertThat(sql).doesNotContain("CAST(? AS DATE)");
-        assertThat(sql).contains("CAST(rc.data_base_sm_at AS DATE) AS data_corte");
-        assertThat(sql).contains("CAST(CAST(rc.data_base_sm_at AS DATE) AS DATETIME2(0))");
+        assertThat(sql).contains("N'E. South America Standard Time'",
+                "CAST(v.inicio_referencia AT TIME ZONE @fusoRaster AS DATE) AS dia_base_sm",
+                "CAST(v.data_hora_real_ini AT TIME ZONE @fusoRaster AS DATETIME2(7))",
+                "rc.dia_base_sm AS data_corte", "CAST(rc.dia_base_sm AS DATETIME2(0))");
         assertThat(sql).doesNotContain("data_corte_base_at");
+    }
+
+    @Test
+    void outubroComecaETerminaAMeiaNoiteDeSaoPaulo() throws ReflectiveOperationException {
+        var filtro = new FiltroConsultaDTO(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31), Map.of());
+        var parametros = queryParams(tabelaQuery(sqlCount(), filtro, ""));
+        assertThat(parametros.getValue("dataInicio")).isEqualTo(OffsetDateTime.parse("2026-10-01T00:00:00-03:00"));
+        assertThat(parametros.getValue("dataFimExclusivo")).isEqualTo(OffsetDateTime.parse("2026-11-01T00:00:00-03:00"));
+        var jdbc = new NamedParameterJdbcTemplate(new DriverManagerDataSource("jdbc:h2:mem:;MODE=MSSQLServer"));
+        var viagens = jdbc.queryForList("""
+                SELECT sm FROM (VALUES
+                    (9808810, '2026-09-30 23:00:00-03:00'),
+                    (1,       '2026-10-01 03:00:00+00:00'),
+                    (10027980,'2026-10-31 23:19:47-03:00'),
+                    (2,       '2026-11-01 02:59:59.9999999+00:00'),
+                    (3,       '2026-11-01 00:00:00-03:00')
+                ) AS viagens(sm, inicio)
+                WHERE CAST(inicio AS TIMESTAMP(7) WITH TIME ZONE) >= :dataInicio
+                  AND CAST(inicio AS TIMESTAMP(7) WITH TIME ZONE) < :dataFimExclusivo
+                ORDER BY sm
+                """, parametros, Integer.class);
+        assertThat(viagens).containsExactly(1, 2, 10027980);
     }
 
     @Test
@@ -252,8 +279,8 @@ class HorariosCorteRasterSqlRepositoryTest {
         return method.invoke(
                 repository,
                 sqlBase,
-                LocalDate.of(2026, 5, 1),
-                LocalDate.of(2026, 5, 12),
+                filtro.dataInicio(),
+                filtro.dataFim(),
                 EscopoFilialService.EscopoFilial.comAcessoTotal(),
                 List.of("CWB"),
                 filtro,

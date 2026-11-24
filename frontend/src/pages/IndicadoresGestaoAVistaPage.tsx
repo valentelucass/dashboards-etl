@@ -981,7 +981,7 @@ export default function IndicadoresGestaoAVistaPage() {
           Fonte: {horariosOverview.data?.ultimaImportacaoArquivo ?? 'Raster API - SQL Server'}
         </div>
         <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          A saída real é comparada ao corte da rota no dia previsto para o início da viagem, com tolerância de 10 minutos. Se faltar a previsão, vale o dia da saída real.
+          O período usa o dia da partida prevista no horário de Brasília. Se faltar a previsão, vale o dia da saída real. A saída tem tolerância de 10 minutos após o corte da rota.
         </div>
       </div>
     </Card>
