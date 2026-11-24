@@ -53,7 +53,7 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                 cod_solicitacao BIGINT, status_viagem NVARCHAR(10), placa_veiculo NVARCHAR(20),
                 rota_limpa NVARCHAR(500), origem_raw NVARCHAR(500), destino_raw NVARCHAR(500),
                 origem_sm NVARCHAR(100), destino_sm NVARCHAR(100),
-                dia_base_sm DATE, data_hora_real_ini_at DATETIME2(7),
+                data_base_sm_at DATETIME2(7), data_hora_real_ini_at DATETIME2(7),
                 data_hora_real_fim_at DATETIME2(7), data_hora_prev_fim_at DATETIME2(7),
                 data_extracao_at DATETIME2(3)
             );
@@ -101,7 +101,7 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     CAST(v.data_hora_real_ini AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_hora_real_ini_at,
                     CAST(v.data_hora_real_fim AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_hora_real_fim_at,
                     CAST(v.data_hora_prev_fim AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_hora_prev_fim_at,
-                    CAST(v.inicio_referencia AT TIME ZONE @fusoRaster AS DATE) AS dia_base_sm,
+                    CAST(v.inicio_referencia AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_base_sm_at,
                     CASE
                         WHEN p.parada_data_extracao IS NULL THEN v.data_extracao
                         WHEN v.data_extracao IS NULL THEN p.parada_data_extracao
@@ -160,11 +160,11 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
             )
             INSERT INTO @rotas (
                 cod_solicitacao, status_viagem, placa_veiculo, rota_limpa, origem_raw, destino_raw,
-                origem_sm, destino_sm, dia_base_sm, data_hora_real_ini_at,
+                origem_sm, destino_sm, data_base_sm_at, data_hora_real_ini_at,
                 data_hora_real_fim_at, data_hora_prev_fim_at, data_extracao_at
             )
             SELECT cod_solicitacao, status_viagem, placa_veiculo, rota_limpa, origem_raw, destino_raw,
-                   origem_sm, destino_sm, dia_base_sm, data_hora_real_ini_at,
+                   origem_sm, destino_sm, data_base_sm_at, data_hora_real_ini_at,
                    data_hora_real_fim_at, data_hora_prev_fim_at, data_extracao_at
             FROM rota_canonica;
 
@@ -209,10 +209,10 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     LOWER(COALESCE(filial.filial, N'Não mapeada')) COLLATE Latin1_General_CI_AI AS filial_key,
                     CONCAT(rc.origem_sm, N' x ', rc.destino_sm) AS origem_destino,
                     apoio.horario_corte,
-                    rc.dia_base_sm AS data_corte,
+                    CAST(rc.data_base_sm_at AS DATE) AS data_corte,
                     CASE
-                        WHEN rc.dia_base_sm IS NULL OR apoio.horario_corte IS NULL THEN NULL
-                        ELSE DATEADD(SECOND, DATEDIFF(SECOND, CAST(N'00:00:00' AS TIME), apoio.horario_corte), CAST(rc.dia_base_sm AS DATETIME2(0)))
+                        WHEN rc.data_base_sm_at IS NULL OR apoio.horario_corte IS NULL THEN NULL
+                        ELSE DATEADD(SECOND, DATEDIFF(SECOND, CAST(N'00:00:00' AS TIME), apoio.horario_corte), CAST(CAST(rc.data_base_sm_at AS DATE) AS DATETIME2(0)))
                     END AS corte_at,
                     vj.cod_solicitacao AS cod_solicitacao_justificada,
                     vj.justificativa AS justificativa
@@ -256,7 +256,7 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                 END AS transit_time,
                 CAST(data_hora_real_ini_at AS TIME(0)) AS inicio,
                 CAST(NULL AS TIME(0)) AS manifestado,
-                CAST(data_base_sm_at AS TIME(0)) AS sm_gerada,
+                CAST(data_base_sm_at AS TIME(7)) AS sm_gerada,
                 CAST(corte_at AS TIME(0)) AS corte,
                 data_hora_real_ini_at AS saida_efetiva,
                 corte_at AS horario_corte,
