@@ -27,10 +27,10 @@ function mesAtual() {
   return partes.find(p => p.type === 'year')!.value + '-' + partes.find(p => p.type === 'month')!.value;
 }
 
-function escolha(label: string, valores: Array<string | null>, valor: string, alterar: (v: string) => void, todos: string) {
+function escolha(label: string, valores: Array<string | null>, valor: string, alterar: (v: string) => void, todos: string, vazio = todos) {
   const opcoes = [...new Set([...valores, valor].filter((v): v is string => Boolean(v)))].sort((a,b) => a.localeCompare(b,'pt-BR'));
   return <div className="dre-control"><span aria-hidden="true">{label}</span>
-    <DashboardSelector label={label} value={valor} onValueChange={alterar}><option value="">{todos}</option>
+    <DashboardSelector label={label} value={valor} onValueChange={alterar} disabled={opcoes.length === 0}><option value="">{opcoes.length ? todos : vazio}</option>
       {opcoes.map(v => <option key={v} value={v}>{v}</option>)}</DashboardSelector>
   </div>;
 }
@@ -72,7 +72,8 @@ export default function DrePage() {
       actions={<ExportButton label="Exportar" nomeArquivo={'DRE-'+competencia} onExport={resumo.isSuccess ? exportar : undefined}/>}>
       {escolha('Empresa (CNPJ base)', dimensoes.map(d => d.empresa), empresa, v => setFiltros({empresaDre:v?[v]:[],filialDre:[],centroDre:[]}), 'Todas as empresas')}
       {escolha('Filial', filiais.map(d => d.filial), filial, v => setFiltros({filialDre:v?[v]:[],centroDre:[]}), 'Todas as filiais')}
-      {escolha('Centro de custo', centros.map(d => d.centro), centro, v => setFiltros({centroDre:v?[v]:[]}), 'Todos os centros')}
+      {escolha('Centro de custo', centros.map(d => d.centro), centro, v => setFiltros({centroDre:v?[v]:[]}), 'Todos os centros',
+        dims.isSuccess ? 'Sem centro informado nos fretes' : 'Centros indisponíveis')}
       <label className="dre-control"><span>Conta do DRE</span><input value={busca} onChange={e => buscar(e.target.value)} placeholder="Nome da conta"/></label>
       <label className="dre-control"><span>Projeto</span><input disabled value="Aguarda origem dos projetos" readOnly/></label>
       <label className="dre-control"><span>Fornecedor</span><input disabled value="Aguarda vínculo com as despesas" readOnly/></label>

@@ -2,7 +2,7 @@
 
 A rota `/dre` segue a aba DRE do modelo de Custos. As 224 linhas preservam a ordem e os agrupamentos da planilha. A receita bruta usa a mesma base e data de referência de Faturamento, com filtro de empresa, filial, centro de custo e competência e com o escopo de acesso do usuário. A consulta de uma conta de receita abre os fretes que compõem o valor. A exportação em reais preserva os níveis da tabela e os filtros aplicados.
 
-As demais fontes estão identificadas em cada conta para a conciliação com Custos. O orçamento, os custos e os resultados que dependem deles aparecem como indisponíveis. O acumulado só é exibido quando a origem tem histórico desde janeiro. O histórico consultado nesta entrega se inicia em 17/08/2026.
+As demais fontes estão identificadas em cada conta para a conciliação com Custos. O orçamento, os custos e os resultados que dependem deles aparecem como indisponíveis. O acumulado só é exibido quando a origem tem histórico desde janeiro. O histórico consultado nesta entrega se inicia em 17/08/2026. A base de Faturamento consultada em 24/11 tem 58.128 fretes desde agosto e nenhum centro de custo preenchido. A tela informa essa condição no filtro até que a origem forneça centros.
 
 ## 24/11/2026 — Título de Manifestos
 

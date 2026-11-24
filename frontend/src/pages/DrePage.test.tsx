@@ -47,3 +47,14 @@ it('mantém o erro de consulta explícito, sem publicar números zerados', async
   expect((await screen.findByRole('alert')).textContent).toContain('Falha ao carregar o DRE');
   expect(screen.queryByText('R$ 0,00')).toBeNull();
 });
+
+it('explica o filtro de centro de custo quando a base tem fretes sem nenhum centro preenchido', async () => {
+  vi.spyOn(api, 'dimensoesDre').mockResolvedValue([{empresa:'12345678', filial:'Filial A', centro:null}]);
+  vi.spyOn(api, 'resumoDre').mockResolvedValue({historico:{primeiroFrete:null, atualizadoEm:null}, valores:[]});
+  abrir();
+  await screen.findByRole('button', {name:'Expandir RECEITA BRUTA'});
+  fireEvent.click(screen.getByRole('button', {name:/^Filtros/}));
+  const centro = screen.getByRole('combobox', {name:'Centro de custo'});
+  expect(centro.textContent).toContain('Sem centro informado nos fretes');
+  expect(centro.matches(':disabled, [aria-disabled="true"]')).toBe(true);
+});
