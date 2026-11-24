@@ -59,8 +59,8 @@ it.each([
   await waitFor(() => expect(cartao('Horários de Corte').textContent).toContain('Meta indisponível'));
   expect(cartao('Horários de Corte').textContent).toContain('75,0%');
   expect(cartao('Horários de Corte').textContent).not.toContain('Meta 98%');
-  expect(cartao('Nova Tela de Fretes = Performance').textContent).toContain(metaFrete);
-  expect(cartao('Nova Tela de Fretes = Performance').textContent).toContain('90,00%');
+  expect(cartao('Performance').textContent).toContain(metaFrete);
+  expect(cartao('Performance').textContent).toContain('90,00%');
   expect(screen.getByRole('group', { name: 'Resultados dos indicadores de gestão' }).querySelectorAll('article')).toHaveLength(5);
   expect(screen.queryByText(erroDaPagina)).toBeNull();
 });
@@ -71,9 +71,9 @@ it.each([
   { nome: 'linha inválida', status: 200, data: [null], mensagem: mensagemGrafico },
 ])('mantém a página quando a série de performance recebe $nome', async ({ status, data, mensagem }) => {
   abrir(Promise.resolve({ goals: metas }), { status, data });
-  const performance = screen.getByRole('heading', { level: 2, name: 'Nova Tela de Fretes = Performance' }).closest('section')!;
+  const performance = screen.getByRole('heading', { level: 2, name: 'Performance', exact: true }).closest('section')!;
   await waitFor(() => expect(within(performance).getByText(mensagem)).toBeTruthy());
-  expect(cartao('Nova Tela de Fretes = Performance').textContent).toContain('90,00%');
+  expect(cartao('Performance').textContent).toContain('90,00%');
   expect(cartao('Horários de Corte').textContent).toContain('Meta 98%');
   expect(screen.queryByText(erroDaPagina)).toBeNull();
 });

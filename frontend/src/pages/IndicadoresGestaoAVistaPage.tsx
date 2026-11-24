@@ -99,6 +99,7 @@ interface GoalConfig {
   label: string;
 }
 
+const indicadorPerformance = KpiDictionary.gestaoAVista.resumo.performanceFretes;
 const DEFAULT_KPI_GOALS: KpiGoalsMap = {
   delivery_performance: 95,
   collector_usage: 90,
@@ -999,8 +1000,8 @@ export default function IndicadoresGestaoAVistaPage() {
   const panoramaItems: PanoramaOperacionalItem[] = [
     {
       id: 'performance',
-      definition: KpiDictionary.gestaoAVista.resumo.performanceFretes,
-      title: 'Nova Tela de Fretes - Performance',
+      definition: indicadorPerformance,
+      title: indicadorPerformance.titulo,
       value: formatarPorcentagem(performanceOverview.data?.pctNoPrazo ?? 0, 2),
       statusLabel: performanceAssessment.label,
       tone: performanceAssessment.tone,
@@ -1116,8 +1117,8 @@ export default function IndicadoresGestaoAVistaPage() {
 
       <div className="gestao-scoreboard" role="group" aria-label="Resultados dos indicadores de gestão">
         <IndicadoresGestaoSummaryCard
-          definition={KpiDictionary.gestaoAVista.resumo.performanceFretes}
-          title="Nova Tela de Fretes = Performance"
+          definition={indicadorPerformance}
+          title={indicadorPerformance.titulo}
           description="Proporção de entregas finalizadas que chegaram no prazo previsto."
           value={formatarPorcentagem(performanceOverview.data?.pctNoPrazo ?? 0, 2)}
           detail={`${formatarNumero(performanceOverview.data?.entregasNoPrazo ?? 0)} no prazo de ${formatarNumero(performanceOverview.data?.finalizadas ?? 0)} finalizadas · ${performanceGapLabel}`}
@@ -1180,7 +1181,7 @@ export default function IndicadoresGestaoAVistaPage() {
       <IndicadoresGestaoPanoramaSection items={panoramaItems} />
 
       <IndicadoresGestaoSection
-        title="Nova Tela de Fretes = Performance"
+        title={indicadorPerformance.titulo}
         description="Performance de entrega com drill-down por responsável, região e cidade, considerando as entregas finalizadas com previsão no período."
         goalLabel={goals.performance.label}
         goalTone={performanceAssessment.tone}

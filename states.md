@@ -4,6 +4,8 @@ Quando falta uma meta, o painel mantém os resultados medidos e identifica a met
 
 ## 23/11/2026 — Filial responsável na Performance da Gestão à Vista
 
+O indicador aparece como “Performance” no cartão, na dica, no Panorama Operacional e no detalhamento da Gestão à Vista.
+
 Horários de Corte exibe o instante da extração do Raster no fuso de Brasília. O banco registra esse instante em UTC.
 
 No cartão, no ranking, no detalhe e na exportação da Performance da Gestão à Vista, a filial base corresponde ao responsável pela região de destino. A seleção de várias filiais e as permissões de acesso usam a mesma chave do filtro Responsáveis da tela Performance. O percentual divide as entregas no prazo pelas finalizadas no período de previsão selecionado.

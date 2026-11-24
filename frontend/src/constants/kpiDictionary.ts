@@ -1058,7 +1058,7 @@ export const KpiDictionary = {
   gestaoAVista: {
     resumo: {
       performanceFretes: {
-        titulo: 'Nova Tela de Fretes',
+        titulo: 'Performance',
         descricao: 'Percentual das entregas finalizadas que chegaram no prazo.',
         calculo: 'Entregas finalizadas no prazo ÷ total de entregas finalizadas × 100.',
         observacao:
