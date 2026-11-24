@@ -7,6 +7,7 @@ import com.dashboard.api.dto.PaginaDTO;
 import com.dashboard.api.model.VisaoHorariosCorteEntity;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import com.dashboard.api.util.ConsultaLimiteUtils;
+import com.dashboard.api.util.PeriodoOffsetDateTimeHelper;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Repository;
 public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterDataSource {
 
     private static final int TOLERANCIA_HORARIO_CORTE_MINUTOS = 10;
+    private static final PeriodoOffsetDateTimeHelper PERIODO_RASTER = PeriodoOffsetDateTimeHelper.padrao();
     private static final String PARAM_TOLERANCIA_HORARIO_CORTE_MINUTOS = "toleranciaHorarioCorteMinutos";
 
     private static final List<String> FILIAIS_RASTER_PADRAO = List.of(
@@ -46,12 +48,13 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
     // uma vez evita repetir essa leitura para cada combinação de filial e horário de corte.
     private static final String BASE_CTE = """
             SET NOCOUNT ON;
+            DECLARE @fusoRaster SYSNAME = N'E. South America Standard Time';
             DECLARE @rotas TABLE (
                 cod_solicitacao BIGINT, status_viagem NVARCHAR(10), placa_veiculo NVARCHAR(20),
                 rota_limpa NVARCHAR(500), origem_raw NVARCHAR(500), destino_raw NVARCHAR(500),
                 origem_sm NVARCHAR(100), destino_sm NVARCHAR(100),
-                data_base_sm_at DATETIME2(0), data_hora_real_ini_at DATETIME2(0),
-                data_hora_real_fim_at DATETIME2(0), data_hora_prev_fim_at DATETIME2(0),
+                dia_base_sm DATE, data_hora_real_ini_at DATETIME2(7),
+                data_hora_real_fim_at DATETIME2(7), data_hora_prev_fim_at DATETIME2(7),
                 data_extracao_at DATETIME2(3)
             );
             WITH viagens_base AS (
@@ -60,10 +63,8 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     v.status_viagem,
                     v.placa_veiculo,
                     NULLIF(LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(v.rota_descricao, N'/BRASIL', N''), CHAR(13), N' '), CHAR(10), N' '))), N'') AS rota_limpa,
-                    CAST(v.data_hora_real_ini AS DATETIME2(0)) AS data_hora_real_ini_at,
-                    CAST(v.data_hora_real_fim AS DATETIME2(0)) AS data_hora_real_fim_at,
-                    CAST(v.data_hora_prev_fim AS DATETIME2(0)) AS data_hora_prev_fim_at,
-                    CAST(COALESCE(v.data_hora_prev_ini, v.data_hora_real_ini) AS DATETIME2(0)) AS data_base_sm_at,
+                    v.data_hora_real_ini, v.data_hora_real_fim, v.data_hora_prev_fim,
+                    v.data_hora_prev_ini AS inicio_referencia,
                     v.data_extracao
                 FROM dbo.raster_viagens v
                 WHERE v.data_hora_prev_ini >= :dataInicio
@@ -76,10 +77,8 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     v.status_viagem,
                     v.placa_veiculo,
                     NULLIF(LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(v.rota_descricao, N'/BRASIL', N''), CHAR(13), N' '), CHAR(10), N' '))), N'') AS rota_limpa,
-                    CAST(v.data_hora_real_ini AS DATETIME2(0)) AS data_hora_real_ini_at,
-                    CAST(v.data_hora_real_fim AS DATETIME2(0)) AS data_hora_real_fim_at,
-                    CAST(v.data_hora_prev_fim AS DATETIME2(0)) AS data_hora_prev_fim_at,
-                    CAST(COALESCE(v.data_hora_prev_ini, v.data_hora_real_ini) AS DATETIME2(0)) AS data_base_sm_at,
+                    v.data_hora_real_ini, v.data_hora_real_fim, v.data_hora_prev_fim,
+                    v.data_hora_real_ini AS inicio_referencia,
                     v.data_extracao
                 FROM dbo.raster_viagens v
                 WHERE v.data_hora_prev_ini IS NULL
@@ -99,10 +98,10 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     v.status_viagem,
                     v.placa_veiculo,
                     v.rota_limpa,
-                    v.data_hora_real_ini_at,
-                    v.data_hora_real_fim_at,
-                    v.data_hora_prev_fim_at,
-                    v.data_base_sm_at,
+                    CAST(v.data_hora_real_ini AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_hora_real_ini_at,
+                    CAST(v.data_hora_real_fim AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_hora_real_fim_at,
+                    CAST(v.data_hora_prev_fim AT TIME ZONE @fusoRaster AS DATETIME2(7)) AS data_hora_prev_fim_at,
+                    CAST(v.inicio_referencia AT TIME ZONE @fusoRaster AS DATE) AS dia_base_sm,
                     CASE
                         WHEN p.parada_data_extracao IS NULL THEN v.data_extracao
                         WHEN v.data_extracao IS NULL THEN p.parada_data_extracao
@@ -161,11 +160,11 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
             )
             INSERT INTO @rotas (
                 cod_solicitacao, status_viagem, placa_veiculo, rota_limpa, origem_raw, destino_raw,
-                origem_sm, destino_sm, data_base_sm_at, data_hora_real_ini_at,
+                origem_sm, destino_sm, dia_base_sm, data_hora_real_ini_at,
                 data_hora_real_fim_at, data_hora_prev_fim_at, data_extracao_at
             )
             SELECT cod_solicitacao, status_viagem, placa_veiculo, rota_limpa, origem_raw, destino_raw,
-                   origem_sm, destino_sm, data_base_sm_at, data_hora_real_ini_at,
+                   origem_sm, destino_sm, dia_base_sm, data_hora_real_ini_at,
                    data_hora_real_fim_at, data_hora_prev_fim_at, data_extracao_at
             FROM rota_canonica;
 
@@ -210,10 +209,10 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     LOWER(COALESCE(filial.filial, N'Não mapeada')) COLLATE Latin1_General_CI_AI AS filial_key,
                     CONCAT(rc.origem_sm, N' x ', rc.destino_sm) AS origem_destino,
                     apoio.horario_corte,
-                    CAST(rc.data_base_sm_at AS DATE) AS data_corte,
+                    rc.dia_base_sm AS data_corte,
                     CASE
-                        WHEN rc.data_base_sm_at IS NULL OR apoio.horario_corte IS NULL THEN NULL
-                        ELSE DATEADD(SECOND, DATEDIFF(SECOND, CAST(N'00:00:00' AS TIME), apoio.horario_corte), CAST(CAST(rc.data_base_sm_at AS DATE) AS DATETIME2(0)))
+                        WHEN rc.dia_base_sm IS NULL OR apoio.horario_corte IS NULL THEN NULL
+                        ELSE DATEADD(SECOND, DATEDIFF(SECOND, CAST(N'00:00:00' AS TIME), apoio.horario_corte), CAST(rc.dia_base_sm AS DATETIME2(0)))
                     END AS corte_at,
                     vj.cod_solicitacao AS cod_solicitacao_justificada,
                     vj.justificativa AS justificativa
@@ -632,9 +631,10 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
             filiais = List.of("__sem_filtro__");
         }
 
+        var janela = PERIODO_RASTER.criarJanela(dataInicio, dataFim);
         return new MapSqlParameterSource()
-                .addValue("dataInicio", dataInicio)
-                .addValue("dataFimExclusivo", dataFim.plusDays(1))
+                .addValue("dataInicio", janela.inicioInclusivo())
+                .addValue("dataFimExclusivo", janela.fimExclusivo())
                 .addValue(PARAM_TOLERANCIA_HORARIO_CORTE_MINUTOS, TOLERANCIA_HORARIO_CORTE_MINUTOS)
                 .addValue("escopoFiliais", escopoFiliais)
                 .addValue("escopoFiliaisVazio", escopo.acessoTotal() ? 1 : 0)

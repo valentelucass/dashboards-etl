@@ -568,7 +568,7 @@ export const chartDictionary = {
     calculoTecnico:
       'COUNT_BIG(1); SUM(CASE WHEN saiu_no_horario = 1 THEN 1 ELSE 0 END); SUM(CASE WHEN saiu_no_horario = 0 THEN 1 ELSE 0 END)',
     calculoNegocio:
-      'Conta viagens avaliadas, separa as que saíram no horário das que atrasaram e permite comparar aderência por filial.',
+      'Compara as saídas no horário por filial. Cada viagem entra pelo dia da partida prevista no horário de Brasília. Se faltar a previsão, vale o dia da saída real.',
     agrupamento: 'GROUP BY data_corte, filial',
   },
 
