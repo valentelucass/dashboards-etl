@@ -71,7 +71,7 @@ it.each([
   { nome: 'linha inválida', status: 200, data: [null], mensagem: mensagemGrafico },
 ])('mantém a página quando a série de performance recebe $nome', async ({ status, data, mensagem }) => {
   abrir(Promise.resolve({ goals: metas }), { status, data });
-  const performance = screen.getByRole('heading', { level: 2, name: 'Performance', exact: true }).closest('section')!;
+  const performance = screen.getByRole('heading', { level: 2, name: 'Performance' }).closest('section')!;
   await waitFor(() => expect(within(performance).getByText(mensagem)).toBeTruthy());
   expect(cartao('Performance').textContent).toContain('90,00%');
   expect(cartao('Horários de Corte').textContent).toContain('Meta 98%');

@@ -253,7 +253,7 @@ export default function ManifestosPage() {
   );
 
   usePageHeader({
-    title: 'Manifestos - Performance de Veículos',
+    title: 'Manifestos',
     description: 'Custos, ocupação de carga e performance por motorista.',
     updatedAt: performance.data?.updatedAt ?? null,
   });
