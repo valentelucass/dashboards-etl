@@ -11,6 +11,7 @@ export const PAPEL_ADMIN_ACESSO = 'admin_acesso';
 export const PAPEL_DESENVOLVEDOR = String(import.meta.env.VITE_ACESSO_USUARIO_SUPREMO_PAPEL ?? 'desenvolvedor');
 export const EMAIL_USUARIO_SUPREMO = 'desenvolvedor@rodogarcia.com.br';
 export const PAPEL_USUARIO_COMUM = 'usuario_comum';
+export const TITULO_MANIFESTOS = 'Manifestos';
 
 type UsuarioPapel = Pick<IUsuarioSessao, 'papel'> & Partial<Pick<IUsuarioSessao, 'email'>>;
 
@@ -30,7 +31,7 @@ export function isAdministrativeDashboardNavItem(item: NavItem): boolean {
 
 export const DASHBOARD_NAV_ITEMS: NavItem[] = [
   { label: 'Coletas', path: '/coletas', permission: 'coletas' },
-  { label: 'Manifestos - Performan. Veículos', path: '/manifestos', permission: 'manifestos' },
+  { label: TITULO_MANIFESTOS, path: '/manifestos', permission: 'manifestos' },
   { label: 'Faturamento', path: '/faturamento', permission: 'fretes' },
   { label: 'Performance', path: '/performance', permission: 'performance' },
   { label: 'Rede Credenciada', path: '/rede-credenciada', permission: 'redeCredenciada' },

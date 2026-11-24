@@ -1,6 +1,6 @@
 ## 24/11/2026 — Título de Manifestos
 
-A página e o menu usam o nome Manifestos.
+O cabeçalho e os menus de navegação usam o mesmo título para a rota de Manifestos.
 
 ## 23/11/2026 — Carregamento dos indicadores da Gestão à Vista
 

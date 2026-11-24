@@ -25,6 +25,7 @@ import StatusBadge from '../components/shared/StatusBadge';
 import MensagemErro from '../components/ui/MensagemErro';
 import { KpiDictionary } from '../constants/kpiDictionary';
 import { exportarManifestosCsv } from '../api/endpoints/manifestosServico';
+import { TITULO_MANIFESTOS } from '../utils/accessControl';
 import { getApiErrorMessage, getTipoErro } from '../utils/apiError';
 import { useFiltro } from '../contexts/FiltroContext';
 import { usePageHeader } from '../contexts/PageHeaderContext';
@@ -253,7 +254,7 @@ export default function ManifestosPage() {
   );
 
   usePageHeader({
-    title: 'Manifestos',
+    title: TITULO_MANIFESTOS,
     description: 'Custos, ocupação de carga e performance por motorista.',
     updatedAt: performance.data?.updatedAt ?? null,
   });

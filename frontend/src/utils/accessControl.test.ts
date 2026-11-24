@@ -9,6 +9,13 @@ import {
 } from './accessControl';
 
 describe('accessControl', () => {
+  it('exibe Manifestos no link da rota de manifestos', () => {
+    expect(DASHBOARD_NAV_ITEMS.find(item => item.path === '/manifestos')).toMatchObject({
+      label: 'Manifestos',
+      permission: 'manifestos',
+    });
+  });
+
   it('inclui a permissão indicadoresGestaoAVista no mapa vazio', () => {
     expect(createEmptyPermissionMap()).toMatchObject({
       indicadoresGestaoAVista: false,
