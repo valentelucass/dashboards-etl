@@ -319,6 +319,10 @@ function PerformanceDrilldownBreadcrumbs({
   );
 }
 
+function formatarPercentualMedido(valor?: number, decimais = 1) {
+  return typeof valor === 'number' && Number.isFinite(valor) ? formatarPorcentagem(valor, decimais) : undefined;
+}
+
 export default function IndicadoresGestaoAVistaPage() {
   const { dataInicio, dataFim, filtros, setDataInicio, setDataFim, setDataRange, setFiltro, setFiltros, limparFiltros } = useFiltro();
   const { isDark } = useEchartsTheme();
@@ -1120,7 +1124,7 @@ export default function IndicadoresGestaoAVistaPage() {
           definition={indicadorPerformance}
           title={indicadorPerformance.titulo}
           description="Proporção de entregas finalizadas que chegaram no prazo previsto."
-          value={formatarPorcentagem(performanceOverview.data?.pctNoPrazo ?? 0, 2)}
+          value={formatarPercentualMedido(performanceOverview.data?.pctNoPrazo, 2)}
           detail={`${formatarNumero(performanceOverview.data?.entregasNoPrazo ?? 0)} no prazo de ${formatarNumero(performanceOverview.data?.finalizadas ?? 0)} finalizadas · ${performanceGapLabel}`}
           goalLabel={goals.performance.label}
           statusLabel={performanceAssessment.label}
@@ -1132,7 +1136,7 @@ export default function IndicadoresGestaoAVistaPage() {
           definition={KpiDictionary.gestaoAVista.resumo.utilizacaoColetores}
           title="Utilização dos Coletores"
           description="Aderência operacional da conferência."
-          value={formatarPorcentagem(coletoresOverview.data?.pctUtilizacao ?? 0)}
+          value={formatarPercentualMedido(coletoresOverview.data?.pctUtilizacao)}
           detail={`${formatarNumero(coletoresOverview.data?.manifestosBipados ?? 0)} ordens sobre ${formatarNumero(coletoresOverview.data?.totalManifestos ?? 0)} manifestos bipáveis · ${coletoresGapLabel}`}
           goalLabel={goals.coletores.label}
           statusLabel={coletoresAssessment.label}
@@ -1144,7 +1148,7 @@ export default function IndicadoresGestaoAVistaPage() {
           definition={KpiDictionary.gestaoAVista.resumo.cubagemMercadorias}
           title="Cubagem de Mercadorias"
           description="Cobertura de cubagem das minutas emitidas."
-          value={formatarPorcentagem(cubagemOverview.data?.pctCubagem ?? 0)}
+          value={formatarPercentualMedido(cubagemOverview.data?.pctCubagem)}
           detail={`${formatarNumero(cubagemOverview.data?.fretesCubados ?? 0)} cubadas de ${formatarNumero(cubagemOverview.data?.totalFretes ?? 0)} minutas · ${cubagemGapLabel}`}
           goalLabel={goals.cubagem.label}
           statusLabel={cubagemAssessment.label}
@@ -1156,7 +1160,7 @@ export default function IndicadoresGestaoAVistaPage() {
           definition={KpiDictionary.gestaoAVista.resumo.indenizacaoMercadorias}
           title="Indenização de Mercadorias"
           description="Valor a pagar ao cliente por abertura do sinistro sobre o faturamento da filial."
-          value={formatarPorcentagem(indenizacaoOverview.data?.pctIndenizacao ?? 0, 2)}
+          value={formatarPercentualMedido(indenizacaoOverview.data?.pctIndenizacao, 2)}
           detail={`${formatarMoeda(indenizacaoOverview.data?.valorIndenizadoAbs ?? 0)} indenizados · ${indenizacaoGapLabel}`}
           goalLabel={goals.indenizacao.label}
           statusLabel={indenizacaoAssessment.label}
@@ -1168,7 +1172,7 @@ export default function IndicadoresGestaoAVistaPage() {
           definition={KpiDictionary.gestaoAVista.resumo.horariosCorte}
           title="Horários de Corte"
           description="Pontualidade das saídas programadas."
-          value={formatarPorcentagem(horariosOverview.data?.pctNoHorario ?? 0)}
+          value={formatarPercentualMedido(horariosOverview.data?.pctNoHorario)}
           detail={`${formatarNumero(horariosOverview.data?.saidasNoHorario ?? 0)} no horário de ${formatarNumero(horariosOverview.data?.totalProgramado ?? 0)} · ${horariosGapLabel}`}
           goalLabel={goals.horarios.label}
           statusLabel={horariosAssessment.label}

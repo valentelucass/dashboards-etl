@@ -167,6 +167,27 @@ describe('fila HTTP dos dashboards', () => {
     expect(transport.mock.calls.map(([c]) => c.url)).toEqual([urls[3], urls[2], urls[0], urls[1]]);
   });
 
+  it('carrega os cartões de Gestão à Vista antes do gráfico e da tabela mesmo quando o detalhe está visível', async () => {
+    const prefix = '/api/painel/indicadores-gestao-a-vista/';
+    const section = document.createElement('section');
+    section.dataset.dashboardSection = 'gestaoPerformanceRanking';
+    vi.spyOn(section, 'getBoundingClientRect').mockReturnValue({ top: 40, bottom: 340, height: 300, width: 500 } as DOMRect);
+    document.body.append(section);
+    region('table', 90);
+    const urls = [
+      'performance-entrega/serie',
+      'horarios-corte/tabela/paginada',
+      'horarios-corte/overview',
+      'performance-entrega/overview',
+    ].map(path => prefix + path);
+    const transport = vi.fn<AxiosAdapter>(async config => ({ data: [], status: 200, statusText: 'OK', headers: {}, config }));
+    const adapter = createDashboardRequestAdapter(transport);
+
+    await Promise.all(urls.map(url => adapter(config(url))));
+
+    expect(transport.mock.calls.map(([config]) => config.url)).toEqual([urls[2], urls[3], urls[0], urls[1]]);
+  });
+
   it.each(['/api/auth/refresh', '/api/painel/home/comunicados', '/api/painel/performance/exportacao', '/api/painel/fretes/exportacao', '/api/painel/manifestos/metas/importacao/template'])('não enfileira %s', async (url) => {
     const c = controlled();
     const occupied = [1, 2, 3].map(() => c.adapter(config('/api/painel/performance/status')));

@@ -42,18 +42,27 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
             "SPO - RODOGARCIA TRANSPORTES RODOVIARIOS LTDA"
     );
 
+    // As leituras do Raster podem expandir a captura em JSON. Materializar as rotas da janela
+    // uma vez evita repetir essa leitura para cada combinação de filial e horário de corte.
     private static final String BASE_CTE = """
+            SET NOCOUNT ON;
+            DECLARE @rotas TABLE (
+                cod_solicitacao BIGINT, status_viagem NVARCHAR(10), placa_veiculo NVARCHAR(20),
+                rota_limpa NVARCHAR(500), origem_raw NVARCHAR(500), destino_raw NVARCHAR(500),
+                origem_sm NVARCHAR(100), destino_sm NVARCHAR(100),
+                data_base_sm_at DATETIME2(0), data_hora_real_ini_at DATETIME2(0),
+                data_hora_real_fim_at DATETIME2(0), data_hora_prev_fim_at DATETIME2(0),
+                data_extracao_at DATETIME2(3)
+            );
             WITH viagens_base AS (
                 SELECT
                     v.cod_solicitacao,
                     v.status_viagem,
                     v.placa_veiculo,
                     NULLIF(LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(v.rota_descricao, N'/BRASIL', N''), CHAR(13), N' '), CHAR(10), N' '))), N'') AS rota_limpa,
-                    CAST(v.data_hora_prev_ini AS DATETIME2(0)) AS data_hora_prev_ini_at,
                     CAST(v.data_hora_real_ini AS DATETIME2(0)) AS data_hora_real_ini_at,
                     CAST(v.data_hora_real_fim AS DATETIME2(0)) AS data_hora_real_fim_at,
                     CAST(v.data_hora_prev_fim AS DATETIME2(0)) AS data_hora_prev_fim_at,
-                    CAST(v.data_hora_identificou_fim_viagem AS DATETIME2(0)) AS data_hora_identificou_fim_at,
                     CAST(COALESCE(v.data_hora_prev_ini, v.data_hora_real_ini) AS DATETIME2(0)) AS data_base_sm_at,
                     v.data_extracao
                 FROM dbo.raster_viagens v
@@ -67,11 +76,9 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     v.status_viagem,
                     v.placa_veiculo,
                     NULLIF(LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(v.rota_descricao, N'/BRASIL', N''), CHAR(13), N' '), CHAR(10), N' '))), N'') AS rota_limpa,
-                    CAST(v.data_hora_prev_ini AS DATETIME2(0)) AS data_hora_prev_ini_at,
                     CAST(v.data_hora_real_ini AS DATETIME2(0)) AS data_hora_real_ini_at,
                     CAST(v.data_hora_real_fim AS DATETIME2(0)) AS data_hora_real_fim_at,
                     CAST(v.data_hora_prev_fim AS DATETIME2(0)) AS data_hora_prev_fim_at,
-                    CAST(v.data_hora_identificou_fim_viagem AS DATETIME2(0)) AS data_hora_identificou_fim_at,
                     CAST(COALESCE(v.data_hora_prev_ini, v.data_hora_real_ini) AS DATETIME2(0)) AS data_base_sm_at,
                     v.data_extracao
                 FROM dbo.raster_viagens v
@@ -92,11 +99,9 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     v.status_viagem,
                     v.placa_veiculo,
                     v.rota_limpa,
-                    v.data_hora_prev_ini_at,
                     v.data_hora_real_ini_at,
                     v.data_hora_real_fim_at,
                     v.data_hora_prev_fim_at,
-                    v.data_hora_identificou_fim_at,
                     v.data_base_sm_at,
                     CASE
                         WHEN p.parada_data_extracao IS NULL THEN v.data_extracao
@@ -105,7 +110,7 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                         ELSE v.data_extracao
                     END AS data_extracao_at
                 FROM viagens_base v
-                LEFT JOIN paradas p
+                LEFT HASH JOIN paradas p
                     ON p.cod_solicitacao = v.cod_solicitacao
             ),
             partes_rota AS (
@@ -153,8 +158,18 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                         ELSE NULL
                     END AS destino_sm
                 FROM rota r
-            ),
-            hc_apoio AS (
+            )
+            INSERT INTO @rotas (
+                cod_solicitacao, status_viagem, placa_veiculo, rota_limpa, origem_raw, destino_raw,
+                origem_sm, destino_sm, data_base_sm_at, data_hora_real_ini_at,
+                data_hora_real_fim_at, data_hora_prev_fim_at, data_extracao_at
+            )
+            SELECT cod_solicitacao, status_viagem, placa_veiculo, rota_limpa, origem_raw, destino_raw,
+                   origem_sm, destino_sm, data_base_sm_at, data_hora_real_ini_at,
+                   data_hora_real_fim_at, data_hora_prev_fim_at, data_extracao_at
+            FROM rota_canonica;
+
+            WITH hc_apoio AS (
                 SELECT *
                 FROM (VALUES
                     (N'AGUDOS/SP - RODOGARCIA FILIAL AGU', N'OSASCO/SP - RODOGARCIA FILIAL SPO', CAST(N'20:30:00' AS TIME(0))),
@@ -202,7 +217,7 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
                     END AS corte_at,
                     vj.cod_solicitacao AS cod_solicitacao_justificada,
                     vj.justificativa AS justificativa
-                FROM rota_canonica rc
+                FROM @rotas rc
                 LEFT JOIN hc_apoio apoio
                     ON apoio.origem_sm = rc.origem_sm
                    AND apoio.destino_sm = rc.destino_sm
@@ -214,8 +229,7 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
             )
             """;
 
-    private static final String SQL = BASE_CTE + """
-            SELECT
+    private static final String COLUNAS_TABELA = """
                 CONVERT(BIGINT, cod_solicitacao) AS id,
                 data_corte AS data,
                 filial,
@@ -276,6 +290,9 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
             FROM calculado
             """;
 
+    private static final String SQL = BASE_CTE + "SELECT " + COLUNAS_TABELA;
+    private static final String SQL_PAGINA = BASE_CTE + "SELECT COUNT_BIG(*) OVER () AS total_filtrado, " + COLUNAS_TABELA;
+
     private static final String SQL_INDICADOR_CTE = BASE_CTE + """
             , indicador AS (
                 SELECT
@@ -323,7 +340,7 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
 
     private static final String SQL_COUNT = BASE_CTE + "SELECT COUNT_BIG(1) FROM calculado";
     private static final String SQL_ORDER_PAGED = """
-            ORDER BY data DESC, importado_em DESC, filial, linha_ou_operacao
+            ORDER BY data DESC, importado_em DESC, filial, linha_ou_operacao, id
             OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY
             """;
     private static final String LINHA_OU_OPERACAO_SQL = "COALESCE(origem_destino, rota_limpa, CONCAT(N'SM ', CONVERT(NVARCHAR(30), cod_solicitacao)))";
@@ -417,21 +434,25 @@ public class HorariosCorteRasterSqlRepository implements HorariosCorteRasterData
         int pagina = Math.max(1, paginaSolicitada);
         int tamanho = ConsultaLimiteUtils.limitar(tamanhoSolicitado, 10, 100);
         long offset = (long) (pagina - 1) * tamanho;
-        TabelaQuery countQuery = tabelaQuery(SQL_COUNT, dataInicio, dataFim, escopo, filiaisFiltro, filtro, "");
-        Long total = jdbcTemplate.queryForObject(countQuery.sql(), countQuery.params(), Long.class);
-        long totalElementos = total != null ? total : 0L;
-        int totalPaginas = totalElementos == 0 ? 0 : (int) Math.ceil(totalElementos / (double) tamanho);
-
-        TabelaQuery pageQuery = tabelaQuery(SQL, dataInicio, dataFim, escopo, filiaisFiltro, filtro, SQL_ORDER_PAGED);
+        TabelaQuery pageQuery = tabelaQuery(SQL_PAGINA, dataInicio, dataFim, escopo, filiaisFiltro, filtro, SQL_ORDER_PAGED);
         pageQuery.params()
                 .addValue("offset", offset)
                 .addValue("limite", tamanho);
-        List<VisaoHorariosCorteEntity> conteudo = offset >= totalElementos
-                ? List.of()
-                : jdbcTemplate.query(pageQuery.sql(), pageQuery.params(), this::mapRow);
-
+        List<LinhaComTotal> linhas = jdbcTemplate.query(pageQuery.sql(), pageQuery.params(),
+                (rs, posicao) -> new LinhaComTotal(mapRow(rs, posicao), rs.getLong("total_filtrado")));
+        long totalElementos = linhas.isEmpty() ? 0 : linhas.get(0).total();
+        if (linhas.isEmpty() && pagina > 1) {
+            // Uma página além do fim ainda precisa informar quantos registros atenderam ao filtro.
+            TabelaQuery countQuery = tabelaQuery(SQL_COUNT, dataInicio, dataFim, escopo, filiaisFiltro, filtro, "");
+            Long total = jdbcTemplate.queryForObject(countQuery.sql(), countQuery.params(), Long.class);
+            totalElementos = total == null ? 0 : total;
+        }
+        int totalPaginas = (int) Math.ceil(totalElementos / (double) tamanho);
+        List<VisaoHorariosCorteEntity> conteudo = linhas.stream().map(LinhaComTotal::linha).toList();
         return new PaginaDTO<>(conteudo, totalElementos, totalPaginas, pagina, tamanho);
     }
+
+    private record LinhaComTotal(VisaoHorariosCorteEntity linha, long total) {}
 
     private TabelaQuery tabelaQuery(
             String sqlBase,

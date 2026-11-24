@@ -1,10 +1,13 @@
 package com.dashboard.api.service;
 
 import com.dashboard.api.dto.FiltroConsultaDTO;
+import com.dashboard.api.dto.PaginaDTO;
+import com.dashboard.api.model.VisaoHorariosCorteEntity;
 import com.dashboard.api.repository.HorariosCorteRasterSqlRepository;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -12,10 +15,64 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class HorariosCorteRasterSqlRepositoryTest {
+
+    @Test
+    void materializaAsRotasDoPeriodoAntesDeCruzarComApoioEFiliais() throws ReflectiveOperationException {
+        for (String consulta : List.of(sql(), sqlSerie(), sqlCount(), constanteSql("SQL_OVERVIEW"), constanteSql("SQL_PAGINA"))) {
+            assertThat(consulta).containsSubsequence("SET NOCOUNT ON", "DECLARE @rotas TABLE", "FROM dbo.raster_viagens",
+                    "LEFT HASH JOIN paradas", "INSERT INTO @rotas", "FROM rota_canonica;", "FROM @rotas rc",
+                    "LEFT JOIN hc_apoio", "LEFT JOIN filiais_raster");
+        }
+    }
+
+    @Test
+    void paginaPreenchidaLeConteudoETotalNaMesmaConsulta() throws Exception {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        ResultSet linha = mock(ResultSet.class);
+        when(linha.getLong("id")).thenReturn(42L);
+        when(linha.getLong("total_filtrado")).thenReturn(11L);
+        doAnswer(chamada -> {
+            RowMapper<?> mapper = chamada.getArgument(1);
+            return List.of(mapper.mapRow(linha, 0));
+        }).when(jdbc).query(any(PreparedStatementCreator.class), any(RowMapper.class));
+
+        var pagina = buscarPagina(jdbc, 2);
+        assertThat(pagina.totalElementos()).isEqualTo(11);
+        assertThat(pagina.totalPaginas()).isEqualTo(2);
+        assertThat(pagina.conteudo()).hasSize(1);
+        verify(jdbc).query(any(PreparedStatementCreator.class), any(RowMapper.class));
+    }
+
+    @Test
+    void preservaOTotalQuandoAPaginaSolicitadaEstaAlemDoFim() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        when(jdbc.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
+                .thenReturn(List.of(), List.of(11L));
+
+        var pagina = buscarPagina(jdbc, 3);
+        assertThat(pagina.conteudo()).isEmpty();
+        assertThat(pagina.totalElementos()).isEqualTo(11);
+        assertThat(pagina.totalPaginas()).isEqualTo(2);
+        verify(jdbc, times(2)).query(any(PreparedStatementCreator.class), any(RowMapper.class));
+    }
+
+    private PaginaDTO<VisaoHorariosCorteEntity> buscarPagina(JdbcTemplate jdbc, int pagina) {
+        LocalDate dia = LocalDate.of(2026, 11, 1);
+        return new HorariosCorteRasterSqlRepository(jdbc).findPageByDataBetween(dia, dia,
+                EscopoFilialService.EscopoFilial.comAcessoTotal(), List.of(), null, pagina, 10);
+    }
 
     @Test
     void queryDeveFiltrarJanelaDaSmComPredicadosSargaveis() throws ReflectiveOperationException {
@@ -118,10 +175,11 @@ class HorariosCorteRasterSqlRepositoryTest {
         assertThat(countParams.getValue("filtroTabelaColuna_linhaOuOperacao")).isEqualTo("%cwb%");
         assertThat(countParams.getValue("filtroTabelaColuna_saiuNoHorario")).isEqualTo(List.of("no prazo"));
 
-        Object pageQuery = tabelaQuery(sql(), filtro, sqlOrderPaged());
+        Object pageQuery = tabelaQuery(constanteSql("SQL_PAGINA"), filtro, sqlOrderPaged());
         assertThat(querySql(pageQuery))
                 .contains("filial_key LIKE :filtroTabelaColuna_filial")
-                .contains("ORDER BY data DESC, importado_em DESC, filial, linha_ou_operacao")
+                .contains("COUNT_BIG(*) OVER () AS total_filtrado")
+                .contains("ORDER BY data DESC, importado_em DESC, filial, linha_ou_operacao, id")
                 .contains("OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY");
     }
 

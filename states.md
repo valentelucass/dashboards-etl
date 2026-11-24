@@ -12,6 +12,8 @@ O indicador aparece como “Performance” no cartão, na dica, no Panorama Oper
 
 Horários de Corte exibe o instante da extração do Raster no fuso de Brasília. O banco registra esse instante em UTC.
 
+Na Gestão à Vista, os cinco cartões de resumo têm prioridade sobre os gráficos e as tabelas na fila de leitura. Cada cartão mostra o percentual assim que a medição chega, mesmo que a meta ainda esteja carregando. Horários de Corte calcula as rotas do período uma vez por consulta e usa esse resultado para cruzar filial, horário e justificativa. A tabela devolve o total filtrado junto com as viagens e usa a SM para desempatar a ordenação entre páginas.
+
 No cartão, no ranking, no detalhe e na exportação da Performance da Gestão à Vista, a filial base corresponde ao responsável pela região de destino. A seleção de várias filiais e as permissões de acesso usam a mesma chave do filtro Responsáveis da tela Performance. O percentual divide as entregas no prazo pelas finalizadas no período de previsão selecionado.
 
 ## 23/11/2026 — Cobertura da Rede Credenciada e do Customer Service

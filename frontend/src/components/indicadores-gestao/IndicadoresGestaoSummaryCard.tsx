@@ -11,7 +11,7 @@ interface IndicadoresGestaoSummaryCardProps {
   definition: KpiDefinition;
   title: string;
   description: string;
-  value: string;
+  value?: string;
   detail: string;
   goalLabel: string;
   statusLabel: string;
@@ -32,7 +32,7 @@ export default function IndicadoresGestaoSummaryCard({
   progressPct,
   icon,
 }: IndicadoresGestaoSummaryCardProps) {
-  if (tone === 'loading') return <ScorecardLoading title={title} />;
+  if (tone === 'loading') return <ScorecardLoading title={title} value={value} />;
   const style = getGoalToneStyle(tone);
   const widthPct = Math.max(0, Math.min(progressPct ?? 0, 100));
 
@@ -52,7 +52,7 @@ export default function IndicadoresGestaoSummaryCard({
         </header>
         <p className="sr-only">{description}</p>
 
-        <strong className="gestao-scorecard-value">{value}</strong>
+        <strong className="gestao-scorecard-value">{value ?? '—'}</strong>
 
         <div className="gestao-scorecard-state">
           <Badge className="dashboard-status-badge" label={statusLabel} variant={goalProgressVariant[tone]} />

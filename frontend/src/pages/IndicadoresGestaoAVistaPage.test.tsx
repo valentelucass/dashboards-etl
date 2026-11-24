@@ -55,6 +55,9 @@ it.each([
   let concluir!: (resposta: unknown) => void;
   abrir(new Promise(resolve => { concluir = resolve; }));
   expect(screen.getByRole('group', { name: 'Resultados dos indicadores de gestão' })).toBeTruthy();
+  await waitFor(() => expect(cartao('Performance').textContent).toContain('90,00%'));
+  expect(cartao('Horários de Corte').textContent).toContain('75,0%');
+  expect(cartao('Performance').textContent).not.toContain('Meta 95%');
   await act(async () => { concluir(resposta); });
   await waitFor(() => expect(cartao('Horários de Corte').textContent).toContain('Meta indisponível'));
   expect(cartao('Horários de Corte').textContent).toContain('75,0%');

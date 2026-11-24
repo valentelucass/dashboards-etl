@@ -81,10 +81,10 @@ export function dashboardRequestPriority(path: string, chartKey?: ChartDictionar
     return typeof document !== 'undefined' && document.querySelector('[data-dashboard-filters-open="true"]')
       ? -0.5 : 5_000_000;
   }
-  const section = endpoint.startsWith('indicadores-gestao-a-vista/') ? indicatorSections[endpoint.split('/')[1]] : undefined;
-  if (!endpoint.includes('/') || (endpoint.endsWith('/overview') && !section) || endpoint === 'tracking/dashboard'
+  if (!endpoint.includes('/') || endpoint.endsWith('/overview') || endpoint === 'tracking/dashboard'
     || endpoint === 'manifestos/performance' || endpoint === 'fretes/metas') return -1;
 
+  const section = endpoint.startsWith('indicadores-gestao-a-vista/') ? indicatorSections[endpoint.split('/')[1]] : undefined;
   const table = /\/(tabela|detalhes|resumo-financeiro)(\/|$)/.test(endpoint);
   const keys = chartKey ? [chartKey] : charts[endpoint];
   if (typeof document !== 'undefined' && (keys || table || section)) {
@@ -98,7 +98,7 @@ export function dashboardRequestPriority(path: string, chartKey?: ChartDictionar
       const band = rect.bottom <= 0 ? 2_000_000 : rect.top < window.innerHeight ? 0 : 1_000_000;
       best = Math.min(best, band + Math.max(0, rect.top));
     }
-    if (best !== Infinity) return best + (section && !endpoint.endsWith('/overview') ? 1 : 0);
+    if (best !== Infinity) return best;
   }
   if (table) return 4_000_000;
   return 1_500_000;
