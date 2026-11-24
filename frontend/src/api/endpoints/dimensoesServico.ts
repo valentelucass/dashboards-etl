@@ -34,7 +34,11 @@ export interface DimensaoOpcao {
 }
 
 export async function buscarFiliais(signal?: AbortSignal): Promise<string[]> {
-  const { data } = await clienteAxios.get<string[]>('/api/dimensoes/filiais', { signal });
+  const { data, status } = await clienteAxios.get<string[]>('/api/dimensoes/filiais', { signal });
+  if (status === 204) return [];
+  if (!Array.isArray(data) || !data.every(filial => typeof filial === 'string')) {
+    throw new Error('Não foi possível ler a lista de filiais.');
+  }
   return data;
 }
 

@@ -1,3 +1,7 @@
+## 23/11/2026 — Carregamento dos indicadores da Gestão à Vista
+
+Quando falta uma meta, o painel mantém os resultados medidos e identifica a meta indisponível. Uma série vazia ou uma resposta inválida recebe tratamento no próprio gráfico. A interface também carrega os gráficos em navegadores sem observação nativa de tamanho. Se o carregamento de um módulo falhar e o arquivo voltar a responder, a aba pode recuperar a mesma rota e os filtros uma vez.
+
 ## 23/11/2026 — Filial responsável na Performance da Gestão à Vista
 
 Horários de Corte exibe o instante da extração do Raster no fuso de Brasília. O banco registra esse instante em UTC.

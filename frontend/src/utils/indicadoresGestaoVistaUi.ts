@@ -245,6 +245,10 @@ export function avaliarMetaIndicador({
     return { tone: 'empty', label: 'Sem dados', met: null, delta: null, progressPct: null };
   }
 
+  if (!Number.isFinite(threshold)) {
+    return { tone: 'neutral', label: 'Meta indisponível', met: null, delta: null, progressPct: null };
+  }
+
   const met = mode === 'atLeast' ? value >= threshold : value <= threshold;
   const progressPct = calcularProgressoMeta(value, threshold, mode);
   const tone = resolverTomMetaPorValor(value, threshold, mode);

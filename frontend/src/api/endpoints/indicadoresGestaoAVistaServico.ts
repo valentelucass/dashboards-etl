@@ -44,6 +44,14 @@ const CUBAGEM_CLIENTES_IMPORTACAO_BASE = '/api/painel/gestao-vista/cubagem/clien
 
 export const GLOBAL_KPI_GOAL_BRANCH_ID = 'GLOBAL';
 
+function lerListaIndicadores<T extends object>(resposta: { data: T[]; status: number }): T[] {
+  if (resposta.status === 204) return [];
+  if (!Array.isArray(resposta.data) || !resposta.data.every(item => item != null && typeof item === 'object' && !Array.isArray(item))) {
+    throw new Error('Não foi possível ler os dados deste indicador.');
+  }
+  return resposta.data;
+}
+
 function withCompetenciaParam<TParams extends Record<string, string | number>>(
   params: TParams,
   competencia?: string,
@@ -97,11 +105,11 @@ export async function buscarPerformanceEntregaSerie(
   serieParams: PerformanceEntregaSerieParams,
   signal?: AbortSignal,
 ): Promise<PerformanceEntregaSeriePoint[]> {
-  const { data } = await clienteAxios.get<PerformanceEntregaSeriePoint[]>(`${BASE}/performance-entrega/serie`, {
+  const resposta = await clienteAxios.get<PerformanceEntregaSeriePoint[]>(`${BASE}/performance-entrega/serie`, {
     signal,
     params: withPerformanceSerieParams(filtro, serieParams),
   });
-  return data;
+  return lerListaIndicadores(resposta);
 }
 
 export async function buscarPerformanceEntregaTabela(
@@ -144,22 +152,22 @@ export async function buscarUtilizacaoColetoresSerie(
   filtro: IndicadoresGestaoVistaFiltro,
   signal?: AbortSignal,
 ): Promise<UtilizacaoColetoresSeriePoint[]> {
-  const { data } = await clienteAxios.get<UtilizacaoColetoresSeriePoint[]>(`${BASE}/utilizacao-coletores/serie`, {
+  const resposta = await clienteAxios.get<UtilizacaoColetoresSeriePoint[]>(`${BASE}/utilizacao-coletores/serie`, {
     signal,
     params: montarQueryParams(filtro),
   });
-  return data;
+  return lerListaIndicadores(resposta);
 }
 
 export async function buscarUtilizacaoColetoresRanking(
   filtro: IndicadoresGestaoVistaFiltro,
   signal?: AbortSignal,
 ): Promise<UtilizacaoColetoresRankingItem[]> {
-  const { data } = await clienteAxios.get<UtilizacaoColetoresRankingItem[]>(`${BASE}/utilizacao-coletores/ranking`, {
+  const resposta = await clienteAxios.get<UtilizacaoColetoresRankingItem[]>(`${BASE}/utilizacao-coletores/ranking`, {
     signal,
     params: montarQueryParams(filtro),
   });
-  return data;
+  return lerListaIndicadores(resposta);
 }
 
 export async function buscarUtilizacaoColetoresTabela(
@@ -202,11 +210,11 @@ export async function buscarCubagemMercadoriasSerie(
   filtro: IndicadoresGestaoVistaFiltro,
   signal?: AbortSignal,
 ): Promise<CubagemMercadoriasSeriePoint[]> {
-  const { data } = await clienteAxios.get<CubagemMercadoriasSeriePoint[]>(`${BASE}/cubagem-mercadorias/serie`, {
+  const resposta = await clienteAxios.get<CubagemMercadoriasSeriePoint[]>(`${BASE}/cubagem-mercadorias/serie`, {
     signal,
     params: montarQueryParams(filtro),
   });
-  return data;
+  return lerListaIndicadores(resposta);
 }
 
 export async function buscarCubagemMercadoriasTabela(
@@ -235,8 +243,8 @@ export async function exportarCubagemMercadoriasCsv(filtro: IndicadoresGestaoVis
 }
 
 export async function buscarClientesExcecaoCubagem(signal?: AbortSignal): Promise<ClienteExcecaoCubagem[]> {
-  const { data } = await clienteAxios.get<ClienteExcecaoCubagem[]>(CUBAGEM_CLIENTES_BASE, { signal });
-  return data;
+  const resposta = await clienteAxios.get<ClienteExcecaoCubagem[]>(CUBAGEM_CLIENTES_BASE, { signal });
+  return lerListaIndicadores(resposta);
 }
 
 export async function excluirClienteExcecaoCubagem(cnpj: string): Promise<void> {
@@ -294,11 +302,11 @@ export async function buscarIndenizacaoMercadoriasSerie(
   filtro: IndicadoresGestaoVistaFiltro,
   signal?: AbortSignal,
 ): Promise<IndenizacaoMercadoriasSeriePoint[]> {
-  const { data } = await clienteAxios.get<IndenizacaoMercadoriasSeriePoint[]>(`${BASE}/indenizacao-mercadorias/serie`, {
+  const resposta = await clienteAxios.get<IndenizacaoMercadoriasSeriePoint[]>(`${BASE}/indenizacao-mercadorias/serie`, {
     signal,
     params: montarQueryParams(filtro),
   });
-  return data;
+  return lerListaIndicadores(resposta);
 }
 
 export async function buscarIndenizacaoMercadoriasTabela(
@@ -341,11 +349,11 @@ export async function buscarHorariosCorteSerie(
   filtro: IndicadoresGestaoVistaFiltro,
   signal?: AbortSignal,
 ): Promise<HorariosCorteSeriePoint[]> {
-  const { data } = await clienteAxios.get<HorariosCorteSeriePoint[]>(`${BASE}/horarios-corte/serie`, {
+  const resposta = await clienteAxios.get<HorariosCorteSeriePoint[]>(`${BASE}/horarios-corte/serie`, {
     signal,
     params: montarQueryParams(filtro),
   });
-  return data;
+  return lerListaIndicadores(resposta);
 }
 
 export async function buscarHorariosCorteTabela(
@@ -393,6 +401,9 @@ export async function buscarKpiGoalsCompleto(competencia?: string, signal?: Abor
   const { data } = Object.keys(params).length > 0
     ? await clienteAxios.get<KpiGoalsFullResponse>(KPI_GOALS_BASE, { signal, params })
     : await clienteAxios.get<KpiGoalsFullResponse>(KPI_GOALS_BASE, { signal });
+  if (!Array.isArray(data?.branches) || !data.global) {
+    throw new Error('Não foi possível ler as metas cadastradas.');
+  }
   return data;
 }
 
@@ -456,5 +467,8 @@ export async function buscarKpiGoalOverrides(indicatorKey: KpiGoalIndicatorKey, 
     signal,
     params: withCompetenciaParam({ indicatorKey }, competencia),
   });
+  if (!Array.isArray(data?.overrides) || !data.overrides.every(item => typeof item?.branchId === 'string' && Number.isFinite(item.goalValue))) {
+    throw new Error('Não foi possível ler as metas específicas das filiais.');
+  }
   return data;
 }

@@ -132,15 +132,16 @@ function formatarMetaValor(value: number): string {
   });
 }
 
-function buildGoalConfigs(kpiGoals: KpiGoalsMap): Record<SectionId, GoalConfig> {
+function buildGoalConfigs(kpiGoals: Partial<KpiGoalsMap> | undefined): Record<SectionId, GoalConfig> {
   return (Object.keys(SECTION_GOAL_KEYS) as SectionId[]).reduce((acc, sectionId) => {
     const mode = SECTION_GOAL_MODES[sectionId];
-    const threshold = kpiGoals[SECTION_GOAL_KEYS[sectionId]];
+    const value = kpiGoals?.[SECTION_GOAL_KEYS[sectionId]];
+    const threshold = typeof value === 'number' ? value : NaN;
     const prefix = mode === 'atLeast' ? 'Meta' : 'Limite';
     acc[sectionId] = {
       threshold,
       mode,
-      label: `${prefix} ${formatarMetaValor(threshold)}%`,
+      label: Number.isFinite(threshold) ? `${prefix} ${formatarMetaValor(threshold)}%` : `${prefix} indisponível`,
     };
     return acc;
   }, {} as Record<SectionId, GoalConfig>);
@@ -170,7 +171,13 @@ function formatarGap(gap: number, mode: GoalMode, decimais = 1): string {
 }
 
 function formatarGapComBase(hasData: boolean, gap: number, mode: GoalMode, decimais = 1): string {
+  if (!Number.isFinite(gap)) return '—';
   return hasData ? formatarGap(gap, mode, decimais) : 'Sem base de cálculo';
+}
+
+function erroGrafico(consulta: { isError: boolean; error: unknown }, meta: GoalConfig): string | null {
+  if (consulta.isError) return getApiErrorMessage(consulta.error, 'Erro ao carregar gráfico.');
+  return Number.isFinite(meta.threshold) ? null : meta.label;
 }
 
 function normalizarFilialMeta(value: string | null | undefined): string {
@@ -422,7 +429,7 @@ export default function IndicadoresGestaoAVistaPage() {
   const removerOverride = useRemoverKpiGoalsOverride();
   const salvarJustificativaHorarioCorte = useSalvarJustificativaHorarioCorte();
   const excluirJustificativaHorarioCorte = useExcluirJustificativaHorarioCorte();
-  const goals = useMemo(() => buildGoalConfigs(kpiGoals.data?.goals ?? DEFAULT_KPI_GOALS), [kpiGoals.data]);
+  const goals = useMemo(() => buildGoalConfigs(kpiGoals.isPending ? DEFAULT_KPI_GOALS : kpiGoals.data?.goals), [kpiGoals.isPending, kpiGoals.data]);
   const overridesByIndicator = useMemo<Record<KpiGoalIndicatorKey, KpiGoalIndicatorOverride[]>>(() => ({
     delivery_performance: performanceOverrides.data?.overrides ?? [],
     collector_usage: coletoresOverrides.data?.overrides ?? [],
@@ -598,18 +605,18 @@ export default function IndicadoresGestaoAVistaPage() {
   const horariosRanking = useMemo(() => aggregateHorariosRanking(horariosSerie.data ?? []), [horariosSerie.data]);
   const selectedBranchForOverrides = filiaisSelecionadas.length === 1 ? filiaisSelecionadas[0] : null;
   const globalGoalByIndicator = useMemo<KpiGoalsMap>(() => ({
-    delivery_performance: performanceOverrides.data?.globalGoal ?? kpiGoals.data?.goals.delivery_performance ?? DEFAULT_KPI_GOALS.delivery_performance,
-    collector_usage: coletoresOverrides.data?.globalGoal ?? kpiGoals.data?.goals.collector_usage ?? DEFAULT_KPI_GOALS.collector_usage,
-    cargo_cubage: cubagemOverrides.data?.globalGoal ?? kpiGoals.data?.goals.cargo_cubage ?? DEFAULT_KPI_GOALS.cargo_cubage,
-    cargo_indemnity: indenizacaoOverrides.data?.globalGoal ?? kpiGoals.data?.goals.cargo_indemnity ?? DEFAULT_KPI_GOALS.cargo_indemnity,
-    cutoff_time: horariosOverrides.data?.globalGoal ?? kpiGoals.data?.goals.cutoff_time ?? DEFAULT_KPI_GOALS.cutoff_time,
+    delivery_performance: performanceOverrides.data?.globalGoal ?? goals.performance.threshold,
+    collector_usage: coletoresOverrides.data?.globalGoal ?? goals.coletores.threshold,
+    cargo_cubage: cubagemOverrides.data?.globalGoal ?? goals.cubagem.threshold,
+    cargo_indemnity: indenizacaoOverrides.data?.globalGoal ?? goals.indenizacao.threshold,
+    cutoff_time: horariosOverrides.data?.globalGoal ?? goals.horarios.threshold,
   }), [
     performanceOverrides.data?.globalGoal,
     coletoresOverrides.data?.globalGoal,
     cubagemOverrides.data?.globalGoal,
     indenizacaoOverrides.data?.globalGoal,
     horariosOverrides.data?.globalGoal,
-    kpiGoals.data?.goals,
+    goals,
   ]);
   const metaFilial = useCallback((sectionId: SectionId, branchName: string) => {
     const indicatorKey = SECTION_GOAL_KEYS[sectionId];
@@ -1192,7 +1199,7 @@ export default function IndicadoresGestaoAVistaPage() {
         chartEvents={performanceChartEvents}
         chartLoading={performanceSerie.isLoading}
         chartEmpty={performanceRanking.length === 0}
-        chartError={performanceSerie.isError ? getApiErrorMessage(performanceSerie.error, 'Erro ao carregar gráfico.') : null}
+        chartError={erroGrafico(performanceSerie, goals.performance)}
         exportName="indicadores-gestao-a-vista-performance-entrega"
         onExport={() => exportarPerformanceEntregaCsv(filtroBase)}
         tableTitle="Entregas Analíticas por Minuta"
@@ -1229,7 +1236,7 @@ export default function IndicadoresGestaoAVistaPage() {
         chartKey="gestaoColetoresRanking"
         chartLoading={coletoresRankingQuery.isLoading}
         chartEmpty={coletoresRanking.length === 0}
-        chartError={coletoresRankingQuery.isError ? getApiErrorMessage(coletoresRankingQuery.error, 'Erro ao carregar gráfico.') : null}
+        chartError={erroGrafico(coletoresRankingQuery, goals.coletores)}
         exportName="indicadores-gestao-a-vista-utilizacao-coletores"
         onExport={() => exportarUtilizacaoColetoresCsv(filtroColetores)}
         tableTitle="Coletores por Data e Filial"
@@ -1267,7 +1274,7 @@ export default function IndicadoresGestaoAVistaPage() {
         chartKey="gestaoCubagemRanking"
         chartLoading={cubagemSerie.isLoading}
         chartEmpty={cubagemRanking.length === 0}
-        chartError={cubagemSerie.isError ? getApiErrorMessage(cubagemSerie.error, 'Erro ao carregar gráfico.') : null}
+        chartError={erroGrafico(cubagemSerie, goals.cubagem)}
         exportName="indicadores-gestao-a-vista-cubagem-mercadorias"
         onExport={() => exportarCubagemMercadoriasCsv(filtroBase)}
         tableTitle="Cubagem Analítica por Minuta"
@@ -1304,7 +1311,7 @@ export default function IndicadoresGestaoAVistaPage() {
         chartKey="gestaoIndenizacaoRanking"
         chartLoading={indenizacaoSerie.isLoading}
         chartEmpty={indenizacaoRanking.length === 0}
-        chartError={indenizacaoSerie.isError ? getApiErrorMessage(indenizacaoSerie.error, 'Erro ao carregar gráfico.') : null}
+        chartError={erroGrafico(indenizacaoSerie, goals.indenizacao)}
         exportName="indicadores-gestao-a-vista-indenizacao-mercadorias"
         onExport={() => exportarIndenizacaoMercadoriasCsv(filtroBase)}
         tableTitle="Sinistros Analíticos por Abertura"
@@ -1341,7 +1348,7 @@ export default function IndicadoresGestaoAVistaPage() {
         chartKey="gestaoHorariosRanking"
         chartLoading={horariosSerie.isLoading}
         chartEmpty={horariosRanking.length === 0}
-        chartError={horariosSerie.isError ? getApiErrorMessage(horariosSerie.error, 'Erro ao carregar gráfico.') : null}
+        chartError={erroGrafico(horariosSerie, goals.horarios)}
         exportName="indicadores-gestao-a-vista-horarios-corte"
         onExport={() => exportarHorariosCorteCsv(filtroBase, horariosFiltrosTabela.apiFilters)}
         tableTitle="Horários de Corte Analíticos"

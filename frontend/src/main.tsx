@@ -1,4 +1,5 @@
 import './index.css'
+import './utils/resizeObserver'
 import '@fontsource-variable/figtree'
 import '@astryxdesign/core/astryx.css'
 import '@astryxdesign/charts/charts.css'

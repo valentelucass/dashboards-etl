@@ -99,6 +99,7 @@ describe('indicadoresGestaoAVistaServico kpi goals', () => {
   });
 
   it('busca overrides por indicador', async () => {
+    clienteMock.get.mockResolvedValueOnce({ data: { overrides: [] } });
     await buscarKpiGoalOverrides('collector_usage', competencia);
 
     expect(clienteMock.get).toHaveBeenCalledWith('/api/kpi-goals/overrides', {
@@ -107,6 +108,7 @@ describe('indicadoresGestaoAVistaServico kpi goals', () => {
   });
 
   it('busca ranking de utilizacao dos coletores', async () => {
+    clienteMock.get.mockResolvedValueOnce({ data: [] });
     await buscarUtilizacaoColetoresRanking({ dataInicio: '2026-05-01', dataFim: '2026-05-12', filiais: ['SPO'] });
 
     expect(clienteMock.get).toHaveBeenCalledWith('/api/painel/indicadores-gestao-a-vista/utilizacao-coletores/ranking', {
@@ -115,6 +117,7 @@ describe('indicadoresGestaoAVistaServico kpi goals', () => {
   });
 
   it('busca serie de performance com visao e filtros de drill-down', async () => {
+    clienteMock.get.mockResolvedValueOnce({ data: [] });
     await buscarPerformanceEntregaSerie(
       { dataInicio: '2026-05-01', dataFim: '2026-05-12', filiais: ['SPO'] },
       { visao: 'CIDADE', responsavelFiltro: 'Responsavel A', regiaoFiltro: 'SP' },
