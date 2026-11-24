@@ -193,6 +193,24 @@ public class ManifestosPerformanceSqlRepository implements ManifestosCostDataRep
         ));
     }
 
+    List<CustoContratoDTO> custosPorContrato(FiltroConsultaDTO filtro) {
+        return buscarCustosContrato(criarContexto(filtro));
+    }
+
+    List<DreTransporteRepository.Movimento> lancamentosDre(FiltroConsultaDTO filtro, int pagina) {
+        var ctx = criarContexto(filtro);
+        String sql = ctx.baseCte() + """
+                SELECT sequence_code, data_criacao_date, filial, motorista, custo_total
+                FROM manifestos WHERE 1=1
+                """ + ctx.where() + """
+                 ORDER BY data_criacao DESC, sequence_code DESC
+                 OFFSET :pular ROWS FETCH NEXT 26 ROWS ONLY
+                """;
+        ctx.params().addValue("pular", (long) pagina * 25);
+        return jdbcTemplate.query(sql,ctx.params(),(rs,n) -> new DreTransporteRepository.Movimento(rs.getString(1),
+                rs.getDate(2).toLocalDate(),rs.getString(3),rs.getString(4),rs.getBigDecimal(5)));
+    }
+
     private List<CustoContratoDTO> buscarCustosContrato(QueryContext ctx) {
         String sql = ctx.baseCte() + """
                 SELECT

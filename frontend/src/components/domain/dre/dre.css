@@ -1,8 +1,10 @@
 .dre-page { display: grid; gap: 14px; min-width: 0; }
 .dre-control { display: grid; gap: 5px; min-width: 0; font-size: .78rem; color: var(--color-text-subtle); }
-.dre-control input, .dre-search { min-height: 34px; border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text); background: var(--color-card); }
-.dre-control input { padding: 5px 10px; max-width: 100%; }
-.dre-control input:disabled { color: var(--color-text-subtle); }
+.dre-control input, .dre-control select, .dre-search { min-height: 34px; border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text); background: var(--color-card); }
+.dre-control input, .dre-control select { padding: 5px 10px; max-width: 100%; min-width: 0; }
+.dre-control select { width: 100%; text-overflow: ellipsis; }
+.dre-control input:disabled, .dre-control select:disabled { color: var(--color-text-subtle); }
+.dre-control select:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 .dre-currency { color: var(--color-text-subtle); font-size: .8rem; }
 .dre-note, .dre-footnote, .dre-section-header p, .dre-detail > p { margin: 0; font-size: .8rem; color: var(--color-text-subtle); }
 .dre-note button, .dre-detail p button { color: var(--color-primary); text-decoration: underline; }
@@ -37,6 +39,10 @@
 .dre-footnote { line-height: 1.5; padding: 12px 18px; }
 .dre-table > tbody > tr > td.dre-detail-cell { padding: 0; white-space: normal; text-align: left; }
 .dre-detail { display: grid; gap: 8px; padding: 14px 20px; border-inline-start: 3px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 4%, var(--color-card)); }
+.dre-back { justify-self: start; color: var(--color-primary); text-decoration: underline; }
+.dre-composicao { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 4px 16px; list-style: none; padding: 0; margin: 0; }
+.dre-composicao button { display: flex; width: 100%; justify-content: space-between; gap: 12px; padding: 6px; text-align: left; border-bottom: 1px solid var(--color-border); }
+.dre-composicao button:hover { color: var(--color-primary); }
 .dre-detail-toolbar, .dre-pagination { display: flex; align-items: center; gap: 12px; color: var(--color-text-subtle); font-size: .79rem; }
 .dre-segment { display: inline-flex; border: 1px solid var(--color-border); border-radius: 6px; }
 .dre-segment button { padding: 4px 8px; }
@@ -46,6 +52,7 @@
 .dre-fretes th, .dre-fretes td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--color-border); }
 .dre-fretes th:last-child, .dre-fretes td:last-child { text-align: right; }
 .dre-pagination { justify-content: end; }
+.dre-origin-link { color: var(--color-primary); text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 640px) {
   .dre-table-title { align-items: start; flex-direction: column; padding: 12px; }
   .dre-search { width: 100%; }

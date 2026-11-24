@@ -2,16 +2,21 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import * as api from '../api/endpoints/dreServico';
 import { FiltroProvider } from '../contexts/FiltroContext';
 import { PageHeaderProvider } from '../contexts/PageHeaderContext';
 import DrePage from './DrePage';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
-function abrir() {
+beforeEach(() => {
+  vi.spyOn(api,'custosTransporteDre').mockResolvedValue([]);
+  vi.spyOn(api,'opcoesPagarDre').mockResolvedValue([]);
+  vi.spyOn(api,'resumoPagarDre').mockResolvedValue({historico:{primeiraEmissao:null,atualizadoEm:null}, valores:[]});
+});
+function abrir(filtros = '') {
   vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
-  return render(<MemoryRouter initialEntries={['/dre?f.competenciaDre=2025-11']} future={{v7_startTransition:true,v7_relativeSplatPath:true}}>
+  return render(<MemoryRouter initialEntries={['/dre?f.competenciaDre=2025-11'+filtros]} future={{v7_startTransition:true,v7_relativeSplatPath:true}}>
     <QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><FiltroProvider><PageHeaderProvider>
       <DrePage/>
     </PageHeaderProvider></FiltroProvider></QueryClientProvider>
@@ -48,6 +53,20 @@ it('mantém o erro de consulta explícito, sem publicar números zerados', async
   expect(screen.queryByText('R$ 0,00')).toBeNull();
 });
 
+it('abre a composição de um resultado e chega ao frete sem perder o mês ou a filial', async () => {
+  vi.spyOn(api,'dimensoesDre').mockResolvedValue([{empresa:'10000000',filial:'AGU',centro:null}]);
+  vi.spyOn(api,'resumoDre').mockResolvedValue({historico:{primeiroFrete:'2025-01-01',atualizadoEm:'2026-01-01'},valores:[{classe:null,tipo:null,mes:15,ano:20}]});
+  const fretes = vi.spyOn(api,'fretesDre').mockResolvedValue({itens:[{minuta:'12345',cte:'515',data:'2025-11-02',classe:'FTL',tipo:'Normal',filial:'AGU',valor:15}],temProxima:false});
+  abrir('&f.filialDre=AGU');
+  fireEvent.click(await screen.findByRole('button',{name:'RECEITA LÍQUIDA'}));
+  fireEvent.click(screen.getByRole('button',{name:'Detalhar RECEITA BRUTA'}));
+  expect(await screen.findByText('12345')).toBeTruthy();
+  expect(fretes.mock.calls[0][0]).toMatchObject({competencia:'2025-11',filial:'AGU'});
+  fireEvent.click(screen.getByRole('button',{name:'Voltar para RECEITA LÍQUIDA'}));
+  fireEvent.click(screen.getByRole('button',{name:'Detalhar TOTAL IMPOSTOS'}));
+  expect(screen.getByRole('button',{name:'Detalhar ICMS'})).toBeTruthy();
+});
+
 it('explica o filtro de centro de custo quando a base tem fretes sem nenhum centro preenchido', async () => {
   vi.spyOn(api, 'dimensoesDre').mockResolvedValue([{empresa:'12345678', filial:'Filial A', centro:null}]);
   vi.spyOn(api, 'resumoDre').mockResolvedValue({historico:{primeiroFrete:null, atualizadoEm:null}, valores:[]});
@@ -55,6 +74,41 @@ it('explica o filtro de centro de custo quando a base tem fretes sem nenhum cent
   await screen.findByRole('button', {name:'Expandir RECEITA BRUTA'});
   fireEvent.click(screen.getByRole('button', {name:/^Filtros/}));
   const centro = screen.getByRole('combobox', {name:'Centro de custo'});
-  expect(centro.textContent).toContain('Sem centro informado nos fretes');
+  expect(centro.textContent).toContain('Sem centro informado');
   expect(centro.matches(':disabled, [aria-disabled="true"]')).toBe(true);
+});
+
+it('aplica conta e fornecedor aos valores e aos lançamentos, sem atribuir fretes ao fornecedor', async () => {
+  vi.spyOn(api,'dimensoesDre').mockResolvedValue([]);
+  vi.spyOn(api,'resumoDre').mockResolvedValue({historico:{primeiroFrete:'2024-01-01',atualizadoEm:'2026-01-01'},valores:[{classe:null,tipo:null,mes:9999,ano:12000}]});
+  vi.mocked(api.opcoesPagarDre).mockResolvedValue([{tipo:'conta',nome:'INTERNET'},{tipo:'fornecedor',nome:'Operadora'}]);
+  vi.mocked(api.resumoPagarDre).mockResolvedValue({historico:{primeiraEmissao:'2024-01-01',atualizadoEm:'2026-01-02'},valores:[{conta:'INTERNET',mes:50,ano:120}]});
+  const consultar = vi.spyOn(api,'lancamentosPagarDre').mockResolvedValue({itens:[{numero:7001,documento:'F-11',filial:'ABC',centro:'Adm',fornecedor:'Operadora',conta:'INTERNET',mes:11,ano:2025,valor:50}],temProxima:false});
+  abrir('&f.fornecedorDre=Operadora&f.contaContabilDre=INTERNET');
+  await screen.findByText('Sem vínculo com este filtro');
+  expect(screen.queryByText(/9\.999,00/)).toBeNull();
+  fireEvent.change(screen.getByRole('searchbox',{name:'Buscar conta'}),{target:{value:'internet'}});
+  fireEvent.click(screen.getByRole('button',{name:'INTERNET'}));
+  expect(await within(screen.getByRole('region',{name:'Detalhe de INTERNET'})).findByText('F-11')).toBeTruthy();
+  expect(screen.getByText(/-R\$\s*50,00/)).toBeTruthy();
+  expect(consultar.mock.calls[0][0]).toMatchObject({conta:'INTERNET',fornecedor:'Operadora',competencia:'2025-11',acumulado:false});
+});
+
+it('troca filial, centro, conta e fornecedor em sequência sem fechar os filtros ou consultar o recorte antigo', async () => {
+  vi.spyOn(api,'dimensoesDre').mockResolvedValue([{empresa:'12345678',filial:'AGU',centro:null}]);
+  vi.spyOn(api,'resumoDre').mockResolvedValue({historico:{primeiroFrete:'2025-01-01',atualizadoEm:'2026-01-01'},valores:[]});
+  vi.mocked(api.opcoesPagarDre).mockImplementation(async f => {
+    if (f.centro === 'ADM') return [{tipo:'centro',nome:'ADM'},{tipo:'conta',nome:'INTERNET'},{tipo:'fornecedor',nome:'Operadora'}];
+    return [{tipo:'filial',nome:'AGU'},{tipo:'centro',nome:'ADM'}];
+  });
+  vi.spyOn(api,'lancamentosPagarDre').mockResolvedValue({itens:[],temProxima:false});
+  abrir();
+  await screen.findByRole('region',{name:'Tabela do DRE'});
+  fireEvent.click(screen.getByRole('button',{name:/^Filtros/}));
+  for(const [nome,valor] of [['Filial','AGU'],['Centro de custo','ADM'],['Conta contábil','INTERNET'],['Fornecedor','Operadora']]) {
+    const campo = screen.getByRole('combobox',{name:nome});
+    await within(campo).findByRole('option',{name:valor});
+    fireEvent.change(campo,{target:{value:valor}});
+  }
+  await waitFor(() => expect(vi.mocked(api.resumoPagarDre).mock.calls.at(-1)?.[0]).toMatchObject({filial:'AGU',centro:'ADM',conta:'INTERNET',fornecedor:'Operadora'}));
 });

@@ -2,9 +2,9 @@ package com.dashboard.api.repository;
 
 import com.dashboard.api.config.ConsultaAnalitica;
 import com.dashboard.api.service.acesso.EscopoFilialService;
+import com.dashboard.api.util.TemporalJsonUtils;
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository;
 public class DreReceitaRepository {
     public record Filtro(YearMonth competencia, String empresa, String filial, String centro) {}
     public record Dimensao(String empresa, String filial, String centro) {}
-    public record Historico(LocalDate primeiroFrete, LocalDateTime atualizadoEm) {}
+    public record Historico(LocalDate primeiroFrete, String atualizadoEm) {}
     public record Linha(String classe, String tipo, BigDecimal mes, BigDecimal ano) {}
     public record Resumo(Historico historico, List<Linha> valores) {}
     public record Frete(String minuta, String cte, LocalDate data, String filial, String classe, String tipo, BigDecimal valor) {}
@@ -80,6 +80,15 @@ public class DreReceitaRepository {
         }
     }
 
+    List<String> filiaisEmpresa(String empresa, String filial) {
+        var base = escopo();
+        var origem = new StringBuilder(base.origem()).append(" AND filial_nome IS NOT NULL AND NULLIF(filial_cnpj,'') IS NOT NULL");
+        filtrar(origem, base.parametros(), "filial_nome", "filial", filial);
+        base.parametros().addValue("empresa",empresa);
+        return jdbc.queryForList("SELECT filial_nome" + origem + " GROUP BY filial_nome HAVING MIN(" + EMPRESA
+                + ")=:empresa AND MAX(" + EMPRESA + ")=:empresa",base.parametros(),String.class);
+    }
+
     public List<Dimensao> dimensoes(YearMonth mes) {
         var consulta = periodo(escopo(), new Filtro(mes, null, null, null), true);
         return jdbc.query("SELECT DISTINCT " + EMPRESA + " AS empresa, filial_nome, centro_custo_nome"
@@ -92,9 +101,9 @@ public class DreReceitaRepository {
         var historico = jdbc.queryForObject("SELECT MIN(data_referencia_faturamento_date), MAX(snapshot_em)"
                 + base.origem(), base.parametros(), (rs, n) -> {
                     Date primeiro = rs.getDate(1);
-                    Timestamp atualizado = rs.getTimestamp(2);
+                    LocalDateTime atualizado = rs.getObject(2, LocalDateTime.class);
                     return new Historico(primeiro == null ? null : primeiro.toLocalDate(),
-                            atualizado == null ? null : atualizado.toLocalDateTime());
+                            atualizado == null ? null : TemporalJsonUtils.formatarUtcComoIsoComOffset(atualizado));
                 });
         var consulta = periodo(base, filtro, true);
         String sql = """

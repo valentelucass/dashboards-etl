@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { rememberedDashboardHref, rememberDashboardSearch, type DashboardNavigationEntry } from '../utils/dashboardNavigation';
@@ -48,6 +48,10 @@ function lerFiltros(params: URLSearchParams): Record<string, string[]> {
 export function FiltroProvider({ children }: { children: ReactNode }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const parametrosAtuais = useRef(searchParams);
+  useLayoutEffect(() => {
+    parametrosAtuais.current = searchParams;
+  }, [searchParams, location.key]);
   const [navigation, setNavigation] = useState(() => ({
     key: location.key,
     entries: rememberDashboardSearch([] as DashboardNavigationEntry[], location.pathname, location.search),
@@ -68,13 +72,19 @@ export function FiltroProvider({ children }: { children: ReactNode }) {
   const dataFim = searchParams.get('dataFim') ?? defaultPeriod?.dataFim ?? dataHojeLocal();
   const filtros = useMemo(() => lerFiltros(searchParams), [searchParams]);
 
+  const substituirParams = useCallback((next: URLSearchParams) => {
+    // O próximo controle pode mudar antes de o Router terminar de renderizar esta seleção.
+    parametrosAtuais.current = next;
+    setSearchParams(next, { replace: true });
+  }, [setSearchParams]);
+
   const atualizarParams = useCallback(
     (mutator: (params: URLSearchParams) => void) => {
-      const next = new URLSearchParams(searchParams);
+      const next = new URLSearchParams(parametrosAtuais.current);
       mutator(next);
-      setSearchParams(next, { replace: true });
+      substituirParams(next);
     },
-    [searchParams, setSearchParams]
+    [substituirParams]
   );
 
   const setDataInicio = useCallback(
@@ -134,8 +144,8 @@ export function FiltroProvider({ children }: { children: ReactNode }) {
   );
 
   const limparFiltros = useCallback(() => {
-    setSearchParams({}, { replace: true });
-  }, [setSearchParams]);
+    substituirParams(new URLSearchParams());
+  }, [substituirParams]);
 
   return (
     <FiltroContext.Provider

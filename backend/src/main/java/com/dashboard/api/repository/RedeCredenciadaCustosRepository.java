@@ -27,12 +27,15 @@ public class RedeCredenciadaCustosRepository {
     private final ValidadorPeriodoService periodo;
     private final EscopoFilialService escopo;
     private final String consulta;
+    private final String consolidacoes;
 
     public RedeCredenciadaCustosRepository(@ConsultaAnalitica NamedParameterJdbcTemplate jdbc,
             ValidadorPeriodoService periodo, EscopoFilialService escopo) throws IOException {
         this.jdbc = jdbc;
         this.periodo = periodo;
         this.escopo = escopo;
+        this.consolidacoes = new ClassPathResource("sql/rede-credenciada-consolidacoes.sql")
+                .getContentAsString(StandardCharsets.UTF_8);
         this.consulta = new ClassPathResource("sql/rede-credenciada-custos.sql")
                 .getContentAsString(StandardCharsets.UTF_8);
     }
@@ -42,16 +45,6 @@ public class RedeCredenciadaCustosRepository {
         periodo.validar(inicio, fim);
         var parametros = new MapSqlParameterSource("dataInicio", Date.valueOf(inicio))
                 .addValue("dataFim", Date.valueOf(fim));
-        var acesso = escopo.escopoAtual();
-        String sql = consulta;
-        if (!acesso.acessoTotal()) {
-            var filiais = FilialKeyUtils.normalizarCodigosParaFiltro(acesso.filiaisOrdenadas());
-            String permitido = filiais.isEmpty() ? "1=0" : "c.filial_key IN (:filiais)";
-            if (!filiais.isEmpty()) {
-                parametros.addValue("filiais", filiais);
-            }
-            sql = sql.replace("/* acesso */ 1=1", permitido);
-        }
         var filtros = new StringBuilder();
         if (parceiros != null && !parceiros.isEmpty()) {
             filtros.append(" AND b.parceiro IN (:parceiros)");
@@ -61,7 +54,7 @@ public class RedeCredenciadaCustosRepository {
             filtros.append(" AND b.situacao IN (:status)");
             parametros.addValue("status", status);
         }
-        sql = sql.replace("/* filtros */", filtros.toString());
+        String sql = baseConsolidacoes(parametros,null).replace("/* filtros */", filtros.toString()) + "\n" + consulta;
         int cobertos = jdbc.queryForObject("""
                 SELECT COUNT(DISTINCT data_arquivo) FROM dbo.rede_credenciada_cobertura
                 WHERE entidade = 'CONSOLIDACAO_DETALHADA'
@@ -86,6 +79,25 @@ public class RedeCredenciadaCustosRepository {
             return new RedeCredenciadaCustosDTO(inicio, fim, "Emissão da consolidação", "ESL 11067",
                     cobertos, Math.toIntExact(ChronoUnit.DAYS.between(inicio, fim) + 1), totais, linhas);
         });
+    }
+
+    String baseConsolidacoes(MapSqlParameterSource parametros, List<String> filiaisSolicitadas) {
+        var acesso = escopo.escopoAtual();
+        String permitido = "1=1";
+        if (!acesso.acessoTotal()) {
+            var filiais = FilialKeyUtils.normalizarCodigosParaFiltro(acesso.filiaisOrdenadas());
+            permitido = filiais.isEmpty() ? "1=0" : "c.filial_key IN (:filiais)";
+            if (!filiais.isEmpty()) parametros.addValue("filiais",filiais);
+        }
+        if (filiaisSolicitadas != null) {
+            var filiais = FilialKeyUtils.normalizarCodigosParaFiltro(filiaisSolicitadas);
+            if (filiais.isEmpty()) permitido += " AND 1=0";
+            else {
+                permitido += " AND c.filial_key IN (:filiaisDre)";
+                parametros.addValue("filiaisDre",filiais);
+            }
+        }
+        return consolidacoes.replace("/* acesso */ 1=1",permitido);
     }
 
     private static Linha lerLinha(ResultSet rs) throws SQLException {

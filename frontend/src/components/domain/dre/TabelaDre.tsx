@@ -3,21 +3,21 @@ import { ChevronDown, ChevronRight, Search } from 'lucide-react';
 import { formatarDataHoraMinuto } from '../../../utils/formatadores';
 import type { FiltroDre, ResumoDre } from '../../../api/endpoints/dreServico';
 import DetalheDre from './DetalheDre';
-import { apresentacaoDre, dinheiro, montarLinhas, selecionarContas } from './modeloDre';
+import type { ContaDre } from './contasDre';
+import { apresentacaoDre, formatarConta, selecionarContas } from './modeloDre';
 
 const totais = new Set(['D12', 'D91', 'D96', 'D200', 'D203', 'D214', 'D217']);
 const rodapes = new Set(['D91', 'D200', 'D214']);
 const abertasAoEntrar = ['D93', 'D99', 'D206'];
 
 interface Props {
-  resumo?: ResumoDre; filtro: FiltroDre; busca: string; buscar: (texto: string) => void;
+  resumo?: ResumoDre; linhas: ContaDre[]; filtro: FiltroDre; busca: string; buscar: (texto: string) => void; dados: ReturnType<typeof apresentacaoDre>;
 }
 
-export default function TabelaDre({resumo, filtro, busca, buscar}: Props) {
-  const [abertas, setAbertas] = useState(() => new Set(abertasAoEntrar));
+export default function TabelaDre({resumo, linhas, filtro, busca, buscar, dados}: Props) {
+  const [abertas, setAbertas] = useState(() => new Set(filtro.conta || filtro.fornecedor ? linhas.map(c => c.id) : abertasAoEntrar));
   const [detalhe, setDetalhe] = useState<string | null>(null);
-  const contas = selecionarContas(montarLinhas(resumo), busca);
-  const dados = apresentacaoDre(resumo, filtro.competencia);
+  const contas = selecionarContas(linhas, busca);
   const pais = new Set(contas.map(c => c.pai));
   const niveis = new Map<string, number>();
   const visiveis = new Set<string>();
@@ -62,17 +62,18 @@ export default function TabelaDre({resumo, filtro, busca, buscar}: Props) {
                 <button type="button" className="dre-name" aria-expanded={selecionada}
                   onClick={() => setDetalhe(selecionada ? null : conta.id)}>{conta.nome}</button>
               </div></th>
-              <td>{dinheiro(dados.valor(conta, 'mes'))}</td><td>—</td><td>—</td>
-              <td>{dinheiro(dados.valor(conta, 'ano'))}</td><td>—</td><td>—</td>
+              <td>{formatarConta(conta,dados.valor(conta,'mes'))}</td><td>—</td><td>—</td>
+              <td>{formatarConta(conta,dados.valor(conta,'ano'))}</td><td>—</td><td>—</td>
             </tr>
             {selecionada && <tr><td colSpan={7} className="dre-detail-cell"><DetalheDre key={conta.id}
-              conta={conta} filtro={filtro} mesDisponivel={dados.mesDisponivel} anoDisponivel={dados.anoDisponivel} fechar={() => setDetalhe(null)}/></td></tr>}
+              conta={conta} filtro={filtro} dados={dados} linhas={linhas} fechar={() => setDetalhe(null)}/></td></tr>}
           </Fragment>;
         })}
-        {contas.length === 0 && <tr><td colSpan={7}>Nenhuma conta encontrada.</td></tr>}
+        {contas.length === 0 && <tr><td colSpan={7}>{!busca && (filtro.conta || filtro.fornecedor)
+          ? 'Nenhuma linha do modelo vinculada neste recorte. Consulte os lançamentos de Contas a Pagar abaixo.' : 'Nenhuma conta encontrada.'}</td></tr>}
         </tbody>
       </table>
     </div>
-    <p className="dre-footnote">O traço indica valor indisponível. Orçamento, custos e resultados aguardam conciliação com o departamento de Custos.</p>
+    <p className="dre-footnote">As despesas aparecem com sinal negativo. O traço indica histórico insuficiente, conta sem vínculo ou valor pendente de conciliação. O orçamento aguarda o fechamento de Custos.</p>
   </section>;
 }

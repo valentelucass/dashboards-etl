@@ -14,6 +14,36 @@ function mount(path: string) {
 }
 
 describe('período inicial e memória de navegação', () => {
+  it('preserva todos os filtros alterados antes de a navegação anterior terminar', () => {
+    const hook = mount('/dre?f.competenciaDre=2026-10');
+    const { setFiltros } = hook.result.current.filtro;
+    act(() => {
+      setFiltros({ filialDre: ['AGU'] });
+      setFiltros({ centroDre: ['FILIAL AGUDOS'] });
+      setFiltros({ contaContabilDre: ['CARGA E DESCARGA'] });
+      setFiltros({ fornecedorDre: ['Fornecedor'] });
+    });
+    expect(hook.result.current.filtro.filtros).toEqual({
+      competenciaDre: ['2026-10'], filialDre: ['AGU'], centroDre: ['FILIAL AGUDOS'],
+      contaContabilDre: ['CARGA E DESCARGA'], fornecedorDre: ['Fornecedor'],
+    });
+  });
+
+  it('parte da URL de destino após navegar e respeita limpar antes de uma nova seleção', () => {
+    const hook = mount('/dre?f.filialDre=AGU');
+    act(() => hook.result.current.navigate('/coletas?f.regiao=Sul'));
+    act(() => hook.result.current.filtro.setFiltro('cidade', ['Curitiba']));
+    expect(hook.result.current.filtro.filtros).toEqual({ regiao: ['Sul'], cidade: ['Curitiba'] });
+    act(() => {
+      hook.result.current.filtro.limparFiltros();
+      hook.result.current.filtro.setFiltro('cidade', ['Londrina']);
+    });
+    expect(hook.result.current.filtro.filtros).toEqual({ cidade: ['Londrina'] });
+    act(() => hook.result.current.navigate(-1));
+    act(() => hook.result.current.filtro.setFiltro('contaContabilDre', ['Pedágio']));
+    expect(hook.result.current.filtro.filtros).toEqual({ filialDre: ['AGU'], contaContabilDre: ['Pedágio'] });
+  });
+
   it.each(['/executivo', '/etl-saude'])('%s respeita datas explícitas desde a primeira renderização e ao retornar', path => {
     const hook = mount(`${path}?dataInicio=2026-08-01&dataFim=2026-08-30&f.filiais=CWB`);
     expect(hook.result.current.filtro).toMatchObject({ dataInicio: '2026-08-01', dataFim: '2026-08-30', filtros: { filiais: ['CWB'] } });

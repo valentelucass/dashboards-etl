@@ -751,7 +751,9 @@ O carregamento usa skeletons Astryx por rota e por consulta. Os indicadores acom
 
 ## Tarefas Pendentes
 
-- [ ] [DRE] Conciliar um mês já fechado com Nicholas. Validar o orçamento por conta, a distribuição das despesas entre operação, administração e comercial e o rateio da frota por viagem. Ligar os filtros de projeto e fornecedor aos lançamentos conciliados.
+- [x] [DRE] Reproduzir as 224 linhas do modelo de Custos e detalhar os fretes e os lançamentos de Contas a Pagar por competência, filial, centro de custo, conta contábil e fornecedor. A correspondência direta exige descrição única. O detalhe também permite conferir lançamentos que aguardam classificação.
+- [x] [DRE] Apurar os fretes de agregados e terceiros com o custo por contrato de Manifestos e os fretes de parceiros com o valor cobrado nas consolidações admitidas pela Rede Credenciada. O detalhe lista os documentos da mesma competência e filial.
+- [ ] [DRE] Conciliar um mês fechado com Nicholas. Obter o orçamento mensal por conta, os vínculos de projeto, as classificações manuais por departamento, a planilha de abastecimentos e o rateio da frota por viagem.
 
 - [ ] [Capacidade do Dashboard] Qualificar o preparo incremental de Coletas com os lotes reais, conectar a fila ao ciclo contínuo e estender aos demais contratos das 11 fontes. Medir os painéis e filtros com ingestão concorrente e volume maior antes de trocar a leitura.
 

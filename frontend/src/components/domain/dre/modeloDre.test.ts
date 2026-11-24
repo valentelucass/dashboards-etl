@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contasDre } from './contasDre';
-import { apresentacaoDre, exportacaoDre, montarLinhas, selecionarContas } from './modeloDre';
+import { apresentacaoDre, exportacaoDre, linhasContabeis, montarLinhas, selecionarContas } from './modeloDre';
 import type { ResumoDre } from '../../../api/endpoints/dreServico';
 
 const resumo: ResumoDre = {
@@ -44,6 +44,34 @@ describe('demonstrativo de Custos', () => {
   it('aceita o acumulado desde janeiro quando o histórico cobre o exercício', () => {
     const completo = {...resumo, historico:{...resumo.historico, primeiroFrete:'2025-09-15'}};
     expect(apresentacaoDre(completo,'2026-11').valor(contasDre[0],'ano')).toBe(300);
+  });
+  it('o recorte contábil conserva os pais e remete contas desconhecidas à conferência de títulos', () => {
+    const contas = linhasContabeis(resumo,undefined,'INTERNET');
+    expect(contas.map(c => c.id)).toEqual(['D99','D100','D128','D131']);
+    expect(linhasContabeis(resumo,undefined,'SALÁRIOS').filter(c => c.nome === 'SALÁRIOS')).toHaveLength(3);
+    expect(linhasContabeis(resumo,undefined,'CONTA NOVA')).toEqual([]);
+    expect(linhasContabeis(resumo,{historico:{primeiraEmissao:null,atualizadoEm:null},valores:[{conta:'INTERNET',mes:10,ano:90}]},undefined,'Operadora')).toEqual(contas);
+  });
+  it('exibe os custos das três origens com sinal de despesa e mantém o resultado pendente até o rateio', () => {
+    const dados = apresentacaoDre(resumo,'2026-11',undefined,true,[{id:'D33',mes:100,ano:null},{id:'D34',mes:3,ano:20},{id:'D35',mes:0,ano:null}]);
+    const valor = (id: string, p: 'mes'|'ano') => dados.valor(contasDre.find(l => l.id === id)!,p);
+    expect([valor('D33','mes'),valor('D34','ano'),valor('D35','mes')]).toEqual([-100,-20,0]);
+    expect(valor('D33','ano')).toBeNull();
+    expect(valor('D96','mes')).toBeNull();
+  });
+  it('concilia a descrição única, preserva rateio pendente e evita distribuir salários a três departamentos', () => {
+    const pagar = {historico:{primeiraEmissao:'2025-12-01',atualizadoEm:'2026-11-24'},valores:[
+      {conta:'INTERNET',mes:50,ano:250}, {conta:'SALÁRIOS',mes:100,ano:200}, {conta:'IPVA',mes:100,ano:100},
+      {conta:'TARIFAS BANCÁRIAS',mes:null,ano:null},{conta:'JUROS RECEBIDOS',mes:3,ano:15},
+    ]};
+    const view = apresentacaoDre(resumo,'2026-11',pagar,false);
+    const conta = (id:string) => contasDre.find(linha => linha.id === id)!;
+    expect(view.valor(conta('D131'),'mes')).toBe(-50);
+    expect(view.valor(conta('D131'),'ano')).toBe(-250);
+    expect(view.valor(conta('D208'),'mes')).toBe(3);
+    for (const id of ['D6','D16','D102','D178','D74','D156','D148','D217']) expect(view.valor(conta(id),'mes')).toBeNull();
+    const parcial = apresentacaoDre(resumo,'2026-11',{...pagar,historico:{...pagar.historico,primeiraEmissao:'2026-08-16'}});
+    expect(parcial.valor(conta('D131'),'ano')).toBeNull();
   });
   it('exporta as sete colunas, todos os níveis do filtro, os totais e a ausência de orçamento', () => {
     const linhas = selecionarContas(montarLinhas(resumo), 'salarios');

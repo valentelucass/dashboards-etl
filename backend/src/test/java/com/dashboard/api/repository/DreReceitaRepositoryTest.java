@@ -2,6 +2,9 @@ package com.dashboard.api.repository;
 
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -57,5 +60,15 @@ class DreReceitaRepositoryTest {
         verify(jdbc).query(anyString(), params.capture(), any(RowMapper.class));
         assertThat(params.getValue().getValue("inicio")).isEqualTo(params.getValue().getValue("mes"));
         assertThat(params.getValue().getValue("fim")).isEqualTo(Date.valueOf("2026-02-01"));
+    }
+
+    @Test void usaOMesmoFusoDeFaturamentoNaViradaDoMes() throws Exception {
+        when(escopos.escopoAtual()).thenReturn(EscopoFilialService.EscopoFilial.comAcessoTotal());
+        var rs = mock(ResultSet.class);
+        when(rs.getObject(2, LocalDateTime.class)).thenReturn(LocalDateTime.parse("2026-11-01T01:00:00"));
+        when(jdbc.queryForObject(anyString(),any(MapSqlParameterSource.class),any(RowMapper.class)))
+                .thenAnswer(i -> ((RowMapper)i.getArgument(2)).mapRow(rs,0));
+        var resposta = repo.resumo(new DreReceitaRepository.Filtro(novembro,null,null,null));
+        assertThat(OffsetDateTime.parse(resposta.historico().atualizadoEm())).isEqualTo(OffsetDateTime.parse("2026-10-31T22:00:00-03:00"));
     }
 }

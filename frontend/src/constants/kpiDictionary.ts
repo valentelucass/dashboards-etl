@@ -70,7 +70,7 @@ const periodoHorarioCorte = 'O período usa o dia da partida prevista no horári
 
 export const KpiDictionary = {
   dre: {
-    bruta: { titulo: 'Receita Bruta · Fretes Emitidos', descricao: 'Receita dos fretes na competência selecionada.', calculo: 'Soma da receita bruta publicada em Faturamento, com os mesmos critérios de elegibilidade e de data.' },
+    bruta: { titulo: 'Receita Bruta · Fretes Emitidos', descricao: 'Receita dos fretes na competência selecionada.', calculo: 'Soma da receita bruta publicada em Faturamento, com os mesmos critérios de elegibilidade e de data.', observacao: 'Fornecedor e conta contábil aplicam-se aos lançamentos de Contas a Pagar. A receita fica indisponível nesses recortes.' },
     liquida: { titulo: 'Receita Líquida', descricao: 'Receita após os impostos do demonstrativo.', calculo: 'A apuração depende da conciliação de ICMS, PIS/COFINS, contribuição previdenciária e ISS.' },
     lucro: { titulo: 'Lucro Bruto', descricao: 'Resultado após os custos da operação.', calculo: 'Depende dos custos operacionais e da absorção da frota conforme o fechamento de Custos.' },
     margem: { titulo: 'Margem Bruta %', descricao: 'Participação do lucro bruto na receita líquida.', calculo: 'Lucro bruto dividido pela receita líquida da mesma competência. Aguarda o fechamento das duas contas.' },
