@@ -237,7 +237,7 @@ export function avaliarMetaIndicador({
     return { tone: 'error', label: 'Erro tecnico', met: null, delta: null, progressPct: null };
   }
 
-  if (isLoading && !hasData) {
+  if (isLoading) {
     return { tone: 'loading', label: 'Carregando', met: null, delta: null, progressPct: null };
   }
 
