@@ -104,7 +104,7 @@ export default function TooltipKpi({
       >
         {children}
       </div>
-      {open && anchorRef.current && createPortal(
+      {open && createPortal(
         <Tooltip anchorRef={anchorRef} isOpen placement="above"
           alignment="center" hasHoverIndication={false}
           onOpenChange={next => { if (!next) { setIsHovered(false); setIsFocused(false); } }}
@@ -156,7 +156,7 @@ export default function TooltipKpi({
                 )}
             </div>
           } />,
-        anchorRef.current.ownerDocument.fullscreenElement ?? anchorRef.current.ownerDocument.body,
+        document.fullscreenElement ?? document.body,
       )}
     </>
   );
