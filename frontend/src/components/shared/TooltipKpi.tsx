@@ -6,6 +6,7 @@ import {
   type FocusEvent,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { KpiDictionary, type KpiDefinition } from '../../constants/kpiDictionary';
 import { Tooltip } from '@astryxdesign/core/Tooltip';
 import { getKpiFlexBasis } from './kpiCardLayout';
@@ -81,7 +82,7 @@ export default function TooltipKpi({
   return (
     <>
       <div
-          ref={anchorRef}
+        ref={anchorRef}
         className={`flex min-w-0 rounded-[20px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] ${className}`}
         onBlur={handleBlur}
         onFocus={() => setIsFocused(true)}
@@ -103,7 +104,7 @@ export default function TooltipKpi({
       >
         {children}
       </div>
-      {open && (
+      {open && anchorRef.current && createPortal(
         <Tooltip anchorRef={anchorRef} isOpen placement="above"
           alignment="center" hasHoverIndication={false}
           onOpenChange={next => { if (!next) { setIsHovered(false); setIsFocused(false); } }}
@@ -154,7 +155,8 @@ export default function TooltipKpi({
                   </div>
                 )}
             </div>
-          } />
+          } />,
+        anchorRef.current.ownerDocument.fullscreenElement ?? anchorRef.current.ownerDocument.body,
       )}
     </>
   );

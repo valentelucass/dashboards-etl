@@ -7,6 +7,23 @@ afterEach(cleanup);
 const definition = { titulo: 'Indicador de teste', descricao: 'Descrição do indicador', calculo: 'Total / quantidade', observacao: 'Período selecionado' };
 
 describe('TooltipKpi acessível', () => {
+  it('mantém os mesmos cartões na grade quando o mouse abre a dica', async () => {
+    const { getByTestId } = render(
+      <section data-testid="grade">
+        <TooltipKpi definition={definition}><span>Primeiro</span></TooltipKpi>
+        <TooltipKpi definition={definition}><span>Segundo</span></TooltipKpi>
+      </section>,
+    );
+    const grade = getByTestId('grade');
+    const cartoes = Array.from(grade.children);
+    fireEvent.mouseEnter(cartoes[0]);
+    const dica = await screen.findByRole('tooltip');
+    expect(cartoes[0].getAttribute('aria-describedby')).toBe(dica.id);
+    expect(Array.from(grade.children)).toEqual(cartoes);
+    fireEvent.mouseLeave(cartoes[0]);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
   it('exibe o contrato por foco e fecha com Escape', async () => {
     const { container } = render(<TooltipKpi definition={definition}><span>123</span></TooltipKpi>);
     const trigger = container.querySelector('[tabindex="0"]') as HTMLElement;
