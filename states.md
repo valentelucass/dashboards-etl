@@ -1,3 +1,7 @@
+## 24/11/2026 — Abertura da tela de Performance
+
+O histórico de atrasos verifica se a minuta e a nota têm uma ocorrência diretamente na base de ocorrências. A data de anexação do comprovante é publicada pelo ETL V2 na leitura de fretes e atende aos cartões, filtros, tabela e exportação de Performance.
+
 ## 24/11/2026 — Apresentação e metas de Faturamento
 
 A apresentação mantém o período entre relatórios e alinha os filtros à direita. O Faturamento utiliza as filiais permitidas para calcular a meta inicial, inclusive quando alguma delas ainda não teve movimento. A atribuição da Vedacit a SPO é feita na publicação do ETL V2 pelo CNPJ do pagador.

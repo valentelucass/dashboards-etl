@@ -20,6 +20,12 @@ final class PerformanceOperacaoSql {
                    AND o.ocorrido_em < :dataFim AND %s)
             """.formatted(marco("base_raw.[Tipo Frete]"));
 
+    // A nota do frete só gera "Sem ocorrência" se a mesma minuta e nota não têm histórico.
+    static final String NOTA_SEM_HISTORICO = """
+            NOT EXISTS (SELECT 1 FROM dbo.dashboard_performance_ocorrencias o
+                         WHERE o.minuta = a.numero_minuta AND TRIM(o.nota_fiscal) = TRIM(n.value))
+            """;
+
     static String ocorrenciasAtraso(String filtros) {
         return """
                 , atrasadas AS (
@@ -39,13 +45,12 @@ final class PerformanceOperacaoSql {
                     UNION ALL
                     SELECT DISTINCT a.numero_minuta, TRIM(n.value), NULL, 0
                     FROM atrasadas a CROSS APPLY STRING_SPLIT(a.notas_fiscais, N',') n
-                    WHERE TRIM(n.value) <> N'' AND NOT EXISTS (
-                        SELECT 1 FROM historico h WHERE h.minuta = a.numero_minuta AND h.nota = TRIM(n.value))
+                    WHERE TRIM(n.value) <> N'' AND %s
                 )
                 SELECT COALESCE(NULLIF(TRIM(descricao), N''), N'Sem ocorrência') AS ocorrencia, COUNT_BIG(1) AS notas
                 FROM cobranca WHERE entregue = 0
                 GROUP BY COALESCE(NULLIF(TRIM(descricao), N''), N'Sem ocorrência') ORDER BY notas DESC, ocorrencia
-                """.formatted(filtros, entrega("a.tipo_frete"));
+                """.formatted(filtros, entrega("a.tipo_frete"), NOTA_SEM_HISTORICO);
     }
 
     static String entregasAtencao(String filtros) {
