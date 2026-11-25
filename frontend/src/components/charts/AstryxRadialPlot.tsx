@@ -20,11 +20,12 @@ interface RadialPlotProps {
   height: number;
   label?: string;
   onEvents?: ChartEvents;
+  fitDonut?: boolean;
 }
 
 const numberFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
-export default function AstryxRadialPlot({ option, height, label, onEvents }: RadialPlotProps) {
+export default function AstryxRadialPlot({ option, height, label, onEvents, fitDonut = false }: RadialPlotProps) {
   const { series: [spec], config } = readDashboardChart(option);
   const data = spec.data ?? [];
   const palette = useChartColors().categorical(Math.max(data.length, 1));
@@ -99,6 +100,7 @@ export default function AstryxRadialPlot({ option, height, label, onEvents }: Ra
           innerRadius={radiusRatio(spec.radius, gauge)} padAngle={gauge ? 0 : Math.min(0.02, 0.5 / Math.max(1, segments.length))}
           height={gauge ? Math.round(height * 1.54) : Math.max(40, height - (legend ? legendHeight : 0))}>
           <SliceMarks data={radialData} gauge={gauge} active={hoveredIndex} labels={labels}
+            fittedInnerRadius={fitDonut && !gauge ? radiusRatio(spec.radius, false) : undefined}
             centerTitle={centerCaption?.text} centerSubtitle={centerCaption?.subtext}
             showLabels={!gauge && spec.label?.show !== false && !legend}
             onHover={slice => {
@@ -140,7 +142,7 @@ function radiusRatio(radius: (string | number)[] | string | number | undefined, 
   return outer > 0 && inner >= 0 && inner < outer ? inner / outer : gauge ? 0.72 : 0.57;
 }
 
-function SliceMarks({ data, gauge, active, labels, centerTitle, centerSubtitle, showLabels, onHover, onSelect }: {
+function SliceMarks({ data, gauge, active, labels, centerTitle, centerSubtitle, showLabels, onHover, onSelect, fittedInnerRadius }: {
   data: SliceDatum[];
   gauge: boolean;
   active: number | null;
@@ -148,10 +150,18 @@ function SliceMarks({ data, gauge, active, labels, centerTitle, centerSubtitle, 
   centerTitle?: string;
   centerSubtitle?: string;
   showLabels: boolean;
+  fittedInnerRadius?: number;
   onHover: (slice: SliceDatum | null) => void;
   onSelect?: (slice: SliceDatum) => void;
 }) {
   const { cx, cy, radius, slices } = useRadial();
+  // A separate HTML legend frees the space the radial renderer reserves for outer labels.
+  const outer = Math.max(1, Math.min(cx, cy) - 8);
+  const inner = fittedInnerRadius === undefined ? undefined : outer * fittedInnerRadius;
+  const scale = inner !== undefined && radius > 0 ? outer / radius : 1;
+  const fittedTransform = scale === 1 ? undefined : `translate(${cx} ${cy}) scale(${scale}) translate(${-cx} ${-cy})`;
+  const centerFont = (value: string | undefined, maximum: number) =>
+    inner && value ? Math.min(maximum, inner * 1.6 / (value.length * 0.62)) : undefined;
   const marks = useRef<SVGGElement>(null);
   // RadialSlice owns the geometry. Attach the dashboard's drill-down semantics
   // to its visible marks so pointer and keyboard select the same original row.
@@ -182,7 +192,7 @@ function SliceMarks({ data, gauge, active, labels, centerTitle, centerSubtitle, 
   });
   return (
     <>
-      <g ref={marks} transform={gauge ? `rotate(-90 ${cx} ${cy})` : undefined}
+      <g ref={marks} transform={gauge ? `rotate(-90 ${cx} ${cy})` : fittedTransform}
         className={onSelect ? 'cursor-pointer' : undefined}
         onPointerOver={event => onHover(datum(event.target))} onPointerLeave={() => onHover(null)}
         onFocus={event => onHover(datum(event.target))} onBlur={() => onHover(null)}
@@ -211,11 +221,11 @@ function SliceMarks({ data, gauge, active, labels, centerTitle, centerSubtitle, 
             <tspan x={labelX} dy={14}>{numberFormat.format(slice.percentage * 100)}%</tspan>
           </text>;
         })}
-        {(gauge || centerTitle) && <text x={cx} y={cy - (gauge ? 9 : 0)} className="dashboard-gauge-value">{gauge ? labels[0] : centerTitle}</text>}
+        {(gauge || centerTitle) && <text x={cx} y={cy - (gauge ? 9 : 0)} className="dashboard-gauge-value" style={{ fontSize: centerFont(centerTitle, 24) }}>{gauge ? labels[0] : centerTitle}</text>}
         {gauge ? <>
           <text x={cx - radius} y={cy + 20} textAnchor="start">{labels[1]}</text>
           <text x={cx + radius} y={cy + 20} textAnchor="end">{labels[2]}</text>
-        </> : centerSubtitle && <text x={cx} y={cy + 18}>{centerSubtitle}</text>}
+        </> : centerSubtitle && <text x={cx} y={cy + (inner === undefined ? 18 : Math.min(16, inner * 0.4))} style={{ fontSize: centerFont(centerSubtitle, 11) }}>{centerSubtitle}</text>}
       </g>
     </>
   );

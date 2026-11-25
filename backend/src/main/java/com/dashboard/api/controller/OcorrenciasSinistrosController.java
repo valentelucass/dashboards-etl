@@ -32,8 +32,9 @@ public class OcorrenciasSinistrosController {
     }
 
     @GetMapping("/sinistros")
-    public JsonNode sinistros(@RequestParam LocalDate dataInicio,@RequestParam LocalDate dataFim,@RequestParam(defaultValue="0") int pagina) {
-        return relatorios.relacao(dataInicio,dataFim,pagina);
+    public JsonNode sinistros(@RequestParam LocalDate dataInicio,@RequestParam LocalDate dataFim,@RequestParam(defaultValue="0") int pagina,
+                             @RequestParam(defaultValue="25") int tamanho) {
+        return relatorios.relacao(dataInicio,dataFim,pagina,tamanho);
     }
 
     @PutMapping("/sinistros/{numero}") @PreAuthorize(EDICAO) @ResponseStatus(HttpStatus.NO_CONTENT)

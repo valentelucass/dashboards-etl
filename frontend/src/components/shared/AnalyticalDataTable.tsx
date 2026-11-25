@@ -492,7 +492,7 @@ export default function AnalyticalDataTable<T>({
   const fimExibido = Math.min(inicio + dados.length, totalReal);
   const resumoRegistros = hasError
     ? 'Falha ao carregar registros'
-    : `${formatarInteiro(totalReal)} registros encontrados`;
+    : (totalReal === 1 ? '1 registro encontrado' : `${formatarInteiro(totalReal)} registros encontrados`);
   const statusOptionsEfetivas = statusOptions ?? [];
   const larguraMinimaTabela = calcularLarguraMinimaTabela(colunas);
 
@@ -609,6 +609,14 @@ export default function AnalyticalDataTable<T>({
                 return (
                   <TableHeaderCell
                     key={col.chave}
+                    tabIndex={colunaOrdenavel ? 0 : undefined}
+                    aria-sort={colunaOrdenavel && sortField === col.chave ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined}
+                    onKeyDown={event => {
+                      if (colunaOrdenavel && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                        event.preventDefault();
+                        handleSort(col.chave);
+                      }
+                    }}
                     onClick={() => handleSort(col.chave, colunaOrdenavel)}
                     className={`h-10 px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap select-none ${
                       colunaOrdenavel ? 'cursor-pointer' : 'cursor-default'

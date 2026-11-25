@@ -75,9 +75,25 @@ export interface Apolice {
 export async function lerIndicadores(periodo: Periodo, signal?: AbortSignal) {
   return (await clienteAxios.get<Indicadores>(base + '/indicadores', { params: periodo, signal })).data;
 }
-export async function lerSinistros(periodo: Periodo, pagina: number, signal?: AbortSignal) {
-  return (await clienteAxios.get<Relacao>(base + '/sinistros', { params: { ...periodo, pagina }, signal }))
-    .data;
+export async function lerSinistros(periodo: Periodo, pagina: number, signal?: AbortSignal, tamanho = 25) {
+  return (
+    await clienteAxios.get<Relacao>(base + '/sinistros', { params: { ...periodo, pagina, tamanho }, signal })
+  ).data;
+}
+export async function lerRelacaoCompleta(periodo: Periodo, signal?: AbortSignal): Promise<Relacao> {
+  const tamanho = 200;
+  const primeira = await lerSinistros(periodo, 0, signal, tamanho);
+  const linhas = [...primeira.linhas];
+  let pagina = 1;
+  while (linhas.length < primeira.total) {
+    const parte = await lerSinistros(periodo, pagina++, signal, tamanho);
+    if (parte.total !== primeira.total || !parte.linhas.length)
+      throw new Error('A relação de sinistros foi atualizada.');
+    linhas.push(...parte.linhas);
+  }
+  if (linhas.length !== primeira.total || new Set(linhas.map((l) => l.numero)).size !== linhas.length)
+    throw new Error('A relação de sinistros foi atualizada.');
+  return { ...primeira, linhas };
 }
 export async function salvarAcompanhamento(numero: number, dados: Acompanhamento) {
   await clienteAxios.put(base + '/sinistros/' + numero, dados);

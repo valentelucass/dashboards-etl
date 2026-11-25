@@ -3,6 +3,7 @@ import type { EChartsOption } from 'echarts';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import AstryxDashboardChart from './AstryxDashboardChart';
+import AstryxRadialPlot from './AstryxRadialPlot';
 import { buildManifestosHalfDonutOption } from '../domain/manifestos/manifestosGaugeOptions';
 
 beforeEach(() => {
@@ -101,4 +102,19 @@ it('preserva o percentual acima da escala e ignora a metade oculta no medidor', 
   expect(screen.getByText(/Global: 125,0%/)).toBeTruthy();
   fireEvent.click(filled);
   expect(click).toHaveBeenCalledWith(expect.objectContaining({ name: 'Global', dataIndex: 0 }));
+});
+
+it('encaixa o total no centro da rosca compacta e preserva o tamanho padrão dos demais gráficos', () => {
+  const option: EChartsOption = {
+    legend: { show: false },
+    title: { text: '123.456', subtext: 'notas únicas' },
+    series: [{ type: 'pie', radius: ['62%', '94%'], data: [{ name: 'Avaria', value: 12 }] }],
+  };
+  const { rerender } = render(<AstryxRadialPlot option={option} height={110} />);
+  const titulo = screen.getByText('123.456');
+  expect(titulo.style.fontSize).toBe('');
+  rerender(<AstryxRadialPlot option={option} height={110} fitDonut />);
+  expect(parseFloat(titulo.style.fontSize)).toBeGreaterThan(0);
+  expect(parseFloat(titulo.style.fontSize)).toBeLessThan(14);
+  expect(screen.getByRole('img', { name: 'Avaria, 12' }).parentElement?.closest('g[transform]')).toBeTruthy();
 });

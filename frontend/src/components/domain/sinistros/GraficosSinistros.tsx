@@ -61,8 +61,10 @@ function RoscaNotas({
     <div className="os-rosca" aria-label="Percentual e quantidade de notas">
       <div className="os-anel">
         <AstryxRadialPlot
+          key={itens.map((i) => i.chave).join('/')}
+          fitDonut
           option={option}
-          height={174}
+          height={204}
           label="Notas por grupo ou ocorrência"
           onEvents={
             onGrupo
@@ -80,12 +82,7 @@ function RoscaNotas({
         {itens.map((item, i) => {
           const percentual = unicas ? formatarPorcentagem((100 * item.notas) / unicas, 1) : '—';
           const descricao =
-            item.nome +
-            ' · ' +
-            formatarNumero(item.notas) +
-            ' notas · ' +
-            percentual +
-            ' das notas únicas';
+            item.nome + ' · ' + formatarNumero(item.notas) + ' notas · ' + percentual + ' das notas únicas';
           const legenda = (
             <>
               <i aria-hidden="true" style={{ backgroundColor: cores[i % cores.length] }} />
@@ -141,12 +138,12 @@ function ColunasOcorrencias({ itens, onGrupo }: { itens: Categoria[]; onGrupo?: 
     ],
   };
   return (
-    <div aria-label="Quantidade de ocorrências">
+    <div className="os-colunas" aria-label="Quantidade de ocorrências">
       <AstryxDashboardChart
         key={itens.map((i) => i.chave).join('/')}
         label="Ocorrências e notas em colunas verticais"
         option={option}
-        style={{ height: 210 }}
+        style={{ height: 'auto' }}
         minCategoryWidth={76}
         onEvents={onGrupo ? { click: (ponto) => onGrupo((ponto as { name: string }).name) } : undefined}
       />
@@ -192,12 +189,17 @@ export function GraficoGrupo({ dados, porNota }: { dados: Indicadores; porNota: 
       titulo={porNota ? 'Notas e quantidade por grupo de ocorrência' : 'Ocorrências por grupo de ocorrência'}
       chartKey={porNota ? 'notasGrupo' : 'eventosGrupo'}
       actions={acoes}
+      contentClassName={porNota ? 'os-conteudo-rosca' : 'os-conteudo-colunas'}
       isEmpty={!itens.length}
       emptyMessage={porNota ? 'Nenhuma nota com ocorrência no período.' : 'Nenhuma ocorrência no período.'}
     >
       {selecionado && <p className="os-grupo-ativo">{selecionado.grupo}</p>}
       {porNota ? (
-        <RoscaNotas itens={itens} unicas={selecionado?.notas ?? dados.notas} onGrupo={onGrupo} />
+        <RoscaNotas
+          itens={itens}
+          unicas={selecionado?.notas ?? dados.notas}
+          onGrupo={onGrupo}
+        />
       ) : (
         <ColunasOcorrencias itens={itens} onGrupo={onGrupo} />
       )}

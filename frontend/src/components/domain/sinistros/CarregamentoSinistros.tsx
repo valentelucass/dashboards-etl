@@ -1,5 +1,6 @@
 import { LoadingKpiGrid } from '../../shared/DashboardLoading';
-import { LoadingTableRows } from '../../shared/TableLoading';
+import TableLoading from '../../shared/TableLoading';
+import { camposSinistros } from './camposSinistros';
 import ChartLoading, { ChartPlaceholder } from '../../shared/ChartLoading';
 import './sinistros.css';
 
@@ -9,7 +10,7 @@ export default function CarregamentoSinistros() {
       <LoadingKpiGrid count={5} className="os-kpis os-kpis-principais" />
       <div className="os-composicao">
         <ChartPlaceholder>
-          <div className="h-[194px]">
+          <div className="h-[210px]">
             <ChartLoading round legend={false} />
           </div>
         </ChartPlaceholder>
@@ -18,11 +19,10 @@ export default function CarregamentoSinistros() {
             <ChartLoading bars />
           </div>
         </ChartPlaceholder>
-        <LoadingKpiGrid
-          count={4}
-          containerClassName="os-skeleton-lateral"
-          className="os-kpis os-kpis-operacionais"
-        />
+        <div className="os-lateral" aria-hidden="true">
+          <h2>Tratativas e resolução</h2>
+          <LoadingKpiGrid count={4} className="os-kpis os-kpis-operacionais" />
+        </div>
       </div>
       <div className="os-graficos">
         {[0, 1].map((i) => (
@@ -33,13 +33,7 @@ export default function CarregamentoSinistros() {
           </ChartPlaceholder>
         ))}
       </div>
-      <ChartPlaceholder>
-        <table className="w-full">
-          <tbody>
-            <LoadingTableRows columns={7} />
-          </tbody>
-        </table>
-      </ChartPlaceholder>
+      <TableLoading title="Relação de sinistros" columns={camposSinistros} pageSize={10} filters />
     </div>
   );
 }

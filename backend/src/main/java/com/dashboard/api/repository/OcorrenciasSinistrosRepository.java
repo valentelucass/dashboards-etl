@@ -43,9 +43,9 @@ public class OcorrenciasSinistrosRepository {
         return consultar(indicadores,inicio,fim,new MapSqlParameterSource());
     }
 
-    public JsonNode relacao(LocalDate inicio,LocalDate fim,int pagina) {
-        if (pagina<0) throw new IllegalArgumentException("Página inválida");
-        return consultar(relacao,inicio,fim,new MapSqlParameterSource("deslocamento",(long)pagina*25).addValue("limite",25));
+    public JsonNode relacao(LocalDate inicio,LocalDate fim,int pagina,int tamanho) {
+        if (pagina<0 || tamanho<1 || tamanho>200) throw new IllegalArgumentException("Paginação inválida");
+        return consultar(relacao,inicio,fim,new MapSqlParameterSource("deslocamento",(long)pagina*tamanho).addValue("limite",tamanho));
     }
 
     private JsonNode consultar(String consulta,LocalDate inicio,LocalDate fim,MapSqlParameterSource p) {

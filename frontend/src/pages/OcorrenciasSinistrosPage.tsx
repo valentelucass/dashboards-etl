@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ShieldCheck } from 'lucide-react';
+import { BadgeCheck, ClipboardList, Layers3, ShieldCheck, Timer, type LucideIcon } from 'lucide-react';
 import {
   consultarGestaoGlobal,
   dominioSinistros,
   lerIndicadores,
-  lerSinistros,
+  lerRelacaoCompleta,
   type Indicadores,
   type Periodo,
   type Relacao,
@@ -31,10 +31,29 @@ const definicoes = KpiDictionary.ocorrenciasSinistros;
 function porcentagem(parte: number, base: number) {
   return base ? formatarPorcentagem((100 * parte) / base, 2) : '—';
 }
+const iconesOperacionais: Partial<Record<keyof typeof definicoes, LucideIcon>> = {
+  media: Layers3,
+  tratativa: ClipboardList,
+  solucao: Timer,
+  encerrados: BadgeCheck,
+};
 function Card({ tipo, valor, ajuda }: { tipo: keyof typeof definicoes; valor: string; ajuda?: string }) {
+  const Icone = iconesOperacionais[tipo];
   return (
     <TooltipKpi definition={definicoes[tipo]} className="h-full">
-      <KpiCard label={definicoes[tipo].titulo} valor={valor} helperText={ajuda} className="h-full" />
+      <KpiCard
+        label={definicoes[tipo].titulo}
+        valor={valor}
+        helperText={ajuda}
+        className={Icone ? 'h-full os-kpi-operacional os-kpi-' + tipo : 'h-full'}
+        icone={
+          Icone && (
+            <span className="os-kpi-icone">
+              <Icone size={15} aria-hidden="true" />
+            </span>
+          )
+        }
+      />
     </TooltipKpi>
   );
 }
@@ -75,28 +94,31 @@ function IndicadoresDaTela({ op, sin }: { op: Indicadores; sin: Relacao }) {
       <div className="os-composicao">
         <GraficoGrupo dados={op} porNota />
         <GraficoGrupo dados={op} porNota={false} />
-        <section aria-label="Tratativas e resolução" className="os-kpis os-kpis-operacionais">
-          <Card
-            tipo="media"
-            valor={
-              eventos && fretes && op.minutas ? formatarNumero(op.eventosDasMinutas / op.minutas, 2) : '—'
-            }
-          />
-          <Card tipo="tratativa" valor={eventos ? formatarNumero(op.emTratativa) : '—'} />
-          <Card
-            tipo="solucao"
-            valor={eventos ? porcentagem(op.noPrazo, op.comPrazo) : '—'}
-            ajuda={
-              eventos
-                ? formatarNumero(op.noPrazo) + ' de ' + formatarNumero(op.comPrazo) + ' com prazo'
-                : undefined
-            }
-          />
-          <Card
-            tipo="encerrados"
-            valor={sinistros || sin.encerrados > 0 ? formatarNumero(sin.encerrados) : '—'}
-            ajuda={sin.mediaDias == null ? undefined : formatarNumero(sin.mediaDias, 1) + ' dias em média'}
-          />
+        <section aria-labelledby="os-titulo-tratativas" className="os-lateral">
+          <h2 id="os-titulo-tratativas">Tratativas e resolução</h2>
+          <div className="os-kpis os-kpis-operacionais">
+            <Card
+              tipo="media"
+              valor={
+                eventos && fretes && op.minutas ? formatarNumero(op.eventosDasMinutas / op.minutas, 2) : '—'
+              }
+            />
+            <Card tipo="tratativa" valor={eventos ? formatarNumero(op.emTratativa) : '—'} />
+            <Card
+              tipo="solucao"
+              valor={eventos ? porcentagem(op.noPrazo, op.comPrazo) : '—'}
+              ajuda={
+                eventos
+                  ? formatarNumero(op.noPrazo) + ' de ' + formatarNumero(op.comPrazo) + ' com prazo'
+                  : undefined
+              }
+            />
+            <Card
+              tipo="encerrados"
+              valor={sinistros || sin.encerrados > 0 ? formatarNumero(sin.encerrados) : '—'}
+              ajuda={sin.mediaDias == null ? undefined : formatarNumero(sin.mediaDias, 1) + ' dias em média'}
+            />
+          </div>
         </section>
       </div>
     </>
@@ -104,7 +126,6 @@ function IndicadoresDaTela({ op, sin }: { op: Indicadores; sin: Relacao }) {
 }
 
 function Relatorio({ periodo, edita }: { periodo: Periodo; edita: boolean }) {
-  const [pagina, setPagina] = useState(0);
   const [edicao, setEdicao] = useState<Sinistro>();
   const client = useQueryClient();
   const chave = [dominioSinistros, periodo.dataInicio, periodo.dataFim];
@@ -115,16 +136,9 @@ function Relatorio({ periodo, edita }: { periodo: Periodo; edita: boolean }) {
   });
   const sin = useQuery({
     ...cache,
-    queryKey: [...chave, 'relacao', 0],
-    queryFn: ({ signal }) => lerSinistros(periodo, 0, signal),
+    queryKey: [...chave, 'relacao-completa'],
+    queryFn: ({ signal }) => lerRelacaoCompleta(periodo, signal),
   });
-  const outraPagina = useQuery({
-    ...cache,
-    enabled: pagina > 0,
-    queryKey: [...chave, 'relacao', pagina],
-    queryFn: ({ signal }) => lerSinistros(periodo, pagina, signal),
-  });
-  const atual = pagina === 0 ? sin : outraPagina;
   if (op.isError || sin.isError)
     return (
       <div role="alert" className="os-cobertura">
@@ -147,21 +161,7 @@ function Relatorio({ periodo, edita }: { periodo: Periodo; edita: boolean }) {
       <div className="os-graficos">
         <HistoricoSinistro indicadores={op.data} relacao={sin.data} />
       </div>
-      {atual.isError ? (
-        <p role="alert">
-          Falha ao abrir esta página. <button onClick={() => void atual.refetch()}>Tentar novamente</button>
-        </p>
-      ) : atual.data ? (
-        <RelacaoSinistros
-          periodo={periodo}
-          relacao={atual.data}
-          pagina={pagina}
-          setPagina={setPagina}
-          editar={edita ? setEdicao : undefined}
-        />
-      ) : (
-        <p role="status">Carregando página da relação…</p>
-      )}
+      <RelacaoSinistros periodo={periodo} linhas={sin.data.linhas} editar={edita ? setEdicao : undefined} />
       {edicao && (
         <EditarSinistro
           linha={edicao}
