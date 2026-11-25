@@ -109,7 +109,8 @@ export default function DrePage() {
       <KpiGrid count={5} singleRowDesktop>{cards.map(([id, def]) => {
         const linha = contasDre.find(c => c.id === id)!;
         const valor = disponivel.valor(linha,'mes');
-        const ajuda = id === 'D6' && !aplicaFretes ? 'Sem vínculo com este filtro' : valor == null ? 'Aguardando conciliação' : 'Competência selecionada';
+        const ajuda = id === 'D6' && !aplicaFretes ? 'Sem vínculo com este filtro' : valor == null ? 'Sem base de cálculo'
+          : disponivel.resultadoParcial(linha,'mes') ? 'Parcial · contas em conciliação' : 'Competência selecionada';
         return <TooltipKpi definition={def} key={id}><KpiCard label={def.titulo} valor={formatarConta(linha,valor)} helperText={ajuda}/></TooltipKpi>;
       })}</KpiGrid>
       {disponivel.anoParcial && <p className="dre-note" role="status">O acumulado soma os lançamentos disponíveis de janeiro até a competência selecionada.

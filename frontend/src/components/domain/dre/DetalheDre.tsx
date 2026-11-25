@@ -78,7 +78,7 @@ export default function DetalheDre({conta: inicial, filtro, dados, linhas, fecha
     {anterior && <button type="button" className="dre-back" onClick={() => setCaminho(c => c.slice(0,-1))}>Voltar para {anterior.nome}</button>}
     <p>{nomeContabil ? 'Conta contábil do ESL vinculada pela descrição única do demonstrativo.' : origemConta[conta.fonte]}</p>
     {partes.length > 0 && <ul className="dre-composicao" aria-label="Contas que compõem esta linha">{partes.map(parte => {
-      const nome = parte.nome === 'TOTAL' ? 'Total · ' + linhas.find(l => l.id === parte.pai)?.nome : parte.nome;
+      const nome = parte.nome;
       return <li key={parte.id}><button type="button" aria-label={'Detalhar ' + nome} onClick={() => setCaminho(c => [...c,parte])}>
         <span>{nome}</span><span>{formatarConta(parte,dados.valor(parte,'mes'))}</span>
       </button></li>;

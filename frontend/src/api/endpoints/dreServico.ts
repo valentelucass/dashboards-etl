@@ -14,6 +14,8 @@ export interface ValorReceita { classe: string | null; tipo: string | null; mes:
 export interface ResumoDre {
   historico: { primeiroFrete: string | null; atualizadoEm: string | null };
   valores: ValorReceita[];
+  /** Valores orçados com o sinal contábil, quando disponibilizados por Custos. */
+  orcamento?: Array<{contaId: string; mes: number | null; ano: number | null}>;
 }
 export interface FreteDre {
   minuta: string | null; cte: string | null; data: string; filial: string;

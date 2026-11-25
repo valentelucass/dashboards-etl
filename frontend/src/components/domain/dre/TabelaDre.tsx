@@ -4,11 +4,11 @@ import { formatarDataHoraMinuto } from '../../../utils/formatadores';
 import type { FiltroDre, ResumoDre } from '../../../api/endpoints/dreServico';
 import DetalheDre from './DetalheDre';
 import type { ContaDre } from './contasDre';
-import { apresentacaoDre, formatarConta, selecionarContas } from './modeloDre';
+import { apresentacaoDre, colunasPeriodoDre, selecionarContas } from './modeloDre';
 
-const totais = new Set(['D12', 'D91', 'D96', 'D200', 'D203', 'D214', 'D217']);
-const rodapes = new Set(['D91', 'D200', 'D214']);
 const abertasAoEntrar = ['D93', 'D99', 'D206'];
+const periodos = ['mes', 'ano'] as const;
+const totalColunas = 1 + periodos.length * colunasPeriodoDre.length;
 
 interface Props {
   resumo?: ResumoDre; linhas: ContaDre[]; filtro: FiltroDre; busca: string; buscar: (texto: string) => void; dados: ReturnType<typeof apresentacaoDre>;
@@ -40,20 +40,23 @@ export default function TabelaDre({resumo, linhas, filtro, busca, buscar, dados}
     </div>
     <div className="dre-scroll" tabIndex={0} aria-label="Contas e valores por período">
       <table className="dre-table">
-        <thead><tr><th scope="col" rowSpan={2}>Conta</th><th scope="colgroup" colSpan={3}>Mês atual · {mesLegivel}</th>
-          <th scope="colgroup" colSpan={3}>Acumulado do ano · jan a {mesLegivel}{dados.anoParcial && ' (histórico parcial)'}</th></tr>
-          <tr>{['mes','ano'].map(p => <Fragment key={p}><th scope="col">Realizado</th><th scope="col">Orçado</th><th scope="col">Variação R$ / %</th></Fragment>)}</tr>
+        <thead><tr><th scope="col" rowSpan={2}>Conta</th><th scope="colgroup" colSpan={colunasPeriodoDre.length}>Mês atual · {mesLegivel}</th>
+          <th scope="colgroup" colSpan={colunasPeriodoDre.length}>Acumulado do ano · jan a {mesLegivel}{dados.anoParcial && ' (histórico parcial)'}</th></tr>
+          <tr>{periodos.map(p => <Fragment key={p}>{colunasPeriodoDre.map((titulo,i) => {
+            const contexto = titulo === '% ROL' ? '% ROL ' + (i === 1 ? 'realizado' : 'orçado') + (p === 'mes' ? ' do mês' : ' do acumulado') : undefined;
+            return <th key={i} scope="col" aria-label={contexto} title={contexto}>{titulo}</th>;
+          })}</Fragment>)}</tr>
         </thead>
         <tbody>{contas.map(conta => {
           const nivel = conta.pai ? (niveis.get(conta.pai) ?? 0) + 1 : 0;
           niveis.set(conta.id, nivel);
-          if (conta.pai && !pesquisando && (!visiveis.has(conta.pai) || (!abertas.has(conta.pai) && !rodapes.has(conta.id)))) return null;
+          if (conta.pai && !pesquisando && (!visiveis.has(conta.pai) || !abertas.has(conta.pai))) return null;
           visiveis.add(conta.id);
           const temFilhos = pais.has(conta.id);
           const expandida = pesquisando || abertas.has(conta.id);
           const selecionada = detalhe === conta.id;
           return <Fragment key={conta.id}>
-            <tr data-grupo={!conta.pai || undefined} data-total={totais.has(conta.id) || undefined} data-resultado={conta.id === 'D217' || undefined}>
+            <tr data-grupo={!conta.pai || undefined} data-total={conta.fonte === 'resultado' || undefined} data-resultado={conta.id === 'D217' || undefined}>
               <th scope="row"><div className="dre-conta" style={{paddingInlineStart: 12 + 16 * nivel}}>
                 {temFilhos ? <button type="button" className="dre-expand" disabled={pesquisando} aria-expanded={expandida}
                   aria-label={(expandida ? 'Recolher ' : 'Expandir ') + conta.nome} onClick={() => alternar(conta.id)}>
@@ -62,18 +65,17 @@ export default function TabelaDre({resumo, linhas, filtro, busca, buscar, dados}
                 <button type="button" className="dre-name" aria-expanded={selecionada}
                   onClick={() => setDetalhe(selecionada ? null : conta.id)}>{conta.nome}</button>
               </div></th>
-              <td>{formatarConta(conta,dados.valor(conta,'mes'))}</td><td>—</td><td>—</td>
-              <td>{formatarConta(conta,dados.valor(conta,'ano'))}</td><td>—</td><td>—</td>
+              {periodos.map(p => <Fragment key={p}>{dados.celulasPeriodo(conta,p).map((texto,i) => <td key={i}>{texto}</td>)}</Fragment>)}
             </tr>
-            {selecionada && <tr><td colSpan={7} className="dre-detail-cell"><DetalheDre key={conta.id}
+            {selecionada && <tr><td colSpan={totalColunas} className="dre-detail-cell"><DetalheDre key={conta.id}
               conta={conta} filtro={filtro} dados={dados} linhas={linhas} fechar={() => setDetalhe(null)}/></td></tr>}
           </Fragment>;
         })}
-        {contas.length === 0 && <tr><td colSpan={7}>{!busca && (filtro.conta || filtro.fornecedor)
+        {contas.length === 0 && <tr><td colSpan={totalColunas}>{!busca && (filtro.conta || filtro.fornecedor)
           ? 'Nenhuma linha do modelo vinculada neste recorte. Consulte os lançamentos de Contas a Pagar abaixo.' : 'Nenhuma conta encontrada.'}</td></tr>}
         </tbody>
       </table>
     </div>
-    <p className="dre-footnote">Cada grupo soma as contas com valor disponível. As despesas têm sinal negativo. O traço indica valor indisponível ou pendente de conciliação. O orçamento aguarda o fechamento de Custos.</p>
+    <p className="dre-footnote">Grupos e resultados somam os lançamentos disponíveis. Contas em conciliação podem alterar o resultado. O % ROL divide o valor em reais pela receita líquida da mesma coluna. O traço indica valor indisponível ou percentual sem base.{!dados.temOrcamento && ' O orçamento aguarda o fechamento de Custos.'}</p>
   </section>;
 }

@@ -14,9 +14,11 @@ Na conferência de 01 a 24/11, a extração disponível indicou 10.335 comprovan
 
 ## 24/11/2026 — DRE em desenvolvimento
 
-A rota `/dre` segue a aba DRE do modelo de Custos. As 224 linhas preservam a ordem e os agrupamentos da planilha. A receita bruta usa a mesma base e data de referência de Faturamento, com filtro de empresa, filial, centro de custo e competência e com o escopo de acesso do usuário. A consulta de uma conta de receita abre os fretes que compõem o valor. A exportação em reais preserva os níveis da tabela e os filtros aplicados.
+A rota `/dre` segue a ordem e os agrupamentos da aba DRE do modelo de Custos. A receita bruta usa a mesma base e data de referência de Faturamento, com filtro de empresa, filial, centro de custo e competência e com o escopo de acesso do usuário. A consulta de uma conta de receita abre os fretes que compõem o valor. A exportação preserva os níveis da tabela e os filtros aplicados.
 
-Os grupos e seus rodapés somam as contas disponíveis, inclusive nos subgrupos. Os resultados e margens exigem a conciliação dos componentes. O realizado acumulado inclui os lançamentos publicados de janeiro até a competência. A tabela e o CSV identificam o histórico parcial. A consulta de novembro de 2026 encontrou fretes desde 17/08, e os títulos seguem a competência contábil mesmo quando ela precede a emissão. O orçamento permanece pendente de Custos.
+Os grupos somam as contas disponíveis na própria linha. A receita líquida soma receita bruta e impostos. O lucro bruto soma receita líquida, custo operacional e absorção da frota. O EBIT acrescenta as despesas ao lucro bruto e o lucro líquido acrescenta as outras receitas e despesas ao EBIT. Os cartões identificam resultados com grupos pendentes. As margens e o % ROL usam a receita líquida do mesmo período e cenário e aparecem com uma casa decimal na tabela e no CSV. A fonte do orçamento aguarda o fechamento de Custos.
+
+O realizado acumulado inclui os lançamentos publicados de janeiro até a competência. A tabela e o CSV identificam o histórico parcial. A consulta de novembro de 2026 encontrou fretes desde 17/08, e os títulos seguem a competência contábil mesmo quando ela precede a emissão.
 
 ## 24/11/2026 — Título de Manifestos
 
@@ -761,6 +763,7 @@ O carregamento usa skeletons Astryx por rota e por consulta. Os indicadores acom
 
 - [x] [DRE] Reproduzir as 224 linhas do modelo de Custos e detalhar os fretes e os lançamentos de Contas a Pagar por competência, filial, centro de custo, conta contábil e fornecedor. A correspondência direta exige descrição única. O detalhe também permite conferir lançamentos que aguardam classificação.
 - [x] [DRE] Apurar os fretes de agregados e terceiros com o custo por contrato de Manifestos e os fretes de parceiros com o valor cobrado nas consolidações admitidas pela Rede Credenciada. O detalhe lista os documentos da mesma competência e filial.
+- [x] [DRE] Apurar receita líquida, lucro bruto, EBIT e lucro líquido com as contas disponíveis. Exibir três margens com uma casa decimal e % ROL por período e cenário na tabela e no CSV. Os três grupos exibem o total na própria linha.
 - [ ] [DRE] Conciliar um mês fechado com Nicholas. Obter o orçamento mensal por conta, os vínculos de projeto, as classificações manuais por departamento, a planilha de abastecimentos e o rateio da frota por viagem.
 
 - [ ] [Capacidade do Dashboard] Qualificar o preparo incremental de Coletas com os lotes reais, conectar a fila ao ciclo contínuo e estender aos demais contratos das 11 fontes. Medir os painéis e filtros com ingestão concorrente e volume maior antes de trocar a leitura.

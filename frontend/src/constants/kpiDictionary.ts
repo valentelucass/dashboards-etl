@@ -71,10 +71,10 @@ const periodoHorarioCorte = 'O período usa o dia da partida prevista no horári
 export const KpiDictionary = {
   dre: {
     bruta: { titulo: 'Receita Bruta · Fretes Emitidos', descricao: 'Receita dos fretes na competência selecionada.', calculo: 'Soma da receita bruta publicada em Faturamento, com os mesmos critérios de elegibilidade e de data.', observacao: 'O cartão mostra o mês. Na tabela, o acumulado soma os fretes disponíveis de janeiro até a competência. A receita fica indisponível nos filtros de fornecedor e conta contábil.' },
-    liquida: { titulo: 'Receita Líquida', descricao: 'Receita após os impostos do demonstrativo.', calculo: 'A apuração depende da conciliação de ICMS, PIS/COFINS, contribuição previdenciária e ISS.' },
-    lucro: { titulo: 'Lucro Bruto', descricao: 'Resultado após os custos da operação.', calculo: 'Depende dos custos operacionais e da absorção da frota conforme o fechamento de Custos.' },
-    margem: { titulo: 'Margem Bruta %', descricao: 'Participação do lucro bruto na receita líquida.', calculo: 'Lucro bruto dividido pela receita líquida da mesma competência. Aguarda o fechamento das duas contas.' },
-    resultado: { titulo: 'Resultado Líquido', descricao: 'Lucro líquido da competência selecionada.', calculo: 'Depende da conciliação das despesas administrativas, comerciais e do resultado financeiro.' },
+    liquida: { titulo: 'Receita Líquida', descricao: 'Receita após os impostos do demonstrativo.', calculo: 'Receita bruta + total de impostos, com os sinais dos lançamentos disponíveis.' },
+    lucro: { titulo: 'Lucro Bruto', descricao: 'Resultado após os custos da operação.', calculo: 'Receita líquida + custo operacional + absorção da frota.' },
+    margem: { titulo: 'Margem Bruta %', descricao: 'Participação do lucro bruto na receita líquida.', calculo: 'Lucro bruto dividido pela receita líquida da mesma competência, em percentual com uma casa decimal.' },
+    resultado: { titulo: 'Resultado Líquido', descricao: 'Lucro líquido da competência selecionada.', calculo: 'O EBIT soma lucro bruto e despesas. O lucro líquido soma EBIT e o total de outras receitas e despesas.' },
   },
   customerService: {
     entregas: { titulo: 'Total de entregas', descricao: 'Minutas de entrega da conta selecionada.', calculo: periodoPerformance },

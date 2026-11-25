@@ -132,3 +132,28 @@ it('troca filial, centro, conta e fornecedor em sequência sem fechar os filtros
   }
   await waitFor(() => expect(vi.mocked(api.resumoPagarDre).mock.calls.at(-1)?.[0]).toMatchObject({filial:'AGU',centro:'ADM',conta:'INTERNET',fornecedor:'Operadora'}));
 });
+
+it('mostra os quatro % ROL, mantém os totais nos grupos e usa os mesmos resultados nos cartões e no detalhe', async () => {
+  vi.spyOn(api,'dimensoesDre').mockResolvedValue([]);
+  vi.spyOn(api,'resumoDre').mockResolvedValue({historico:{primeiroFrete:'2025-01-01',atualizadoEm:'2025-11-30'},
+    valores:[{classe:null,tipo:null,mes:300,ano:1000}],
+    orcamento:[{contaId:'D6',mes:400,ano:1600},{contaId:'D33',mes:-20,ano:-160}]});
+  vi.mocked(api.custosTransporteDre).mockResolvedValue([{id:'D33',mes:60,ano:100}]);
+  abrir();
+  const tabela = within(await screen.findByRole('region',{name:'Tabela do DRE'}));
+  for (const nome of ['% ROL realizado do mês','% ROL orçado do mês','% ROL realizado do acumulado','% ROL orçado do acumulado']) {
+    expect(tabela.getByRole('columnheader',{name:nome})).toBeTruthy();
+  }
+  const celulas = (nome:string) => within(tabela.getByRole('button',{name:nome}).closest('tr')!).getAllByRole('cell').map(c => c.textContent);
+  expect(celulas('CUSTO OPERACIONAL').filter((_,i) => [1,3,6,8].includes(i))).toEqual(['-20,0%','-5,0%','-10,0%','-10,0%']);
+  expect(celulas('MARGEM BRUTA')[0]).toBe('80,0%');
+  expect(screen.getAllByText('80,0%').length).toBeGreaterThan(1);
+  expect(tabela.queryByRole('button',{name:'TOTAL'})).toBeNull();
+  fireEvent.click(tabela.getByRole('button',{name:'Expandir CUSTO OPERACIONAL'}));
+  expect(tabela.queryByRole('button',{name:'TOTAL'})).toBeNull();
+  fireEvent.click(tabela.getByRole('button',{name:'LUCRO BRUTO'}));
+  const detalhe = screen.getByRole('region',{name:'Detalhe de LUCRO BRUTO'});
+  expect(detalhe.closest('td')?.colSpan).toBe(11);
+  expect(within(detalhe).getByRole('button',{name:'Detalhar CUSTO OPERACIONAL'})).toBeTruthy();
+  expect(within(detalhe).getByRole('button',{name:'Detalhar ABSORÇÃO FROTA'})).toBeTruthy();
+});
