@@ -71,25 +71,25 @@ export default function DetalheDre({conta: inicial, filtro, dados, linhas, fecha
   const [caminho, setCaminho] = useState([inicial]);
   const conta = caminho[caminho.length - 1];
   const anterior = caminho[caminho.length - 2];
-  const nomeContabil = dados.contaPagar(conta)?.conta;
+  const vinculo = dados.contaPagar(conta);
   const partes = composicaoConta(conta).filter(parte => linhas.some(l => l.id === parte.id));
   return <section className="dre-detail" aria-label={'Detalhe de ' + conta.nome}>
     <div className="dre-section-header"><h3>{conta.nome}</h3><button type="button" aria-label="Fechar detalhamento" onClick={fechar}><X size={16}/></button></div>
     {anterior && <button type="button" className="dre-back" onClick={() => setCaminho(c => c.slice(0,-1))}>Voltar para {anterior.nome}</button>}
-    <p>{nomeContabil ? 'Conta contábil do ESL vinculada pela descrição única do demonstrativo.' : origemConta[conta.fonte]}</p>
+    <p>{conta.fonte === 'abastecimento' ? origemConta.abastecimento : vinculo ? 'Lançamentos do Contas a Pagar que compõem esta linha, pelos filtros selecionados.' : origemConta[conta.fonte]}</p>
     {partes.length > 0 && <ul className="dre-composicao" aria-label="Contas que compõem esta linha">{partes.map(parte => {
       const nome = parte.nome;
       return <li key={parte.id}><button type="button" aria-label={'Detalhar ' + nome} onClick={() => setCaminho(c => [...c,parte])}>
         <span>{nome}</span><span>{formatarConta(parte,dados.valor(parte,'mes'))}</span>
       </button></li>;
     })}</ul>}
-    {nomeContabil && <LancamentosPagarDre key={conta.id} filtro={{...filtro, conta:nomeContabil}}/>}
+    {vinculo && <LancamentosPagarDre key={conta.id} filtro={{...filtro, conta:filtro.conta || vinculo.conta}} linha={vinculo.linha}/>}
     {conta.fonte === 'fretes' && (!dados.aplicaFretes ? <p>Os fretes não têm vínculo com os filtros contábeis selecionados.</p> : dados.anoDisponivel ? <Lancamentos key={conta.id} conta={conta} filtro={filtro} anoDisponivel={dados.anoDisponivel}/>
       : <p>O histórico disponível ainda não cobre esta competência.</p>)}
     {['agregados','terceiros','parceiros'].includes(conta.fonte) && (filtro.centro || filtro.conta || filtro.fornecedor
       ? <p>A origem operacional não informa o vínculo com este recorte contábil.</p>
       : <Lancamentos key={conta.id} conta={conta} filtro={filtro} anoDisponivel={dados.valor(conta,'ano') != null}/>)}
-    {['abastecimento','rateio'].includes(conta.fonte) && <p>A apuração desta linha será conciliada com o fechamento de Custos.</p>}
+    {conta.fonte === 'rateio' && <p>A apuração desta linha será conciliada com o fechamento de Custos.</p>}
     <RelatorioDeOrigem conta={conta} filtro={filtro}/>
   </section>;
 }

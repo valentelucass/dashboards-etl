@@ -63,9 +63,10 @@ public class DreController {
     public DrePagarRepository.Pagina lancamentos(@RequestParam String competencia, @RequestParam(required=false) String empresa,
             @RequestParam(required=false) String filial, @RequestParam(required=false) String centro,
             @RequestParam(required=false) String fornecedor, @RequestParam(required=false) String conta,
+            @RequestParam(required=false) String linha,
             @RequestParam(defaultValue="false") boolean acumulado, @RequestParam(defaultValue="0") int pagina) {
         if (pagina < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Página inválida");
-        return pagar.lancamentos(new Filtro(mes(competencia), empresa, filial, centro), fornecedor, conta, acumulado, pagina);
+        return pagar.lancamentos(new Filtro(mes(competencia), empresa, filial, centro), fornecedor, conta, linha, acumulado, pagina);
     }
 
     @GetMapping("/transporte/resumo")

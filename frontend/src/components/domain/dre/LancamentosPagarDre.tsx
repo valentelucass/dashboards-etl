@@ -4,12 +4,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { lancamentosPagarDre, type FiltroDre } from '../../../api/endpoints/dreServico';
 import { dinheiro } from './modeloDre';
 
-export default function LancamentosPagarDre({filtro}: {filtro: FiltroDre}) {
+export default function LancamentosPagarDre({filtro,linha}: {filtro: FiltroDre; linha?: string}) {
   const [acumulado, setAcumulado] = useState(false);
   const [pagina, setPagina] = useState(0);
   const consulta = useQuery({
-    queryKey:['dre', 'lancamentos-pagar', filtro, acumulado, pagina],
-    queryFn:({signal}) => lancamentosPagarDre({...filtro, acumulado, pagina}, signal),
+    queryKey:['dre', 'lancamentos-pagar', filtro, linha, acumulado, pagina],
+    queryFn:({signal}) => lancamentosPagarDre({...filtro, linha, acumulado, pagina}, signal),
     placeholderData:undefined,
   });
   return <div className="dre-detail">
@@ -22,7 +22,7 @@ export default function LancamentosPagarDre({filtro}: {filtro: FiltroDre}) {
     {consulta.data && (consulta.data.itens.length ? <>
       <div className="dre-scroll" tabIndex={0} aria-label="Lançamentos por competência"><table className="dre-fretes" aria-label="Lançamentos de Contas a Pagar">
         <thead><tr>{['Competência','Lançamento','Documento','Filial','Centro de custo','Conta contábil','Fornecedor','Valor do lançamento'].map(c => <th scope="col" key={c}>{c}</th>)}</tr></thead>
-        <tbody>{consulta.data.itens.map(l => <tr key={l.numero}>
+        <tbody>{consulta.data.itens.map(l => <tr key={l.numero+'-'+(l.ordem ?? 0)}>
           <td>{String(l.mes).padStart(2,'0')}/{l.ano}</td><td>{l.numero}</td><td>{l.documento || '—'}</td>
           <td>{l.filial}</td><td>{l.centro || '—'}</td><td>{l.conta || '—'}</td><td>{l.fornecedor || '—'}</td><td>{dinheiro(l.valor)}</td>
         </tr>)}</tbody>

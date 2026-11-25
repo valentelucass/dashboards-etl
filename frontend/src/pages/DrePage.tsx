@@ -4,7 +4,7 @@ import { salvarBlobComoArquivo } from '../api/downloadArquivo';
 import { custosTransporteDre, dimensoesDre, opcoesPagarDre, resumoDre, resumoPagarDre, type FiltroDre, type OpcaoPagarDre } from '../api/endpoints/dreServico';
 import CarregamentoDre from '../components/domain/dre/CarregamentoDre';
 import { contasDre } from '../components/domain/dre/contasDre';
-import { apresentacaoDre, formatarConta, exportacaoDre, linhasContabeis, selecionarContas } from '../components/domain/dre/modeloDre';
+import { apresentacaoDre, dinheiro, formatarConta, exportacaoDre, linhasContabeis, pessoalAClassificar, selecionarContas } from '../components/domain/dre/modeloDre';
 import TabelaDre from '../components/domain/dre/TabelaDre';
 import LancamentosPagarDre from '../components/domain/dre/LancamentosPagarDre';
 import ExportButton from '../components/shared/ExportButton';
@@ -39,12 +39,14 @@ function escolha(label: string, valores: Array<string | null>, valor: string, al
   </label>;
 }
 
-function ConferenciaPagar({filtro}: {filtro: FiltroDre}) {
-  const [aberta, alterar] = useState(Boolean(filtro.conta || filtro.fornecedor));
-  return <section className="dre-card" aria-label="Conferência de Contas a Pagar">
-    <div className="dre-section-header dre-table-title"><h2>Lançamentos de Contas a Pagar</h2>
+function ConferenciaPagar({filtro, pendente}: {filtro: FiltroDre; pendente?: {mes:number | null; ano:number | null}}) {
+  const [aberta, alterar] = useState(!pendente && Boolean(filtro.conta || filtro.fornecedor));
+  const titulo = pendente ? 'Pessoal a classificar' : 'Lançamentos de Contas a Pagar';
+  return <section className="dre-card" aria-label={pendente ? titulo : 'Conferência de Contas a Pagar'}>
+    <div className="dre-section-header dre-table-title"><div><h2>{titulo}</h2>
+      {pendente && <p>Mês {dinheiro(pendente.mes)} · Acumulado {dinheiro(pendente.ano)}. Estes lançamentos aguardam identificação do departamento para entrar nos totais.</p>}</div>
       <button className="dre-name" type="button" aria-expanded={aberta} onClick={() => alterar(!aberta)}>{aberta ? 'Recolher lançamentos' : 'Conferir lançamentos'}</button></div>
-    {aberta && <LancamentosPagarDre filtro={filtro}/>}
+    {aberta && <LancamentosPagarDre filtro={filtro} linha={pendente ? pessoalAClassificar : undefined}/>}
   </section>;
 }
 
@@ -100,7 +102,6 @@ export default function DrePage() {
       {escolha('Centro de custo', [...centros.map(d => d.centro),...nomes('centro')], centro, v => setFiltros({centroDre:v?[v]:[],...limparContas}), 'Todos os centros','Sem centro informado')}
       {escolha('Conta contábil', nomes('conta'), conta, v => setFiltros({contaContabilDre:v?[v]:[]}), 'Todas as contas', 'Sem contas no período', opcoes.isPending)}
       {escolha('Fornecedor', nomes('fornecedor'), fornecedor, v => setFiltros({fornecedorDre:v?[v]:[]}), 'Todos os fornecedores', 'Sem fornecedores no período', opcoes.isPending)}
-      <label className="dre-control"><span>Projeto</span><input disabled value="Aguarda origem dos projetos" readOnly/></label>
     </FilterBar>
     {(dims.isError || opcoes.isError) && <p role="alert" className="dre-note">Falha ao carregar opções dos filtros. <button onClick={() => {void dims.refetch(); void opcoes.refetch();}}>Tentar novamente</button></p>}
     {resumo.isPending || pagar.isPending || (aplicaTransporte && transporte.isPending) ? <CarregamentoDre/> : resumo.isError ? <div className="dre-note" role="alert">Falha ao carregar o DRE. <button onClick={() => void resumo.refetch()}>Tentar novamente</button></div> : <>
@@ -117,6 +118,7 @@ export default function DrePage() {
         {aplicaFretes && dados?.historico.primeiroFrete && dados.historico.primeiroFrete > competencia.slice(0,4)+'-01-01'
           && <> O histórico de fretes começa em {formatarData(dados.historico.primeiroFrete)}.</>}</p>}
       <TabelaDre key={JSON.stringify(filtro)} filtro={filtro} linhas={linhasDre} resumo={dados} dados={disponivel} busca={busca} buscar={buscar}/>
+      {disponivel.pessoalPendente && <ConferenciaPagar key={'pendente'+JSON.stringify(filtro)} filtro={filtro} pendente={disponivel.pessoalPendente}/>}
       <ConferenciaPagar key={'lancamentos'+JSON.stringify(filtro)} filtro={filtro}/>
     </>}
   </div>;

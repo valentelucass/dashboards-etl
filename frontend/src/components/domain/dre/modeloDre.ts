@@ -56,6 +56,8 @@ export function selecionarContas(contas: ContaDre[], busca: string) {
 
 const nomesPagar = new Map<string, number>();
 const nomeContabil = (nome: string) => nome.trim().toLocaleUpperCase('pt-BR');
+const paisComRegraPropria = new Set(['D7','D15','D101','D177']);
+export const pessoalAClassificar = 'PESSOAL_REVISAR';
 for (const linha of contasDre.filter(l => l.fonte === 'pagar')) {
   const nome = nomeContabil(linha.nome);
   nomesPagar.set(nome, (nomesPagar.get(nome) ?? 0) + 1);
@@ -65,10 +67,10 @@ export function linhasContabeis(resumo: ResumoDre | undefined, pagar: ResumoPaga
   const linhas = montarLinhas(resumo);
   if (!conta && !fornecedor) return linhas;
   const nomes = new Set(conta ? [nomeContabil(conta)] : pagar?.valores.map(l => nomeContabil(l.conta)));
-  const ids = new Set<string>();
+  const ids = new Set(pagar?.valores.filter(v => v.linhaDre && nomes.has(nomeContabil(v.conta))).map(v => v.linhaDre));
   for (let i = linhas.length - 1; i >= 0; i--) {
     const l = linhas[i];
-    if (l.fonte === 'pagar' && nomes.has(nomeContabil(l.nome))) ids.add(l.id);
+    if ((l.fonte === 'pagar' || l.fonte === 'abastecimento') && nomes.has(nomeContabil(l.nome))) ids.add(l.id);
     if (l.pai && ids.has(l.id)) ids.add(l.pai);
   }
   return linhas.filter(l => ids.has(l.id));
@@ -97,6 +99,17 @@ export function composicaoConta(conta: ContaDre): ContaDre[] {
 type Periodo = 'mes' | 'ano';
 type Cenario = 'realizado' | 'orcado';
 export const colunasPeriodoDre = ['Realizado', '% ROL', 'Orçado', '% ROL', 'Variação R$ / %'] as const;
+type ParcelaPagar = ResumoPagarDre['valores'][number];
+function totalApropriado(parcelas: ParcelaPagar[], periodo: Periodo) {
+  let centavos: number | null = null;
+  for (const parcela of parcelas) {
+    const valor = parcela[periodo];
+    if (valor == null) {
+      if (periodo === 'mes') return null;
+    } else centavos = (centavos ?? 0) + Math.round(valor * 100);
+  }
+  return centavos == null ? null : centavos / 100;
+}
 function percentual(valor: number | null, base: number | null) {
   if (valor == null || base == null || base === 0) return null;
   return valor === 0 ? 0 : 100 * valor / base;
@@ -112,15 +125,27 @@ export function apresentacaoDre(resumo: ResumoDre | undefined, competencia: stri
   const anoDisponivel = temFretesAteCompetencia && Boolean(atualizado && atualizado >= ano);
   const valores = new Map(resumo?.valores.map(v => [chaveReceita(v.classe, v.tipo), v]));
   const orcamento = new Map((aplicaFretes ? resumo?.orcamento : undefined)?.map(v => [v.contaId, v]));
-  const contas = new Map(pagar?.valores.map(v => [nomeContabil(v.conta), v]));
+  const contas = new Map<string, ParcelaPagar>();
+  const porLinha = new Map<string, ParcelaPagar[]>();
+  for (const parcela of pagar?.valores ?? []) {
+    if (parcela.linhaDre) {
+      const grupo = porLinha.get(parcela.linhaDre);
+      if (grupo) grupo.push(parcela);
+      else porLinha.set(parcela.linhaDre,[parcela]);
+    } else contas.set(nomeContabil(parcela.conta),parcela);
+  }
   const custosTransporte = new Map(transporte.map(v => [v.id,v]));
   const primeira = pagar?.historico.primeiraEmissao;
   const anoParcial = Boolean((aplicaFretes && anoDisponivel && primeiro && primeiro > ano)
     || (pagar?.valores.length && primeira && primeira > ano) || pagar?.valores.some(v => v.anoParcial)
     || transporte.some(v => v.anoParcial));
   function contaPagar(linha: ContaDre) {
+    const parcelas = porLinha.get(linha.id);
+    if (parcelas) return {linha:linha.id, conta:undefined, mes:totalApropriado(parcelas,'mes'), ano:totalApropriado(parcelas,'ano')};
     const nome = nomeContabil(linha.nome);
-    return linha.fonte === 'pagar' && nomesPagar.get(nome) === 1 ? contas.get(nome) : undefined;
+    if (linha.fonte !== 'pagar' || paisComRegraPropria.has(linha.pai ?? '') || nomesPagar.get(nome) !== 1) return undefined;
+    const direta = contas.get(nome);
+    return direta && {...direta,linha:undefined};
   }
   function valorFolha(conta: ContaDre, periodo: Periodo) {
     const operacional = custosTransporte.get(conta.id);
@@ -170,11 +195,14 @@ export function apresentacaoDre(resumo: ResumoDre | undefined, competencia: stri
     return [formatarConta(conta, realizado), formatarPercentual(rolReal), formatarConta(conta, orcado),
       formatarPercentual(rolOrcado), diferenca == null ? '—' : dinheiro(diferenca) + ' / ' + formatarPercentual(percentual(diferenca, orcado))];
   }
+  const pendencias = porLinha.get(pessoalAClassificar);
+  const pessoalPendente = pendencias && {mes:totalApropriado(pendencias,'mes'),ano:totalApropriado(pendencias,'ano')};
   function resultadoParcial(conta: ContaDre, periodo: Periodo): boolean {
+    if (pessoalPendente && pessoalPendente[periodo] !== 0 && ['D14','D99'].includes(conta.id)) return true;
     if (conta.fonte !== 'resultado' && conta.fonte !== 'percentual') return false;
     return composicaoConta(conta).some(parte => valor(parte, periodo) == null || resultadoParcial(parte, periodo));
   }
-  return {mesDisponivel, anoDisponivel, anoParcial, aplicaFretes, temOrcamento: orcamento.size > 0, contaPagar, valor, celulasPeriodo, resultadoParcial};
+  return {mesDisponivel, anoDisponivel, anoParcial, aplicaFretes, temOrcamento: orcamento.size > 0, pessoalPendente, contaPagar, valor, celulasPeriodo, resultadoParcial};
 }
 
 export function dinheiro(valor: number | null) {

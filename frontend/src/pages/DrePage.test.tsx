@@ -40,6 +40,7 @@ it('expande as contas, mostra lançamentos da família selecionada e troca a com
   expect(within(tabela).getAllByText('R$ 150,00').length).toBeGreaterThan(0);
   fireEvent.click(screen.getByRole('button',{name:/^Filtros/}));
   expect(screen.getByRole('combobox',{name:'Filial'})).toBeTruthy();
+  expect(screen.queryByLabelText('Projeto')).toBeNull();
   fireEvent.change(screen.getByLabelText('Competência'),{target:{value:'2025-10'}});
   await waitFor(() => expect(resumo.mock.calls.at(-1)![0].competencia).toBe('2025-10'));
   await screen.findAllByText('R$ 90,00');
@@ -93,6 +94,18 @@ it('aplica conta e fornecedor aos valores e aos lançamentos, sem atribuir frete
   const linha = screen.getByRole('button',{name:'INTERNET'}).closest('tr')!;
   expect(within(linha).getByText(/-R\$\s*50,00/)).toBeTruthy();
   expect(consultar.mock.calls[0][0]).toMatchObject({conta:'INTERNET',fornecedor:'Operadora',competencia:'2025-11',acumulado:false});
+});
+
+it('detalha PIS/COFINS por linha e preserva a conta de origem e o fornecedor filtrados', async () => {
+  vi.spyOn(api,'dimensoesDre').mockResolvedValue([]);
+  vi.spyOn(api,'resumoDre').mockResolvedValue({historico:{primeiroFrete:null,atualizadoEm:null},valores:[]});
+  vi.mocked(api.resumoPagarDre).mockResolvedValue({historico:{primeiraEmissao:null,atualizadoEm:null},
+    valores:[{linhaDre:'D9',conta:'COFINS A RECOLHER',mes:35,ano:42}]});
+  const consultar = vi.spyOn(api,'lancamentosPagarDre').mockResolvedValue({itens:[],temProxima:false});
+  abrir('&f.contaContabilDre=COFINS+A+RECOLHER&f.fornecedorDre=Receita');
+  fireEvent.click(await screen.findByRole('button',{name:'PIS / COFINS'}));
+  await waitFor(() => expect(consultar).toHaveBeenCalledWith(expect.objectContaining({linha:'D9',conta:'COFINS A RECOLHER',
+    fornecedor:'Receita',acumulado:false}),expect.anything()));
 });
 
 it('mostra o subtotal recolhido, preserva-o ao expandir e abre os fretes do acumulado parcial', async () => {

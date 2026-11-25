@@ -13,6 +13,31 @@ const resumo: ResumoDre = {
 };
 
 describe('demonstrativo de Custos', () => {
+  it('concilia folha por departamento, tributos compostos, combustível e pendências sem duplicar o DRE', () => {
+    const pagar = {historico:{primeiraEmissao:'2026-01-01',atualizadoEm:'2026-11-25'},valores:[
+      {conta:'FGTS',linhaDre:'D24',mes:40,ano:100},{conta:'FGTS',linhaDre:'D110',mes:30,ano:80},
+      {conta:'FGTS',linhaDre:'D185',mes:20,ano:60},{conta:'FGTS',linhaDre:'PESSOAL_REVISAR',mes:10,ano:15},
+      {conta:'PIS A RECOLHER',linhaDre:'D9',mes:2.11,ano:12.30},{conta:'COFINS A RECOLHER',linhaDre:'D9',mes:3.12,ano:21.81},
+      {conta:'CONTRIBUIÇÃO PREVIDENCIARIA A RECOLHER',linhaDre:'D10',mes:4,ano:14},
+      {conta:'ABASTECIMENTOS ( TRIVALE E POSTOS )',linhaDre:'D36',mes:12,ano:40},
+      {conta:'SOFTWARES E LICENÇAS',linhaDre:'D130',mes:3,ano:5},
+      {conta:'PLANO DE SAÚDE',linhaDre:'D143',mes:6,ano:7},
+      {conta:'FGTS A RECOLHER',mes:1000,ano:2000},{conta:'ICMS',mes:99,ano:99},
+    ]};
+    const dados = apresentacaoDre(resumo,'2026-09',pagar);
+    const linha = (id:string) => contasDre.find(c=>c.id===id)!;
+    expect(['D15','D101','D177','D9','D10','D36','D7','D14','D99'].map(id=>dados.valor(linha(id),'mes')))
+      .toEqual([-40,-30,-20,-5.23,-4,-12,-9.23,-52,-59]);
+    expect(dados.valor(linha('D143'),'mes')).toBe(-6);
+    expect(dados.valor(linha('D128'),'mes')).toBe(-3);
+    expect(linhasContabeis(resumo,pagar,'SOFTWARES E LICENÇAS').map(c=>c.id)).toEqual(['D99','D100','D128','D130']);
+    expect(dados.valor(linha('D9'),'ano')).toBe(-34.11);
+    expect(dados.valor(linha('D8'),'mes')).toBeNull();
+    expect(dados.pessoalPendente).toEqual({mes:10,ano:15});
+    expect(linhasContabeis(resumo,pagar,'COFINS A RECOLHER').map(c=>c.id)).toEqual(['D7','D9']);
+    expect(dados.contaPagar(linha('D24'))?.linha).toBe('D24');
+    expect(exportacaoDre([linha('D9')],dados,'2026-09')).toContain('34,11');
+  });
   it('preserva a hierarquia sem os três rodapés TOTAL e mantém contas homônimas em seus grupos', () => {
     expect(contasDre).toHaveLength(221);
     expect(contasDre.some(c => c.nome === 'TOTAL')).toBe(false);
@@ -115,7 +140,7 @@ describe('demonstrativo de Custos', () => {
       orcamento:[{contaId:'D6',mes:900,ano:2500},{contaId:'D8',mes:-150,ano:-500},
         {contaId:'D33',mes:-150,ano:-400},{contaId:'D94',mes:-70,ano:-100}]};
     const pagar = {historico:{primeiraEmissao:'2026-01-01',atualizadoEm:'2026-11-25'},valores:[
-      {conta:'ICMS',mes:200,ano:200}, {conta:'INTERNET',mes:60,ano:190},
+      {conta:'ICMS A RECOLHER',linhaDre:'D8',mes:200,ano:200}, {conta:'INTERNET',mes:60,ano:190},
       {conta:'JUROS RECEBIDOS',mes:10,ano:30}, {conta:'JUROS E ENCARGOS BANCÁRIOS',mes:12,ano:20},
     ]};
     const dados = apresentacaoDre(receitas,'2026-11',pagar,true,[{id:'D33',mes:300,ano:900},{id:'D94',mes:80,ano:150}]);
@@ -141,7 +166,7 @@ describe('demonstrativo de Custos', () => {
     expect(csv.split(';').map(c => c.slice(1,-1))).toEqual(['CUSTO OPERACIONAL',...dados.celulasPeriodo(linha('D14'),'mes'),...dados.celulasPeriodo(linha('D14'),'ano')]);
   });
   it('preserva saldos negativos e zeros e não calcula percentuais com receita líquida zero ou ausente', () => {
-    const pagar = {historico:{primeiraEmissao:'2026-01-01',atualizadoEm:'2026-11-25'},valores:[{conta:'ICMS',mes:120,ano:400}]};
+    const pagar = {historico:{primeiraEmissao:'2026-01-01',atualizadoEm:'2026-11-25'},valores:[{conta:'ICMS A RECOLHER',linhaDre:'D8',mes:120,ano:400}]};
     const dados = apresentacaoDre(resumo,'2026-11',pagar,true,[{id:'D33',mes:8,ano:12},{id:'D35',mes:0,ano:0}]);
     const linha = (id:string) => contasDre.find(c => c.id === id)!;
     expect(dados.valor(linha('D12'),'mes')).toBe(0);

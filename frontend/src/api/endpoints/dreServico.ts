@@ -24,11 +24,11 @@ export interface FreteDre {
 
 export interface ResumoPagarDre {
   historico: { primeiraEmissao: string | null; atualizadoEm: string | null };
-  valores: Array<{conta: string; mes: number | null; ano: number | null; anoParcial?: boolean}>;
+  valores: Array<{conta: string; linhaDre?: string | null; mes: number | null; ano: number | null; anoParcial?: boolean}>;
 }
 export interface LancamentoPagarDre {
   numero: number; documento: string | null; filial: string; centro: string | null; fornecedor: string | null;
-  conta: string | null; mes: number; ano: number; valor: number | null;
+  conta: string | null; mes: number; ano: number; valor: number | null; ordem?: number;
 }
 export type OpcaoPagarDre = {tipo: 'filial' | 'centro' | 'conta' | 'fornecedor'; nome: string};
 export type CustoTransporteDre = {id: string; mes: number | null; ano: number | null; mesParcial?: boolean; anoParcial?: boolean};
@@ -47,7 +47,7 @@ export async function opcoesPagarDre(params: FiltroDre, signal?: AbortSignal) {
 export async function resumoPagarDre(params: FiltroDre, signal?: AbortSignal) {
   return (await clienteAxios.get<ResumoPagarDre>(base + '/contas-a-pagar/resumo', {params, signal})).data;
 }
-export async function lancamentosPagarDre(params: FiltroDre & {acumulado: boolean; pagina: number}, signal?: AbortSignal) {
+export async function lancamentosPagarDre(params: FiltroDre & {linha?: string; acumulado: boolean; pagina: number}, signal?: AbortSignal) {
   return (await clienteAxios.get<{itens: LancamentoPagarDre[]; temProxima: boolean}>(base + '/contas-a-pagar/lancamentos', {params, signal})).data;
 }
 export async function resumoDre(params: FiltroDre, signal?: AbortSignal) {

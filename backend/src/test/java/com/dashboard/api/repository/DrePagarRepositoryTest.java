@@ -22,29 +22,38 @@ class DrePagarRepositoryTest {
     @Test void filtraValoresEDetalhePelaMesmaContaFornecedorCentroCompetenciaEFilialAutorizada() {
         when(escopos.escopoAtual()).thenReturn(new EscopoFilialService.EscopoFilial(false,List.of("AGU")));
         repo.resumo(filtro,"Operadora","INTERNET");
-        repo.lancamentos(filtro,"Operadora","INTERNET",false,1);
-        repo.lancamentos(filtro,"Operadora","INTERNET",true,0);
+        repo.lancamentos(filtro,"Operadora","INTERNET",null,false,1);
+        repo.lancamentos(filtro,"Operadora","INTERNET",null,true,0);
         var sql=ArgumentCaptor.forClass(String.class);
         var params=ArgumentCaptor.forClass(MapSqlParameterSource.class);
         verify(jdbc,times(3)).query(sql.capture(),params.capture(),any(RowMapper.class));
-        assertThat(sql.getAllValues()).allSatisfy(s -> assertThat(s).contains("LOWER(p.[Filial]) IN (:permitidas)","p.[Ano de Competência]=:ano",
-                "p.[Conta Contábil/Descrição] = :conta","p.[Fornecedor/Nome] = :fornecedor","p.[Centro de custo/Nome] = :centro",
-                "p.[Conta Contábil/Valor]=p.[Valor]","p.[Centro de custo/Valor]=p.[Valor]","MIN(LEFT(filial_cnpj,8))=:empresa"));
+        assertThat(sql.getAllValues()).allSatisfy(s -> assertThat(s).contains("dbo.dashboard_dre_pagar","LOWER(p.[Filial]) IN (:permitidas)","p.ano=:ano",
+                "p.[conta] = :conta","p.[fornecedor] = :fornecedor","p.[centro] = :centro","p.valor_centro","MIN(LEFT(filial_cnpj,8))=:empresa"));
         assertThat(params.getAllValues()).allSatisfy(p -> assertThat(p.getValues()).containsEntry("conta","INTERNET")
                 .containsEntry("fornecedor","Operadora").containsEntry("filial","AGU").containsEntry("ano",2026).containsEntry("mes",10));
         assertThat(params.getAllValues().get(0).getValue("inicio")).isEqualTo(1);
         assertThat(params.getAllValues().get(1).getValues()).containsEntry("inicio",10).containsEntry("pular",25L);
         assertThat(params.getAllValues().get(2).getValue("inicio")).isEqualTo(1);
-        assertThat(sql.getAllValues().get(0)).contains("COUNT_BIG(*)=COUNT_BIG(valor)","GROUP BY conta,mes",
+        assertThat(sql.getAllValues().get(0)).contains("COUNT_BIG(*)=COUNT_BIG(valor)","GROUP BY conta,linha_dre,mes",
                 "SUM(realizado)","COUNT_BIG(realizado)<COUNT_BIG(*)");
         verify(jdbc).queryForObject(contains("LOWER(p.[Filial]) IN (:permitidas)"),any(MapSqlParameterSource.class),any(RowMapper.class));
+    }
+
+    @Test void detalheDeLinhaConservaContaFiltradaEscopoEOrdemDasApropriacoes() {
+        when(escopos.escopoAtual()).thenReturn(new EscopoFilialService.EscopoFilial(false,List.of("AGU")));
+        repo.lancamentos(filtro,"Receita","PIS A RECOLHER","D9",true,0);
+        var sql=ArgumentCaptor.forClass(String.class);
+        var parametros=ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbc).query(sql.capture(),parametros.capture(),any(RowMapper.class));
+        assertThat(sql.getValue()).contains("p.[linha_dre] = :linha","p.[conta] = :conta","IN (:permitidas)","ORDER BY p.mes DESC,p.numero DESC,p.ordem");
+        assertThat(parametros.getValue().getValues()).containsEntry("linha","D9").containsEntry("conta","PIS A RECOLHER").containsEntry("inicio",1);
     }
 
     @Test void acessoSemFiliaisNaoVeFornecedorContaNemDetalhe() {
         when(escopos.escopoAtual()).thenReturn(EscopoFilialService.EscopoFilial.semAcesso());
         repo.dimensoes(filtro);
         repo.resumo(filtro,null,null);
-        repo.lancamentos(filtro,null,null,false,0);
+        repo.lancamentos(filtro,null,null,null,false,0);
         verify(jdbc,times(3)).query(contains("AND 1=0"),any(MapSqlParameterSource.class),any(RowMapper.class));
         verify(jdbc).queryForObject(contains("AND 1=0"),any(MapSqlParameterSource.class),any(RowMapper.class));
     }

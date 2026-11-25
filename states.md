@@ -36,6 +36,10 @@ Os grupos somam as contas disponíveis na própria linha. A receita líquida som
 
 O realizado acumulado inclui os lançamentos publicados de janeiro até a competência. A tabela e o CSV identificam o histórico parcial. A consulta de novembro de 2026 encontrou fretes desde 17/08, e os títulos seguem a competência contábil mesmo quando ela precede a emissão.
 
+A folha do DRE usa a apropriação publicada por conta e centro de custo. Nos centros antigos que só informam a filial, o setor explícito na observação distingue Operação, ADM e Comercial. A conferência “Pessoal a classificar” lista as parcelas com departamento pendente. O detalhamento de cada linha preserva competência, conta, fornecedor, centro e escopo de filiais.
+
+ICMS, PIS/COFINS, contribuição previdenciária e ISS usam as respectivas contas a recolher. Abastecimentos inclui os lançamentos da conta Trivale e Postos registrados por Elivaldo da Controladoria. ADM apresenta Softwares e Licenças no grupo TELEF./INTERNET/INFORM. e os lançamentos de Plano de Saúde na sua própria linha.
+
 ## 24/11/2026 — Título de Manifestos
 
 O cabeçalho e os menus de navegação usam o mesmo título para a rota de Manifestos.
@@ -780,7 +784,7 @@ O carregamento usa skeletons Astryx por rota e por consulta. Os indicadores acom
 - [x] [DRE] Reproduzir as 224 linhas do modelo de Custos e detalhar os fretes e os lançamentos de Contas a Pagar por competência, filial, centro de custo, conta contábil e fornecedor. A correspondência direta exige descrição única. O detalhe também permite conferir lançamentos que aguardam classificação.
 - [x] [DRE] Apurar os fretes de agregados e terceiros com o custo por contrato de Manifestos e os fretes de parceiros com o valor cobrado nas consolidações admitidas pela Rede Credenciada. O detalhe lista os documentos da mesma competência e filial.
 - [x] [DRE] Apurar receita líquida, lucro bruto, EBIT e lucro líquido com as contas disponíveis. Exibir três margens com uma casa decimal e % ROL por período e cenário na tabela e no CSV. Os três grupos exibem o total na própria linha.
-- [ ] [DRE] Conciliar um mês fechado com Nicholas. Obter o orçamento mensal por conta, os vínculos de projeto, as classificações manuais por departamento, a planilha de abastecimentos e o rateio da frota por viagem.
+- [ ] [DRE] Conciliar um mês fechado com Nicholas. Obter o orçamento mensal por conta, o departamento das parcelas de pessoal ainda pendentes e o rateio da frota por viagem.
 
 - [ ] [Capacidade do Dashboard] Qualificar o preparo incremental de Coletas com os lotes reais, conectar a fila ao ciclo contínuo e estender aos demais contratos das 11 fontes. Medir os painéis e filtros com ingestão concorrente e volume maior antes de trocar a leitura.
 
