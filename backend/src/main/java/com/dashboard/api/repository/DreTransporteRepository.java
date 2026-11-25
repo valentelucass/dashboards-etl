@@ -17,15 +17,24 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class DreTransporteRepository {
-    public record Valor(String id, BigDecimal mes, BigDecimal ano) {}
+    public record Valor(String id, BigDecimal mes, BigDecimal ano, boolean mesParcial, boolean anoParcial) {}
     public record Movimento(String documento, LocalDate data, String filial, String responsavel, BigDecimal valor) {}
     public record Pagina(List<Movimento> itens, boolean temProxima) {}
     private record Cobertura(LocalDate primeiro, LocalDate atualizado) {
+        boolean intersecta(LocalDate inicio, LocalDate fim) {
+            return primeiro != null && atualizado != null && !primeiro.isAfter(fim) && !atualizado.isBefore(inicio);
+        }
         boolean cobre(LocalDate inicio, LocalDate fim, LocalDate hoje) {
             LocalDate referencia = fim.equals(hoje) ? fim.withDayOfMonth(1) : fim;
             return primeiro != null && atualizado != null && !primeiro.isAfter(inicio) && !atualizado.isBefore(referencia);
         }
     }
+    private record TotalRede(BigDecimal valor, boolean parcial) {}
+    private static final String CONSOLIDACOES_APURADAS = """
+             FROM numeradas n WHERE n.linha_consolidacao=1 AND n.conferencia IS NULL AND EXISTS (
+               SELECT 1 FROM dbo.rede_credenciada_cobertura c
+               WHERE c.entidade='CONSOLIDACAO_DETALHADA' AND c.data_arquivo=n.data_emissao)
+            """;
 
     private final NamedParameterJdbcOperations jdbc;
     private final DreReceitaRepository receitas;
@@ -63,17 +72,24 @@ public class DreTransporteRepository {
         return new MapSqlParameterSource("dataInicio", Date.valueOf(inicio)).addValue("dataFim",Date.valueOf(fim));
     }
 
-    private BigDecimal custoRede(LocalDate inicio, LocalDate fim, List<String> filiais) {
+    private TotalRede custoRede(LocalDate inicio, LocalDate fim, List<String> filiais) {
         var params=periodo(inicio,fim);
         var dias=jdbc.queryForObject("""
                 SELECT COUNT(DISTINCT data_arquivo) FROM dbo.rede_credenciada_cobertura
                 WHERE entidade='CONSOLIDACAO_DETALHADA' AND data_arquivo BETWEEN :dataInicio AND :dataFim
                 """,params,Integer.class);
-        if (dias==null || dias!=ChronoUnit.DAYS.between(inicio,fim)+1) return null;
-        return jdbc.queryForObject(rede.baseConsolidacoes(params,filiais) + """
-                 SELECT CASE WHEN COUNT_BIG(*)=COUNT_BIG(cobrado) THEN COALESCE(SUM(cobrado),0) END
-                 FROM numeradas WHERE linha_consolidacao=1 AND conferencia IS NULL
-                """,params,BigDecimal.class);
+        if (dias==null || dias==0) return new TotalRede(null, false);
+        boolean faltamDias = dias < ChronoUnit.DAYS.between(inicio,fim)+1;
+        String sql = rede.baseConsolidacoes(params,filiais) + """
+                , custos_mensais AS (
+                    SELECT CASE WHEN COUNT_BIG(*)=COUNT_BIG(cobrado) THEN SUM(cobrado) END AS realizado
+                """ + CONSOLIDACOES_APURADAS + """
+                    GROUP BY YEAR(data_emissao), MONTH(data_emissao))
+                SELECT CASE WHEN COUNT_BIG(*)=0 THEN 0 ELSE SUM(realizado) END,
+                       CASE WHEN COUNT_BIG(realizado)<COUNT_BIG(*) THEN 1 ELSE 0 END
+                FROM custos_mensais
+                """;
+        return jdbc.queryForObject(sql,params,(rs,n) -> new TotalRede(rs.getBigDecimal(1),faltamDias || rs.getBoolean(2)));
     }
 
     private static BigDecimal custoManifestos(List<CustoContratoDTO> linhas, String contrato) {
@@ -87,20 +103,22 @@ public class DreTransporteRepository {
         if ((f.centro()!=null && !f.centro().isBlank()) || mes.isAfter(fim)) return List.of();
         var filiais=filiais(f);
         if(filiais!=null && filiais.isEmpty()) return List.of();
-        // A data de criação é a mesma da tela de Manifestos. Um exercício parcialmente extraído fica em aberto.
+        // O acumulado soma os documentos publicados e informa quando a cobertura é parcial.
         var cobertura=jdbc.queryForObject("""
                 SELECT CAST(MIN([Data criação]) AS date), CAST(MAX([Data de extracao]) AS date)
                 FROM dbo.vw_fato_manifestos_dash
                 """, new MapSqlParameterSource(), (rs,n) -> new Cobertura(rs.getObject(1,LocalDate.class),rs.getObject(2,LocalDate.class)));
-        var lancMes=cobertura!=null && cobertura.cobre(mes,fim,calendario.hoje())
+        var lancMes=cobertura!=null && cobertura.intersecta(mes,fim)
                 ? manifestos.custosPorContrato(filtroManifesto(mes,fim,filiais,null)) : null;
-        var lancAno=mes.equals(ano) ? lancMes : cobertura!=null && cobertura.cobre(ano,fim,calendario.hoje())
+        var lancAno=mes.equals(ano) ? lancMes : cobertura!=null && cobertura.intersecta(ano,fim)
                 ? manifestos.custosPorContrato(filtroManifesto(ano,fim,filiais,null)) : null;
         var parceiroMes=custoRede(mes,fim,filiais);
         var parceiroAno=mes.equals(ano) ? parceiroMes : custoRede(ano,fim,filiais);
-        return List.of(new Valor("D33",custoManifestos(lancMes,"Agregado"),custoManifestos(lancAno,"Agregado")),
-                new Valor("D34",parceiroMes,parceiroAno),
-                new Valor("D35",custoManifestos(lancMes,"Terceiro"),custoManifestos(lancAno,"Terceiro")));
+        boolean mesParcial=lancMes!=null && !cobertura.cobre(mes,fim,calendario.hoje());
+        boolean anoParcial=lancAno!=null && !cobertura.cobre(ano,fim,calendario.hoje());
+        return List.of(new Valor("D33",custoManifestos(lancMes,"Agregado"),custoManifestos(lancAno,"Agregado"),mesParcial,anoParcial),
+                new Valor("D34",parceiroMes.valor(),parceiroAno.valor(),parceiroMes.parcial(),parceiroAno.parcial()),
+                new Valor("D35",custoManifestos(lancMes,"Terceiro"),custoManifestos(lancAno,"Terceiro"),mesParcial,anoParcial));
     }
 
     public Pagina lancamentos(Filtro f, String linha, boolean acumulado, int pagina) {
@@ -111,10 +129,8 @@ public class DreTransporteRepository {
         if (linha.equals("D34")) {
             var params=periodo(inicio,fim);
             String sql=rede.baseConsolidacoes(params,filiais) + """
-                     SELECT consolidacao,data_emissao,filial_emissora,parceiro,cobrado FROM numeradas
-                     WHERE linha_consolidacao=1 AND conferencia IS NULL
-                     ORDER BY data_emissao DESC,consolidacao DESC OFFSET :pular ROWS FETCH NEXT 26 ROWS ONLY
-                    """;
+                     SELECT consolidacao,data_emissao,filial_emissora,parceiro,cobrado
+                    """ + CONSOLIDACOES_APURADAS + " ORDER BY data_emissao DESC,consolidacao DESC OFFSET :pular ROWS FETCH NEXT 26 ROWS ONLY";
             itens=jdbc.query(sql,params.addValue("pular",(long)pagina*25),(rs,n) -> new Movimento(rs.getString(1),
                     rs.getDate(2).toLocalDate(),rs.getString(3),rs.getString(4),rs.getBigDecimal(5)));
         } else {

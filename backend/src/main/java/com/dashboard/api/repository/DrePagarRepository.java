@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class DrePagarRepository {
     public record Opcao(String tipo, String nome) {}
-    public record Linha(String conta, BigDecimal mes, BigDecimal ano) {}
+    public record Linha(String conta, BigDecimal mes, BigDecimal ano, boolean anoParcial) {}
     public record Historico(LocalDate primeiraEmissao, LocalDateTime atualizadoEm) {}
     public record Resumo(Historico historico, List<Linha> valores) {}
     public record Lancamento(long numero, String documento, String filial, String centro, String fornecedor,
@@ -118,15 +118,17 @@ public class DrePagarRepository {
         var c = movimentos(f, fornecedor, conta, true);
         String sql = """
                 WITH movimentos AS (SELECT p.[Conta Contábil/Descrição] AS conta, p.[Mês de Competência] AS mes,
-                       %s AS valor %s)
+                       %s AS valor %s),
+                mensais AS (
+                    SELECT conta, mes, CASE WHEN COUNT_BIG(*)=COUNT_BIG(valor) THEN SUM(valor) END AS realizado
+                    FROM movimentos WHERE NULLIF(conta,'') IS NOT NULL GROUP BY conta,mes)
                 SELECT conta,
-                    CASE WHEN COUNT(CASE WHEN mes=:mes THEN 1 END)=COUNT(CASE WHEN mes=:mes THEN valor END)
-                        THEN SUM(CASE WHEN mes=:mes THEN valor ELSE 0 END) END,
-                    CASE WHEN COUNT_BIG(*)=COUNT_BIG(valor) THEN SUM(valor) END
-                FROM movimentos WHERE NULLIF(conta,'') IS NOT NULL GROUP BY conta
+                    CASE WHEN COUNT(CASE WHEN mes=:mes THEN 1 END)=0 THEN 0 ELSE MAX(CASE WHEN mes=:mes THEN realizado END) END,
+                    SUM(realizado), CASE WHEN COUNT_BIG(realizado)<COUNT_BIG(*) THEN 1 ELSE 0 END
+                FROM mensais GROUP BY conta
                 """.formatted(valor(f),c.sql());
         return new Resumo(historico, jdbc.query(sql, c.params(), (rs,n) ->
-                new Linha(rs.getString(1),rs.getBigDecimal(2),rs.getBigDecimal(3))));
+                new Linha(rs.getString(1),rs.getBigDecimal(2),rs.getBigDecimal(3),rs.getBoolean(4))));
     }
 
     public Pagina lancamentos(Filtro f, String fornecedor, String conta, boolean acumulado, int pagina) {

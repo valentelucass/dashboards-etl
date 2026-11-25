@@ -28,28 +28,45 @@ class DreTransporteRepositoryTest {
     private final YearMonth outubro=YearMonth.of(2026,10);
     private final LocalDate hoje=LocalDate.of(2026,11,24);
 
-    @Test void excluiContratosDeFrotaEConsolidacoesEmConferenciaEPreservaAnoIncompleto() throws Exception {
+    @Test void somaOHistoricoDisponivelDesdeJaneiroComAMesmaFilialSemDuplicarContratosOuConsolidacoes() throws Exception {
         when(tempo.hoje()).thenReturn(hoje);
         var rs=mock(ResultSet.class);
         when(rs.getObject(1,LocalDate.class)).thenReturn(LocalDate.of(2026,8,16));
         when(rs.getObject(2,LocalDate.class)).thenReturn(hoje);
-        when(jdbc.queryForObject(anyString(),any(MapSqlParameterSource.class),any(RowMapper.class)))
+        when(jdbc.queryForObject(contains("vw_fato_manifestos_dash"),any(MapSqlParameterSource.class),any(RowMapper.class)))
                 .thenAnswer(i -> ((RowMapper)i.getArgument(2)).mapRow(rs,0));
         when(manifestos.custosPorContrato(any())).thenReturn(List.of(new CustoContratoDTO("Frota + PX",BigDecimal.TEN),
-                new CustoContratoDTO("Agregado",new BigDecimal("500")),new CustoContratoDTO("Terceiro",new BigDecimal("100"))));
-        when(jdbc.queryForObject(anyString(),any(MapSqlParameterSource.class),eq(Integer.class))).thenReturn(31,31);
+                new CustoContratoDTO("Agregado",new BigDecimal("500")),new CustoContratoDTO("Terceiro",new BigDecimal("100"))),
+                List.of(new CustoContratoDTO("Agregado",new BigDecimal("1300")),new CustoContratoDTO("Terceiro",new BigDecimal("300"))));
+        when(jdbc.queryForObject(anyString(),any(MapSqlParameterSource.class),eq(Integer.class))).thenReturn(31,77);
         when(rede.baseConsolidacoes(any(),eq(List.of("AGU")))).thenReturn("WITH numeradas AS (...) ");
-        when(jdbc.queryForObject(contains("linha_consolidacao=1 AND conferencia IS NULL"),any(MapSqlParameterSource.class),eq(BigDecimal.class)))
-                .thenReturn(new BigDecimal("98.12"));
+        var cobrancas=mock(ResultSet.class);
+        when(cobrancas.getBigDecimal(1)).thenReturn(new BigDecimal("98.12"),new BigDecimal("198.12"));
+        when(jdbc.queryForObject(contains("n.linha_consolidacao=1 AND n.conferencia IS NULL AND EXISTS"),any(MapSqlParameterSource.class),any(RowMapper.class)))
+                .thenAnswer(i -> ((RowMapper)i.getArgument(2)).mapRow(cobrancas,0));
         var valores=repo.resumo(new DreReceitaRepository.Filtro(outubro,null,"AGU",null));
-        assertThat(valores).containsExactly(new DreTransporteRepository.Valor("D33",new BigDecimal("500"),null),
-                new DreTransporteRepository.Valor("D34",new BigDecimal("98.12"),null),
-                new DreTransporteRepository.Valor("D35",new BigDecimal("100"),null));
+        assertThat(valores).containsExactly(new DreTransporteRepository.Valor("D33",new BigDecimal("500"),new BigDecimal("1300"),false,true),
+                new DreTransporteRepository.Valor("D34",new BigDecimal("98.12"),new BigDecimal("198.12"),false,true),
+                new DreTransporteRepository.Valor("D35",new BigDecimal("100"),new BigDecimal("300"),false,true));
         var filtro=ArgumentCaptor.forClass(FiltroConsultaDTO.class);
-        verify(manifestos).custosPorContrato(filtro.capture());
-        assertThat(filtro.getValue().valores("filiais")).containsExactly("AGU");
-        assertThat(filtro.getValue().dataInicio()).isEqualTo(outubro.atDay(1));
-        assertThat(filtro.getValue().dataFim()).isEqualTo(outubro.atEndOfMonth());
+        verify(manifestos,times(2)).custosPorContrato(filtro.capture());
+        assertThat(filtro.getAllValues()).extracting(FiltroConsultaDTO::dataInicio)
+                .containsExactly(outubro.atDay(1), LocalDate.of(2026,1,1));
+        assertThat(filtro.getAllValues()).allSatisfy(f -> {
+            assertThat(f.valores("filiais")).containsExactly("AGU");
+            assertThat(f.dataFim()).isEqualTo(outubro.atEndOfMonth());
+        });
+    }
+
+    @Test void janeiroSemOrigemFicaIndisponivelESomenteUmaConsultaDeCobertura() {
+        when(tempo.hoje()).thenReturn(hoje);
+        var janeiro = new DreReceitaRepository.Filtro(YearMonth.of(2026,1),null,null,null);
+        assertThat(repo.resumo(janeiro)).allSatisfy(v -> {
+            assertThat(v.mes()).isNull();
+            assertThat(v.ano()).isNull();
+        });
+        verify(jdbc).queryForObject(contains("COUNT(DISTINCT data_arquivo)"),any(MapSqlParameterSource.class),eq(Integer.class));
+        verifyNoInteractions(manifestos,rede);
     }
 
     @Test void empresaSemFiliaisOuCentroContabilNaoRetornaOCustoDeTodaARede() {

@@ -97,51 +97,62 @@ export function apresentacaoDre(resumo: ResumoDre | undefined, competencia: stri
   const atualizado = resumo?.historico.atualizadoEm?.slice(0, 10);
   const mes = competencia + '-01';
   const ano = competencia.slice(0, 4) + '-01-01';
-  const mesDisponivel = Boolean(primeiro && atualizado && primeiro <= mes && atualizado >= mes);
-  const anoDisponivel = mesDisponivel && Boolean(primeiro && primeiro <= ano);
+  const temFretesAteCompetencia = Boolean(primeiro && primeiro.slice(0, 7) <= competencia);
+  const mesDisponivel = temFretesAteCompetencia && Boolean(atualizado && atualizado >= mes);
+  const anoDisponivel = temFretesAteCompetencia && Boolean(atualizado && atualizado >= ano);
   const valores = new Map(resumo?.valores.map(v => [chaveReceita(v.classe, v.tipo), v]));
   const contas = new Map(pagar?.valores.map(v => [nomeContabil(v.conta), v]));
   const custosTransporte = new Map(transporte.map(v => [v.id,v]));
   const primeira = pagar?.historico.primeiraEmissao;
-  const atualizacao = pagar?.historico.atualizadoEm?.slice(0,10);
-  const mesPagar = Boolean(primeira && atualizacao && primeira <= mes && atualizacao >= mes);
-  const anoPagar = mesPagar && Boolean(primeira && primeira <= ano);
+  const anoParcial = Boolean((aplicaFretes && anoDisponivel && primeiro && primeiro > ano)
+    || (pagar?.valores.length && primeira && primeira > ano) || pagar?.valores.some(v => v.anoParcial)
+    || transporte.some(v => v.anoParcial));
   function contaPagar(linha: ContaDre) {
     const nome = nomeContabil(linha.nome);
     return linha.fonte === 'pagar' && nomesPagar.get(nome) === 1 ? contas.get(nome) : undefined;
   }
-  function valorFolha(conta: ContaDre, periodo: 'mes' | 'ano') {
+  function valorFolha(conta: ContaDre, periodo: 'mes' | 'ano', exigirCompleto: boolean) {
+    const inicio = periodo === 'mes' ? mes : ano;
     const operacional = custosTransporte.get(conta.id);
     if (operacional) {
+      if (exigirCompleto && (periodo === 'mes' ? operacional.mesParcial : operacional.anoParcial)) return null;
       const custo = operacional[periodo];
       return custo == null || custo === 0 ? custo : -custo;
     }
     if (conta.fonte === 'fretes') {
       if (!aplicaFretes || !(periodo === 'mes' ? mesDisponivel : anoDisponivel)) return null;
+      if (exigirCompleto && primeiro && primeiro > inicio) return null;
       return valores.get(conta.id)?.[periodo] ?? 0;
     }
-    if (!(periodo === 'mes' ? mesPagar : anoPagar)) return null;
-    const quantia = contaPagar(conta)?.[periodo];
+    // O SQL já selecionou o lançamento pela competência, que pode preceder sua emissão.
+    const lancamento = contaPagar(conta);
+    if (exigirCompleto && ((primeira && primeira > inicio) || (periodo === 'ano' && lancamento?.anoParcial))) return null;
+    const quantia = lancamento?.[periodo];
     if (quantia == null || quantia === 0) return quantia ?? null;
     return conta.pai === 'D207' ? quantia : -quantia;
   }
-  function valor(conta: ContaDre, periodo: 'mes' | 'ano'): number | null {
+  function valor(conta: ContaDre, periodo: 'mes' | 'ano', exigirCompleto = false): number | null {
     if (margens[conta.id]) {
-      const base = valor(porId.get('D12')!,periodo);
-      const resultado = valor(porId.get(margens[conta.id])!,periodo);
+      const base = valor(porId.get('D12')!,periodo,true);
+      const resultado = valor(porId.get(margens[conta.id])!,periodo,true);
       return base && resultado != null ? 100 * resultado / base : null;
     }
     const partes = composicaoConta(conta);
-    if (!partes.length) return valorFolha(conta,periodo);
-    let total = 0;
+    if (!partes.length) return valorFolha(conta,periodo,exigirCompleto);
+    // Os rodapés TOTAL repetem seu grupo. As fórmulas de resultado exigem todas as parcelas.
+    const completo = exigirCompleto || (conta.fonte === 'resultado' && partes.length > 1);
+    let centavos: number | null = null;
     for (const parte of partes) {
-      const parcela = valor(parte,periodo);
-      if (parcela === null) return null;
-      total += parcela;
+      const parcela = valor(parte,periodo,completo);
+      if (parcela === null) {
+        if (completo) return null;
+      } else {
+        centavos = (centavos ?? 0) + Math.round(parcela * 100);
+      }
     }
-    return total;
+    return centavos === null ? null : centavos / 100;
   }
-  return {mesDisponivel, anoDisponivel, mesPagar, anoPagar, aplicaFretes, contaPagar, valor};
+  return {mesDisponivel, anoDisponivel, anoParcial, aplicaFretes, contaPagar, valor};
 }
 
 export function dinheiro(valor: number | null) {
@@ -155,7 +166,7 @@ export function formatarConta(conta: ContaDre, valor: number | null) {
 
 export function exportacaoDre(linhas: ContaDre[], dados: ReturnType<typeof apresentacaoDre>, competencia: string) {
   const colunas = ['Conta', competencia + ' · Realizado', competencia + ' · Orçado', 'Variação mês R$ / %',
-    'Jan a ' + competencia + ' · Realizado', 'Jan a ' + competencia + ' · Orçado', 'Variação ano R$ / %'];
+    'Jan a ' + competencia + ' · Realizado' + (dados.anoParcial ? ' (histórico parcial)' : ''), 'Jan a ' + competencia + ' · Orçado', 'Variação ano R$ / %'];
   const caminho = new Map<string, string>();
   const celula = (valor: string) => '"' + valor.replaceAll('"', '""') + '"';
   const linhasCsv = [colunas];

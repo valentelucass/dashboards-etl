@@ -16,7 +16,7 @@ Na conferência de 01 a 24/11, a extração disponível indicou 10.335 comprovan
 
 A rota `/dre` segue a aba DRE do modelo de Custos. As 224 linhas preservam a ordem e os agrupamentos da planilha. A receita bruta usa a mesma base e data de referência de Faturamento, com filtro de empresa, filial, centro de custo e competência e com o escopo de acesso do usuário. A consulta de uma conta de receita abre os fretes que compõem o valor. A exportação em reais preserva os níveis da tabela e os filtros aplicados.
 
-As demais fontes estão identificadas em cada conta para a conciliação com Custos. O orçamento, os custos e os resultados que dependem deles aparecem como indisponíveis. O acumulado só é exibido quando a origem tem histórico desde janeiro. O histórico consultado nesta entrega se inicia em 17/08/2026. A base de Faturamento consultada em 24/11 tem 58.128 fretes desde agosto e nenhum centro de custo preenchido. A tela informa essa condição no filtro até que a origem forneça centros.
+Os grupos e seus rodapés somam as contas disponíveis, inclusive nos subgrupos. Os resultados e margens exigem a conciliação dos componentes. O realizado acumulado inclui os lançamentos publicados de janeiro até a competência. A tabela e o CSV identificam o histórico parcial. A consulta de novembro de 2026 encontrou fretes desde 17/08, e os títulos seguem a competência contábil mesmo quando ela precede a emissão. O orçamento permanece pendente de Custos.
 
 ## 24/11/2026 — Título de Manifestos
 

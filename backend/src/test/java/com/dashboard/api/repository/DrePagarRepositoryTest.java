@@ -35,7 +35,8 @@ class DrePagarRepositoryTest {
         assertThat(params.getAllValues().get(0).getValue("inicio")).isEqualTo(1);
         assertThat(params.getAllValues().get(1).getValues()).containsEntry("inicio",10).containsEntry("pular",25L);
         assertThat(params.getAllValues().get(2).getValue("inicio")).isEqualTo(1);
-        assertThat(sql.getAllValues().get(0)).contains("COUNT_BIG(*)=COUNT_BIG(valor)");
+        assertThat(sql.getAllValues().get(0)).contains("COUNT_BIG(*)=COUNT_BIG(valor)","GROUP BY conta,mes",
+                "SUM(realizado)","COUNT_BIG(realizado)<COUNT_BIG(*)");
         verify(jdbc).queryForObject(contains("LOWER(p.[Filial]) IN (:permitidas)"),any(MapSqlParameterSource.class),any(RowMapper.class));
     }
 

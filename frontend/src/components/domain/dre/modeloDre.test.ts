@@ -35,9 +35,11 @@ describe('demonstrativo de Custos', () => {
     const c = apresentacaoDre(resumo,'2026-11');
     expect(c.valor(contasDre[0],'mes')).toBe(120);
     expect(c.valor(contasDre.find(l => l.id === 'LTL')!,'mes')).toBe(0);
-    expect(c.valor(contasDre[0],'ano')).toBeNull();
+    expect(c.valor(contasDre[0],'ano')).toBe(300);
+    expect(c.anoParcial).toBe(true);
     expect(c.valor(contasDre.find(l => l.id === 'D217')!,'mes')).toBeNull();
-    expect(apresentacaoDre(resumo,'2026-08').mesDisponivel).toBe(false);
+    expect(apresentacaoDre(resumo,'2026-08').mesDisponivel).toBe(true);
+    expect(apresentacaoDre(resumo,'2026-07').anoDisponivel).toBe(false);
     expect(apresentacaoDre(resumo,'2026-12').mesDisponivel).toBe(false);
     expect(apresentacaoDre(undefined,'2026-11').valor(contasDre[0],'mes')).toBeNull();
   });
@@ -71,7 +73,30 @@ describe('demonstrativo de Custos', () => {
     expect(view.valor(conta('D208'),'mes')).toBe(3);
     for (const id of ['D6','D16','D102','D178','D74','D156','D148','D217']) expect(view.valor(conta(id),'mes')).toBeNull();
     const parcial = apresentacaoDre(resumo,'2026-11',{...pagar,historico:{...pagar.historico,primeiraEmissao:'2026-08-16'}});
-    expect(parcial.valor(conta('D131'),'ano')).toBeNull();
+    expect(parcial.valor(conta('D131'),'ano')).toBe(-250);
+  });
+  it('soma cada filho conhecido uma vez, inclusive subgrupos, zerados e créditos', () => {
+    const linha = (id: string) => contasDre.find(c => c.id === id)!;
+    const pagar = {historico:{primeiraEmissao:'2026-08-16',atualizadoEm:'2026-11-25'},valores:[
+      {conta:'ARLA',mes:19.47,ano:60}, {conta:'INTERNET',mes:0,ano:100},
+      {conta:'JUROS RECEBIDOS',mes:10,ano:40}, {conta:'JUROS E ENCARGOS BANCÁRIOS',mes:10,ano:12},
+    ]};
+    const dados = apresentacaoDre(resumo,'2026-11',pagar,true,[{id:'D33',mes:100.55,ano:200},{id:'D35',mes:25.17,ano:100}]);
+    for (const id of ['D14','D91']) {
+      expect(dados.valor(linha(id),'mes')).toBe(-145.19);
+      expect(dados.valor(linha(id),'ano')).toBe(-360);
+    }
+    for (const id of ['D99','D100','D128','D200']) {
+      expect(dados.valor(linha(id),'mes')).toBe(0);
+      expect(dados.valor(linha(id),'ano')).toBe(-100);
+    }
+    expect(dados.valor(linha('D206'),'mes')).toBe(0);
+    expect(dados.valor(linha('D214'),'ano')).toBe(28);
+    expect(dados.valor(linha('D15'),'mes')).toBeNull();
+    expect(dados.valor(linha('D217'),'ano')).toBeNull();
+    expect(exportacaoDre([linha('D14')],dados,'2026-11')).toContain('360,00');
+    expect(exportacaoDre([linha('D14')],dados,'2026-11')).toContain('histórico parcial');
+    expect(apresentacaoDre(resumo,'2026-07',pagar).valor(linha('D38'),'ano')).toBe(-60);
   });
   it('exporta as sete colunas, todos os níveis do filtro, os totais e a ausência de orçamento', () => {
     const linhas = selecionarContas(montarLinhas(resumo), 'salarios');

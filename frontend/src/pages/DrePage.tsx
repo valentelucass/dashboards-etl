@@ -112,9 +112,9 @@ export default function DrePage() {
         const ajuda = id === 'D6' && !aplicaFretes ? 'Sem vínculo com este filtro' : valor == null ? 'Aguardando conciliação' : 'Competência selecionada';
         return <TooltipKpi definition={def} key={id}><KpiCard label={def.titulo} valor={formatarConta(linha,valor)} helperText={ajuda}/></TooltipKpi>;
       })}</KpiGrid>
-      {!disponivel.anoDisponivel && <p className="dre-note" role="status">{dados?.historico.primeiroFrete
-        ? 'Primeiro frete disponível em ' + formatarData(dados.historico.primeiroFrete) + '. Períodos com histórico incompleto aparecem com traço.'
-        : 'Sem histórico de fretes disponível para este acesso.'}</p>}
+      {disponivel.anoParcial && <p className="dre-note" role="status">O acumulado soma os lançamentos disponíveis de janeiro até a competência selecionada.
+        {aplicaFretes && dados?.historico.primeiroFrete && dados.historico.primeiroFrete > competencia.slice(0,4)+'-01-01'
+          && <> O histórico de fretes começa em {formatarData(dados.historico.primeiroFrete)}.</>}</p>}
       <TabelaDre key={JSON.stringify(filtro)} filtro={filtro} linhas={linhasDre} resumo={dados} dados={disponivel} busca={busca} buscar={buscar}/>
       <ConferenciaPagar key={'lancamentos'+JSON.stringify(filtro)} filtro={filtro}/>
     </>}

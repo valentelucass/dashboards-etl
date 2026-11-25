@@ -22,14 +22,14 @@ export interface FreteDre {
 
 export interface ResumoPagarDre {
   historico: { primeiraEmissao: string | null; atualizadoEm: string | null };
-  valores: Array<{conta: string; mes: number | null; ano: number | null}>;
+  valores: Array<{conta: string; mes: number | null; ano: number | null; anoParcial?: boolean}>;
 }
 export interface LancamentoPagarDre {
   numero: number; documento: string | null; filial: string; centro: string | null; fornecedor: string | null;
   conta: string | null; mes: number; ano: number; valor: number | null;
 }
 export type OpcaoPagarDre = {tipo: 'filial' | 'centro' | 'conta' | 'fornecedor'; nome: string};
-export type CustoTransporteDre = {id: string; mes: number | null; ano: number | null};
+export type CustoTransporteDre = {id: string; mes: number | null; ano: number | null; mesParcial?: boolean; anoParcial?: boolean};
 export type DocumentoTransporteDre = {documento: string; data: string; filial: string | null; responsavel: string | null; valor: number | null};
 
 const base = '/api/painel/dre';

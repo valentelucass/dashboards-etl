@@ -90,8 +90,28 @@ it('aplica conta e fornecedor aos valores e aos lançamentos, sem atribuir frete
   fireEvent.change(screen.getByRole('searchbox',{name:'Buscar conta'}),{target:{value:'internet'}});
   fireEvent.click(screen.getByRole('button',{name:'INTERNET'}));
   expect(await within(screen.getByRole('region',{name:'Detalhe de INTERNET'})).findByText('F-11')).toBeTruthy();
-  expect(screen.getByText(/-R\$\s*50,00/)).toBeTruthy();
+  const linha = screen.getByRole('button',{name:'INTERNET'}).closest('tr')!;
+  expect(within(linha).getByText(/-R\$\s*50,00/)).toBeTruthy();
   expect(consultar.mock.calls[0][0]).toMatchObject({conta:'INTERNET',fornecedor:'Operadora',competencia:'2025-11',acumulado:false});
+});
+
+it('mostra o subtotal recolhido, preserva-o ao expandir e abre os fretes do acumulado parcial', async () => {
+  vi.spyOn(api,'dimensoesDre').mockResolvedValue([]);
+  vi.spyOn(api,'resumoDre').mockResolvedValue({historico:{primeiroFrete:'2025-08-17',atualizadoEm:'2025-11-25'},valores:[{classe:null,tipo:null,mes:75,ano:230}]});
+  vi.mocked(api.custosTransporteDre).mockResolvedValue([{id:'D33',mes:15,ano:70,anoParcial:true}]);
+  const fretes = vi.spyOn(api,'fretesDre').mockResolvedValue({itens:[],temProxima:false});
+  abrir();
+  const botao = await screen.findByRole('button',{name:'Expandir CUSTO OPERACIONAL'});
+  const grupo = within(botao.closest('tr')!);
+  expect(grupo.getByText(/-R\$\s*15,00/)).toBeTruthy();
+  fireEvent.click(botao);
+  expect(grupo.getByText(/-R\$\s*70,00/)).toBeTruthy();
+  expect(screen.getByRole('columnheader',{name:/histórico parcial/})).toBeTruthy();
+  const receita = screen.getByRole('button',{name:'RECEITA BRUTA'});
+  expect(within(receita.closest('tr')!).getByText(/R\$\s*230,00/)).toBeTruthy();
+  fireEvent.click(receita);
+  fireEvent.click(await screen.findByRole('button',{name:'Acumulado do ano'}));
+  await waitFor(() => expect(fretes.mock.calls.at(-1)![0]).toMatchObject({competencia:'2025-11',acumulado:true}));
 });
 
 it('troca filial, centro, conta e fornecedor em sequência sem fechar os filtros ou consultar o recorte antigo', async () => {

@@ -41,7 +41,7 @@ export default function TabelaDre({resumo, linhas, filtro, busca, buscar, dados}
     <div className="dre-scroll" tabIndex={0} aria-label="Contas e valores por período">
       <table className="dre-table">
         <thead><tr><th scope="col" rowSpan={2}>Conta</th><th scope="colgroup" colSpan={3}>Mês atual · {mesLegivel}</th>
-          <th scope="colgroup" colSpan={3}>Acumulado do ano · jan a {mesLegivel}</th></tr>
+          <th scope="colgroup" colSpan={3}>Acumulado do ano · jan a {mesLegivel}{dados.anoParcial && ' (histórico parcial)'}</th></tr>
           <tr>{['mes','ano'].map(p => <Fragment key={p}><th scope="col">Realizado</th><th scope="col">Orçado</th><th scope="col">Variação R$ / %</th></Fragment>)}</tr>
         </thead>
         <tbody>{contas.map(conta => {
@@ -74,6 +74,6 @@ export default function TabelaDre({resumo, linhas, filtro, busca, buscar, dados}
         </tbody>
       </table>
     </div>
-    <p className="dre-footnote">As despesas aparecem com sinal negativo. O traço indica histórico insuficiente, conta sem vínculo ou valor pendente de conciliação. O orçamento aguarda o fechamento de Custos.</p>
+    <p className="dre-footnote">Cada grupo soma as contas com valor disponível. As despesas têm sinal negativo. O traço indica valor indisponível ou pendente de conciliação. O orçamento aguarda o fechamento de Custos.</p>
   </section>;
 }

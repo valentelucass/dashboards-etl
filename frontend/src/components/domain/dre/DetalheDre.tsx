@@ -84,7 +84,7 @@ export default function DetalheDre({conta: inicial, filtro, dados, linhas, fecha
       </button></li>;
     })}</ul>}
     {nomeContabil && <LancamentosPagarDre key={conta.id} filtro={{...filtro, conta:nomeContabil}}/>}
-    {conta.fonte === 'fretes' && (!dados.aplicaFretes ? <p>Os fretes não têm vínculo com os filtros contábeis selecionados.</p> : dados.mesDisponivel ? <Lancamentos key={conta.id} conta={conta} filtro={filtro} anoDisponivel={dados.anoDisponivel}/>
+    {conta.fonte === 'fretes' && (!dados.aplicaFretes ? <p>Os fretes não têm vínculo com os filtros contábeis selecionados.</p> : dados.anoDisponivel ? <Lancamentos key={conta.id} conta={conta} filtro={filtro} anoDisponivel={dados.anoDisponivel}/>
       : <p>O histórico disponível ainda não cobre esta competência.</p>)}
     {['agregados','terceiros','parceiros'].includes(conta.fonte) && (filtro.centro || filtro.conta || filtro.fornecedor
       ? <p>A origem operacional não informa o vínculo com este recorte contábil.</p>
