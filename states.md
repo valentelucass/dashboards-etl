@@ -1,3 +1,9 @@
+## 25/11/2026 — Dados da nova tela de ocorrências e sinistros
+
+Flyway 087 aplicado em `DASHBOARDS` e `DASHBOARDS_DEV`. O leitor da aplicação confirmou, nos dois ambientes, 156 linhas em `dbo.dashboard_sinistros` e 49 registros em `dbo.dashboard_sinistros_ocorrencias_documento`. A primeira consulta traz os 46 campos atuais do relatório. Para contar sinistros, use o número distinto. A segunda consulta fornece o histórico da combinação de minuta, nota e código e pode retornar múltiplos registros. A lista operacional completa continua em `dbo.dashboard_performance_ocorrencias`.
+
+O ensaio em transação revertida antecedeu a migração. Em desenvolvimento, o fluxo normal também aplicou a 085 e registrou a 086, cujo cadastro de DRE já existia. A versão da consulta anterior retornou as mesmas 156 linhas. Passaram os 17 testes de regressão selecionados de migrations, Performance e Customer Service.
+
 ## 24/11/2026 — Abertura da tela de Performance
 
 O histórico de atrasos verifica se a minuta e a nota têm uma ocorrência diretamente na base de ocorrências. A data de anexação do comprovante é publicada pelo ETL V2 na leitura de fretes e atende aos cartões, filtros, tabela e exportação de Performance.
