@@ -290,6 +290,9 @@ button.os-item-notas:hover,
 .os-celula-edicao {
   min-width: 0;
 }
+.os-painel tbody td.sticky {
+  z-index: 2;
+}
 .os-edicao-moeda,
 .os-edicao-moeda label,
 .os-edicao-moeda button {
