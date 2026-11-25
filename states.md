@@ -40,6 +40,8 @@ Os grupos somam as contas disponíveis na própria linha. A receita líquida som
 
 O realizado acumulado inclui os lançamentos publicados de janeiro até a competência. A tabela e o CSV identificam o histórico parcial. A consulta de novembro de 2026 encontrou fretes desde 17/08, e os títulos seguem a competência contábil mesmo quando ela precede a emissão.
 
+Em Despesas → ADM, o grupo Uso e Consumo (Escrit. / Higie.) soma Material de Escritório, Material de Higiene e Limpeza e Material para Cozinha e Refeitório. O subtotal integra ADM uma única vez no mês e no acumulado.
+
 A folha do DRE usa a apropriação publicada por conta e centro de custo. Nos centros antigos que só informam a filial, o setor explícito na observação distingue Operação, ADM e Comercial. A conferência “Pessoal a classificar” lista as parcelas com departamento pendente. O detalhamento de cada linha preserva competência, conta, fornecedor, centro e escopo de filiais.
 
 ICMS, PIS/COFINS, contribuição previdenciária e ISS usam as respectivas contas a recolher. Abastecimentos inclui os lançamentos da conta Trivale e Postos registrados por Elivaldo da Controladoria. ADM apresenta Softwares e Licenças no grupo TELEF./INTERNET/INFORM. e os lançamentos de Plano de Saúde na sua própria linha.

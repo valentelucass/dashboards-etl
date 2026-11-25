@@ -13,6 +13,26 @@ const resumo: ResumoDre = {
 };
 
 describe('demonstrativo de Custos', () => {
+  it('soma os três materiais em Uso e Consumo uma única vez em ADM no mês e no ano', () => {
+    const pagar = {historico: {primeiraEmissao: '2026-01-01', atualizadoEm: null}, valores: [
+      {conta: 'MATERIAL DE ESCRITÓRIO', mes: 0, ano: 120},
+      {conta: 'MATERIAL DE HIGIENE E LIMPEZA', mes: 6292.35, ano: 12340.55},
+      {conta: 'MATERIAL PARA COZINHA E REFEITÓRIO', mes: 7967.36, ano: 8439.76},
+      {conta: 'TARIFAS BANCÁRIAS', mes: 10, ano: 30},
+    ]};
+    const dados = apresentacaoDre(resumo, '2026-09', pagar);
+    const grupo = contasDre.find(c => c.id === 'D144')!;
+    const adm = contasDre.find(c => c.id === 'D100')!;
+    expect(selecionarContas(contasDre, grupo.nome).map(c => c.id))
+      .toEqual(['D99', 'D100', 'D144', 'D145', 'D146', 'D147']);
+    expect([dados.valor(grupo, 'mes'), dados.valor(grupo, 'ano')]).toEqual([-14259.71, -20900.31]);
+    expect([dados.valor(adm, 'mes'), dados.valor(adm, 'ano')]).toEqual([-14269.71, -20930.31]);
+    const filtro = linhasContabeis(resumo, pagar, 'MATERIAL DE HIGIENE E LIMPEZA');
+    expect(filtro.map(c => c.id)).toEqual(['D99', 'D100', 'D144', 'D146']);
+    expect(exportacaoDre(filtro, dados, '2026-09'))
+      .toContain('DESPESAS / ADM / USO E CONSUMO (ESCRIT. / HIGIE.) / MATERIAL DE HIGIENE E LIMPEZA');
+  });
+
   it('concilia folha por departamento, tributos compostos, combustível e pendências sem duplicar o DRE', () => {
     const pagar = {historico:{primeiraEmissao:'2026-01-01',atualizadoEm:'2026-11-25'},valores:[
       {conta:'FGTS',linhaDre:'D24',mes:40,ano:100},{conta:'FGTS',linhaDre:'D110',mes:30,ano:80},
