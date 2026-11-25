@@ -66,11 +66,12 @@ it('detalha as notas distintas e os lançamentos em gráficos independentes', ()
   const eventos = within(screen.getByLabelText('Quantidade de ocorrências'));
   const item = notas.getByRole('button', { name: 'Detalhar AVARIA' });
   expect(item.textContent).toContain('50,0%');
+  const maiorGrupo = notas.getByRole('button', { name: 'Detalhar CLIENTE' });
   expect(notas.getByLabelText('Detalhe da primeira fatia').textContent).toBe(
-    item.getAttribute('aria-description'),
+    maiorGrupo.getAttribute('aria-description'),
   );
   expect(item.getAttribute('title')).toBe('AVARIA · 2 notas · 50,0% das notas únicas');
-  expect(notas.getByRole('button', { name: 'Detalhar CLIENTE' }).textContent).toContain('100,0%');
+  expect(maiorGrupo.textContent).toContain('100,0%');
   expect(within(item).getByText('2')).toBeTruthy();
   expect(notas.getByLabelText('Tipo de gráfico de notas').textContent).toContain('"type":"pie"');
   fireEvent.click(item);
