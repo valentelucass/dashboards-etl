@@ -10,6 +10,7 @@ import AnalyticalDataTable, {
 } from '../../shared/AnalyticalDataTable';
 import ExportButton from '../../shared/ExportButton';
 import StatusBadge from '../../shared/StatusBadge';
+import CelulaAcompanhamento from './CelulaAcompanhamento';
 import {
   apresentarCampo,
   camposSinistros,
@@ -22,9 +23,10 @@ interface Props {
   periodo: Periodo;
   linhas: Sinistro[];
   editar?: (sinistro: Sinistro) => void;
+  atualizarAcompanhamento?: () => Promise<void>;
 }
 
-export default function RelacaoSinistros({ periodo, linhas, editar }: Props) {
+export default function RelacaoSinistros({ periodo, linhas, editar, atualizarAcompanhamento }: Props) {
   const tabela = useAnalyticalTableFilters();
   const paginacao = useTabelaPaginadaState(tabela.resetKey);
   const [ordem, setOrdem] = useState<{ chave: keyof Sinistro | null; direcao: SortDirection }>({
@@ -61,13 +63,25 @@ export default function RelacaoSinistros({ periodo, linhas, editar }: Props) {
                 <Pencil size={12} aria-hidden="true" />
               </button>
             );
+          if (
+            atualizarAcompanhamento &&
+            (campo.chave === 'statusCorretora' || campo.chave === 'franquia' || campo.chave === 'salvados')
+          )
+            return (
+              <CelulaAcompanhamento
+                campo={campo.chave}
+                linha={linha}
+                rotulo={campo.label}
+                atualizar={atualizarAcompanhamento}
+              />
+            );
           if (campo.chave === 'status' || campo.chave === 'statusCorretora')
             return <StatusBadge status={texto} />;
           if (campo.tipo === 'moeda') return <span className="block text-right tabular-nums">{texto}</span>;
           return <span className="block whitespace-normal break-words">{texto}</span>;
         },
       })),
-    [editar],
+    [editar, atualizarAcompanhamento],
   );
 
   function exportar() {

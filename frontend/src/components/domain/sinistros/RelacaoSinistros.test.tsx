@@ -134,6 +134,8 @@ it('apresenta todos os campos financeiros em modo de leitura', () => {
     </MemoryRouter>,
   );
   expect(screen.queryByRole('button', { name: /Editar sinistro/ })).toBeNull();
+  expect(screen.queryByRole('combobox', { name: /Status do processo da corretora do sinistro/ })).toBeNull();
+  expect(screen.queryByRole('textbox', { name: /do sinistro 1026 em reais/ })).toBeNull();
   expect(screen.getByRole('columnheader', { name: /^Venda de salvados$/i })).toBeTruthy();
   expect(screen.getByText(/950,00 \(parcial\)/)).toBeTruthy();
 });

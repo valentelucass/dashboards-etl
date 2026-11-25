@@ -6,6 +6,8 @@ No desktop, a rosca de notas fica à esquerda das colunas de ocorrências. Cada 
 
 A relação reúne as notas e minutas do mesmo sinistro em uma linha. Franquia, venda de salvados e status da corretora são editáveis com permissão própria e controle de revisão. O saldo considera os sinistros publicados na vigência inteira. Na ausência de número na origem, uma única apólice válida na data permite a atribuição. Dias sem cobertura ou valores ainda sem atribuição à apólice deixam o saldo identificado como parcial.
 
+Quem tem a permissão de gerenciar sinistros edita essas três colunas diretamente na relação. A escolha de status é gravada ao selecionar. Os valores em reais aceitam vírgula decimal, confirmação por Enter ou pelo botão de salvar e cancelamento por Escape. Cada gravação altera só o campo escolhido e atualiza os saldos da relação.
+
 A Relação de Sinistros usa a mesma tabela de Coletas Analíticas. Busca, filtros por coluna e ordenação consideram todos os sinistros autorizados no período. O CSV exporta os resultados filtrados na ordem escolhida, incluindo registros de outras páginas. Em telas estreitas, a tabela tem rolagem horizontal e o número do sinistro permanece visível.
 
 No desktop, o quadro de tratativas acompanha a altura dos gráficos e o lápis da edição aparece ao apontar a linha ou focar o número pelo teclado. Em telas de toque, o lápis fica visível. A legenda rolável da rosca reserva espaço entre as quantidades e a barra.

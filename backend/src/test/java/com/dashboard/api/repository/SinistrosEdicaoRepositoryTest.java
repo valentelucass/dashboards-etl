@@ -2,6 +2,8 @@ package com.dashboard.api.repository;
 
 import com.dashboard.api.dto.sinistros.SinistrosFormularios.Acompanhamento;
 import com.dashboard.api.dto.sinistros.SinistrosFormularios.Apolice;
+import com.dashboard.api.dto.sinistros.SinistrosFormularios.AlteracaoCampo;
+import com.dashboard.api.dto.sinistros.SinistrosFormularios.Campo;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import com.dashboard.api.service.acesso.EscopoFilialService.EscopoFilial;
 import java.math.BigDecimal;
@@ -33,6 +35,8 @@ class SinistrosEdicaoRepositoryTest {
         when(jdbc.queryForObject(contains("filial IN"), any(SqlParameterSource.class), eq(Integer.class))).thenReturn(0);
         assertEquals(404, assertThrows(ResponseStatusException.class,
             () -> repositorio.salvarAcompanhamento(12, edicao, "teste")).getStatusCode().value());
+        assertEquals(404, assertThrows(ResponseStatusException.class,
+            () -> repositorio.alterarCampo(12, new AlteracaoCampo(Campo.salvados,"0",0), "teste")).getStatusCode().value());
         verify(jdbc, never()).update(anyString(), any(SqlParameterSource.class));
     }
 
@@ -42,6 +46,8 @@ class SinistrosEdicaoRepositoryTest {
         when(jdbc.queryForObject(contains("MAX(revisao)"), any(SqlParameterSource.class), eq(Integer.class))).thenReturn(3);
         assertEquals(409, assertThrows(ResponseStatusException.class,
             () -> repositorio.salvarAcompanhamento(12, edicao, "teste")).getStatusCode().value());
+        assertEquals(409, assertThrows(ResponseStatusException.class,
+            () -> repositorio.alterarCampo(12, new AlteracaoCampo(Campo.franquia,"0.00",2), "teste")).getStatusCode().value());
         verify(jdbc, never()).update(anyString(), any(SqlParameterSource.class));
     }
 
@@ -65,5 +71,26 @@ class SinistrosEdicaoRepositoryTest {
         assertEquals(409, assertThrows(ResponseStatusException.class,
             () -> repositorio.salvarApolice(null, valida, "teste")).getStatusCode().value());
         verify(jdbc, never()).update(anyString(), any(SqlParameterSource.class));
+    }
+
+    @Test void edicaoDiretaPreservaOsOutrosCamposEGravaCentavosExatos() {
+        escopo(true);
+        when(jdbc.queryForObject(startsWith("SELECT COUNT"), any(SqlParameterSource.class), eq(Integer.class))).thenReturn(1);
+        when(jdbc.queryForObject(contains("MAX(revisao)"), any(SqlParameterSource.class), eq(Integer.class))).thenReturn(5);
+        repositorio.alterarCampo(12,new AlteracaoCampo(Campo.franquia,"999999999999999.99",5),"teste");
+        verify(jdbc).update(contains("ELSE salvados END"),argThat((SqlParameterSource p) ->
+            p.getValue("franquia").equals(new BigDecimal("999999999999999.99"))
+            && p.getValue("mudarFranquia").equals(1) && p.getValue("mudarSalvados").equals(0)
+            && p.getValue("mudarStatus").equals(0)));
+    }
+
+    @Test void aceitaOsTresStatusEValorVazioOuZeroERejeitaValoresInvalidos() {
+        for (String status : List.of("Pendente","Em Andamento","Finalizado"))
+            assertTrue(new AlteracaoCampo(Campo.statusCorretora,status,0).isValorValido());
+        assertFalse(new AlteracaoCampo(Campo.statusCorretora,"Encerrado",0).isValorValido());
+        for (String valor : List.of("","0.00","1234.56","999999999999999.99"))
+            assertTrue(new AlteracaoCampo(Campo.salvados,valor,0).isValorValido());
+        for (String valor : List.of("-1","0.001","1e2","1000000000000000","1,20"))
+            assertFalse(new AlteracaoCampo(Campo.franquia,valor,0).isValorValido());
     }
 }

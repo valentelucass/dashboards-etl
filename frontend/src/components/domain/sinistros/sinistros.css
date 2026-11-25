@@ -295,6 +295,58 @@ button.os-item-notas:hover,
   gap: 1rem;
   color: var(--color-text);
 }
+.os-celula-edicao {
+  min-width: 0;
+}
+.os-edicao-moeda,
+.os-edicao-moeda label,
+.os-edicao-moeda button {
+  display: flex;
+  align-items: center;
+}
+.os-edicao-moeda {
+  gap: 2px;
+}
+.os-edicao-moeda label {
+  flex: 1;
+  min-width: 0;
+  gap: 0.3rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.4rem;
+  color: var(--color-text-muted);
+}
+.os-edicao-moeda input {
+  width: 100%;
+  min-width: 0;
+  text-align: right;
+  color: var(--color-text);
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.os-edicao-moeda label:focus-within,
+.os-edicao-moeda button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+.os-edicao-moeda input:focus {
+  outline: 0;
+}
+.os-edicao-moeda button {
+  justify-content: center;
+  min-width: 24px;
+  min-height: 28px;
+  cursor: pointer;
+}
+.os-edicao-moeda button[type='submit'] {
+  color: var(--color-primary);
+}
+.os-erro-celula {
+  display: block;
+  white-space: normal;
+  color: var(--color-danger, #d45f56);
+  font-size: 0.75rem;
+}
 .os-formulario label {
   display: grid;
   gap: 0.35rem;

@@ -42,6 +42,11 @@ public class OcorrenciasSinistrosController {
         edicao.salvarAcompanhamento(numero,dados,usuario.getName());
     }
 
+    @PatchMapping("/sinistros/{numero}") @PreAuthorize(EDICAO) @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void alterarCampo(@PathVariable long numero,@Valid @RequestBody AlteracaoCampo dados,Principal usuario) {
+        edicao.alterarCampo(numero,dados,usuario.getName());
+    }
+
     @GetMapping("/gestao-global") @PreAuthorize(EDICAO)
     public boolean gestaoGlobal() { return edicao.acessoGlobal(); }
 

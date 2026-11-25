@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BadgeCheck, ClipboardList, Layers3, ShieldCheck, Timer, type LucideIcon } from 'lucide-react';
 import {
@@ -132,6 +132,14 @@ function Relatorio({ periodo, edita }: { periodo: Periodo; edita: boolean }) {
   const [edicao, setEdicao] = useState<Sinistro>();
   const client = useQueryClient();
   const chave = [dominioSinistros, periodo.dataInicio, periodo.dataFim];
+  const atualizarRelacoes = useCallback(
+    () =>
+      client.invalidateQueries({
+        queryKey: [dominioSinistros],
+        predicate: ({ queryKey }) => queryKey[queryKey.length - 1] === 'relacao-completa',
+      }),
+    [client],
+  );
   const op = useQuery({
     ...cache,
     queryKey: [...chave, 'indicadores'],
@@ -171,16 +179,17 @@ function Relatorio({ periodo, edita }: { periodo: Periodo; edita: boolean }) {
         !falha && <CarregamentoIndicadoresSinistros />
       )}
       {sin.data ? (
-        <RelacaoSinistros periodo={periodo} linhas={sin.data.linhas} editar={edita ? setEdicao : undefined} />
+        <RelacaoSinistros
+          periodo={periodo}
+          linhas={sin.data.linhas}
+          editar={edita ? setEdicao : undefined}
+          atualizarAcompanhamento={edita ? atualizarRelacoes : undefined}
+        />
       ) : (
         !sin.isError && <CarregamentoRelacaoSinistros />
       )}
       {edicao && (
-        <EditarSinistro
-          linha={edicao}
-          fechar={() => setEdicao(undefined)}
-          salvou={() => client.invalidateQueries({ queryKey: [dominioSinistros] })}
-        />
+        <EditarSinistro linha={edicao} fechar={() => setEdicao(undefined)} salvou={atualizarRelacoes} />
       )}
     </div>
   );

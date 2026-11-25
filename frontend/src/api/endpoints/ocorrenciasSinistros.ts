@@ -98,6 +98,15 @@ export async function lerRelacaoCompleta(periodo: Periodo, signal?: AbortSignal)
 export async function salvarAcompanhamento(numero: number, dados: Acompanhamento) {
   await clienteAxios.put(base + '/sinistros/' + numero, dados);
 }
+export type CampoAcompanhamento = 'statusCorretora' | 'franquia' | 'salvados';
+export async function alterarCampoSinistro(
+  numero: number,
+  campo: CampoAcompanhamento,
+  valor: string,
+  revisao: number,
+) {
+  await clienteAxios.patch(base + '/sinistros/' + numero, { campo, valor, revisao });
+}
 export async function consultarGestaoGlobal(signal?: AbortSignal) {
   return (await clienteAxios.get<boolean>(base + '/gestao-global', { signal })).data;
 }

@@ -3,6 +3,7 @@ package com.dashboard.api.repository;
 import com.dashboard.api.dto.sinistros.SinistrosFormularios.*;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import java.sql.Date;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -24,9 +25,25 @@ public class SinistrosEdicaoRepository {
 
     @Transactional
     public void salvarAcompanhamento(long numero,Acompanhamento dados,String usuario) {
+        gravar(numero,dados,usuario,null);
+    }
+
+    @Transactional
+    public void alterarCampo(long numero,AlteracaoCampo dados,String usuario) {
+        Campo campo=dados.campo();
+        BigDecimal valor=campo==Campo.statusCorretora || dados.valor().isEmpty() ? null : new BigDecimal(dados.valor());
+        var ajuste=new Acompanhamento(campo==Campo.statusCorretora ? dados.valor() : "Pendente",
+            campo==Campo.franquia ? valor : null,campo==Campo.salvados ? valor : null,dados.revisao());
+        gravar(numero,ajuste,usuario,campo);
+    }
+
+    private void gravar(long numero,Acompanhamento dados,String usuario,Campo campo) {
         var p=new MapSqlParameterSource("numero",numero).addValue("status",dados.statusCorretora())
             .addValue("franquia",dados.franquia(),java.sql.Types.DECIMAL).addValue("salvados",dados.salvados(),java.sql.Types.DECIMAL)
-            .addValue("revisao",dados.revisao()).addValue("usuario",usuario);
+            .addValue("revisao",dados.revisao()).addValue("usuario",usuario)
+            .addValue("mudarStatus",campo==null || campo==Campo.statusCorretora ? 1 : 0)
+            .addValue("mudarFranquia",campo==null || campo==Campo.franquia ? 1 : 0)
+            .addValue("mudarSalvados",campo==null || campo==Campo.salvados ? 1 : 0);
         var escopo=escopos.escopoAtual();
         var filiais=escopo.filiaisOrdenadas();
         String filtro="";
@@ -48,7 +65,10 @@ public class SinistrosEdicaoRepository {
                 """,p);
         } else {
             jdbc.update("""
-                UPDATE acesso.sinistro_acompanhamento SET status_corretora=:status,franquia=:franquia,salvados=:salvados,
+                UPDATE acesso.sinistro_acompanhamento SET
+                   status_corretora=CASE WHEN :mudarStatus=1 THEN :status ELSE status_corretora END,
+                   franquia=CASE WHEN :mudarFranquia=1 THEN :franquia ELSE franquia END,
+                   salvados=CASE WHEN :mudarSalvados=1 THEN :salvados ELSE salvados END,
                    revisao=revisao+1,alterado_por=:usuario,alterado_em=SYSUTCDATETIME() WHERE numero=:numero
                 """,p);
         }
