@@ -4,9 +4,9 @@ import { camposSinistros } from './camposSinistros';
 import ChartLoading, { ChartPlaceholder } from '../../shared/ChartLoading';
 import './sinistros.css';
 
-export default function CarregamentoSinistros() {
+export function CarregamentoIndicadoresSinistros() {
   return (
-    <div className="os-painel" role="status" aria-label="Carregando ocorrências e sinistros">
+    <div className="os-painel" role="status" aria-label="Carregando indicadores de ocorrências e sinistros">
       <LoadingKpiGrid count={5} className="os-kpis os-kpis-principais" />
       <div className="os-composicao">
         <ChartPlaceholder>
@@ -33,7 +33,19 @@ export default function CarregamentoSinistros() {
           </ChartPlaceholder>
         ))}
       </div>
-      <TableLoading title="Relação de sinistros" columns={camposSinistros} pageSize={10} filters />
+    </div>
+  );
+}
+
+export function CarregamentoRelacaoSinistros() {
+  return <TableLoading title="Relação de sinistros" columns={camposSinistros} pageSize={10} filters />;
+}
+
+export default function CarregamentoSinistros() {
+  return (
+    <div className="os-painel" aria-label="Carregando ocorrências e sinistros">
+      <CarregamentoIndicadoresSinistros />
+      <CarregamentoRelacaoSinistros />
     </div>
   );
 }

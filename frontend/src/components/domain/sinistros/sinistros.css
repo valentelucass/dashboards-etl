@@ -164,6 +164,10 @@
 .os-anel {
   min-width: 0;
 }
+/* A legenda acessível usa o total de notas distintas. A tabela automática do gráfico soma as fatias. */
+.os-anel table {
+  display: none;
+}
 .os-percentual-notas {
   grid-column: 1 / -1;
   font-size: 0.69rem;

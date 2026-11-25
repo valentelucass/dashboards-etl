@@ -39,10 +39,24 @@ function RoscaNotas({
   unicas: number;
   onGrupo?: (nome: string) => void;
 }) {
+  const percentualNotas = (notas: number) => (unicas ? formatarPorcentagem((100 * notas) / unicas, 1) : '—');
+  const descrever = (item: Categoria) =>
+    item.nome +
+    ' · ' +
+    formatarNumero(item.notas) +
+    (item.notas === 1 ? ' nota · ' : ' notas · ') +
+    percentualNotas(item.notas) +
+    ' das notas únicas';
   const option: EChartsOption = {
     legend: { show: false },
     title: { text: formatarNumero(unicas), subtext: 'notas únicas' },
-    tooltip: { trigger: 'item' },
+    tooltip: {
+      trigger: 'item',
+      formatter: (ponto) => {
+        const item = itens[(Array.isArray(ponto) ? ponto[0] : ponto).dataIndex];
+        return item ? descrever(item) : '';
+      },
+    },
     series: [
       {
         type: 'pie',
@@ -80,14 +94,12 @@ function RoscaNotas({
       </div>
       <div className="os-legenda-notas" aria-label="Legenda de notas">
         {itens.map((item, i) => {
-          const percentual = unicas ? formatarPorcentagem((100 * item.notas) / unicas, 1) : '—';
-          const descricao =
-            item.nome + ' · ' + formatarNumero(item.notas) + ' notas · ' + percentual + ' das notas únicas';
+          const descricao = descrever(item);
           const legenda = (
             <>
               <i aria-hidden="true" style={{ backgroundColor: cores[i % cores.length] }} />
               <span className="os-legenda-nome">{item.nome}</span>
-              <span>{percentual}</span>
+              <span>{percentualNotas(item.notas)}</span>
               <strong>{formatarNumero(item.notas)}</strong>
             </>
           );
@@ -98,6 +110,7 @@ function RoscaNotas({
               onClick={() => onGrupo(item.nome)}
               className="os-item-notas"
               aria-label={'Detalhar ' + item.nome}
+              aria-description={descricao}
               title={descricao}
             >
               {legenda}
@@ -195,11 +208,7 @@ export function GraficoGrupo({ dados, porNota }: { dados: Indicadores; porNota: 
     >
       {selecionado && <p className="os-grupo-ativo">{selecionado.grupo}</p>}
       {porNota ? (
-        <RoscaNotas
-          itens={itens}
-          unicas={selecionado?.notas ?? dados.notas}
-          onGrupo={onGrupo}
-        />
+        <RoscaNotas itens={itens} unicas={selecionado?.notas ?? dados.notas} onGrupo={onGrupo} />
       ) : (
         <ColunasOcorrencias itens={itens} onGrupo={onGrupo} />
       )}

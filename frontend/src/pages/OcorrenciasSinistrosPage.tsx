@@ -20,7 +20,10 @@ import TooltipKpi from '../components/shared/TooltipKpi';
 import KpiCard from '../components/shared/KpiCard';
 import { KpiDictionary } from '../constants/kpiDictionary';
 import { formatarNumero, formatarPorcentagem } from '../utils/formatadores';
-import CarregamentoSinistros from '../components/domain/sinistros/CarregamentoSinistros';
+import {
+  CarregamentoIndicadoresSinistros,
+  CarregamentoRelacaoSinistros,
+} from '../components/domain/sinistros/CarregamentoSinistros';
 import { GraficoGrupo, HistoricoSinistro } from '../components/domain/sinistros/GraficosSinistros';
 import { EditarSinistro, GerenciarApolices } from '../components/domain/sinistros/EdicaoSinistros';
 import RelacaoSinistros from '../components/domain/sinistros/RelacaoSinistros';
@@ -139,29 +142,39 @@ function Relatorio({ periodo, edita }: { periodo: Periodo; edita: boolean }) {
     queryKey: [...chave, 'relacao-completa'],
     queryFn: ({ signal }) => lerRelacaoCompleta(periodo, signal),
   });
-  if (op.isError || sin.isError)
-    return (
-      <div role="alert" className="os-cobertura">
-        Não foi possível carregar o relatório.{' '}
-        <button
-          className="os-botao"
-          onClick={() => {
-            void op.refetch();
-            void sin.refetch();
-          }}
-        >
-          Tentar novamente
-        </button>
-      </div>
-    );
-  if (!op.data || !sin.data) return <CarregamentoSinistros />;
+  const falha = op.isError || sin.isError;
   return (
     <div className="os-painel">
-      <IndicadoresDaTela op={op.data} sin={sin.data} />
-      <div className="os-graficos">
-        <HistoricoSinistro indicadores={op.data} relacao={sin.data} />
-      </div>
-      <RelacaoSinistros periodo={periodo} linhas={sin.data.linhas} editar={edita ? setEdicao : undefined} />
+      {falha && (
+        <div role="alert" className="os-cobertura">
+          Não foi possível carregar todos os dados do relatório.{' '}
+          <button
+            className="os-botao"
+            type="button"
+            onClick={() => {
+              if (op.isError) void op.refetch();
+              if (sin.isError) void sin.refetch();
+            }}
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+      {op.data && sin.data ? (
+        <>
+          <IndicadoresDaTela op={op.data} sin={sin.data} />
+          <div className="os-graficos">
+            <HistoricoSinistro indicadores={op.data} relacao={sin.data} />
+          </div>
+        </>
+      ) : (
+        !falha && <CarregamentoIndicadoresSinistros />
+      )}
+      {sin.data ? (
+        <RelacaoSinistros periodo={periodo} linhas={sin.data.linhas} editar={edita ? setEdicao : undefined} />
+      ) : (
+        !sin.isError && <CarregamentoRelacaoSinistros />
+      )}
       {edicao && (
         <EditarSinistro
           linha={edicao}

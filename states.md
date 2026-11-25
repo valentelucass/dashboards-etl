@@ -10,6 +10,10 @@ A Relação de Sinistros usa a mesma tabela de Coletas Analíticas. Busca, filtr
 
 No desktop, o quadro de tratativas acompanha a altura dos gráficos e o lápis da edição aparece ao apontar a linha ou focar o número pelo teclado. Em telas de toque, o lápis fica visível. A legenda rolável da rosca reserva espaço entre as quantidades e a barra.
 
+A relação de sinistros aparece assim que sua consulta termina. Os indicadores contam os lançamentos e as notas distintas por tipo e por grupo uma vez por consulta. O detalhamento da tabela lê os documentos da página uma única vez para montar as listas de clientes, minutas e notas.
+
+Na conferência de produção de 1 a 25/11/2026, os relatórios do ETL V2 e a tabela exibiram 21 sinistros e R$ 168.568,72 de prejuízo. As notas distintas determinam o percentual da legenda e dos detalhes da rosca. A vigência da apólice cadastrada começa em 01/06/2026 e o primeiro dia coberto pelo histórico de sinistros é 16/08/2026. Os saldos dessa conferência são parciais.
+
 O ensaio no SQL verificou o limite exato do prazo, documentos repetidos, escopo por filial, renovação e vigências ambíguas. A edição com o usuário da aplicação foi conferida em transação revertida. De 1 a 25/11/2026, o navegador em desenvolvimento e o SQL apresentaram 14 sinistros por data da ocorrência e 53 encerramentos, com média de 26 dias. O cadastro inicial de apólices fica vazio até que a empresa informe os dados reais.
 
 ## 25/11/2026 — Dados da nova tela de ocorrências e sinistros

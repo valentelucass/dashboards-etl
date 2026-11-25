@@ -1,6 +1,6 @@
 SET NOCOUNT ON;
 DECLARE @de date=:inicio, @ate date=:fim;
-DROP TABLE IF EXISTS #os_casos,#os_visiveis,#os_pagina;
+DROP TABLE IF EXISTS #os_casos,#os_visiveis,#os_pagina,#os_documentos;
 -- O saldo começa no início da vigência, mesmo quando o filtro exibe só um dia.
 WITH apurados AS (
  SELECT s.*, a.status_corretora AS statusCorretora,a.franquia,a.salvados,ISNULL(a.revisao,0) revisao,
@@ -23,19 +23,19 @@ INTO #os_casos FROM saldos s WHERE 1=1 /* escopoCaso */;
 SELECT * INTO #os_visiveis FROM #os_casos WHERE ocorrido>=@de AND ocorrido<@ate;
 SELECT * INTO #os_pagina FROM #os_visiveis ORDER BY ocorrido DESC,numero DESC OFFSET :deslocamento ROWS FETCH NEXT :limite ROWS ONLY;
 
-WITH docs AS (
- SELECT s.[Nº do Sinistro] numero,s.[Minuta] minuta,NULLIF(TRIM(s.[Nota Fiscal/Número]),'') nota,
-        NULLIF(TRIM(s.[Pagador do frete/Nome fantasia]),'') cliente
- FROM dbo.dashboard_sinistros s JOIN #os_pagina p ON p.numero=s.[Nº do Sinistro]
-), clientes AS (
+SELECT s.[Nº do Sinistro] numero,s.[Minuta] minuta,NULLIF(TRIM(s.[Nota Fiscal/Número]),'') nota,
+       NULLIF(TRIM(s.[Pagador do frete/Nome fantasia]),'') cliente
+INTO #os_documentos FROM dbo.dashboard_sinistros s JOIN #os_pagina p ON p.numero=s.[Nº do Sinistro];
+
+WITH clientes AS (
  SELECT numero,STRING_AGG(CONVERT(nvarchar(max),cliente),N', ') WITHIN GROUP (ORDER BY cliente) lista
- FROM (SELECT DISTINCT numero,cliente FROM docs WHERE cliente IS NOT NULL) d GROUP BY numero
+ FROM (SELECT DISTINCT numero,cliente FROM #os_documentos WHERE cliente IS NOT NULL) d GROUP BY numero
 ), minutas AS (
  SELECT numero,STRING_AGG(CONVERT(nvarchar(max),minuta),N', ') WITHIN GROUP (ORDER BY minuta) lista
- FROM (SELECT DISTINCT numero,minuta FROM docs WHERE minuta IS NOT NULL) d GROUP BY numero
+ FROM (SELECT DISTINCT numero,minuta FROM #os_documentos WHERE minuta IS NOT NULL) d GROUP BY numero
 ), notas AS (
  SELECT numero,STRING_AGG(CONVERT(nvarchar(max),nota),N', ') WITHIN GROUP (ORDER BY nota) lista
- FROM (SELECT DISTINCT numero,nota FROM docs WHERE nota IS NOT NULL) d GROUP BY numero
+ FROM (SELECT DISTINCT numero,nota FROM #os_documentos WHERE nota IS NOT NULL) d GROUP BY numero
 )
 SELECT (SELECT (SELECT COUNT(*) FROM #os_visiveis) total,
         (SELECT AVG(CONVERT(decimal(18,3),DATEDIFF(day,abertura,finalizacao))) FROM #os_casos WHERE finalizacao>=@de AND finalizacao<@ate AND abertura<=finalizacao) mediaDias,
