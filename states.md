@@ -8,6 +8,8 @@ A relação reúne as notas e minutas do mesmo sinistro em uma linha. Franquia, 
 
 A Relação de Sinistros usa a mesma tabela de Coletas Analíticas. Busca, filtros por coluna e ordenação consideram todos os sinistros autorizados no período. O CSV exporta os resultados filtrados na ordem escolhida, incluindo registros de outras páginas. Em telas estreitas, a tabela tem rolagem horizontal e o número do sinistro permanece visível.
 
+No desktop, o quadro de tratativas acompanha a altura dos gráficos e o lápis da edição aparece ao apontar a linha ou focar o número pelo teclado. Em telas de toque, o lápis fica visível. A legenda rolável da rosca reserva espaço entre as quantidades e a barra.
+
 O ensaio no SQL verificou o limite exato do prazo, documentos repetidos, escopo por filial, renovação e vigências ambíguas. A edição com o usuário da aplicação foi conferida em transação revertida. De 1 a 25/11/2026, o navegador em desenvolvimento e o SQL apresentaram 14 sinistros por data da ocorrência e 53 encerramentos, com média de 26 dias. O cadastro inicial de apólices fica vazio até que a empresa informe os dados reais.
 
 ## 25/11/2026 — Dados da nova tela de ocorrências e sinistros

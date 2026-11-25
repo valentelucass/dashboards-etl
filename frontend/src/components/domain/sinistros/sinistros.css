@@ -23,7 +23,9 @@
   min-width: 0;
 }
 .os-lateral {
-  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
   border: 1px solid var(--color-border);
   border-radius: 0.75rem;
   background: var(--color-card);
@@ -42,6 +44,19 @@
 .os-kpis-operacionais {
   gap: 0.55rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 1160px) {
+  .os-lateral > .os-kpis-operacionais,
+  .os-lateral > [role='status'] {
+    flex: 1;
+  }
+  .os-lateral > [role='status'] {
+    display: grid;
+  }
+  .os-lateral .os-kpis-operacionais {
+    grid-auto-rows: minmax(min-content, 7.5rem);
+    align-content: space-between;
+  }
 }
 .os-kpi-operacional {
   --os-acento: #437ac1;
@@ -159,7 +174,10 @@
   max-height: 210px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 0.15rem;
+  padding-inline-end: 0.8rem;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-text-muted) 48%, transparent) transparent;
 }
 .os-item-notas {
   display: grid;
@@ -237,8 +255,36 @@ button.os-item-notas:hover,
   cursor: default;
 }
 .os-editar {
+  padding: 0.2rem 0.35rem;
+  margin-inline-start: -0.35rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
   color: var(--color-text);
-  border-bottom: 1px dotted currentColor;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  cursor: pointer;
+}
+.os-editar svg {
+  color: var(--color-text-muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .os-editar svg {
+    opacity: 0;
+  }
+  tr:hover .os-editar svg,
+  .os-editar:focus-visible svg {
+    opacity: 1;
+  }
+}
+.os-editar:hover,
+.os-editar:focus-visible {
+  background: color-mix(in srgb, var(--color-primary) 9%, var(--color-card));
+}
+.os-editar:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 .os-formulario {
   display: grid;
