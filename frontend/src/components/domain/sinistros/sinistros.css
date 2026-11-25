@@ -272,15 +272,7 @@ button.os-item-notas:hover,
 }
 .os-editar svg {
   color: var(--color-text-muted);
-}
-@media (hover: hover) and (pointer: fine) {
-  .os-editar svg {
-    opacity: 0;
-  }
-  tr:hover .os-editar svg,
-  .os-editar:focus-visible svg {
-    opacity: 1;
-  }
+  flex-shrink: 0;
 }
 .os-editar:hover,
 .os-editar:focus-visible {

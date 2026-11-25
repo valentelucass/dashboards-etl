@@ -113,7 +113,9 @@ it('usa a tabela analítica para buscar um sinistro da terceira página, editar 
   fireEvent.change(busca, { target: { value: 'industria santa fe' } });
   fireEvent.keyDown(busca, { key: 'Enter' });
   await waitFor(() => expect(tabela.getByText('1 registro encontrado')).toBeTruthy());
-  fireEvent.click(tabela.getByRole('button', { name: 'Editar sinistro 1026' }));
+  const abrirEdicao = tabela.getByRole('button', { name: 'Editar sinistro 1026' });
+  expect(abrirEdicao.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+  fireEvent.click(abrirEdicao);
   expect(editar).toHaveBeenCalledWith(linhas[26]);
   fireEvent.click(tabela.getByRole('button', { name: 'Exportar CSV' }));
   expect(salvar).toHaveBeenCalledOnce();

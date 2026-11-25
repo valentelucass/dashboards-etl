@@ -10,7 +10,7 @@ Quem tem a permissão de gerenciar sinistros edita essas três colunas diretamen
 
 A Relação de Sinistros usa a mesma tabela de Coletas Analíticas. Busca, filtros por coluna e ordenação consideram todos os sinistros autorizados no período. O CSV exporta os resultados filtrados na ordem escolhida, incluindo registros de outras páginas. Em telas estreitas, a tabela tem rolagem horizontal e o número do sinistro permanece visível.
 
-No desktop, o quadro de tratativas acompanha a altura dos gráficos e o lápis da edição aparece ao apontar a linha ou focar o número pelo teclado. Em telas de toque, o lápis fica visível. A legenda rolável da rosca reserva espaço entre as quantidades e a barra.
+O lápis permanece visível ao lado do número de cada sinistro para quem pode editar, tanto no desktop quanto no celular. O número e o lápis abrem o mesmo formulário por clique, toque ou teclado. No desktop, o quadro de tratativas acompanha a altura dos gráficos. A legenda rolável da rosca reserva espaço entre as quantidades e a barra.
 
 A relação de sinistros aparece assim que sua consulta termina. Os indicadores contam os lançamentos e as notas distintas por tipo e por grupo uma vez por consulta. O detalhamento da tabela lê os documentos da página uma única vez para montar as listas de clientes, minutas e notas.
 

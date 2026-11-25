@@ -40,10 +40,7 @@ public class SinistrosEdicaoRepository {
     private void gravar(long numero,Acompanhamento dados,String usuario,Campo campo) {
         var p=new MapSqlParameterSource("numero",numero).addValue("status",dados.statusCorretora())
             .addValue("franquia",dados.franquia(),java.sql.Types.DECIMAL).addValue("salvados",dados.salvados(),java.sql.Types.DECIMAL)
-            .addValue("revisao",dados.revisao()).addValue("usuario",usuario)
-            .addValue("mudarStatus",campo==null || campo==Campo.statusCorretora ? 1 : 0)
-            .addValue("mudarFranquia",campo==null || campo==Campo.franquia ? 1 : 0)
-            .addValue("mudarSalvados",campo==null || campo==Campo.salvados ? 1 : 0);
+            .addValue("revisao",dados.revisao()).addValue("usuario",usuario);
         var escopo=escopos.escopoAtual();
         var filiais=escopo.filiaisOrdenadas();
         String filtro="";
@@ -64,13 +61,13 @@ public class SinistrosEdicaoRepository {
                 VALUES(:numero,:status,:franquia,:salvados,1,:usuario)
                 """,p);
         } else {
-            jdbc.update("""
-                UPDATE acesso.sinistro_acompanhamento SET
-                   status_corretora=CASE WHEN :mudarStatus=1 THEN :status ELSE status_corretora END,
-                   franquia=CASE WHEN :mudarFranquia=1 THEN :franquia ELSE franquia END,
-                   salvados=CASE WHEN :mudarSalvados=1 THEN :salvados ELSE salvados END,
-                   revisao=revisao+1,alterado_por=:usuario,alterado_em=SYSUTCDATETIME() WHERE numero=:numero
-                """,p);
+            String campos=campo==null ? "status_corretora=:status, franquia=:franquia, salvados=:salvados" : switch (campo) {
+                case statusCorretora -> "status_corretora=:status";
+                case franquia -> "franquia=:franquia";
+                case salvados -> "salvados=:salvados";
+            };
+            jdbc.update("UPDATE acesso.sinistro_acompanhamento SET "+campos+
+                ", revisao=revisao+1,alterado_por=:usuario,alterado_em=SYSUTCDATETIME() WHERE numero=:numero",p);
         }
     }
 

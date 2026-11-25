@@ -59,6 +59,12 @@ try {
   $amb=Relatorio 'sinistros-relacao' '20261101' '20261201'
   Igual ($amb.linhas|Where-Object numero -eq 3).sinistralidade $null 'sem número e vigências ambíguas'
   Igual ($amb.linhas|Where-Object numero -eq 2).sinistralidade 695 'número explícito com vigências concorrentes'
+  Executar "UPDATE #ajustes SET franquia=21.56,salvados=15.18 WHERE numero=2"
+  $centavos=(Relatorio 'sinistros-relacao' '20261101' '20261201').linhas|Where-Object numero -eq 2
+  Igual $centavos.franquia 21.56 'franquia em centavos'
+  Igual $centavos.salvados 15.18 'venda de salvados em centavos'
+  Igual $centavos.sinistralidade 696.56 'saldo da apólice em centavos'
+  Igual $centavos.sinistralidadeReal 721.74 'saldo real em centavos'
   Write-Output 'Regressão SQL aprovada para eventos, documentos, prazos, escopo, renovação e saldos.'
 } finally {
   if($tx){ $tx.Rollback();$tx.Dispose() }

@@ -78,10 +78,13 @@ class SinistrosEdicaoRepositoryTest {
         when(jdbc.queryForObject(startsWith("SELECT COUNT"), any(SqlParameterSource.class), eq(Integer.class))).thenReturn(1);
         when(jdbc.queryForObject(contains("MAX(revisao)"), any(SqlParameterSource.class), eq(Integer.class))).thenReturn(5);
         repositorio.alterarCampo(12,new AlteracaoCampo(Campo.franquia,"999999999999999.99",5),"teste");
-        verify(jdbc).update(contains("ELSE salvados END"),argThat((SqlParameterSource p) ->
-            p.getValue("franquia").equals(new BigDecimal("999999999999999.99"))
-            && p.getValue("mudarFranquia").equals(1) && p.getValue("mudarSalvados").equals(0)
-            && p.getValue("mudarStatus").equals(0)));
+        verify(jdbc).update(contains("SET franquia=:franquia, revisao="),argThat((SqlParameterSource p) ->
+            p.getValue("franquia").equals(new BigDecimal("999999999999999.99"))));
+        repositorio.alterarCampo(12,new AlteracaoCampo(Campo.statusCorretora,"Finalizado",5),"teste");
+        verify(jdbc).update(contains("SET status_corretora=:status, revisao="),any(SqlParameterSource.class));
+        repositorio.alterarCampo(12,new AlteracaoCampo(Campo.salvados,"40.18",5),"teste");
+        verify(jdbc).update(contains("SET salvados=:salvados, revisao="),argThat((SqlParameterSource p) ->
+            p.getValue("salvados").equals(new BigDecimal("40.18"))));
     }
 
     @Test void aceitaOsTresStatusEValorVazioOuZeroERejeitaValoresInvalidos() {
