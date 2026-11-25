@@ -6,6 +6,8 @@ No desktop, a rosca de notas fica à esquerda das colunas de ocorrências. Cada 
 
 A relação reúne as notas e minutas do mesmo sinistro em uma linha. Franquia, venda de salvados e status da corretora são editáveis com permissão própria e controle de revisão. O saldo considera os sinistros publicados na vigência inteira. Na ausência de número na origem, uma única apólice válida na data permite a atribuição. Dias sem cobertura ou valores ainda sem atribuição à apólice deixam o saldo identificado como parcial.
 
+A Relação de Sinistros usa a mesma tabela de Coletas Analíticas. Busca, filtros por coluna e ordenação consideram todos os sinistros autorizados no período. O CSV exporta os resultados filtrados na ordem escolhida, incluindo registros de outras páginas. Em telas estreitas, a tabela tem rolagem horizontal e o número do sinistro permanece visível.
+
 O ensaio no SQL verificou o limite exato do prazo, documentos repetidos, escopo por filial, renovação e vigências ambíguas. A edição com o usuário da aplicação foi conferida em transação revertida. De 1 a 25/11/2026, o navegador em desenvolvimento e o SQL apresentaram 14 sinistros por data da ocorrência e 53 encerramentos, com média de 26 dias. O cadastro inicial de apólices fica vazio até que a empresa informe os dados reais.
 
 ## 25/11/2026 — Dados da nova tela de ocorrências e sinistros
