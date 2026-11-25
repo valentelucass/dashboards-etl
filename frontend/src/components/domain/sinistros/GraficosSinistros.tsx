@@ -39,7 +39,6 @@ function RoscaNotas({
   unicas: number;
   onGrupo?: (nome: string) => void;
 }) {
-  const participacoes = itens.reduce((soma, item) => soma + item.notas, 0);
   const option: EChartsOption = {
     legend: { show: false },
     title: { text: formatarNumero(unicas), subtext: 'notas únicas' },
@@ -79,18 +78,19 @@ function RoscaNotas({
       </div>
       <div className="os-legenda-notas" aria-label="Legenda de notas">
         {itens.map((item, i) => {
+          const percentual = unicas ? formatarPorcentagem((100 * item.notas) / unicas, 1) : '—';
           const descricao =
             item.nome +
             ' · ' +
             formatarNumero(item.notas) +
             ' notas · ' +
-            formatarPorcentagem(unicas ? (100 * item.notas) / unicas : 0, 1) +
+            percentual +
             ' das notas únicas';
           const legenda = (
             <>
               <i aria-hidden="true" style={{ backgroundColor: cores[i % cores.length] }} />
               <span className="os-legenda-nome">{item.nome}</span>
-              <span>{formatarPorcentagem((100 * item.notas) / participacoes, 1)}</span>
+              <span>{percentual}</span>
               <strong>{formatarNumero(item.notas)}</strong>
             </>
           );
@@ -113,7 +113,7 @@ function RoscaNotas({
         })}
       </div>
       <small className="os-percentual-notas">
-        A fatia mostra a participação entre as classificações. Uma nota pode ter mais de uma.
+        A legenda mostra a parcela das notas únicas. Uma nota pode participar de mais de uma fatia.
       </small>
     </div>
   );
