@@ -31,16 +31,19 @@ public class PermissaoCatalogoBootstrapService implements ApplicationRunner {
     }
 
     private void sincronizarPermissao(PermissaoCatalogo catalogo) {
+        String recurso = normalizarRecurso(catalogo);
+        String acao = catalogo == PermissaoCatalogo.GERENCIAR_SINISTROS ? "write" : "read";
+        String chave = "dashboard." + recurso + "." + acao;
         PermissaoEntity permissao = permissaoRepository.findByChaveLegado(catalogo.chave())
-                .or(() -> permissaoRepository.findByChave("dashboard." + normalizarRecurso(catalogo) + ".read"))
+                .or(() -> permissaoRepository.findByChave(chave))
                 .orElseGet(PermissaoEntity::new);
 
-        permissao.setChave("dashboard." + normalizarRecurso(catalogo) + ".read");
+        permissao.setChave(chave);
         permissao.setChaveLegado(catalogo.chave());
         permissao.setNome(catalogo.nome());
         permissao.setDescricao(catalogo.descricao());
-        permissao.setRecurso(normalizarRecurso(catalogo));
-        permissao.setAcao("read");
+        permissao.setRecurso(recurso);
+        permissao.setAcao(acao);
         permissao.setRota(catalogo.rota());
         permissao.setAtivo(true);
 
@@ -50,6 +53,7 @@ public class PermissaoCatalogoBootstrapService implements ApplicationRunner {
 
     private String normalizarRecurso(PermissaoCatalogo catalogo) {
         return switch (catalogo) {
+            case OCORRENCIAS_SINISTROS, GERENCIAR_SINISTROS -> "sinistros";
             case FATURAS_POR_CLIENTE -> "faturas_por_cliente";
             case CONTAS_A_PAGAR -> "contas_a_pagar";
             case ETL_SAUDE -> "etl_saude";

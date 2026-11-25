@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import {
   Activity, BarChart3, Building2, ClipboardList, CreditCard, HeartPulse, House,
   Headset, LayoutDashboard, MapPinned, Network, Table2, Truck, UserCog, Users,
@@ -19,6 +20,7 @@ const icons: Record<string, LucideIcon> = {
   '/faturas-por-cliente': Users,
   '/contas-a-pagar': CreditCard,
   '/dre': Table2,
+  '/ocorrencias-e-sinistros': ShieldAlert,
   '/cotacoes': ClipboardList,
   '/indicadores-gestao-a-vista': BarChart3,
   '/executivo': Activity,

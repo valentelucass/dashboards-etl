@@ -49,6 +49,10 @@ const integracoesBase = {
 } as const;
 
 export const chartDictionary = {
+  notasGrupo: { descricao: 'Notas e quantidade por grupo de ocorrência', tabelasOrigem: 'dbo.dashboard_performance_ocorrencias', cruzamentos: 'Número da minuta e nota fiscal.', calculoTecnico: 'Conta os pares distintos de minuta e NF em cada categoria. Cada fatia divide a quantidade da categoria pela soma das quantidades das categorias exibidas.', calculoNegocio: 'O centro mostra as notas únicas. Uma nota presente em dois grupos participa das duas fatias. A legenda mostra a quantidade e a participação de cada grupo, ou de cada tipo no detalhamento.', agrupamento: 'Grupo e tipo de ocorrência' },
+  eventosGrupo: { descricao: 'Ocorrências por grupo', tabelasOrigem: 'dbo.dashboard_performance_ocorrencias', cruzamentos: 'Minuta ou número do sinistro.', calculoTecnico: 'Cada lançamento do ESL conta uma vez. Selecionar um grupo detalha seus códigos e descrições.', calculoNegocio: 'Cada lançamento do ESL conta uma vez. Selecionar um grupo detalha seus códigos e descrições.', agrupamento: 'Grupo e tipo' },
+  taxaSinistroDia: { descricao: 'Evolução da taxa de sinistro', tabelasOrigem: 'dbo.dashboard_sinistros e dbo.vw_fretes_powerbi', cruzamentos: 'Minuta ou número do sinistro.', calculoTecnico: 'Minutas afetadas por um sinistro no período divididas pelas transportadas de cada dia de serviço.', calculoNegocio: 'Minutas afetadas por um sinistro no período divididas pelas transportadas de cada dia de serviço.', agrupamento: 'Dia do frete' },
+  diasSinistro: { descricao: 'Resolução de sinistros em dias', tabelasOrigem: 'dbo.dashboard_sinistros', cruzamentos: 'Minuta ou número do sinistro.', calculoTecnico: 'Média de dias corridos entre abertura e finalização dos sinistros encerrados em cada data.', calculoNegocio: 'Média de dias corridos entre abertura e finalização dos sinistros encerrados em cada data.', agrupamento: 'Dia de encerramento' },
   csEvolucao: {
     ...performanceBase, descricao: 'Evolução da pontualidade do cliente.',
     calculoTecnico: '100 vezes a soma de entregas no prazo dividida pela soma das finalizadas em cada intervalo.',

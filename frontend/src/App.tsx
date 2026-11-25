@@ -21,6 +21,7 @@ const TrackingPage = lazy(() => import('./pages/TrackingPage'));
 const FaturasPorClientePage = lazy(() => import('./pages/FaturasPorClientePage'));
 const ContasAPagarPage = lazy(() => import('./pages/ContasAPagarPage'));
 const DrePage = lazy(() => import('./pages/DrePage'));
+const OcorrenciasSinistrosPage = lazy(() => import('./pages/OcorrenciasSinistrosPage'));
 const CotacoesPage = lazy(() => import('./pages/CotacoesPage'));
 const IndicadoresGestaoAVistaPage = lazy(() => import('./pages/IndicadoresGestaoAVistaPage'));
 const ExecutivoPage = lazy(() => import('./pages/ExecutivoPage'));
@@ -106,6 +107,10 @@ export default function App() {
 
               <Route element={<RotaProtegida permissao="contasAPagar" />}>
                 <Route path="/contas-a-pagar" element={<ContasAPagarPage />} />
+              </Route>
+
+              <Route element={<RotaProtegida permissao="ocorrenciasSinistros" />}>
+                <Route path="/ocorrencias-e-sinistros" element={<OcorrenciasSinistrosPage />} />
               </Route>
 
               <Route element={<RotaProtegida permissao="dre" />}>

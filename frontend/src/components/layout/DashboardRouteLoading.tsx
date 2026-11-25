@@ -6,6 +6,7 @@ import ChartLoading, { ChartPlaceholder, MetricLoading, StatusBarsLoading } from
 import CarregamentoConta from '../domain/customerService/CarregamentoConta';
 import CarregamentoRede from '../domain/redeCredenciada/CarregamentoRede';
 import CarregamentoDre from '../domain/dre/CarregamentoDre';
+import CarregamentoSinistros from '../domain/sinistros/CarregamentoSinistros';
 import { LoadingTableRows } from '../shared/TableLoading';
 import NoticeListLoading from '../home/NoticeListLoading';
 import { kpiLoadingLayouts } from '../shared/dashboardKpiLayouts';
@@ -86,6 +87,7 @@ function Fields({ count, className = '' }: { count: number; className?: string }
 
 function PagePreview({ path }: { path: string }) {
   if (path === '/dre') return <CarregamentoDre />;
+  if (path === '/ocorrencias-e-sinistros') return <CarregamentoSinistros />;
   if (path === '/rede-credenciada') return <CarregamentoRede />;
   if (path === '/customer-service') return <div className="cs-conteudo"><CarregamentoConta /></div>;
   const profile = dashboards[path];

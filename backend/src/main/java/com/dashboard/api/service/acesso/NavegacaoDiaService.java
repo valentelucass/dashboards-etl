@@ -17,6 +17,7 @@ public class NavegacaoDiaService {
     private static final Set<String> ROTAS = Set.of("/", "/coletas", "/manifestos", "/faturamento",
             "/performance", "/rede-credenciada", "/customer-service", "/tracking", "/faturas-por-cliente", "/contas-a-pagar", "/cotacoes",
             "/dre", "/indicadores-gestao-a-vista", "/executivo", "/etl-saude", "/painel/integracoes",
+            "/ocorrencias-e-sinistros",
             "/admin/usuarios", "/admin/setores");
     private final NavegacaoDiaSqlRepository repository;
     private final UsuarioSupremo supremo;

@@ -69,6 +69,17 @@ const regraHorarioCorteCwbNhb =
 const periodoHorarioCorte = 'O período usa o dia da partida prevista no horário de Brasília. Se faltar a previsão, vale o dia da saída real.';
 
 export const KpiDictionary = {
+  ocorrenciasSinistros: {
+    minutas: { titulo: 'Total de minutas', descricao: 'Minutas transportadas no período.', calculo: 'Minutas distintas pela data do frete, excluídos cancelamentos, complementos e substituições.' },
+    comOcorrencia: { titulo: 'Minutas com ocorrências', descricao: 'Minutas do período com ao menos um lançamento.', calculo: 'Cada minuta transportada com ocorrência no período entra uma vez.' },
+    taxaOcorrencias: { titulo: 'Taxa de ocorrências', descricao: 'Participação das minutas com ocorrência.', calculo: 'Minutas com ocorrência divididas pelas minutas transportadas no período.' },
+    sinistros: { titulo: 'Quantidade de sinistros', descricao: 'Sinistros distintos pela data da ocorrência.', calculo: 'Cada número de sinistro conta uma vez, inclusive quando ele tem várias notas.' },
+    taxaSinistros: { titulo: 'Taxa de sinistro', descricao: 'Participação das minutas transportadas afetadas por sinistro.', calculo: 'Minutas do período associadas a sinistro ocorrido no período divididas pelo total de minutas transportadas.' },
+    media: { titulo: 'Média de ocorrências por minuta', descricao: 'Lançamentos nas minutas transportadas no período.', calculo: 'Registros de ocorrência no período nessas minutas divididos por todas as minutas transportadas, inclusive as sem ocorrência.' },
+    tratativa: { titulo: 'Notas em tratativa', descricao: 'Notas com tratativa do período ainda sem solução.', calculo: 'Cada par de minuta e nota fiscal com ação de abrir tratativa e sem data de solução na extração atual conta uma vez.' },
+    solucao: { titulo: 'Performance de solução', descricao: 'Tratativas solucionadas antes do vencimento.', calculo: 'Somente as ações de abrir tratativa com prazo informado entram na base. Solução igual ao prazo ou ausente conta fora do prazo.' },
+    encerrados: { titulo: 'Sinistros encerrados', descricao: 'Sinistros com abertura e finalização válidas, encerrados no período.', calculo: 'Cada sinistro encerrado conta uma vez. O prazo médio em dias corridos corresponde à finalização menos a abertura.' },
+  },
   dre: {
     bruta: { titulo: 'Receita Bruta · Fretes Emitidos', descricao: 'Receita dos fretes na competência selecionada.', calculo: 'Soma da receita bruta publicada em Faturamento, com os mesmos critérios de elegibilidade e de data.', observacao: 'O cartão mostra o mês. Na tabela, o acumulado soma os fretes disponíveis de janeiro até a competência. A receita fica indisponível nos filtros de fornecedor e conta contábil.' },
     liquida: { titulo: 'Receita Líquida', descricao: 'Receita após os impostos do demonstrativo.', calculo: 'Receita bruta + total de impostos, com os sinais dos lançamentos disponíveis.' },

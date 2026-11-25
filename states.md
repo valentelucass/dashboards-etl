@@ -1,3 +1,13 @@
+## 25/11/2026 — Ocorrências e Sinistros
+
+A rota `/ocorrencias-e-sinistros` detalha os grupos do catálogo do ESL por tipo e distingue contagem de lançamentos, notas e minutas. A performance de solução exige uma ação de tratativa e prazo informado. A solução precisa anteceder o prazo. Os sinistros usam a data da ocorrência e o tempo de resolução usa os encerramentos do período.
+
+No desktop, a rosca de notas fica à esquerda das colunas de ocorrências. Cada gráfico permite detalhar um grupo. Quatro indicadores de tratativa e resolução ocupam duas linhas à direita. A legenda da rosca conta cada nota uma vez dentro de cada grupo e informa quando a mesma nota pode aparecer em grupos diferentes.
+
+A relação reúne as notas e minutas do mesmo sinistro em uma linha. Franquia, venda de salvados e status da corretora são editáveis com permissão própria e controle de revisão. O saldo considera os sinistros publicados na vigência inteira. Na ausência de número na origem, uma única apólice válida na data permite a atribuição. Dias sem cobertura ou valores ainda sem atribuição à apólice deixam o saldo identificado como parcial.
+
+O ensaio no SQL verificou o limite exato do prazo, documentos repetidos, escopo por filial, renovação e vigências ambíguas. A edição com o usuário da aplicação foi conferida em transação revertida. De 1 a 25/11/2026, o navegador em desenvolvimento e o SQL apresentaram 14 sinistros por data da ocorrência e 53 encerramentos, com média de 26 dias. O cadastro inicial de apólices fica vazio até que a empresa informe os dados reais.
+
 ## 25/11/2026 — Dados da nova tela de ocorrências e sinistros
 
 Flyway 087 aplicado em `DASHBOARDS` e `DASHBOARDS_DEV`. O leitor da aplicação confirmou, nos dois ambientes, 156 linhas em `dbo.dashboard_sinistros` e 49 registros em `dbo.dashboard_sinistros_ocorrencias_documento`. A primeira consulta traz os 46 campos atuais do relatório. Para contar sinistros, use o número distinto. A segunda consulta fornece o histórico da combinação de minuta, nota e código e pode retornar múltiplos registros. A lista operacional completa continua em `dbo.dashboard_performance_ocorrencias`.

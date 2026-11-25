@@ -9,6 +9,8 @@ export const PERMISSION_KEYS = [
   'faturasPorCliente',
   'contasAPagar',
   'dre',
+  'ocorrenciasSinistros',
+  'gerenciarSinistros',
   'cotacoes',
   'indicadoresGestaoAVista',
   'executivo',
