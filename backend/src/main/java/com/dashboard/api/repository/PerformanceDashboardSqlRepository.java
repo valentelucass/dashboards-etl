@@ -1192,7 +1192,7 @@ public class PerformanceDashboardSqlRepository {
     private enum VisaoEntregas { PERFORMANCE, GESTAO, CLIENTE, REDE }
 
     private static String comprovanteAnexadoSql(PerformanceViewColumns colunas, VisaoEntregas visao) {
-        if (visao != VisaoEntregas.PERFORMANCE) {
+        if (visao == VisaoEntregas.GESTAO || visao == VisaoEntregas.REDE) {
             exigirColuna(colunas, "Comprovante Anexado");
             return "CASE WHEN UPPER(LTRIM(RTRIM(CONVERT(nvarchar(20), [Comprovante Anexado])))) IN (N'SIM', N'TRUE', N'1') THEN 1 ELSE 0 END";
         }

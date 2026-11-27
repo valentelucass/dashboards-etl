@@ -1,3 +1,7 @@
+## 27/11/2026 — Comprovantes anexados no Customer Service
+
+Customer Service e Performance contam o anexo pela data e hora de “Comprovante de Entrega” do relatório de Fretes do ESL. O período usa a previsão de entrega, e um anexo posterior entra na situação atual. No Customer Service, a base são as minutas finalizadas dos CNPJs pagadores da conta. O percentual de arquivados usa o número de arquivamento do relatório de comprovantes.
+
 ## 25/11/2026 — Ocorrências e Sinistros
 
 A rota `/ocorrencias-e-sinistros` detalha os grupos do catálogo do ESL por tipo e distingue contagem de lançamentos, notas e minutas. A performance de solução exige uma ação de tratativa e prazo informado. A solução precisa anteceder o prazo. Os sinistros usam a data da ocorrência e o tempo de resolução usa os encerramentos do período.

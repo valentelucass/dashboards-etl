@@ -4,18 +4,23 @@ import com.dashboard.api.dto.FiltroConsultaDTO;
 import com.dashboard.api.dto.customerservice.CustomerServiceContaDTO;
 import com.dashboard.api.dto.customerservice.CustomerServiceOperacionalDTO.Coletas;
 import com.dashboard.api.dto.CoberturaArquivamentosDTO;
+import com.dashboard.api.service.ValidadorPeriodoService;
 import com.dashboard.api.service.acesso.EscopoFilialService;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
@@ -54,6 +59,25 @@ class CustomerServiceOperacionalRepositoryTest {
             assertThatThrownBy(() -> CustomerServiceDocumentos.json(invalido, true))
                     .isInstanceOf(IllegalArgumentException.class);
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void anexadasDaContaUsamDataDoFreteNosDoisFormatosPublicados(boolean colunaPropria) {
+        var sql = mock(NamedParameterJdbcTemplate.class);
+        var colunas = new ArrayList<>(List.of("Comprovante Anexado", "Metadata", "Responsável Região Destino Key", "Tipo Frete", "CT-e Emissão"));
+        if (colunaPropria) colunas.add("Comprovante de Entrega");
+        when(sql.queryForList(anyString(), any(MapSqlParameterSource.class), eq(String.class))).thenReturn(colunas);
+        var fretes = new PerformanceDashboardSqlRepository(sql, new ValidadorPeriodoService(), escopo);
+        var documentos = CustomerServiceDocumentos.json(conta.documentos(), true);
+        var consulta = fretes.entregasDoCliente(periodo, escopo.escopoAtual(), documentos);
+
+        String data = colunaPropria ? "CONVERT(nvarchar(80), base_raw.[Comprovante de Entrega], 127)"
+                : "JSON_VALUE(base_raw.[Metadata], '$.fit_d_t_created_at')";
+        assertThat(consulta.sql()).contains("TRY_CONVERT(datetimeoffset(7), NULLIF(TRIM(" + data
+                + "), N''), 127) IS NOT NULL THEN 1 ELSE 0 END AS comprovante_anexado")
+                .doesNotContain("[Comprovante Anexado]");
+        assertThat(consulta.params().getValue("documentos")).isEqualTo(documentos);
     }
 
     private void publicarDias(Date... dias) {
@@ -100,7 +124,8 @@ class CustomerServiceOperacionalRepositoryTest {
                 "candidata.[Pagador Doc] IN (SELECT documento", "candidata.[Nº Minuta] = f.[Nº Minuta]",
                 "HAVING MIN(CASE WHEN conta.documento IS NOT NULL",
                 "f.[Responsável Região Destino Key] IN (:filiaisDaConta)", "THEN 1 ELSE 0 END) = 1"));
-        assertThat(consultas.getAllValues().get(0)).contains("LEFT JOIN titulares", "ON a.minuta=t.minuta")
+        assertThat(consultas.getAllValues().get(0)).contains("LEFT JOIN titulares", "ON a.minuta=t.minuta",
+                        "f.is_finalizada=1 AND f.comprovante_anexado=1", "f.is_finalizada=1 AND a.minuta IS NOT NULL")
                 .doesNotContain("primeiro_arquivamento", ":corteExclusivo");
         assertThat(consultas.getAllValues().get(1)).contains("COUNT_BIG(DISTINCT CASE WHEN classe IS NOT NULL THEN minuta END)",
                 "o.ocorrido_em<:corteExclusivo", "JOIN titulares", "o.codigo IN (:tratativas) OR o.codigo IN (:finalizacoes)");

@@ -1,3 +1,5 @@
+import { calculoComprovanteAnexado } from './kpiDictionary';
+
 export interface ChartDefinition {
   descricao: string;
   tabelasOrigem: string;
@@ -67,7 +69,7 @@ export const chartDictionary = {
     descricao: 'Cobertura documental das entregas finalizadas do cliente.',
     tabelasOrigem: 'Fretes da Performance e relatório de comprovantes do ESL.',
     cruzamentos: 'A minuta identifica o frete nas duas fontes.',
-    calculoTecnico: 'Minutas com anexo ou com número de arquivamento divididas pelas minutas finalizadas.',
+    calculoTecnico: `${calculoComprovanteAnexado} Para arquivados, divida as minutas finalizadas com número de arquivamento pelo total de minutas finalizadas do cliente e multiplique por 100.`,
     calculoNegocio: 'Mostra a situação atual, inclusive anexos e arquivamentos posteriores ao período. Cada minuta com número de arquivamento conta uma vez como arquivada.',
     agrupamento: 'Cliente selecionado e período da previsão de entrega.',
   },

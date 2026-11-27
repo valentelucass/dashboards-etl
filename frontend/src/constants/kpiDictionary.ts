@@ -9,6 +9,9 @@ export interface KpiDefinitionGroup {
   readonly [key: string]: KpiDefinition | KpiDefinitionGroup;
 }
 
+export const calculoComprovanteAnexado =
+  'Minutas finalizadas com data e hora na coluna Comprovante de Entrega do relatório de Fretes do ESL ÷ total de minutas finalizadas × 100.';
+
 export const COLUNAS_PENDENCIAS_INTEGRACOES = {
   etapa: {
     label: 'Etapa',
@@ -462,8 +465,7 @@ export const KpiDictionary = {
     comprovanteAnexado: {
       titulo: 'Comprovante Anexado',
       descricao: 'Percentual de entregas finalizadas com comprovante anexado.',
-      calculo:
-        'Minutas finalizadas com data e hora na coluna Comprovante de Entrega do relatório de Fretes do ESL ÷ total de minutas finalizadas × 100.',
+      calculo: calculoComprovanteAnexado,
       observacao: `${periodoPerformance} Anexos posteriores à entrega aparecem quando o frete é atualizado na extração. ${percentualSemBase}`,
     },
     valorNfSemComprovante: {
